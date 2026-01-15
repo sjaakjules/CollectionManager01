@@ -6,10 +6,15 @@ node_modules/
 dist/
 build/
 
+# Vite
+.vite/
+vite.config.ts.timestamp*
+
 # Environment files
 .env
 .env.local
 .env.*.local
+*.local
 
 # IDE
 .idea/
@@ -26,9 +31,12 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Testing
 coverage/
+.vitest/
 
 # Temporary
 tmp/
@@ -36,3 +44,13 @@ tmp/
 
 # TypeScript cache
 *.tsbuildinfo
+
+# ESLint
+.eslintcache
+
+# Local user data (not committed)
+guest.json
+
+# Editor directories
+*.sublime-workspace
+*.sublime-project
