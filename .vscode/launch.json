@@ -2,6 +2,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Safari",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm dev & sleep 2 && open -a Safari http://localhost:3000",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Open Safari (server running)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "open -a Safari http://localhost:3000",
+      "cwd": "${workspaceFolder}"
+    },
+    {
       "name": "Launch Chrome (Debug)",
       "type": "chrome",
       "request": "launch",
@@ -33,7 +47,12 @@
   ],
   "compounds": [
     {
-      "name": "Dev + Debug",
+      "name": "Dev + Safari",
+      "configurations": ["Launch Safari"],
+      "stopAll": true
+    },
+    {
+      "name": "Dev + Chrome",
       "configurations": ["Launch Chrome (Debug)"],
       "stopAll": true
     }

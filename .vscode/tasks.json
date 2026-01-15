@@ -26,6 +26,41 @@
       }
     },
     {
+      "label": "pnpm: dev + Safari",
+      "type": "shell",
+      "command": "pnpm dev --open",
+      "options": {
+        "env": {
+          "BROWSER": "safari"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "Local:\\s+http"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Open Safari",
+      "type": "shell",
+      "command": "open -a Safari http://localhost:3000",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
       "label": "pnpm: build",
       "type": "shell",
       "command": "pnpm build",

@@ -15,7 +15,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: false,
+    open: process.env.BROWSER === 'safari' ? 'Safari' : false,
     fs: {
       strict: false,
     },
