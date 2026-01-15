@@ -18,10 +18,17 @@ vite.config.ts.timestamp*
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 *~
+
+# VSCode - include project settings but ignore user-specific files
+!.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 # OS
 .DS_Store
