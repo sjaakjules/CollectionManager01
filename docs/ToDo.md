@@ -11,15 +11,28 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 | Task | Status | Notes |
 |------|--------|-------|
 | PixiJS setup | Done | `PixiStage.ts` complete |
-| Grid & snapping | Done | `Grid.ts` with 400px base unit |
+| Grid & snapping | Done | `Grid.ts` with 55px base unit, 6-cell cards |
 | Card sprites | Done | `CardSprite.ts` with portrait/landscape support |
 | Pan/zoom | Done | `Camera.ts` using pixi-viewport |
 | Camera system | Done | Fit-to-content, zoom constraints |
 | LOD switching | Done | `LODManager.ts` with zoom-based resolution |
 
 **Phase 1 Remaining:**
-- [ ] Hover preview shows highest resolution (verify working)
-- [ ] Test performance with large card sets (200+ cards)
+- [x] Hover preview shows highest resolution (verified working)
+- [x] Test performance with large card sets (1104 cards - working with viewport culling)
+- [x] Fix site card rotation (now +90° clockwise)
+- [x] Fix card dragging (requires selection before drag)
+- [x] Avatar layout horizontal, sorted by set/rarity
+- [x] New grid system: 55×55px grid, cards occupy 6 cells (2×3 or 3×2)
+- [x] Card sizes: 110×165px portrait, 165×110px landscape
+- [x] Faint background grid visible during navigation
+- [x] Card stacking with 10 grid unit offset (550px)
+- [x] Sites offset upward (names on bottom), spells offset downward
+- [x] Click on stacked card brings to front
+- [x] Selection: click to select, shift+click multi-select
+- [x] Selection box: left-drag on empty/unselected, or ctrl+drag
+- [x] Drag behavior: only already-selected cards can be dragged
+- [x] Right-drag always pans viewport
 
 ---
 
@@ -136,4 +149,32 @@ These items are explicitly excluded from MVP per PDR section 10:
 
 ---
 
-*Last updated: 2026-01-15*
+*Last updated: 2026-01-16*
+
+---
+
+## Recent Changes (2026-01-16)
+
+**Grid System Overhaul (v2):**
+- Grid unit: 55px (visible as faint background)
+- Cards occupy 6 grid cells: 2×3 portrait (110×165px), 3×2 landscape (165×110px)
+- Cards centered within their grid cell area
+- No gaps between cards within groups
+- 4 grid unit gap between element groups, 1 grid unit gap between type subgroups
+
+**Card Stacking:**
+- Stack offset: 10 grid units (550px) for name visibility
+- Spells offset downward (names on top)
+- Sites offset upward (names on bottom)
+- Click on stacked card brings it to front
+- Offset reduces when cards removed from stack
+- Top cards have higher z-index for proper click handling
+
+**Interaction Improvements:**
+- Click on unselected card: selects it (clears others)
+- Click on selected card: deselects it
+- Shift+click: toggle multi-selection
+- Left-drag on empty space or unselected card: creates selection box
+- Ctrl+drag: selection box (alternative method)
+- Left-drag on already-selected card: moves all selected cards
+- Right-drag: always pans viewport

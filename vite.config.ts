@@ -19,6 +19,15 @@ export default defineConfig({
     fs: {
       strict: false,
     },
+    // Proxy API requests to avoid CORS issues during development
+    proxy: {
+      '/api/sorcery': {
+        target: 'https://api.sorcerytcg.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/sorcery/, '/api'),
+        secure: true,
+      },
+    },
   },
   build: {
     target: 'esnext',

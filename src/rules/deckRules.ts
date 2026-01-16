@@ -10,7 +10,7 @@
  */
 
 import type { Card, Deck, CardRarity } from '@/data/dataModels';
-import { DECK_LIMITS, isSpellType, isSiteType, isAvatarType } from '@/data/dataModels';
+import { DECK_LIMITS, isSpellType, isSiteType } from '@/data/dataModels';
 import { getRuleMessage, type RuleViolationType } from './ruleMessages';
 
 // ============================================================================

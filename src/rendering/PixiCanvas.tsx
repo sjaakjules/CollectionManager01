@@ -52,7 +52,7 @@ export function PixiCanvas() {
     if (!stageRef.current || !state.userData) return;
 
     const activeDeck = state.editor.activeDeckId
-      ? state.userData.decks.find((d) => d.id === state.editor.activeDeckId)
+      ? state.userData.decks.find((d) => d.id === state.editor.activeDeckId) ?? null
       : null;
 
     stageRef.current.updateDeckOverlays(

@@ -112,29 +112,39 @@ Sorcery Collection Manager is a web-based visual deck-building tool for the Sorc
 
 ### 5.1 Card Types & Sizes
 
-| Card Type | Orientation | Image Size |
-|---------|-------------|------------|
-| Spell | Portrait | 744 × 1039 px |
-| Site | Landscape | 1039 × 744 px |
+| Card Type | Orientation | Grid Cells | Display Size | Source Image |
+|---------|-------------|------------|--------------|--------------|
+| Spell | Portrait | 2×3 cells | 110 × 165 px | 744 × 1039 px |
+| Site | Landscape | 3×2 cells | 165 × 110 px | 1039 × 744 px |
 
 ---
 
 ### 5.2 Grid Rules
 
-- Base grid unit: **400px**
-- Cards snap to grid intersections
-- Spacing rules:
-  - Portrait cards align at **2 grid units** along the short side
-  - Landscape cards align at **3 grid units** along the long side
+- Base grid unit: **55px** (visible as faint background grid)
+- Cards occupy **6 grid cells**: 2×3 for portrait (110×165px), 3×2 for landscape (165×110px)
+- Cards are drawn centered within their grid cell area
+- Cards snap to nearest grid cell position on release
 - Grid logic is mathematical (not DOM-based)
-- Cards are grouped by: 
-  - main group by thresholds: air, earth, fire, water, multiple, none
-  - sub-group by type: Minion, Magic, Aura, Artifact, Site
-  - sorted by cost
-  - each main group is layed out horizontally with a gap 4 base grid spaces wide
-  - each sub-group is layed out virtically with a gap 1 base grid space wide
-  - each group of cards is 12 spell cards wide or 8 site cards wide
-  - avatar cards are in their own group
+
+**Card Stacking:**
+- Multiple cards at the same grid position are offset by **10 grid units (550px)**
+- Spells offset downward (names visible on top)
+- Sites offset upward (names visible on bottom)
+- Stack reorders when a card is clicked (brings clicked card to front)
+- Top cards in stack have higher z-index (clickable first)
+- Offset reduces automatically when cards are removed from stack
+
+**Layout Groups:**
+- Main group by thresholds: air, earth, fire, water, multiple, none
+- Sub-group by type: Minion, Magic, Aura, Artifact, Site
+- Sorted by cost within each group
+- **No gaps between cards within a group** (cards placed directly adjacent)
+- Gap of **4 grid units** between element groups horizontally
+- Gap of **1 grid unit** between card type subgroups vertically
+- Each group of cards is 12 spell cards wide or 8 site cards wide
+- Avatar cards are in their own group, laid out horizontally (12 per row)
+- Avatars sorted by: set (Alpha, Beta, Arthurian Legends, Dragonlord, Gothic, Promotional), then precon first, then by rarity
 
 ---
 
@@ -175,10 +185,18 @@ Optimisations:
 
 ### 6.2 Selection & Dragging
 
-- Single click selects a card
-- Click + drag moves a card
-- On release, the card snaps to the nearest grid position
-- Orientation is preserved (site cards rotated -90 degrees)
+**Selection:**
+- Single click on unselected card: Selects it (clears other selections)
+- Single click on selected card: Deselects it
+- Shift+click: Toggles card in multi-selection (additive)
+- Left-drag on empty space OR unselected card: Creates selection box
+- Ctrl+drag: Creates selection box (alternative method)
+
+**Dragging:**
+- Left-drag on **already selected** card: Moves all selected cards
+- Right-drag anywhere: Always pans viewport
+- On release, cards snap to the nearest grid cell position
+- Orientation is preserved (site cards rotated +90° clockwise)
 
 ---
 

@@ -5,7 +5,10 @@
  * Useful for reducing API calls during rapid user input.
  */
 
-export interface DebouncedFunction<T extends (...args: Parameters<T>) => ReturnType<T>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFunction = (...args: any[]) => any;
+
+export interface DebouncedFunction<T extends AnyFunction> {
   (...args: Parameters<T>): void;
   cancel: () => void;
   flush: () => void;
@@ -16,7 +19,7 @@ export interface DebouncedFunction<T extends (...args: Parameters<T>) => ReturnT
  * @param fn - Function to debounce
  * @param wait - Delay in milliseconds
  */
-export function debounce<T extends (...args: Parameters<T>) => ReturnType<T>>(
+export function debounce<T extends AnyFunction>(
   fn: T,
   wait: number
 ): DebouncedFunction<T> {

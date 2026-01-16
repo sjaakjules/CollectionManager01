@@ -9,7 +9,7 @@
  */
 
 import type { AppAction } from './AppState';
-import type { Card, UserData } from '@/data/dataModels';
+import type { Card } from '@/data/dataModels';
 import { createGuestUserData } from '@/data/dataModels';
 import { loadUserData, saveUserData } from '@/data/userStorage';
 import { fetchCards } from '@/data/cardService';

@@ -3,12 +3,19 @@
  *
  * Fetches card data from the Sorcery TCG API.
  * Caches data in browser storage for offline use.
+ *
+ * In development, requests are proxied through Vite to avoid CORS issues.
+ * In production, requests go directly to the API (requires proper CORS headers).
  */
 
 import type { Card } from './dataModels';
 import { get, set } from 'idb-keyval';
 
-const API_URL = 'https://api.sorcerytcg.com/api/cards';
+// Use proxy in development to avoid CORS issues with Safari/browsers
+const API_URL = import.meta.env.DEV
+  ? '/api/sorcery/cards'
+  : 'https://api.sorcerytcg.com/api/cards';
+
 const CACHE_KEY = 'sorcery_card_cache';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 

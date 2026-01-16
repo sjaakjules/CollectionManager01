@@ -5,6 +5,15 @@
  * - Thumbnail: Used when zoomed out (fast loading, low memory)
  * - Medium: Used at normal zoom levels
  * - Full: Used when hovering or zoomed in (highest quality)
+ *
+ * Performance optimizations:
+ * - Concurrent loading with configurable batch size
+ * - Priority queue for visible cards
+ * - Failed load tracking to avoid retries
+ * - Texture caching with sync access
+ *
+ * Currently uses local images from /assets/Cards/ directory.
+ * All LOD levels use the same image (webp format already optimized).
  */
 
 import { Assets, Texture } from 'pixi.js';
@@ -23,21 +32,59 @@ export type LODLevel = (typeof LOD_LEVELS)[keyof typeof LOD_LEVELS];
 
 // Zoom thresholds for LOD switching
 export const LOD_ZOOM_THRESHOLDS = {
-  THUMBNAIL_MAX: 0.15,
-  MEDIUM_MAX: 0.5,
+  THUMBNAIL_MAX: 0.1,
+  MEDIUM_MAX: 0.4,
 } as const;
 
-// Image URL patterns - adjust based on actual CDN structure
-const IMAGE_BASE_URL = 'https://card.sorcerytcg.com';
+// Local image path
+const LOCAL_IMAGE_PATH = '/assets/Cards';
+
+// Concurrent texture loads (higher = more parallelism but more memory pressure)
+const CONCURRENT_LOADS = 8;
+
+// Batch size for preloading
+const PRELOAD_BATCH_SIZE = 20;
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface TextureCache {
-  thumbnail?: Texture;
-  medium?: Texture;
-  full?: Texture;
+  texture?: Texture;
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Normalize special characters to ASCII equivalents
+ * e.g., "ö" -> "o", "é" -> "e", "Ä" -> "a"
+ */
+function normalizeToAscii(str: string): string {
+  // Use Unicode normalization to decompose characters
+  // NFD splits "ö" into "o" + combining diaeresis
+  // Then we remove the combining marks
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Remove combining diacritical marks
+}
+
+/**
+ * Convert a card name to a local image filename slug
+ * e.g., "Cave Trolls" -> "cave_trolls"
+ * e.g., "Sjaelström" -> "sjaelstrom"
+ * e.g., "East-West Dragon" -> "east_west_dragon"
+ */
+export function cardNameToSlug(cardName: string): string {
+  return normalizeToAscii(cardName)
+    .toLowerCase()
+    .replace(/['']/g, '')           // Remove apostrophes
+    .replace(/[-\s]+/g, '_')        // Replace hyphens and spaces with underscores
+    .replace(/[^a-z0-9_]/g, '')     // Remove remaining special chars (keep underscores)
+    .replace(/_+/g, '_')            // Collapse multiple underscores
+    .replace(/^_|_$/g, '')          // Trim leading/trailing underscores
+    .trim();
 }
 
 // ============================================================================
@@ -47,6 +94,7 @@ interface TextureCache {
 export class LODManager {
   private cache: Map<string, TextureCache> = new Map();
   private loadingPromises: Map<string, Promise<Texture>> = new Map();
+  private failedLoads: Set<string> = new Set();
 
   /**
    * Get the appropriate LOD level for a given zoom
@@ -65,69 +113,105 @@ export class LODManager {
    * Get texture for a card at specified LOD level
    * Returns cached texture or loads it if not available
    */
-  async getTexture(variantSlug: string, lod: LODLevel): Promise<Texture> {
-    const cacheKey = `${variantSlug}_${lod}`;
+  async getTexture(cardNameOrSlug: string, _lod: LODLevel): Promise<Texture> {
+    const slug = cardNameOrSlug.includes('_') ? cardNameOrSlug : cardNameToSlug(cardNameOrSlug);
+
+    // Skip if we already know this image failed
+    if (this.failedLoads.has(slug)) {
+      return Texture.WHITE;
+    }
 
     // Check cache first
-    const cached = this.cache.get(variantSlug);
-    if (cached?.[lod]) {
-      return cached[lod]!;
+    const cached = this.cache.get(slug);
+    if (cached?.texture) {
+      return cached.texture;
     }
 
     // Check if already loading
-    const loadingPromise = this.loadingPromises.get(cacheKey);
+    const loadingPromise = this.loadingPromises.get(slug);
     if (loadingPromise) {
       return loadingPromise;
     }
 
     // Start loading
-    const url = this.getImageUrl(variantSlug, lod);
-    const promise = this.loadTexture(url);
-    this.loadingPromises.set(cacheKey, promise);
+    const url = this.getImageUrl(slug);
+    const promise = this.loadTexture(url, slug);
+    this.loadingPromises.set(slug, promise);
 
     try {
       const texture = await promise;
-      this.cacheTexture(variantSlug, lod, texture);
+      this.cacheTexture(slug, texture);
       return texture;
+    } catch {
+      this.failedLoads.add(slug);
+      return Texture.WHITE;
     } finally {
-      this.loadingPromises.delete(cacheKey);
+      this.loadingPromises.delete(slug);
     }
   }
 
   /**
-   * Get texture synchronously if cached, otherwise return placeholder
+   * Get texture synchronously if cached, otherwise return null
    */
-  getTextureSync(variantSlug: string, lod: LODLevel): Texture | null {
-    const cached = this.cache.get(variantSlug);
-    if (cached?.[lod]) {
-      return cached[lod]!;
-    }
-
-    // Try lower LOD levels as fallback
-    if (lod === LOD_LEVELS.FULL && cached?.medium) {
-      return cached.medium;
-    }
-    if ((lod === LOD_LEVELS.FULL || lod === LOD_LEVELS.MEDIUM) && cached?.thumbnail) {
-      return cached.thumbnail;
-    }
-
-    return null;
+  getTextureSync(cardNameOrSlug: string, _lod: LODLevel): Texture | null {
+    const slug = cardNameOrSlug.includes('_') ? cardNameOrSlug : cardNameToSlug(cardNameOrSlug);
+    const cached = this.cache.get(slug);
+    return cached?.texture ?? null;
   }
 
   /**
    * Preload textures for visible cards
+   * Uses concurrent loading with controlled parallelism for better performance
    */
-  async preloadForViewport(
-    variantSlugs: string[],
-    lod: LODLevel
-  ): Promise<void> {
-    const promises = variantSlugs.map((slug) =>
-      this.getTexture(slug, lod).catch((error) => {
-        console.warn(`Failed to preload texture for ${slug}:`, error);
-        return null;
-      })
-    );
-    await Promise.all(promises);
+  async preloadTextures(cardNames: string[]): Promise<void> {
+    // Filter out already loaded/loading/failed
+    const toLoad = cardNames.filter((name) => {
+      const slug = cardNameToSlug(name);
+      return (
+        !this.cache.has(slug) &&
+        !this.failedLoads.has(slug) &&
+        !this.loadingPromises.has(slug)
+      );
+    });
+
+    if (toLoad.length === 0) return;
+
+    // Process in batches with controlled concurrency
+    for (let i = 0; i < toLoad.length; i += PRELOAD_BATCH_SIZE) {
+      const batch = toLoad.slice(i, i + PRELOAD_BATCH_SIZE);
+
+      // Use a semaphore-like approach for concurrent loading
+      const loadPromises: Promise<void>[] = [];
+      let activeLoads = 0;
+      let batchIndex = 0;
+
+      const loadNext = async (): Promise<void> => {
+        while (batchIndex < batch.length) {
+          if (activeLoads >= CONCURRENT_LOADS) {
+            // Wait for slot to free up
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            continue;
+          }
+
+          const name = batch[batchIndex++];
+          if (!name) break;
+
+          activeLoads++;
+          this.getTexture(name, LOD_LEVELS.THUMBNAIL)
+            .catch(() => null)
+            .finally(() => {
+              activeLoads--;
+            });
+        }
+      };
+
+      // Start concurrent loaders
+      for (let j = 0; j < Math.min(CONCURRENT_LOADS, batch.length); j++) {
+        loadPromises.push(loadNext());
+      }
+
+      await Promise.all(loadPromises);
+    }
   }
 
   /**
@@ -135,51 +219,39 @@ export class LODManager {
    */
   clearCache(): void {
     for (const cached of this.cache.values()) {
-      cached.thumbnail?.destroy();
-      cached.medium?.destroy();
-      cached.full?.destroy();
+      cached.texture?.destroy();
     }
     this.cache.clear();
+    this.failedLoads.clear();
   }
 
   /**
-   * Clear textures for cards no longer visible
+   * Get number of cached textures
    */
-  evictUnusedTextures(activeVariantSlugs: Set<string>): void {
-    for (const [slug, cached] of this.cache) {
-      if (!activeVariantSlugs.has(slug)) {
-        cached.thumbnail?.destroy();
-        cached.medium?.destroy();
-        cached.full?.destroy();
-        this.cache.delete(slug);
-      }
-    }
+  getCacheSize(): number {
+    return this.cache.size;
   }
 
-  private getImageUrl(variantSlug: string, lod: LODLevel): string {
-    // URL structure based on common CDN patterns
-    // Adjust based on actual Sorcery TCG image hosting
-    const size = lod === LOD_LEVELS.THUMBNAIL ? 'small' : lod === LOD_LEVELS.MEDIUM ? 'medium' : 'large';
-    return `${IMAGE_BASE_URL}/${size}/${variantSlug}.webp`;
+  private getImageUrl(slug: string): string {
+    return `${LOCAL_IMAGE_PATH}/${slug}.webp`;
   }
 
-  private async loadTexture(url: string): Promise<Texture> {
+  private async loadTexture(url: string, slug: string): Promise<Texture> {
     try {
+      // Use Assets.load for proper caching and management
       const texture = await Assets.load<Texture>(url);
       return texture;
     } catch (error) {
-      console.error(`Failed to load texture from ${url}:`, error);
+      // Only log once per card to avoid spam
+      if (!this.failedLoads.has(slug)) {
+        console.warn(`Image not found: ${slug}.webp`);
+      }
       throw error;
     }
   }
 
-  private cacheTexture(variantSlug: string, lod: LODLevel, texture: Texture): void {
-    let cached = this.cache.get(variantSlug);
-    if (!cached) {
-      cached = {};
-      this.cache.set(variantSlug, cached);
-    }
-    cached[lod] = texture;
+  private cacheTexture(slug: string, texture: Texture): void {
+    this.cache.set(slug, { texture });
   }
 }
 

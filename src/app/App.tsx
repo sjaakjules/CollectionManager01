@@ -10,7 +10,6 @@ import {
   AppContext,
   appReducer,
   initialAppState,
-  type AppState,
 } from './AppState';
 import { initializeApp } from './Startup';
 import { PixiCanvas } from '@/rendering/PixiCanvas';

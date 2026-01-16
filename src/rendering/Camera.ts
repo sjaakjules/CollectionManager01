@@ -17,10 +17,10 @@ import type { Application, Container } from 'pixi.js';
 // ============================================================================
 
 export const CAMERA_DEFAULTS = {
-  MIN_ZOOM: 0.05,
-  MAX_ZOOM: 2.0,
-  INITIAL_ZOOM: 0.2,
-  DECELERATION: 0.95,
+  MIN_ZOOM: 0.02,
+  MAX_ZOOM: 1.5,
+  INITIAL_ZOOM: 0.1,
+  DECELERATION: 0.92,
 } as const;
 
 // ============================================================================
@@ -32,6 +32,7 @@ export interface CameraConfig {
   worldWidth: number;
   worldHeight: number;
   onZoomChange?: (zoom: number) => void;
+  onViewportChange?: () => void;
 }
 
 export interface CameraBounds {
@@ -48,10 +49,12 @@ export interface CameraBounds {
 export class Camera {
   public readonly viewport: Viewport;
   private onZoomChange?: (zoom: number) => void;
+  private onViewportChange?: () => void;
   private currentZoom: number = CAMERA_DEFAULTS.INITIAL_ZOOM;
 
   constructor(config: CameraConfig) {
     this.onZoomChange = config.onZoomChange;
+    this.onViewportChange = config.onViewportChange;
 
     // Create viewport
     this.viewport = new Viewport({
@@ -82,6 +85,9 @@ export class Camera {
     // Listen for zoom changes
     this.viewport.on('zoomed', this.handleZoomChange.bind(this));
 
+    // Listen for viewport movements (for culling updates)
+    this.viewport.on('moved', this.handleViewportMove.bind(this));
+
     // Handle window resize
     window.addEventListener('resize', this.handleResize.bind(this));
   }
@@ -96,6 +102,27 @@ export class Camera {
 
   get container(): Container {
     return this.viewport;
+  }
+
+  /**
+   * Pause viewport dragging (e.g., when dragging cards)
+   */
+  pauseDrag(): void {
+    this.viewport.plugins.pause('drag');
+  }
+
+  /**
+   * Resume viewport dragging
+   */
+  resumeDrag(): void {
+    this.viewport.plugins.resume('drag');
+  }
+
+  /**
+   * Convert screen coordinates to world coordinates
+   */
+  screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
+    return this.viewport.toWorld(screenX, screenY);
   }
 
   setZoom(scale: number, center?: { x: number; y: number }): void {
@@ -130,16 +157,23 @@ export class Camera {
     const scaleX = this.viewport.screenWidth / width;
     const scaleY = this.viewport.screenHeight / height;
     const scale = Math.min(scaleX, scaleY, CAMERA_DEFAULTS.MAX_ZOOM);
+    const clampedScale = Math.max(scale, CAMERA_DEFAULTS.MIN_ZOOM);
 
     const centerX = (bounds.left + bounds.right) / 2;
     const centerY = (bounds.top + bounds.bottom) / 2;
 
+    // Update current zoom tracking
+    this.currentZoom = clampedScale;
+
     this.viewport.animate({
-      scale: Math.max(scale, CAMERA_DEFAULTS.MIN_ZOOM),
+      scale: clampedScale,
       position: { x: centerX, y: centerY },
-      time: 500,
+      time: 800,
       ease: 'easeOutQuad',
     });
+
+    // Notify about zoom change after animation starts
+    this.onZoomChange?.(clampedScale);
   }
 
   getVisibleBounds(): CameraBounds {
@@ -171,9 +205,16 @@ export class Camera {
       this.currentZoom = newZoom;
       this.onZoomChange?.(newZoom);
     }
+    // Zoom changes also affect visible area
+    this.onViewportChange?.();
+  }
+
+  private handleViewportMove(): void {
+    this.onViewportChange?.();
   }
 
   private handleResize(): void {
     this.resize(window.innerWidth, window.innerHeight);
+    this.onViewportChange?.();
   }
 }

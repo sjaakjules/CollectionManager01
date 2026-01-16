@@ -279,11 +279,17 @@ Backend only stores JSON blobs. No card images or metadata.
 ## 8. Rendering System Responsibilities
 
 **PixiJS Layer**
-- Card sprites
-- Grid snapping
-- Pan/zoom
-- LOD switching
-- Drag & hover logic
+- Card sprites (110×165px portrait, 165×110px landscape)
+- Cards occupy 6 grid cells (2×3 portrait, 3×2 landscape)
+- Faint background grid (55×55px cells)
+- Grid snapping (cards centered within their cell area)
+- Card stacking (offset 10 grid units = 550px when overlapping)
+  - Spells offset downward (names on top)
+  - Sites offset upward (names on bottom)
+  - Click brings card to front of stack
+- Pan/zoom (pixi-viewport)
+- LOD switching based on zoom level
+- Selection box on left-drag (empty space or unselected card)
 - Quantity overlays on cards
 
 **React Layer**
@@ -295,6 +301,39 @@ Backend only stores JSON blobs. No card images or metadata.
 
 **Rule:**
 React NEVER directly manipulates PixiJS objects. State flows one-way from React to PixiJS.
+
+**Grid System:**
+- Grid unit: 55px (visible as faint background lines)
+- Cards occupy 6 grid cells: 2×3 for portrait (110×165px), 3×2 for landscape (165×110px)
+- Cards are drawn centered within their grid cell area
+- Cards snap to nearest grid cell position on release
+- No gaps between cards within groups
+- 4 grid units gap between element groups, 1 grid unit gap between type subgroups
+
+**Card Interaction Model:**
+- Single click on unselected card: Selects it (clears other selections)
+- Single click on selected card: Deselects it
+- Shift+click: Toggles card in multi-selection
+- Left-drag on empty space or unselected card: Creates selection box
+- Ctrl+drag: Creates selection box (alternative method)
+- Double left-click: Adds card to active deck
+- Double right-click: Removes card from active deck
+- Left-drag on already selected card: Moves all selected cards
+- Right-drag anywhere: Always pans viewport
+- Site cards: Rotated +90° clockwise for proper landscape display
+
+**Card Stacking:**
+- Multiple cards at same grid position are offset by 10 grid units (550px)
+- Spells offset downward (names visible on top)
+- Sites offset upward (names visible on bottom)
+- Click on stacked card brings it to front
+- Top cards have higher z-index (clickable first)
+- Offset reduces automatically when cards removed from stack
+
+**Avatar Layout:**
+- Avatars displayed horizontally (12 per row)
+- Sorted by set: Alpha → Beta → Arthurian Legends → Dragonlord → Gothic
+- Within each set: Precon avatars (rarity: None) first, then by rarity
 
 ---
 
