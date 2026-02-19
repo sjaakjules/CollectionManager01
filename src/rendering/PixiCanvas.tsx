@@ -10,14 +10,21 @@
  * State flows one-way: React state -> PixiJS reads state for rendering.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAppState } from '@/app/AppState';
 import { PixiStage } from './PixiStage';
+import { loadArchetypeScores, type ArchetypeScores } from '@/data/archetypeScores';
 
 export function PixiCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<PixiStage | null>(null);
   const { state, dispatch } = useAppState();
+  const [archetypeScores, setArchetypeScores] = useState<ArchetypeScores | null>(null);
+
+  // Load archetype scores once
+  useEffect(() => {
+    loadArchetypeScores().then(setArchetypeScores);
+  }, []);
 
   // Initialize PixiJS stage
   useEffect(() => {
@@ -61,6 +68,15 @@ export function PixiCanvas() {
       state.userData.collection
     );
   }, [state.userData, state.editor.activeDeckId, state.editor.activeBoard]);
+
+  // Update archetype highlighting
+  useEffect(() => {
+    if (!stageRef.current) return;
+    stageRef.current.updateArchetypeHighlight(
+      state.ui.selectedArchetype,
+      archetypeScores
+    );
+  }, [state.ui.selectedArchetype, archetypeScores]);
 
   // Prevent context menu on canvas (for right-click interactions)
   const handleContextMenu = useCallback((event: React.MouseEvent) => {

@@ -16,6 +16,7 @@ import { PixiCanvas } from '@/rendering/PixiCanvas';
 import { SidePanel } from '@/ui/SidePanel';
 import { LoginModal } from '@/ui/LoginModal';
 import { Notifications } from '@/ui/Notifications';
+import { BottomPanel } from '@/ui/BottomPanel';
 import '@/styles/ui.css';
 
 export function App() {
@@ -74,6 +75,7 @@ export function App() {
       <div className="app-container">
         <PixiCanvas />
         <SidePanel />
+        <BottomPanel />
         <LoginModal />
         <Notifications />
       </div>

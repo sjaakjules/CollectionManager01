@@ -55,6 +55,8 @@ export class CardSprite extends Container {
   private overlay: Container;
   private quantityText: Text;
   private selectionBorder: Graphics;
+  private archetypeOutline: Graphics;
+  private scoreText: Text;
   private currentLOD: LODLevel = LOD_LEVELS.THUMBNAIL;
   private _isSelected = false;
   private _textureLoaded = false;
@@ -97,6 +99,11 @@ export class CardSprite extends Container {
 
     this.addChild(this.sprite);
 
+    // Archetype score outline (drawn beneath selection border)
+    this.archetypeOutline = new Graphics();
+    this.archetypeOutline.visible = false;
+    this.addChild(this.archetypeOutline);
+
     // Selection border
     this.selectionBorder = new Graphics();
     this.selectionBorder.rect(0, 0, width, height);
@@ -123,6 +130,24 @@ export class CardSprite extends Container {
     this.overlay.addChild(this.quantityText);
     this.overlay.visible = false;
     this.addChild(this.overlay);
+
+    // Archetype score text (centered on card)
+    const scoreFontSize = Math.round(Math.min(width, height) * 0.35);
+    this.scoreText = new Text({
+      text: '',
+      style: {
+        fontFamily: 'Arial',
+        fontSize: scoreFontSize,
+        fontWeight: 'bold',
+        fill: 0xffffff,
+        stroke: { color: 0x000000, width: 3 },
+      },
+    });
+    this.scoreText.anchor.set(0.5);
+    this.scoreText.x = width / 2;
+    this.scoreText.y = height / 2;
+    this.scoreText.visible = false;
+    this.addChild(this.scoreText);
 
     // Enable interactivity - events are handled by PixiStage
     this.eventMode = 'static';
@@ -161,6 +186,66 @@ export class CardSprite extends Container {
 
     // Update highlight (dim non-matching cards)
     this.alpha = state.isHighlighted ? 1 : 0.3;
+  }
+
+  /**
+   * Show a colored outline based on the card's archetype score.
+   * - Negative (-1 to -3): red with increasing opacity
+   * - Positive (+1 to +3): cyan with increasing opacity
+   * - +4 and above: green
+   * - 0 or null: no outline, card dimmed
+   */
+  setArchetypeScore(score: number | null): void {
+    if (score === null) {
+      this.archetypeOutline.visible = false;
+      this.scoreText.visible = false;
+      this.alpha = 1;
+      return;
+    }
+
+    if (score === 0) {
+      this.archetypeOutline.visible = false;
+      this.scoreText.visible = false;
+      this.alpha = 0.3;
+      return;
+    }
+
+    const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const w = cardSize.width;
+    const h = cardSize.height;
+
+    let color: number;
+    let outlineAlpha: number;
+    const borderWidth = 3;
+
+    if (score >= 4) {
+      color = 0x00ff66;
+      outlineAlpha = score >= 5 ? 1.0 : 0.8;
+    } else if (score > 0) {
+      color = 0x00ddff;
+      // score 1 -> 0.4, 2 -> 0.65, 3 -> 0.9
+      outlineAlpha = 0.15 + score * 0.25;
+    } else {
+      // negative
+      color = 0xff3333;
+      const absScore = Math.min(Math.abs(score), 3);
+      // -1 -> 0.4, -2 -> 0.65, -3 -> 0.9
+      outlineAlpha = 0.15 + absScore * 0.25;
+    }
+
+    // Draw outline
+    this.archetypeOutline.clear();
+    this.archetypeOutline.rect(0, 0, w, h);
+    this.archetypeOutline.stroke({ width: borderWidth, color, alpha: outlineAlpha });
+    this.archetypeOutline.visible = true;
+
+    // Draw score value
+    const sign = score > 0 ? '+' : '';
+    this.scoreText.text = `${sign}${score}`;
+    this.scoreText.style.fill = color;
+    this.scoreText.visible = true;
+
+    this.alpha = 1;
   }
 
   updateLOD(zoom: number): void {

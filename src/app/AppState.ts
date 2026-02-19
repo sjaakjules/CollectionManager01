@@ -52,6 +52,7 @@ export interface UIState {
   sidePanelOpen: boolean;
   loginModalOpen: boolean;
   notifications: Notification[];
+  selectedArchetype: string | null;
 }
 
 export interface Notification {
@@ -83,6 +84,7 @@ export const initialAppState: AppState = {
     sidePanelOpen: true,
     loginModalOpen: false,
     notifications: [],
+    selectedArchetype: null,
   },
 };
 
@@ -105,7 +107,8 @@ export type AppAction =
   | { type: 'TOGGLE_SIDE_PANEL' }
   | { type: 'TOGGLE_LOGIN_MODAL' }
   | { type: 'ADD_NOTIFICATION'; notification: Omit<Notification, 'id' | 'timestamp'> }
-  | { type: 'DISMISS_NOTIFICATION'; id: string };
+  | { type: 'DISMISS_NOTIFICATION'; id: string }
+  | { type: 'SET_SELECTED_ARCHETYPE'; archetype: string | null };
 
 // ============================================================================
 // Reducer
@@ -266,6 +269,16 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ui: {
           ...state.ui,
           notifications: state.ui.notifications.filter((n) => n.id !== action.id),
+        },
+      };
+
+    case 'SET_SELECTED_ARCHETYPE':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          selectedArchetype:
+            state.ui.selectedArchetype === action.archetype ? null : action.archetype,
         },
       };
 

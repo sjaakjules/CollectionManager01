@@ -286,8 +286,8 @@ const THRESHOLD_GROUP_ORDER: ThresholdGroup[] = [
   'earth',
   'fire',
   'water',
-  'multiple',
   'none',
+  'multiple',
 ];
 
 const TYPE_ORDER: CardType[] = ['Minion', 'Magic', 'Aura', 'Artifact', 'Site'];
@@ -311,8 +311,15 @@ export interface ContentBounds {
   bottom: number;
 }
 
+export interface GroupHeader {
+  label: string;
+  /** Pixel position for the header text (left edge, above the group) */
+  position: GridPosition;
+}
+
 export interface LayoutResult {
   cards: CardLayoutInfo[];
+  headers: GroupHeader[];
   bounds: ContentBounds;
 }
 
@@ -320,8 +327,24 @@ export interface LayoutResult {
  * Calculate card layout positions (returns CENTER positions)
  * Cards are positioned on their snap grid with proper spacing
  */
+const THRESHOLD_GROUP_LABELS: Record<ThresholdGroup, string> = {
+  air: 'Air',
+  earth: 'Earth',
+  fire: 'Fire',
+  water: 'Water',
+  none: 'None',
+  multiple: 'Multi',
+};
+
+/** Header text height in pixels (~1 card tall) */
+export const HEADER_HEIGHT = 3 * DRAWN_GRID.height;
+
+/** Gap between bottom of header text and top of first card */
+const HEADER_GAP = DRAWN_GRID.height;
+
 export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   const cards: CardLayoutInfo[] = [];
+  const headers: GroupHeader[] = [];
 
   // Track content bounds
   let contentLeft = Infinity;
@@ -345,67 +368,17 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   const avatars = config.cards.filter((c) => c.type === 'Avatar');
   const nonAvatars = config.cards.filter((c) => c.type !== 'Avatar');
 
-  const grouped = groupCards(nonAvatars);
+  // Layout avatars as a single row above all other cards
+  let nonAvatarStartGridY = 0;
 
-  // Track position in snap grid units (not pixels)
-  let currentGridX = 0;
-
-  for (const thresholdGroup of THRESHOLD_GROUP_ORDER) {
-    const thresholdCards = grouped.get(thresholdGroup);
-    if (!thresholdCards || thresholdCards.size === 0) continue;
-
-    let maxGroupGridWidth = 0;
-    let currentGridY = 0;
-
-    for (const type of TYPE_ORDER) {
-      const typeCards = thresholdCards.get(type);
-      if (!typeCards || typeCards.length === 0) continue;
-
-      const sorted = [...typeCards].sort((a, b) => a.cost - b.cost);
-      const isLandscape = type === 'Site';
-      const cardsPerRow = isLandscape ? CARDS_PER_ROW.SITE : CARDS_PER_ROW.SPELL;
-      const spacing = getCardCellSpacing(isLandscape);
-
-      for (const [i, card] of sorted.entries()) {
-        const col = i % cardsPerRow;
-        const row = Math.floor(i / cardsPerRow);
-
-        // Calculate snap grid position
-        const gridX = currentGridX + col * spacing.x;
-        const gridY = currentGridY + row * spacing.y;
-
-        // Convert to pixel CENTER position
-        const position = snapGridToPixels(gridX, gridY, isLandscape);
-
-        cards.push({
-          name: card.name,
-          position,
-          isLandscape,
-          thresholdGroup: card.thresholdGroup,
-          type: card.type,
-          cost: card.cost,
-        });
-
-        updateBounds(position.x, position.y, isLandscape);
-
-        // Track max width for this group
-        const cardRight = (col + 1) * spacing.x;
-        if (cardRight > maxGroupGridWidth) {
-          maxGroupGridWidth = cardRight;
-        }
-      }
-
-      // Move Y down for next type subgroup
-      const rows = Math.ceil(sorted.length / cardsPerRow);
-      currentGridY += rows * spacing.y + SUBGROUP_GAP_UNITS;
-    }
-
-    // Move X right for next threshold group
-    currentGridX += maxGroupGridWidth + GROUP_GAP_UNITS;
-  }
-
-  // Layout avatars
   if (avatars.length > 0) {
+    // Avatar group header
+    const avatarFirstPos = snapGridToPixels(0, 0, false);
+    headers.push({
+      label: 'Avatars',
+      position: { x: avatarFirstPos.x - CARD_SIZE.PORTRAIT.width / 2, y: avatarFirstPos.y - CARD_SIZE.PORTRAIT.height / 2 - HEADER_GAP - HEADER_HEIGHT },
+    });
+
     const sortedAvatars = [...avatars].sort((a, b) => {
       const aSetIndex = getAvatarSetIndex(a.primarySet);
       const bSetIndex = getAvatarSetIndex(b.primarySet);
@@ -420,15 +393,11 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
       return aRarityIndex - bRarityIndex;
     });
 
-    const cardsPerRow = CARDS_PER_ROW.AVATAR;
     const spacing = getCardCellSpacing(false); // Avatars are portrait
 
     for (const [i, avatar] of sortedAvatars.entries()) {
-      const col = i % cardsPerRow;
-      const row = Math.floor(i / cardsPerRow);
-
-      const gridX = currentGridX + col * spacing.x;
-      const gridY = row * spacing.y;
+      const gridX = i * spacing.x;
+      const gridY = 0;
 
       const position = snapGridToPixels(gridX, gridY, false);
 
@@ -443,6 +412,70 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
 
       updateBounds(position.x, position.y, false);
     }
+
+    // Non-avatar cards start below the avatar row
+    nonAvatarStartGridY = spacing.y + GROUP_GAP_UNITS;
+  }
+
+  // Layout non-avatar cards below avatars
+  const grouped = groupCards(nonAvatars);
+
+  let currentGridX = 0;
+
+  for (const thresholdGroup of THRESHOLD_GROUP_ORDER) {
+    const thresholdCards = grouped.get(thresholdGroup);
+    if (!thresholdCards || thresholdCards.size === 0) continue;
+
+    // Group header above the first card row
+    const headerPos = snapGridToPixels(currentGridX, nonAvatarStartGridY, false);
+    headers.push({
+      label: THRESHOLD_GROUP_LABELS[thresholdGroup],
+      position: { x: headerPos.x - CARD_SIZE.PORTRAIT.width / 2, y: headerPos.y - CARD_SIZE.PORTRAIT.height / 2 - HEADER_GAP - HEADER_HEIGHT },
+    });
+
+    let maxGroupGridWidth = 0;
+    let currentGridY = nonAvatarStartGridY;
+
+    for (const type of TYPE_ORDER) {
+      const typeCards = thresholdCards.get(type);
+      if (!typeCards || typeCards.length === 0) continue;
+
+      const sorted = [...typeCards].sort((a, b) => a.cost - b.cost);
+      const isLandscape = type === 'Site';
+      const cardsPerRow = isLandscape ? CARDS_PER_ROW.SITE : CARDS_PER_ROW.SPELL;
+      const spacing = getCardCellSpacing(isLandscape);
+
+      for (const [i, card] of sorted.entries()) {
+        const col = i % cardsPerRow;
+        const row = Math.floor(i / cardsPerRow);
+
+        const gridX = currentGridX + col * spacing.x;
+        const gridY = currentGridY + row * spacing.y;
+
+        const position = snapGridToPixels(gridX, gridY, isLandscape);
+
+        cards.push({
+          name: card.name,
+          position,
+          isLandscape,
+          thresholdGroup: card.thresholdGroup,
+          type: card.type,
+          cost: card.cost,
+        });
+
+        updateBounds(position.x, position.y, isLandscape);
+
+        const cardRight = (col + 1) * spacing.x;
+        if (cardRight > maxGroupGridWidth) {
+          maxGroupGridWidth = cardRight;
+        }
+      }
+
+      const rows = Math.ceil(sorted.length / cardsPerRow);
+      currentGridY += rows * spacing.y + SUBGROUP_GAP_UNITS;
+    }
+
+    currentGridX += maxGroupGridWidth + GROUP_GAP_UNITS;
   }
 
   // Default bounds if no cards
@@ -453,7 +486,7 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
     bottom: contentBottom === -Infinity ? 0 : contentBottom,
   };
 
-  return { cards, bounds };
+  return { cards, headers, bounds };
 }
 
 function getAvatarSetIndex(setName?: string): number {
@@ -484,4 +517,217 @@ function groupCards(
   }
 
   return result;
+}
+
+// ============================================================================
+// Deck Layout Calculation
+// ============================================================================
+
+export interface DeckCardLayoutInfo extends CardLayoutInfo {
+  quantity: number;
+  board: 'avatar' | 'mainboard' | 'sideboard' | 'maybeboard';
+}
+
+export interface DeckLayoutResult {
+  cards: DeckCardLayoutInfo[];
+  headers: GroupHeader[];
+  bounds: ContentBounds;
+}
+
+export interface DeckLayoutConfig {
+  deck: {
+    name: string;
+    boards: {
+      mainboard: Array<{ name: string; quantity: number }>;
+      sideboard: Array<{ name: string; quantity: number }>;
+      avatar: Array<{ name: string; quantity: number }>;
+      maybeboard: Array<{ name: string; quantity: number }>;
+    };
+  };
+  cardLookup: Map<string, { type: CardType; cost: number; isLandscape: boolean; thresholdGroup: ThresholdGroup }>;
+  collectionBottom: number;
+}
+
+export function calculateDeckLayout(config: DeckLayoutConfig): DeckLayoutResult {
+  const { deck, cardLookup, collectionBottom } = config;
+  const cards: DeckCardLayoutInfo[] = [];
+  const headers: GroupHeader[] = [];
+
+  let contentLeft = Infinity;
+  let contentTop = Infinity;
+  let contentRight = -Infinity;
+  let contentBottom = -Infinity;
+
+  const updateBounds = (cx: number, cy: number, isLandscape: boolean) => {
+    const s = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    contentLeft = Math.min(contentLeft, cx - s.width / 2);
+    contentTop = Math.min(contentTop, cy - s.height / 2);
+    contentRight = Math.max(contentRight, cx + s.width / 2);
+    contentBottom = Math.max(contentBottom, cy + s.height / 2);
+  };
+
+  const getInfo = (name: string) =>
+    cardLookup.get(name) ?? {
+      type: 'Minion' as CardType,
+      cost: 0,
+      isLandscape: false,
+      thresholdGroup: 'none' as ThresholdGroup,
+    };
+
+  // Helper: lay out cards grouped by type
+  const layoutByType = (
+    deckCards: Array<{ name: string; quantity: number }>,
+    board: DeckCardLayoutInfo['board'],
+    baseGridX: number,
+    baseGridY: number,
+  ): { endGridY: number; maxGridX: number } => {
+    let currentY = baseGridY;
+    let maxX = 0;
+
+    const byType = new Map<CardType, Array<{ name: string; quantity: number; cost: number; isLandscape: boolean; thresholdGroup: ThresholdGroup }>>();
+    for (const dc of deckCards) {
+      const info = getInfo(dc.name);
+      const list = byType.get(info.type) ?? [];
+      list.push({ name: dc.name, quantity: dc.quantity, ...info });
+      byType.set(info.type, list);
+    }
+
+    for (const type of TYPE_ORDER) {
+      const typeCards = byType.get(type);
+      if (!typeCards?.length) continue;
+
+      const sorted = [...typeCards].sort((a, b) => a.cost - b.cost);
+      const isLand = type === 'Site';
+      const perRow = isLand ? CARDS_PER_ROW.SITE : CARDS_PER_ROW.SPELL;
+      const sp = getCardCellSpacing(isLand);
+
+      for (const [i, c] of sorted.entries()) {
+        const col = i % perRow;
+        const row = Math.floor(i / perRow);
+        const gx = baseGridX + col * sp.x;
+        const gy = currentY + row * sp.y;
+        const pos = snapGridToPixels(gx, gy, isLand);
+
+        cards.push({
+          name: c.name,
+          position: pos,
+          isLandscape: isLand,
+          thresholdGroup: c.thresholdGroup,
+          type,
+          cost: c.cost,
+          quantity: c.quantity,
+          board,
+        });
+        updateBounds(pos.x, pos.y, isLand);
+        maxX = Math.max(maxX, baseGridX + (col + 1) * sp.x);
+      }
+
+      currentY += Math.ceil(sorted.length / perRow) * sp.y + SUBGROUP_GAP_UNITS;
+    }
+
+    return { endGridY: currentY, maxGridX: maxX };
+  };
+
+  // Compute start gridY so the deck name header clears collectionBottom + gap
+  const deckGapPx = GROUP_GAP_UNITS * 2 * DRAWN_GRID.height;
+  const startGridY = Math.ceil(
+    (collectionBottom + deckGapPx + CARD_SIZE.PORTRAIT.height / 2 + HEADER_GAP + HEADER_HEIGHT - SNAP_GRID_OFFSET.PORTRAIT.y) /
+      SNAP_GRID.height
+  );
+
+  // Deck name header - sits in its own row above all board content
+  const namePos = snapGridToPixels(0, startGridY, false);
+  headers.push({
+    label: deck.name,
+    position: {
+      x: namePos.x - CARD_SIZE.PORTRAIT.width / 2,
+      y: namePos.y - CARD_SIZE.PORTRAIT.height / 2 - HEADER_GAP - HEADER_HEIGHT,
+    },
+  });
+
+  // Advance past the deck name row so board headers don't overlap it
+  let currentGridY = startGridY + GROUP_GAP_UNITS;
+
+  // === Avatar ===
+  if (deck.boards.avatar.length > 0) {
+    const sp = getCardCellSpacing(false);
+    for (const [i, card] of deck.boards.avatar.entries()) {
+      const pos = snapGridToPixels(i * sp.x, currentGridY, false);
+      cards.push({
+        name: card.name,
+        position: pos,
+        isLandscape: false,
+        thresholdGroup: 'none',
+        type: 'Avatar',
+        cost: 0,
+        quantity: card.quantity,
+        board: 'avatar',
+      });
+      updateBounds(pos.x, pos.y, false);
+    }
+    currentGridY += sp.y + GROUP_GAP_UNITS;
+  }
+
+  // === Mainboard ===
+  const mainboardStartGridY = currentGridY;
+  let mainboardMaxGridX = 0;
+
+  if (deck.boards.mainboard.length > 0) {
+    const hPos = snapGridToPixels(0, currentGridY, false);
+    headers.push({
+      label: 'Mainboard',
+      position: {
+        x: hPos.x - CARD_SIZE.PORTRAIT.width / 2,
+        y: hPos.y - CARD_SIZE.PORTRAIT.height / 2 - HEADER_GAP - HEADER_HEIGHT,
+      },
+    });
+
+    const result = layoutByType(deck.boards.mainboard, 'mainboard', 0, currentGridY);
+    currentGridY = result.endGridY;
+    mainboardMaxGridX = result.maxGridX;
+  }
+
+  // === Sideboard (below mainboard) ===
+  if (deck.boards.sideboard.length > 0) {
+    currentGridY += GROUP_GAP_UNITS - SUBGROUP_GAP_UNITS;
+
+    const hPos = snapGridToPixels(0, currentGridY, false);
+    headers.push({
+      label: 'Sideboard',
+      position: {
+        x: hPos.x - CARD_SIZE.PORTRAIT.width / 2,
+        y: hPos.y - CARD_SIZE.PORTRAIT.height / 2 - HEADER_GAP - HEADER_HEIGHT,
+      },
+    });
+
+    const result = layoutByType(deck.boards.sideboard, 'sideboard', 0, currentGridY);
+    currentGridY = result.endGridY;
+  }
+
+  // === Maybeboard (to the right of mainboard) ===
+  if (deck.boards.maybeboard.length > 0) {
+    const mbStartX = mainboardMaxGridX + GROUP_GAP_UNITS;
+
+    const hPos = snapGridToPixels(mbStartX, mainboardStartGridY, false);
+    headers.push({
+      label: 'Maybeboard',
+      position: {
+        x: hPos.x - CARD_SIZE.PORTRAIT.width / 2,
+        y: hPos.y - CARD_SIZE.PORTRAIT.height / 2 - HEADER_GAP - HEADER_HEIGHT,
+      },
+    });
+
+    layoutByType(deck.boards.maybeboard, 'maybeboard', mbStartX, mainboardStartGridY);
+  }
+
+  return {
+    cards,
+    headers,
+    bounds: {
+      left: contentLeft === Infinity ? 0 : contentLeft,
+      top: contentTop === Infinity ? 0 : contentTop,
+      right: contentRight === -Infinity ? 0 : contentRight,
+      bottom: contentBottom === -Infinity ? 0 : contentBottom,
+    },
+  };
 }

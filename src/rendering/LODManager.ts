@@ -16,7 +16,10 @@
  * All LOD levels use the same image (webp format already optimized).
  */
 
-import { Assets, Texture } from 'pixi.js';
+import { Assets, Texture, TextureSource } from 'pixi.js';
+
+// Enable mipmaps globally for better quality when downscaling large card images
+TextureSource.defaultOptions.autoGenerateMipmaps = true;
 
 // ============================================================================
 // Constants

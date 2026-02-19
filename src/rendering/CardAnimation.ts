@@ -13,14 +13,18 @@ import type { Container } from 'pixi.js';
 // ============================================================================
 
 export interface ThrowAnimationConfig {
-  /** Starting X position (world coordinates) */
+  /** Starting CENTER X position (world coordinates) */
   startX: number;
-  /** Starting Y position (world coordinates) */
+  /** Starting CENTER Y position (world coordinates) */
   startY: number;
-  /** Target X position (top-left of card) */
+  /** Target CENTER X position (world coordinates) */
   targetX: number;
-  /** Target Y position (top-left of card) */
+  /** Target CENTER Y position (world coordinates) */
   targetY: number;
+  /** Card width at scale 1 */
+  cardWidth: number;
+  /** Card height at scale 1 */
+  cardHeight: number;
   /** Animation duration in milliseconds */
   duration: number;
   /** Stagger delay between cards in milliseconds */
@@ -75,42 +79,20 @@ class CardAnimationManager {
   private _onProgress?: (completed: number, total: number) => void;
 
   /**
-   * Start a throw animation for a sprite
-   * If config.waitFor is provided, waits for that promise, shows sprite at spawn point,
-   * then delays by holdTime before starting the flight animation.
+   * Start a throw animation for a sprite.
+   * The card appears at the spawn point after its delay, then immediately flies to its target.
    */
   animate(sprite: Container, config: ThrowAnimationConfig): void {
-    // Position sprite at spawn point immediately (hidden until texture loads)
-    sprite.x = config.startX;
-    sprite.y = config.startY;
+    // Position sprite centered at spawn point, hidden until its delay elapses
+    sprite.x = config.startX - (config.cardWidth * config.startScale) / 2;
+    sprite.y = config.startY - (config.cardHeight * config.startScale) / 2;
     sprite.scale.set(config.startScale);
     sprite.alpha = 0;
     sprite.visible = false;
 
-    const onReady = () => {
-      // Only proceed if we haven't been cancelled
-      if (this._totalAnimations === 0) return;
-
-      // Ensure sprite is at spawn point (in case anything moved it)
-      sprite.x = config.startX;
-      sprite.y = config.startY;
-      sprite.scale.set(config.startScale);
-
-      // Show sprite at spawn point
-      sprite.visible = true;
-      sprite.alpha = 1;
-      sprite.zIndex = 10000; // Draw on top of stationary cards
-
-      // Schedule animation to start after holdTime delay
-      const animationStartTime = performance.now() + config.delay + config.holdTime;
-      this.startAnimation(sprite, config, animationStartTime);
-    };
-
-    if (config.waitFor) {
-      config.waitFor.then(onReady);
-    } else {
-      onReady();
-    }
+    // Schedule animation to start after delay
+    const animationStartTime = performance.now() + config.delay;
+    this.startAnimation(sprite, config, animationStartTime);
   }
 
   private startAnimation(sprite: Container, config: ThrowAnimationConfig, scheduledStartTime: number): void {
@@ -200,12 +182,19 @@ class CardAnimationManager {
     for (const anim of this.activeAnimations) {
       const elapsed = now - anim.startTime;
 
-      // Still waiting for animation to start (in holdTime delay)
+      // Still waiting for delay to elapse
       if (elapsed < 0) {
         continue;
       }
 
       const { config, sprite, initialRotation, startX, startY } = anim;
+
+      // Make sprite visible on its first active frame
+      if (!sprite.visible) {
+        sprite.visible = true;
+        sprite.alpha = 1;
+        sprite.zIndex = 10000 + config.delay; // Later cards draw on top
+      }
 
       // Calculate progress through the flight animation
       const progress = Math.min(elapsed / config.duration, 1);
@@ -214,22 +203,24 @@ class CardAnimationManager {
       const easedProgress = easeOutCubic(progress);
       const scaleProgress = easeOutQuint(progress);
 
-      // Interpolate position (from stored start position to target)
-      sprite.x = startX + (config.targetX - startX) * easedProgress;
-      sprite.y = startY + (config.targetY - startY) * easedProgress;
-
-      // Interpolate scale (works for both shrinking and growing)
+      // Interpolate scale
       const currentScale = config.startScale + (1 - config.startScale) * scaleProgress;
       sprite.scale.set(currentScale);
+
+      // Interpolate center position, then offset to top-left accounting for current scale
+      const centerX = startX + (config.targetX - startX) * easedProgress;
+      const centerY = startY + (config.targetY - startY) * easedProgress;
+      sprite.x = centerX - (config.cardWidth * currentScale) / 2;
+      sprite.y = centerY - (config.cardHeight * currentScale) / 2;
 
       // Interpolate rotation (add to initial rotation for landscape cards)
       const rotationAmount = config.rotations * (1 - easedProgress);
       sprite.rotation = initialRotation + rotationAmount;
 
       if (progress >= 1) {
-        // Animation complete - ensure final values are exact
-        sprite.x = config.targetX;
-        sprite.y = config.targetY;
+        // Animation complete - ensure final values are exact (top-left at scale 1)
+        sprite.x = config.targetX - config.cardWidth / 2;
+        sprite.y = config.targetY - config.cardHeight / 2;
         sprite.scale.set(1);
         sprite.rotation = initialRotation;
         sprite.alpha = 1;
@@ -293,10 +284,13 @@ export function generateRandomIndices(count: number): number[] {
 
 /**
  * Generate random throw animation config
- * @param startX - Starting X position (world coordinates)
- * @param startY - Starting Y position (world coordinates)
- * @param targetX - Target X position (top-left of card)
- * @param targetY - Target Y position (top-left of card)
+ * All positions are CENTER coordinates.
+ * @param startX - Starting center X (world coordinates)
+ * @param startY - Starting center Y (world coordinates)
+ * @param targetX - Target center X (world coordinates)
+ * @param targetY - Target center Y (world coordinates)
+ * @param cardWidth - Card width at scale 1
+ * @param cardHeight - Card height at scale 1
  * @param index - Card index for staggering delays
  */
 export function generateThrowConfig(
@@ -304,6 +298,8 @@ export function generateThrowConfig(
   startY: number,
   targetX: number,
   targetY: number,
+  cardWidth: number,
+  cardHeight: number,
   index: number
 ): ThrowAnimationConfig {
   // Stagger delays so cards don't all spawn at once
@@ -325,9 +321,11 @@ export function generateThrowConfig(
     startY,
     targetX,
     targetY,
+    cardWidth,
+    cardHeight,
     duration,
     delay,
-    holdTime: 500, // Delay after texture loads before animation starts
+    holdTime: 0, // No hold - cards fly immediately when they appear
     rotations,
     startScale: 20.0, // Start large and shrink down
   };
