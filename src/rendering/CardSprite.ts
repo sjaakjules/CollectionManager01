@@ -8,8 +8,11 @@
  * - Hover state for high-res preview
  *
  * Card sizes:
- * - Portrait: 110×165px (2×3 grid cells at 55px)
- * - Landscape: 165×110px (3×2 grid cells at 55px)
+ * - Portrait: 100×140px
+ * - Landscape: 140×100px
+ *
+ * Cards are positioned by their CENTER point (config.x, config.y is the center).
+ * The container is offset so the sprite draws correctly around that center.
  *
  * NOTE: Selection and dragging logic is managed by PixiStage.
  * This class only reports pointer events and updates visuals.
@@ -45,12 +48,17 @@ export class CardSprite extends Container {
   public readonly imageSlug: string;
   public readonly isLandscape: boolean;
 
+  /** Promise that resolves when the initial texture is loaded */
+  public readonly textureReady: Promise<void>;
+
   private sprite: Sprite;
   private overlay: Container;
   private quantityText: Text;
   private selectionBorder: Graphics;
   private currentLOD: LODLevel = LOD_LEVELS.THUMBNAIL;
   private _isSelected = false;
+  private _textureLoaded = false;
+  private resolveTextureReady!: () => void;
 
   constructor(config: CardSpriteConfig) {
     super();
@@ -59,14 +67,19 @@ export class CardSprite extends Container {
     this.imageSlug = cardNameToSlug(config.name);
     this.isLandscape = config.isLandscape;
 
-    // Set position
-    this.x = config.x;
-    this.y = config.y;
+    // Create promise for texture loading
+    this.textureReady = new Promise((resolve) => {
+      this.resolveTextureReady = resolve;
+    });
 
     // Get card dimensions from Grid constants
     const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
     const width = cardSize.width;
     const height = cardSize.height;
+
+    // Position is the CENTER of the card - offset to get top-left for container
+    this.x = config.x - width / 2;
+    this.y = config.y - height / 2;
 
     // Create sprite with placeholder (dark gray)
     this.sprite = new Sprite(Texture.WHITE);
@@ -159,6 +172,17 @@ export class CardSprite extends Container {
   }
 
   /**
+   * Get the card's CENTER position in world coordinates
+   */
+  getCenter(): { x: number; y: number } {
+    const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    return {
+      x: this.x + cardSize.width / 2,
+      y: this.y + cardSize.height / 2,
+    };
+  }
+
+  /**
    * Get the card's bounding box in world coordinates
    */
   getWorldBounds(): { left: number; top: number; right: number; bottom: number } {
@@ -192,6 +216,7 @@ export class CardSprite extends Container {
       const syncTexture = lodManager.getTextureSync(this.imageSlug, lod);
       if (syncTexture) {
         this.applyTexture(syncTexture);
+        this.markTextureLoaded();
         return;
       }
 
@@ -200,8 +225,17 @@ export class CardSprite extends Container {
       if (texture && texture !== Texture.WHITE) {
         this.applyTexture(texture);
       }
+      this.markTextureLoaded();
     } catch {
-      // Texture load failed - keep placeholder
+      // Texture load failed - still mark as "loaded" so animation can proceed with placeholder
+      this.markTextureLoaded();
+    }
+  }
+
+  private markTextureLoaded(): void {
+    if (!this._textureLoaded) {
+      this._textureLoaded = true;
+      this.resolveTextureReady();
     }
   }
 

@@ -19,20 +19,25 @@
  * - Click on stacked card: Brings it to front of stack
  */
 
-import { Application, Container, Graphics, FederatedPointerEvent } from 'pixi.js';
+import { Application, Container, Graphics, FederatedPointerEvent, Text } from 'pixi.js';
 import { Camera, type CameraBounds } from './Camera';
 import { CardSprite, type CardSpriteState } from './CardSprite';
 import {
   calculateCardLayout,
-  GRID_UNIT,
+  DRAWN_GRID,
   CARD_SIZE,
   GRID_LINE,
   STACK_OFFSET,
-  snapToGrid,
-  pixelsToGrid,
+  snapCardCenter,
+  pixelsToSnapGrid,
   type CardLayoutInfo,
 } from './Grid';
 import { lodManager } from './LODManager';
+import {
+  cardAnimationManager,
+  generateRandomIndices,
+  generateThrowConfig,
+} from './CardAnimation';
 import type {
   Card,
   Deck,
@@ -64,6 +69,7 @@ interface DragState {
   draggedCards: Set<string>;
   startWorldPos: { x: number; y: number };
   cardStartPositions: Map<string, { x: number; y: number }>;
+  cardOriginalZIndices: Map<string, number>;
 }
 
 interface SelectionBoxState {
@@ -109,6 +115,7 @@ export class PixiStage {
     draggedCards: new Set(),
     startWorldPos: { x: 0, y: 0 },
     cardStartPositions: new Map(),
+    cardOriginalZIndices: new Map(),
   };
   private pointerDownOnSelectedCard = false;
 
@@ -125,6 +132,11 @@ export class PixiStage {
 
   // Card stacking - track cards at each grid position
   private cardStacks: Map<string, string[]> = new Map();
+
+  // Loading overlay
+  private loadingOverlay: Container | null = null;
+  private loadingBarFill: Graphics | null = null;
+  private loadingText: Text | null = null;
 
   // Callbacks
   private onAddToDeck: (cardName: string) => void;
@@ -179,6 +191,12 @@ export class PixiStage {
     this.selectionBox.graphics = new Graphics();
     this.camera.container.addChild(this.selectionBox.graphics);
 
+    // Create loading bar (fixed to screen, not viewport)
+    this.createLoadingBar();
+
+    // Set up animation progress callback
+    cardAnimationManager.setProgressCallback(this.updateLoadingBar.bind(this));
+
     this.setupPointerEvents();
 
     this.app.ticker.add(this.update.bind(this));
@@ -203,17 +221,17 @@ export class PixiStage {
 
     const bounds = this.camera.getVisibleBounds();
 
-    const startX = Math.floor(bounds.left / GRID_UNIT) * GRID_UNIT;
-    const startY = Math.floor(bounds.top / GRID_UNIT) * GRID_UNIT;
-    const endX = Math.ceil(bounds.right / GRID_UNIT) * GRID_UNIT;
-    const endY = Math.ceil(bounds.bottom / GRID_UNIT) * GRID_UNIT;
+    const startX = Math.floor(bounds.left / DRAWN_GRID.width) * DRAWN_GRID.width;
+    const startY = Math.floor(bounds.top / DRAWN_GRID.height) * DRAWN_GRID.height;
+    const endX = Math.ceil(bounds.right / DRAWN_GRID.width) * DRAWN_GRID.width;
+    const endY = Math.ceil(bounds.bottom / DRAWN_GRID.height) * DRAWN_GRID.height;
 
-    for (let x = startX; x <= endX; x += GRID_UNIT) {
+    for (let x = startX; x <= endX; x += DRAWN_GRID.width) {
       this.gridGraphics.moveTo(x, startY);
       this.gridGraphics.lineTo(x, endY);
     }
 
-    for (let y = startY; y <= endY; y += GRID_UNIT) {
+    for (let y = startY; y <= endY; y += DRAWN_GRID.height) {
       this.gridGraphics.moveTo(startX, y);
       this.gridGraphics.lineTo(endX, y);
     }
@@ -278,9 +296,6 @@ export class PixiStage {
         return;
       }
 
-      // Bring clicked card to front of its stack
-      this.bringCardToFront(clickedCard);
-
       if (isShiftHeld) {
         // Shift+click toggles selection
         if (wasSelected) {
@@ -298,11 +313,11 @@ export class PixiStage {
         this.startCardDrag(worldPos);
         this.camera.pauseDrag();
       } else {
-        // Clicked on unselected card - start selection box (allows selecting multiple)
+        // Clicked on unselected card - select it and start dragging
         this.clearSelection();
         this.selectCard(clickedCard);
-        // Start selection box in case they drag
-        this.startSelectionBox(worldPos);
+        this.pointerDownOnSelectedCard = true;
+        this.startCardDrag(worldPos);
         this.camera.pauseDrag();
       }
     } else {
@@ -438,6 +453,10 @@ export class PixiStage {
     this.dragState.startWorldPos = { ...worldPos };
     this.dragState.draggedCards = new Set(this.selectedCards);
     this.dragState.cardStartPositions.clear();
+    this.dragState.cardOriginalZIndices.clear();
+
+    // Use a high zIndex so dragged cards appear above all others
+    const dragZIndex = 10000;
 
     for (const cardName of this.dragState.draggedCards) {
       const data = this.cardSprites.get(cardName);
@@ -446,8 +465,13 @@ export class PixiStage {
           x: data.sprite.x,
           y: data.sprite.y,
         });
+        // Store original zIndex and set high one for dragging
+        this.dragState.cardOriginalZIndices.set(cardName, data.sprite.zIndex);
+        data.sprite.zIndex = dragZIndex;
       }
     }
+
+    this.cardContainer.sortChildren();
   }
 
   private updateCardDrag(worldPos: { x: number; y: number }): void {
@@ -469,25 +493,40 @@ export class PixiStage {
       const data = this.cardSprites.get(cardName);
       if (data) {
         const cardSize = data.layout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const isLandscape = data.layout.isLandscape;
 
-        // Snap to grid
-        const snapped = snapToGrid(data.sprite.x, data.sprite.y);
+        // Get current center position
+        const centerX = data.sprite.x + cardSize.width / 2;
+        const centerY = data.sprite.y + cardSize.height / 2;
 
-        data.sprite.x = snapped.x;
-        data.sprite.y = snapped.y;
-        data.basePosition = { x: snapped.x, y: snapped.y };
+        // Snap center to the appropriate snap grid
+        const snappedCenter = snapCardCenter(centerX, centerY, isLandscape);
+
+        // Convert back to top-left for sprite positioning
+        const snappedX = snappedCenter.x - cardSize.width / 2;
+        const snappedY = snappedCenter.y - cardSize.height / 2;
+
+        data.sprite.x = snappedX;
+        data.sprite.y = snappedY;
+        data.basePosition = { x: snappedX, y: snappedY };
 
         // Update cached bounds
         data.bounds = {
-          left: snapped.x,
-          top: snapped.y,
-          right: snapped.x + cardSize.width,
-          bottom: snapped.y + cardSize.height,
+          left: snappedX,
+          top: snappedY,
+          right: snappedX + cardSize.width,
+          bottom: snappedY + cardSize.height,
         };
 
-        // Update grid key for stacking
-        const gridPos = pixelsToGrid(snapped.x, snapped.y);
-        data.gridKey = `${gridPos.x},${gridPos.y}`;
+        // Update grid key for stacking (use snap grid position)
+        const gridPos = pixelsToSnapGrid(snappedCenter.x, snappedCenter.y, isLandscape);
+        data.gridKey = `${isLandscape ? 'L' : 'P'}:${gridPos.x},${gridPos.y}`;
+
+        // Restore original zIndex (will be recalculated by rebuildCardStacks)
+        const originalZ = this.dragState.cardOriginalZIndices.get(cardName);
+        if (originalZ !== undefined) {
+          data.sprite.zIndex = originalZ;
+        }
       }
     }
 
@@ -496,6 +535,7 @@ export class PixiStage {
     this.dragState.isDragging = false;
     this.dragState.draggedCards.clear();
     this.dragState.cardStartPositions.clear();
+    this.dragState.cardOriginalZIndices.clear();
   }
 
   // ============================================================================
@@ -508,15 +548,20 @@ export class PixiStage {
     // Group cards by grid position
     for (const [cardName, data] of this.cardSprites) {
       const gridKey = data.gridKey;
-      if (!this.cardStacks.has(gridKey)) {
-        this.cardStacks.set(gridKey, []);
+      let stack = this.cardStacks.get(gridKey);
+      if (!stack) {
+        stack = [];
+        this.cardStacks.set(gridKey, stack);
       }
-      this.cardStacks.get(gridKey)!.push(cardName);
+      stack.push(cardName);
     }
 
+    // Skip position updates while animating - animation controls positions
+    const skipPositionUpdates = cardAnimationManager.isAnimating;
+
     // Apply stacking offsets and z-indices
-    for (const [_gridKey, cardNames] of this.cardStacks) {
-      this.applyStackOffsets(cardNames);
+    for (const cardNames of this.cardStacks.values()) {
+      this.applyStackOffsets(cardNames, skipPositionUpdates);
     }
 
     this.cardContainer.sortChildren();
@@ -526,18 +571,24 @@ export class PixiStage {
    * Apply visual offsets to cards in a stack
    * - Spells (portrait): offset downward (names on top visible)
    * - Sites (landscape): offset upward (names on bottom visible)
+   * @param skipPositionUpdates - If true, only update z-indices (during animation)
    */
-  private applyStackOffsets(cardNames: string[]): void {
+  private applyStackOffsets(cardNames: string[], skipPositionUpdates = false): void {
     const stackSize = cardNames.length;
 
     if (stackSize <= 1) {
       // Single card, reset to base position
-      const data = this.cardSprites.get(cardNames[0]!);
-      if (data) {
-        data.sprite.x = data.basePosition.x;
-        data.sprite.y = data.basePosition.y;
-        data.sprite.zIndex = 0;
-        this.updateCardBounds(data);
+      const firstCard = cardNames[0];
+      if (firstCard) {
+        const data = this.cardSprites.get(firstCard);
+        if (data) {
+          if (!skipPositionUpdates) {
+            data.sprite.x = data.basePosition.x;
+            data.sprite.y = data.basePosition.y;
+            this.updateCardBounds(data);
+          }
+          data.sprite.zIndex = 0;
+        }
       }
       return;
     }
@@ -545,10 +596,15 @@ export class PixiStage {
     // Calculate total stack offset for centering
     const totalOffset = (stackSize - 1) * STACK_OFFSET;
 
-    for (let i = 0; i < stackSize; i++) {
-      const cardName = cardNames[i]!;
+    for (const [i, cardName] of cardNames.entries()) {
       const data = this.cardSprites.get(cardName);
       if (!data) continue;
+
+      // Higher index = higher z-index (on top)
+      data.sprite.zIndex = i;
+
+      // Skip position updates during animation
+      if (skipPositionUpdates) continue;
 
       const cardSize = data.layout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
       const isSite = data.layout.isLandscape;
@@ -569,9 +625,6 @@ export class PixiStage {
         right: data.sprite.x + cardSize.width,
         bottom: data.sprite.y + cardSize.height,
       };
-
-      // Higher index = higher z-index (on top)
-      data.sprite.zIndex = i;
     }
   }
 
@@ -741,6 +794,9 @@ export class PixiStage {
   // ============================================================================
 
   private rebuildCardSprites(): void {
+    // Cancel any ongoing animations
+    cardAnimationManager.cancelAll();
+
     for (const data of this.cardSprites.values()) {
       data.sprite.destroy();
     }
@@ -764,67 +820,102 @@ export class PixiStage {
       rarity: card.guardian.rarity as 'Ordinary' | 'Exceptional' | 'Elite' | 'Unique' | null,
     }));
 
-    const layout = calculateCardLayout({ cards: layoutCards });
+    const { cards: layout, bounds: contentBounds } = calculateCardLayout({ cards: layoutCards });
 
     console.log(`Layout calculated: ${layout.length} cards positioned`);
 
+    // Fixed spawn point where all cards originate before flying to final positions
+    const spawnPoint = { x: 2000, y: 1000 };
+
+    // Create all sprites at the SPAWN POINT (not their final positions)
+    // This ensures they start at the correct location even if textures load synchronously
     for (const cardLayout of layout) {
       const cardSize = cardLayout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const isLandscape = cardLayout.isLandscape;
 
+      // cardLayout.position is the CENTER of the card (final position)
+      const centerX = cardLayout.position.x;
+      const centerY = cardLayout.position.y;
+
+      // Create sprite at SPAWN POINT, not final position
+      // This prevents any flash of cards at final positions
       const sprite = new CardSprite({
         name: cardLayout.name,
         isLandscape: cardLayout.isLandscape,
-        x: cardLayout.position.x,
-        y: cardLayout.position.y,
+        x: spawnPoint.x, // Start at spawn point
+        y: spawnPoint.y, // Start at spawn point
       });
 
-      const gridPos = pixelsToGrid(cardLayout.position.x, cardLayout.position.y);
-      const gridKey = `${gridPos.x},${gridPos.y}`;
+      // Calculate top-left for bounds (final position)
+      const topLeftX = centerX - cardSize.width / 2;
+      const topLeftY = centerY - cardSize.height / 2;
+
+      // Grid key uses snap grid position with orientation prefix
+      const gridPos = pixelsToSnapGrid(centerX, centerY, isLandscape);
+      const gridKey = `${isLandscape ? 'L' : 'P'}:${gridPos.x},${gridPos.y}`;
 
       const spriteData: CardSpriteData = {
         sprite,
         bounds: {
-          left: cardLayout.position.x,
-          top: cardLayout.position.y,
-          right: cardLayout.position.x + cardSize.width,
-          bottom: cardLayout.position.y + cardSize.height,
+          left: topLeftX,
+          top: topLeftY,
+          right: topLeftX + cardSize.width,
+          bottom: topLeftY + cardSize.height,
         },
         layout: cardLayout,
         gridKey,
-        basePosition: { x: cardLayout.position.x, y: cardLayout.position.y },
+        basePosition: { x: topLeftX, y: topLeftY },
       };
 
       this.cardSprites.set(cardLayout.name, spriteData);
       this.cardContainer.addChild(sprite);
-      sprite.visible = false;
+      sprite.visible = false; // Hidden until animation starts
+      sprite.alpha = 0;
     }
 
+    // Start animation batch BEFORE rebuildCardStacks so isAnimating returns true
+    const spriteDataArray = Array.from(this.cardSprites.values());
+    cardAnimationManager.startBatch(spriteDataArray.length);
+
+    // Build stacks for z-ordering only (positions skipped because isAnimating is true)
     this.rebuildCardStacks();
 
+    // Fit camera to content so user can see the animation
     if (layout.length > 0 && this.camera) {
-      const bounds = this.calculateContentBounds();
-      console.log(`Content bounds: ${bounds.right - bounds.left}x${bounds.bottom - bounds.top}`);
-      this.camera.fitToContent(bounds, 100);
+      console.log(`Content bounds: ${contentBounds.right - contentBounds.left}x${contentBounds.bottom - contentBounds.top}`);
+      this.camera.fitToContent(contentBounds, 100);
     }
 
-    this.performCulling();
+    // Randomize animation order using index list (cards stay in organized storage)
+    const randomIndices = generateRandomIndices(spriteDataArray.length);
+
+    console.log(`Animation order (first 10 indices): ${randomIndices.slice(0, 10).join(', ')}`);
+
+    // All cards start from the same fixed spawn point
+    const cardSpawnX = spawnPoint.x;
+    const cardSpawnY = spawnPoint.y;
+
+    for (const [animOrder, cardIndex] of randomIndices.entries()) {
+      const data = spriteDataArray[cardIndex];
+      if (!data) continue;
+
+      const animConfig = generateThrowConfig(
+        cardSpawnX,
+        cardSpawnY,
+        data.basePosition.x,
+        data.basePosition.y,
+        animOrder
+      );
+
+      // Wait for texture to load before throwing the card
+      animConfig.waitFor = data.sprite.textureReady;
+
+      cardAnimationManager.animate(data.sprite, animConfig);
+    }
+
+    // Don't call performCulling() here - it would set sprites visible before animation starts
+    // The viewport change handlers will update culling after camera animation completes
     this.drawGrid();
-  }
-
-  private calculateContentBounds(): { left: number; top: number; right: number; bottom: number } {
-    let left = Infinity;
-    let top = Infinity;
-    let right = -Infinity;
-    let bottom = -Infinity;
-
-    for (const data of this.cardSprites.values()) {
-      left = Math.min(left, data.bounds.left);
-      top = Math.min(top, data.bounds.top);
-      right = Math.max(right, data.bounds.right);
-      bottom = Math.max(bottom, data.bounds.bottom);
-    }
-
-    return { left, top, right, bottom };
   }
 
   private handleZoomChange(zoom: number): void {
@@ -860,6 +951,9 @@ export class PixiStage {
 
   private performCulling(): void {
     if (!this.camera) return;
+
+    // Skip culling while cards are animating - animation manager controls visibility
+    if (cardAnimationManager.isAnimating) return;
 
     this.lastCullingUpdate = performance.now();
 
@@ -912,5 +1006,90 @@ export class PixiStage {
 
   private update(): void {
     // Per-frame updates if needed
+  }
+
+  // ============================================================================
+  // Loading Overlay
+  // ============================================================================
+
+  private createLoadingBar(): void {
+    const screenWidth = this.app.screen.width;
+    const screenHeight = this.app.screen.height;
+    const barWidth = 300;
+    const barHeight = 6;
+    const padding = 60; // Distance from bottom
+
+    // Container for loading overlay (added to app stage, not viewport)
+    this.loadingOverlay = new Container();
+    this.loadingOverlay.visible = false;
+    this.app.stage.addChild(this.loadingOverlay);
+
+    // "Loading Cards" text
+    this.loadingText = new Text({
+      text: 'Loading Cards',
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 16,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+      },
+    });
+    this.loadingText.anchor.set(0.5);
+    this.loadingText.x = screenWidth / 2;
+    this.loadingText.y = screenHeight - padding - barHeight - 15;
+    this.loadingOverlay.addChild(this.loadingText);
+
+    // Background bar (dark, rounded)
+    const bgBar = new Graphics();
+    const barX = (screenWidth - barWidth) / 2;
+    const barY = screenHeight - padding;
+    bgBar.roundRect(barX, barY, barWidth, barHeight, barHeight / 2);
+    bgBar.fill({ color: 0x333333, alpha: 0.8 });
+    this.loadingOverlay.addChild(bgBar);
+
+    // Fill bar (progress)
+    this.loadingBarFill = new Graphics();
+    this.loadingOverlay.addChild(this.loadingBarFill);
+  }
+
+  private updateLoadingBar(completed: number, total: number): void {
+    if (!this.loadingOverlay || !this.loadingBarFill) return;
+
+    const screenWidth = this.app.screen.width;
+    const screenHeight = this.app.screen.height;
+    const maxBarWidth = 300;
+    const barHeight = 6;
+    const padding = 60;
+
+    const progress = total > 0 ? completed / total : 0;
+    const barX = (screenWidth - maxBarWidth) / 2;
+    const barY = screenHeight - padding;
+    const fillWidth = maxBarWidth * progress;
+
+    // Show overlay when loading starts
+    if (total > 0 && completed < total) {
+      this.loadingOverlay.visible = true;
+    }
+
+    // Update fill bar
+    this.loadingBarFill.clear();
+    if (fillWidth > 0) {
+      this.loadingBarFill.roundRect(barX, barY, fillWidth, barHeight, barHeight / 2);
+      this.loadingBarFill.fill({ color: 0x4488ff });
+    }
+
+    // Update text with count
+    if (this.loadingText) {
+      this.loadingText.text = `Loading Cards (${completed}/${total})`;
+    }
+
+    // Hide overlay when complete
+    if (completed >= total) {
+      setTimeout(() => {
+        if (this.loadingOverlay) {
+          this.loadingOverlay.visible = false;
+        }
+      }, 300);
+    }
   }
 }

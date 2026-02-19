@@ -33,4 +33,10 @@ export default defineConfig({
     target: 'esnext',
     sourcemap: true,
   },
+  // Disable source maps for dependencies to avoid PixiJS shader warnings
+  optimizeDeps: {
+    esbuildOptions: {
+      sourcemap: false,
+    },
+  },
 });

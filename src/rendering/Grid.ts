@@ -1,46 +1,76 @@
 /**
  * Grid system for card layout and snapping
  *
- * Grid unit: 55px (visible as faint background grid)
- * Cards occupy 2×3 grid cells (portrait) or 3×2 (landscape)
- * Cards are centered within their cell area
- * Stacked cards are offset to show underlying card names
+ * Three overlapping grids:
+ * 1. DRAWN GRID: 55×55px - visual grid lines (can be changed independently)
+ * 2. PORTRAIT SNAP GRID: Same spacing, offset vertically by half grid height
+ *    - Portrait cards snap their CENTER to intersections of this grid
+ * 3. LANDSCAPE SNAP GRID: Same spacing, offset horizontally by half grid width
+ *    - Landscape cards snap their CENTER to intersections of this grid
+ *
+ * Cards are always drawn from their CENTER point at grid intersections.
+ * This allows the drawn grid to be changed (even non-square) without affecting snapping.
  */
 
 import type { CardType, ThresholdGroup, CardRarity } from '@/data/dataModels';
 
 // ============================================================================
-// Constants
+// Grid Constants
 // ============================================================================
 
-/** Base grid unit in pixels (55×55 grid cells) */
-export const GRID_UNIT = 55;
-
-/** Card dimensions in grid cells */
-export const CARD_CELLS = {
-  PORTRAIT: { width: 2, height: 3 },   // 110×165 pixels
-  LANDSCAPE: { width: 3, height: 2 },  // 165×110 pixels
+/** Drawn grid dimensions (visual only - can be changed to non-square) */
+export const DRAWN_GRID = {
+  width: 55,
+  height: 55,
 } as const;
 
-/** Card dimensions in pixels (derived from grid cells) */
-export const CARD_SIZE = {
-  PORTRAIT: {
-    width: CARD_CELLS.PORTRAIT.width * GRID_UNIT,   // 110px
-    height: CARD_CELLS.PORTRAIT.height * GRID_UNIT, // 165px
-  },
-  LANDSCAPE: {
-    width: CARD_CELLS.LANDSCAPE.width * GRID_UNIT,   // 165px
-    height: CARD_CELLS.LANDSCAPE.height * GRID_UNIT, // 110px
-  },
+/** Snap grid spacing (matches drawn grid but could differ) */
+export const SNAP_GRID = {
+  width: DRAWN_GRID.width,
+  height: DRAWN_GRID.height,
 } as const;
 
 /**
- * Stack offset in grid units - when multiple cards are at the same position,
- * each subsequent card is offset by this amount to show the name of cards underneath
- * Note: Sites offset upward (names on bottom), Spells offset downward (names on top)
+ * Snap grid offsets from drawn grid origin
+ * - Portrait: offset down by half grid height (cards sit between horizontal lines)
+ * - Landscape: offset right by half grid width (cards sit between vertical lines)
  */
-export const STACK_OFFSET_UNITS = 10;
-export const STACK_OFFSET = STACK_OFFSET_UNITS * GRID_UNIT; // 550px - very spread out for visibility
+export const SNAP_GRID_OFFSET = {
+  PORTRAIT: {
+    x: 0,
+    y: SNAP_GRID.height / 2, // 27.5px down
+  },
+  LANDSCAPE: {
+    x: SNAP_GRID.width / 2, // 27.5px right
+    y: 0,
+  },
+} as const;
+
+// ============================================================================
+// Card Constants
+// ============================================================================
+
+/** Card drawn dimensions in pixels (100×140 maintains TCG aspect ratio) */
+export const CARD_SIZE = {
+  PORTRAIT: { width: 100, height: 140 },
+  LANDSCAPE: { width: 140, height: 100 },
+} as const;
+
+/** Card spacing in snap grid cells (how many cells between card centers) */
+export const CARD_CELL_SPACING = {
+  PORTRAIT: { x: 2, y: 3 },  // Centers are 2 cells apart horizontally, 3 vertically
+  LANDSCAPE: { x: 3, y: 2 }, // Centers are 3 cells apart horizontally, 2 vertically
+} as const;
+
+// ============================================================================
+// Layout Constants
+// ============================================================================
+
+/**
+ * Stack offset in pixels - when multiple cards are at the same position,
+ * each subsequent card is offset by this amount to show a peek of cards underneath
+ */
+export const STACK_OFFSET = 15; // Small offset to show cards are stacked
 
 /** Grid line appearance */
 export const GRID_LINE = {
@@ -88,9 +118,10 @@ export interface GridPosition {
   y: number;
 }
 
+/** Position represents the CENTER of the card */
 export interface CardLayoutInfo {
   name: string;
-  position: GridPosition;
+  position: GridPosition; // CENTER position
   isLandscape: boolean;
   thresholdGroup: ThresholdGroup;
   type: CardType;
@@ -98,80 +129,151 @@ export interface CardLayoutInfo {
 }
 
 // ============================================================================
-// Grid Math
+// Grid Math - Snap Grid Operations
 // ============================================================================
 
-/** Snap a pixel position to the nearest grid cell (top-left corner) */
-export function snapToGrid(x: number, y: number): GridPosition {
+/**
+ * Get the snap grid offset for a card type
+ */
+export function getSnapGridOffset(isLandscape: boolean): GridPosition {
+  return isLandscape ? { ...SNAP_GRID_OFFSET.LANDSCAPE } : { ...SNAP_GRID_OFFSET.PORTRAIT };
+}
+
+/**
+ * Convert snap grid coordinates to pixel position (card CENTER)
+ * @param gridX - Snap grid column
+ * @param gridY - Snap grid row
+ * @param isLandscape - Whether the card is landscape
+ * @returns Pixel position of the card CENTER
+ */
+export function snapGridToPixels(gridX: number, gridY: number, isLandscape: boolean): GridPosition {
+  const offset = getSnapGridOffset(isLandscape);
   return {
-    x: Math.round(x / GRID_UNIT) * GRID_UNIT,
-    y: Math.round(y / GRID_UNIT) * GRID_UNIT,
+    x: offset.x + gridX * SNAP_GRID.width,
+    y: offset.y + gridY * SNAP_GRID.height,
   };
 }
 
-/** Convert grid coordinates to pixel position */
-export function gridToPixels(gridX: number, gridY: number): GridPosition {
+/**
+ * Convert pixel position to snap grid coordinates
+ * @param x - Pixel x (card center)
+ * @param y - Pixel y (card center)
+ * @param isLandscape - Whether the card is landscape
+ * @returns Snap grid coordinates
+ */
+export function pixelsToSnapGrid(x: number, y: number, isLandscape: boolean): GridPosition {
+  const offset = getSnapGridOffset(isLandscape);
   return {
-    x: gridX * GRID_UNIT,
-    y: gridY * GRID_UNIT,
+    x: Math.round((x - offset.x) / SNAP_GRID.width),
+    y: Math.round((y - offset.y) / SNAP_GRID.height),
   };
 }
 
-/** Convert pixel position to grid coordinates */
-export function pixelsToGrid(x: number, y: number): GridPosition {
+/**
+ * Snap a card's center position to the nearest snap grid intersection
+ * @param centerX - Current center X position
+ * @param centerY - Current center Y position
+ * @param isLandscape - Whether the card is landscape
+ * @returns Snapped center position
+ */
+export function snapCardCenter(centerX: number, centerY: number, isLandscape: boolean): GridPosition {
+  const gridPos = pixelsToSnapGrid(centerX, centerY, isLandscape);
+  return snapGridToPixels(gridPos.x, gridPos.y, isLandscape);
+}
+
+/**
+ * Snap a card position (given as top-left) to the nearest snap grid intersection
+ * Returns the new top-left position after snapping the center
+ */
+export function snapCardToGrid(x: number, y: number, isLandscape: boolean): GridPosition {
+  const cardSize = getCardPixelSize(isLandscape);
+  const centerX = x + cardSize.width / 2;
+  const centerY = y + cardSize.height / 2;
+
+  const snappedCenter = snapCardCenter(centerX, centerY, isLandscape);
+
   return {
-    x: Math.floor(x / GRID_UNIT),
-    y: Math.floor(y / GRID_UNIT),
+    x: snappedCenter.x - cardSize.width / 2,
+    y: snappedCenter.y - cardSize.height / 2,
   };
 }
+
+// ============================================================================
+// Grid Math - Drawn Grid Operations (for visual grid rendering)
+// ============================================================================
+
+/** Snap a pixel position to the nearest drawn grid intersection */
+export function snapToDrawnGrid(x: number, y: number): GridPosition {
+  return {
+    x: Math.round(x / DRAWN_GRID.width) * DRAWN_GRID.width,
+    y: Math.round(y / DRAWN_GRID.height) * DRAWN_GRID.height,
+  };
+}
+
+/** Convert drawn grid coordinates to pixel position */
+export function drawnGridToPixels(gridX: number, gridY: number): GridPosition {
+  return {
+    x: gridX * DRAWN_GRID.width,
+    y: gridY * DRAWN_GRID.height,
+  };
+}
+
+// ============================================================================
+// Card Helpers
+// ============================================================================
 
 /** Get card pixel size based on orientation */
 export function getCardPixelSize(isLandscape: boolean): { width: number; height: number } {
   return isLandscape ? { ...CARD_SIZE.LANDSCAPE } : { ...CARD_SIZE.PORTRAIT };
 }
 
-/** Get card cell size based on orientation */
-export function getCardCellSize(isLandscape: boolean): { width: number; height: number } {
-  return isLandscape ? { ...CARD_CELLS.LANDSCAPE } : { ...CARD_CELLS.PORTRAIT };
+/** Get card cell spacing based on orientation */
+export function getCardCellSpacing(isLandscape: boolean): { x: number; y: number } {
+  return isLandscape ? { ...CARD_CELL_SPACING.LANDSCAPE } : { ...CARD_CELL_SPACING.PORTRAIT };
 }
 
 /**
- * Get the position to place a card centered within its grid cells
- * @param gridX - Left grid column
- * @param gridY - Top grid row
+ * Get the CENTER position for a card at a given grid cell
+ * @param cellX - Cell column (in card spacing units, not raw grid)
+ * @param cellY - Cell row (in card spacing units, not raw grid)
  * @param isLandscape - Whether the card is landscape
- * @returns Pixel position with card centered in its cell area
+ * @returns Pixel position of the card CENTER
  */
-export function getCardPositionInCells(
-  gridX: number,
-  gridY: number,
-  _isLandscape: boolean
-): GridPosition {
-  // Card occupies cells from (gridX, gridY) to (gridX + cellWidth, gridY + cellHeight)
-  // Card is drawn to fill these cells exactly
-  return {
-    x: gridX * GRID_UNIT,
-    y: gridY * GRID_UNIT,
-  };
+export function getCardCenterPosition(cellX: number, cellY: number, isLandscape: boolean): GridPosition {
+  const spacing = getCardCellSpacing(isLandscape);
+  const gridX = cellX * spacing.x;
+  const gridY = cellY * spacing.y;
+  return snapGridToPixels(gridX, gridY, isLandscape);
 }
 
-/**
- * Snap a card position to align with grid cells
- * Returns the top-left position of the grid cell area the card should occupy
- */
-export function snapCardToGrid(x: number, y: number, isLandscape: boolean): GridPosition {
-  // Find which grid cell the center of the card is closest to
-  const cardSize = getCardPixelSize(isLandscape);
-  const centerX = x + cardSize.width / 2;
-  const centerY = y + cardSize.height / 2;
+// ============================================================================
+// Legacy compatibility - these map to the new system
+// ============================================================================
 
-  // Snap to grid cell that would contain this center
-  const gridX = Math.round((centerX - cardSize.width / 2) / GRID_UNIT);
-  const gridY = Math.round((centerY - cardSize.height / 2) / GRID_UNIT);
+/** @deprecated Use SNAP_GRID.width instead */
+export const GRID_UNIT = SNAP_GRID.width;
 
+/** @deprecated Use getCardCellSpacing instead */
+export function getCardCellSize(isLandscape: boolean): { width: number; height: number } {
+  const spacing = getCardCellSpacing(isLandscape);
+  return { width: spacing.x, height: spacing.y };
+}
+
+/** @deprecated Use drawnGridToPixels instead */
+export function gridToPixels(gridX: number, gridY: number): GridPosition {
+  return drawnGridToPixels(gridX, gridY);
+}
+
+/** @deprecated Use snapToDrawnGrid instead */
+export function snapToGrid(x: number, y: number): GridPosition {
+  return snapToDrawnGrid(x, y);
+}
+
+/** @deprecated Use pixelsToSnapGrid instead */
+export function pixelsToGrid(x: number, y: number): GridPosition {
   return {
-    x: gridX * GRID_UNIT,
-    y: gridY * GRID_UNIT,
+    x: Math.floor(x / DRAWN_GRID.width),
+    y: Math.floor(y / DRAWN_GRID.height),
   };
 }
 
@@ -202,19 +304,50 @@ export interface LayoutConfig {
   }>;
 }
 
+export interface ContentBounds {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+export interface LayoutResult {
+  cards: CardLayoutInfo[];
+  bounds: ContentBounds;
+}
+
 /**
- * Calculate card layout positions
- * Cards are positioned in grid cells with no gaps within groups
- * Gaps: 1 grid unit between types vertically, 4 grid units between elements horizontally
+ * Calculate card layout positions (returns CENTER positions)
+ * Cards are positioned on their snap grid with proper spacing
  */
-export function calculateCardLayout(config: LayoutConfig): CardLayoutInfo[] {
-  const result: CardLayoutInfo[] = [];
+export function calculateCardLayout(config: LayoutConfig): LayoutResult {
+  const cards: CardLayoutInfo[] = [];
+
+  // Track content bounds
+  let contentLeft = Infinity;
+  let contentTop = Infinity;
+  let contentRight = -Infinity;
+  let contentBottom = -Infinity;
+
+  const updateBounds = (centerX: number, centerY: number, isLandscape: boolean) => {
+    const cardSize = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const left = centerX - cardSize.width / 2;
+    const top = centerY - cardSize.height / 2;
+    const right = left + cardSize.width;
+    const bottom = top + cardSize.height;
+
+    contentLeft = Math.min(contentLeft, left);
+    contentTop = Math.min(contentTop, top);
+    contentRight = Math.max(contentRight, right);
+    contentBottom = Math.max(contentBottom, bottom);
+  };
 
   const avatars = config.cards.filter((c) => c.type === 'Avatar');
   const nonAvatars = config.cards.filter((c) => c.type !== 'Avatar');
 
   const grouped = groupCards(nonAvatars);
 
+  // Track position in snap grid units (not pixels)
   let currentGridX = 0;
 
   for (const thresholdGroup of THRESHOLD_GROUP_ORDER) {
@@ -231,22 +364,20 @@ export function calculateCardLayout(config: LayoutConfig): CardLayoutInfo[] {
       const sorted = [...typeCards].sort((a, b) => a.cost - b.cost);
       const isLandscape = type === 'Site';
       const cardsPerRow = isLandscape ? CARDS_PER_ROW.SITE : CARDS_PER_ROW.SPELL;
-      const cellSize = getCardCellSize(isLandscape);
+      const spacing = getCardCellSpacing(isLandscape);
 
-      // Layout cards in rows - NO gaps between cards within a group
-      for (let i = 0; i < sorted.length; i++) {
-        const card = sorted[i]!;
+      for (const [i, card] of sorted.entries()) {
         const col = i % cardsPerRow;
         const row = Math.floor(i / cardsPerRow);
 
-        // Each card occupies cellSize.width x cellSize.height grid cells
-        // Cards are placed directly adjacent (no gaps)
-        const gridX = currentGridX + col * cellSize.width;
-        const gridY = currentGridY + row * cellSize.height;
+        // Calculate snap grid position
+        const gridX = currentGridX + col * spacing.x;
+        const gridY = currentGridY + row * spacing.y;
 
-        const position = getCardPositionInCells(gridX, gridY, isLandscape);
+        // Convert to pixel CENTER position
+        const position = snapGridToPixels(gridX, gridY, isLandscape);
 
-        result.push({
+        cards.push({
           name: card.name,
           position,
           isLandscape,
@@ -255,21 +386,21 @@ export function calculateCardLayout(config: LayoutConfig): CardLayoutInfo[] {
           cost: card.cost,
         });
 
+        updateBounds(position.x, position.y, isLandscape);
+
         // Track max width for this group
-        const cardRight = (col + 1) * cellSize.width;
+        const cardRight = (col + 1) * spacing.x;
         if (cardRight > maxGroupGridWidth) {
           maxGroupGridWidth = cardRight;
         }
       }
 
       // Move Y down for next type subgroup
-      // Add 1 grid unit gap between card types
       const rows = Math.ceil(sorted.length / cardsPerRow);
-      currentGridY += rows * cellSize.height + SUBGROUP_GAP_UNITS;
+      currentGridY += rows * spacing.y + SUBGROUP_GAP_UNITS;
     }
 
     // Move X right for next threshold group
-    // Add 4 grid units gap between element groups
     currentGridX += maxGroupGridWidth + GROUP_GAP_UNITS;
   }
 
@@ -290,19 +421,18 @@ export function calculateCardLayout(config: LayoutConfig): CardLayoutInfo[] {
     });
 
     const cardsPerRow = CARDS_PER_ROW.AVATAR;
-    const cellSize = getCardCellSize(false); // Avatars are portrait
+    const spacing = getCardCellSpacing(false); // Avatars are portrait
 
-    for (let i = 0; i < sortedAvatars.length; i++) {
-      const avatar = sortedAvatars[i]!;
+    for (const [i, avatar] of sortedAvatars.entries()) {
       const col = i % cardsPerRow;
       const row = Math.floor(i / cardsPerRow);
 
-      const gridX = currentGridX + col * cellSize.width;
-      const gridY = row * cellSize.height;
+      const gridX = currentGridX + col * spacing.x;
+      const gridY = row * spacing.y;
 
-      const position = getCardPositionInCells(gridX, gridY, false);
+      const position = snapGridToPixels(gridX, gridY, false);
 
-      result.push({
+      cards.push({
         name: avatar.name,
         position,
         isLandscape: false,
@@ -310,10 +440,20 @@ export function calculateCardLayout(config: LayoutConfig): CardLayoutInfo[] {
         type: 'Avatar',
         cost: avatar.cost,
       });
+
+      updateBounds(position.x, position.y, false);
     }
   }
 
-  return result;
+  // Default bounds if no cards
+  const bounds: ContentBounds = {
+    left: contentLeft === Infinity ? 0 : contentLeft,
+    top: contentTop === Infinity ? 0 : contentTop,
+    right: contentRight === -Infinity ? 0 : contentRight,
+    bottom: contentBottom === -Infinity ? 0 : contentBottom,
+  };
+
+  return { cards, bounds };
 }
 
 function getAvatarSetIndex(setName?: string): number {
@@ -328,16 +468,19 @@ function groupCards(
   const result = new Map<ThresholdGroup, Map<CardType, LayoutConfig['cards']>>();
 
   for (const card of cards) {
-    if (!result.has(card.thresholdGroup)) {
-      result.set(card.thresholdGroup, new Map());
+    let thresholdMap = result.get(card.thresholdGroup);
+    if (!thresholdMap) {
+      thresholdMap = new Map();
+      result.set(card.thresholdGroup, thresholdMap);
     }
 
-    const typeMap = result.get(card.thresholdGroup)!;
-    if (!typeMap.has(card.type)) {
-      typeMap.set(card.type, []);
+    let typeList = thresholdMap.get(card.type);
+    if (!typeList) {
+      typeList = [];
+      thresholdMap.set(card.type, typeList);
     }
 
-    typeMap.get(card.type)!.push(card);
+    typeList.push(card);
   }
 
   return result;

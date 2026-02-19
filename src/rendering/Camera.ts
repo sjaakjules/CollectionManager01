@@ -18,7 +18,7 @@ import type { Application, Container } from 'pixi.js';
 
 export const CAMERA_DEFAULTS = {
   MIN_ZOOM: 0.02,
-  MAX_ZOOM: 1.5,
+  MAX_ZOOM: 5.0,
   INITIAL_ZOOM: 0.1,
   DECELERATION: 0.92,
 } as const;
@@ -183,6 +183,17 @@ export class Camera {
       top: corner.y,
       right: corner.x + this.viewport.worldScreenWidth,
       bottom: corner.y + this.viewport.worldScreenHeight,
+    };
+  }
+
+  /**
+   * Get the center of the screen in world coordinates
+   */
+  getScreenCenter(): { x: number; y: number } {
+    const bounds = this.getVisibleBounds();
+    return {
+      x: (bounds.left + bounds.right) / 2,
+      y: (bounds.top + bounds.bottom) / 2,
     };
   }
 
