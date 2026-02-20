@@ -234,7 +234,11 @@ export class PixiStage {
     if (this.pendingCards) {
       this.cards = this.pendingCards;
       this.pendingCards = null;
+      // Reset reveal state left by any earlier empty reveal call so culling
+      // inside rebuildCardSprites() doesn't prematurely preload textures.
+      this.initialRevealCompleted = false;
       this.rebuildCardSprites();
+      this.startTextureReveal();
     }
   }
 
@@ -879,7 +883,7 @@ export class PixiStage {
    * Cards start at alpha=0, become 0.5 as they're revealed, then all
    * fade to 1.0 once every card has been revealed.
    */
-  startTextureReveal(): void {
+  async startTextureReveal(): Promise<void> {
     this.isRevealInProgress = true;
     this.initialRevealCompleted = false;
     const runId = ++this.revealRunId;
@@ -888,7 +892,8 @@ export class PixiStage {
     const totalAll = all.length;
 
     if (totalAll === 0) {
-      this.onTextureProgress?.(0, 0);
+      // Nothing to reveal — skip without reporting progress so we don't
+      // schedule a stale clear-timeout that could wipe a later real reveal.
       this.isRevealInProgress = false;
       this.initialRevealCompleted = true;
       return;
@@ -906,14 +911,21 @@ export class PixiStage {
     // Fisher–Yates shuffle
     for (let i = all.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-
-      const temp = all[i]!;
-      all[i] = all[j]!;
-      all[j] = temp;
+      const a = all[i];
+      const b = all[j];
+      if (a && b) {
+        all[i] = b;
+        all[j] = a;
+      }
     }
 
     let revealed = 0;
     this.onTextureProgress?.(0, totalAll);
+
+    // Allow one frame for React to render the loading bar
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
 
     const tryFinish = () => {
       if (revealed >= totalAll && !this.initialRevealCompleted) {
@@ -928,27 +940,25 @@ export class PixiStage {
       // Start load immediately (parallel)
       data.sprite.loadInitialTexture();
 
-      data.sprite.textureReady
-        .then(() => {
-          if (this.isDestroyed || this.revealRunId !== runId) return;
+      // Use a local flag instead of checking alpha — other code paths
+      // (e.g. updateDeckOverlays) can change alpha between the time we
+      // set it to 0 and the time this callback fires, which would cause
+      // the old alpha===0 guard to skip every sprite.
+      let counted = false;
+      data.sprite.textureReady.finally(() => {
+        if (this.isDestroyed || this.revealRunId !== runId) return;
+        if (counted) return;
+        counted = true;
 
-          if (data.sprite.alpha === 0) {
-            data.sprite.alpha = 0.5;
-            revealed++;
-            this.onTextureProgress?.(revealed, totalAll);
-            tryFinish();
-          }
-        })
-        .catch(() => {
-          if (this.isDestroyed || this.revealRunId !== runId) return;
+        // Reveal the sprite only if nothing else already made it visible
+        if (data.sprite.alpha < 0.5) {
+          data.sprite.alpha = 0.5;
+        }
 
-          if (data.sprite.alpha === 0) {
-            data.sprite.alpha = 0.5;
-            revealed++;
-            this.onTextureProgress?.(revealed, totalAll);
-            tryFinish();
-          }
-        });
+        revealed++;
+        this.onTextureProgress?.(revealed, totalAll);
+        tryFinish();
+      });
     }
   }
 
@@ -1093,10 +1103,12 @@ export class PixiStage {
     const shuffledLayout = [...layout];
     for (let i = shuffledLayout.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-
-      const temp = shuffledLayout[i]!;
-      shuffledLayout[i] = shuffledLayout[j]!;
-      shuffledLayout[j] = temp;
+      const a = shuffledLayout[i];
+      const b = shuffledLayout[j];
+      if (a && b) {
+        shuffledLayout[i] = b;
+        shuffledLayout[j] = a;
+      }
     }
 
     // Create sprites in randomized order

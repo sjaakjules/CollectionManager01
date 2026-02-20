@@ -354,8 +354,6 @@ export class CardSprite extends Container {
   private markTextureLoaded(): void {
     // Once any texture has been successfully applied (or we've decided to proceed
     // with a placeholder), we consider the "initial" texture ready.
-    this._initialLoadStarted = true;
-
     if (!this._textureLoaded) {
       this._textureLoaded = true;
       this.resolveTextureReady();

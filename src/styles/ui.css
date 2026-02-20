@@ -150,31 +150,54 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 240px;
-  height: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
   background: rgba(26, 26, 46, 0.85);
   border: 1px solid rgba(100, 100, 180, 0.4);
-  border-radius: 4px;
+  border-radius: 6px;
   z-index: 150;
-  overflow: hidden;
   pointer-events: none;
-}
-
-.texture-loading-fill {
-  height: 100%;
-  background: rgba(100, 100, 180, 0.5);
-  transition: width 0.3s ease-out;
 }
 
 .texture-loading-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.7);
-  pointer-events: none;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.04em;
+}
+
+.texture-loading-progress {
+  width: 200px;
+  height: 8px;
+  appearance: none;
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(100, 100, 180, 0.2);
+}
+
+.texture-loading-progress::-webkit-progress-bar {
+  background: rgba(100, 100, 180, 0.2);
+  border-radius: 4px;
+}
+
+.texture-loading-progress::-webkit-progress-value {
+  background: rgba(100, 100, 180, 0.6);
+  border-radius: 4px;
+  transition: width 0.2s ease-out;
+}
+
+.texture-loading-progress::-moz-progress-bar {
+  background: rgba(100, 100, 180, 0.6);
+  border-radius: 4px;
+}
+
+.texture-loading-count {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================================================

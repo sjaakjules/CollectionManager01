@@ -19,7 +19,7 @@ import {
   type ArchetypeScores,
 } from "@/data/archetypeScores";
 
-export function PixiCanvas() {
+export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<PixiStage | null>(null);
   const { state, dispatch } = useAppState();
@@ -43,6 +43,8 @@ export function PixiCanvas() {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    let clearTimerId: ReturnType<typeof setTimeout> | undefined;
+
     const stage = new PixiStage({
       container: containerRef.current,
       onAddToDeck: (cardName) => {
@@ -52,28 +54,43 @@ export function PixiCanvas() {
         dispatch({ type: "REMOVE_CARD_FROM_DECK", cardName });
       },
       onTextureProgress: (loaded, total) => {
+        // Cancel any pending clear-timeout from a previous reveal
+        if (clearTimerId !== undefined) {
+          clearTimeout(clearTimerId);
+          clearTimerId = undefined;
+        }
+
         progressRef.current({ loaded, total });
+
+        if (loaded >= total) {
+          // Clear after fade completes (small delay prevents flicker)
+          clearTimerId = setTimeout(() => {
+            progressRef.current(null);
+            clearTimerId = undefined;
+          }, 600);
+        }
       },
     });
 
     stageRef.current = stage;
 
     return () => {
+      if (clearTimerId !== undefined) clearTimeout(clearTimerId);
       stage.destroy();
       stageRef.current = null;
     };
   }, [dispatch]);
 
   // Update stage when cards change, start texture reveal on first load
-  const hasPlayedReveal = useRef(false);
   useEffect(() => {
     if (!stageRef.current || !state.cardsLoaded) return;
+
     stageRef.current.setCards(state.cards);
 
-    if (!hasPlayedReveal.current) {
-      hasPlayedReveal.current = true;
-      stageRef.current.startTextureReveal();
-    }
+    // Always reset progress and replay reveal when cards change
+    setLoadProgress(null);
+
+    stageRef.current.startTextureReveal();
   }, [state.cards, state.cardsLoaded]);
 
   // Update overlays when deck changes, pan to deck on new load
@@ -117,6 +134,7 @@ export function PixiCanvas() {
   }, []);
 
   const showLoadingBar =
+    splashDone &&
     loadProgress !== null &&
     loadProgress.total > 0 &&
     loadProgress.loaded < loadProgress.total;
@@ -151,13 +169,14 @@ function TextureLoadingBar({
       className="texture-loading-bar"
       aria-label={`Loading cards ${loaded} of ${total}`}
     >
+      <span className="texture-loading-label">Loading Cards</span>
       <progress
         className="texture-loading-progress"
         value={loaded}
         max={total}
       />
-      <span className="texture-loading-label">
-        Loading cards {loaded} / {total} ({pct}%)
+      <span className="texture-loading-count">
+        {loaded} / {total} ({pct}%)
       </span>
     </div>
   );

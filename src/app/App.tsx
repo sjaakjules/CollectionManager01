@@ -100,7 +100,7 @@ export function App() {
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       <div className="app-container">
-        <PixiCanvas />
+        <PixiCanvas splashDone={splashPhase === 'done'} />
         <BottomPanel />
         <LoginModal />
         <Notifications />

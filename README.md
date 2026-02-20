@@ -64,6 +64,27 @@ src/
 | Add card to deck | Double left-click |
 | Remove card from deck | Double right-click |
 
+## Roadmap
+
+### Account & Persistence
+- [ ] Account signup and login (no personal info required)
+- [ ] Auto-save edits when logged in — each edit saves state automatically
+
+### Deck & Collection Tools
+- [ ] "Save Selected" button — download a text file with `quantity name` per line (e.g. `4 Crawler`)
+- [ ] Filter cards — show a subset of the collection by:
+  - Set, type, sub-type, threshold (inclusive or exclusive), cost, attack, defence, rarity, artist
+  - Text search across card JSON data
+
+### Canvas & Interaction
+- [ ] "Add Category" functionality for custom highlight groups
+- [ ] Text / labeling — users can place, move, and edit labels on the canvas
+
+### Card Info & Rules
+- [ ] Show rule text for selected card in side panel
+- [ ] Codex keyword links — words in rule text that appear in the codex are clickable
+- [ ] Codex search panel below rule text — updates when a codex keyword is selected, mimics curiosa.io codex behavior
+
 ## Development
 
 See [docs/CodePlan.md](docs/CodePlan.md) for architecture details and [docs/PDR.md](docs/PDR.md) for product requirements.
