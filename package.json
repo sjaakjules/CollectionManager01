@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node -e \"const fs=require('fs');if(fs.existsSync('dist'))fs.rmSync('dist',{recursive:true,force:true,maxRetries:3,retryDelay:100})\" && tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "deploy": "pnpm build && netlify deploy --prod --dir=dist --functions=netlify/functions"
+    "publish": "pnpm build && netlify deploy --prod --no-build --dir=dist --functions=netlify/functions"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.0",

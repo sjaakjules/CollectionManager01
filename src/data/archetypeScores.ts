@@ -105,52 +105,78 @@ export function updateArchetypeScore(
 }
 
 /**
- * Save a single score update to the server.
- * Sends a granular delta so concurrent edits to different cards don't conflict.
- * Debounced per card+archetype combination.
+ * Persistent save system.
+ * The local cache is always the source of truth — every edit mutates it in-place,
+ * and we sync the full state to the server.
+ * Posts directly to the function URL with ?action=save-full (no redirect dependency).
  */
-const pendingUpdates = new Map<string, ReturnType<typeof setTimeout>>();
+const SAVE_URL = '/api/archetype-scores?action=save-full';
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let dirty = false;
+let saveInFlight = false;
 
-export function saveScoreUpdate(cardName: string, archetype: string, delta: number): void {
-  const key = `${cardName}::${archetype}`;
+async function doFullSave(): Promise<void> {
+  if (!cachedScores || saveInFlight) return;
+  dirty = false;
+  saveInFlight = true;
+  try {
+    const res = await fetch(SAVE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cachedScores),
+    });
+    if (!res.ok) {
+      console.warn('Save failed with status:', res.status);
+      dirty = true;
+    }
+  } catch (err) {
+    console.warn('Failed to save archetype scores:', err);
+    dirty = true;
+  } finally {
+    saveInFlight = false;
+    // If new edits came in during the save, schedule another
+    if (dirty) {
+      saveTimer = setTimeout(doFullSave, 300);
+    }
+  }
+}
 
-  // Cancel any pending update for this same card+archetype
-  const existing = pendingUpdates.get(key);
-  if (existing) clearTimeout(existing);
-
-  pendingUpdates.set(
-    key,
-    setTimeout(() => {
-      pendingUpdates.delete(key);
-      fetch('/api/archetype-scores?action=update-score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardName, archetype, delta }),
-      }).catch((err) => {
-        console.warn('Failed to save score update:', err);
-      });
-    }, 500)
-  );
+export function saveScoreUpdate(): void {
+  dirty = true;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(doFullSave, 300);
 }
 
 /**
- * Save full archetype scores to the server.
- * Debounced so rapid edits batch into a single write.
- * Used as a fallback / bulk save.
+ * Immediately flush pending saves to the server.
+ * Called when switching/deselecting an archetype filter.
  */
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
+export function flushPendingScoreUpdates(): void {
+  if (!dirty) return;
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+  doFullSave();
+}
+
+// Flush on page close / tab switch using sendBeacon (reliable even during unload)
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (!dirty || !cachedScores) return;
+    const blob = new Blob([JSON.stringify(cachedScores)], { type: 'application/json' });
+    navigator.sendBeacon(SAVE_URL, blob);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushPendingScoreUpdates();
+    }
+  });
+}
 
 export function saveArchetypeScores(scores: ArchetypeScores): void {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    fetch('/api/save-archetype-scores', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(scores),
-    }).catch((err) => {
-      console.warn('Failed to save archetype scores:', err);
-    });
-  }, 500);
+  cachedScores = scores;
+  saveScoreUpdate();
 }
 
 /**

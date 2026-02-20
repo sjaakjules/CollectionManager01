@@ -1,3 +1,36 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/archetype-scores"
+  to = "/.netlify/functions/archetype-scores"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/save-archetype-scores"
+  to = "/.netlify/functions/archetype-scores?action=save-full"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/curiosa/*"
+  to = "https://curiosa.io/:splat"
+  status = 200
+  force = true
+  [redirects.headers]
+    Origin = "https://curiosa.io"
+    Referer = "https://curiosa.io/"
+
+[[redirects]]
+  from = "/api/sorcery/*"
+  to = "https://api.sorcerytcg.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback — must be last
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

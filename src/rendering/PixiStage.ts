@@ -51,6 +51,7 @@ import type {
 import {
   updateArchetypeScore,
   saveScoreUpdate,
+  flushPendingScoreUpdates,
   type ArchetypeScores,
 } from "@/data/archetypeScores";
 import { getThresholdGroup } from "@/data/dataModels";
@@ -871,6 +872,8 @@ export class PixiStage {
     archetype: string | null,
     scores: ArchetypeScores | null,
   ): void {
+    // Flush any pending score saves before switching filters
+    flushPendingScoreUpdates();
     this.selectedArchetype = archetype;
     this.archetypeScores = scores;
     this.applyArchetypeHighlighting();
@@ -1031,8 +1034,8 @@ export class PixiStage {
       }
     }
 
-    // Persist to server (debounced, granular update for concurrency)
-    saveScoreUpdate(cardName, this.selectedArchetype, delta);
+    // Persist full scores to server (debounced)
+    saveScoreUpdate();
   }
 
   private rebuildCardSprites(): void {
