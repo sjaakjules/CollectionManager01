@@ -35,11 +35,29 @@ export function BottomPanel() {
   const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadArchetypeScores().then((data) => {
-      setScores(data);
-      setArchetypes(getArchetypeNames(data));
-    });
-  }, []);
+    let cancelled = false;
+
+    if (state.userData?.archetypeScores) {
+      const userScores = state.userData.archetypeScores;
+      setScores(userScores);
+      setArchetypes(getArchetypeNames(userScores));
+    } else {
+      loadArchetypeScores().then((data) => {
+        if (cancelled) return;
+        setScores(data);
+        setArchetypes(getArchetypeNames(data));
+      }).catch((error) => {
+        if (cancelled) return;
+        console.warn('Failed to load archetype scores:', error);
+        setScores(null);
+        setArchetypes([]);
+      });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state.userData?.id, state.userData?.archetypeScores]);
 
   const selectedArchetype = state.ui.selectedArchetype;
 
@@ -66,6 +84,17 @@ export function BottomPanel() {
     }
   }, [deckUrl, isLoading, dispatch]);
 
+  const handleOpenAccount = useCallback(() => {
+    dispatch({ type: 'TOGGLE_LOGIN_MODAL' });
+  }, [dispatch]);
+
+  const handleToggleLabelMode = useCallback(() => {
+    dispatch({
+      type: 'SET_LABEL_PLACEMENT_MODE',
+      enabled: !state.ui.labelPlacementMode,
+    });
+  }, [dispatch, state.ui.labelPlacementMode]);
+
   const handleAddCategory = useCallback(async () => {
     const trimmed = newCategoryName.trim();
     if (!trimmed || addingCategory) return;
@@ -77,10 +106,10 @@ export function BottomPanel() {
       const sanitized = await addCategory(trimmed);
 
       // Refresh the archetype list from updated cache
-      if (scores) {
-        invalidateArchetypeCache();
-        setArchetypes(getArchetypeNames(scores));
-      }
+      const refreshed = await loadArchetypeScores();
+      setScores(refreshed);
+      invalidateArchetypeCache();
+      setArchetypes(getArchetypeNames(refreshed));
 
       setNewCategoryName('');
       setShowAddInput(false);
@@ -93,7 +122,7 @@ export function BottomPanel() {
     } finally {
       setAddingCategory(false);
     }
-  }, [newCategoryName, addingCategory, scores, dispatch]);
+  }, [newCategoryName, addingCategory, dispatch]);
 
   const handleAddKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -166,6 +195,22 @@ export function BottomPanel() {
       )}
 
       <div className="bottom-panel-deck">
+        <button
+          type="button"
+          className={`archetype-button ${state.ui.labelPlacementMode ? 'active' : ''}`}
+          onClick={handleToggleLabelMode}
+        >
+          {state.ui.labelPlacementMode ? 'Click Canvas...' : 'Add Label'}
+        </button>
+
+        <button
+          type="button"
+          className="archetype-button"
+          onClick={handleOpenAccount}
+        >
+          {state.session.username ?? 'Account'}
+        </button>
+
         <span className="deck-label">
           {activeDeck ? activeDeck.name : 'Load Deck'}
         </span>

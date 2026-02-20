@@ -47,6 +47,7 @@ import type {
   Deck,
   ActiveBoard,
   CollectionItem,
+  CanvasLabel,
 } from "@/data/dataModels";
 import {
   updateArchetypeScore,
@@ -65,6 +66,8 @@ export interface PixiStageConfig {
   onAddToDeck: (cardName: string) => void;
   onRemoveFromDeck: (cardName: string) => void;
   onTextureProgress?: (loaded: number, total: number) => void;
+  onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
+  onLabelPlacementConsumed?: () => void;
 }
 
 interface CardSpriteData {
@@ -89,6 +92,19 @@ interface SelectionBoxState {
   graphics: Graphics | null;
 }
 
+interface LabelSpriteData {
+  label: CanvasLabel;
+  text: Text;
+  bounds: { left: number; top: number; right: number; bottom: number };
+}
+
+interface LabelDragState {
+  isDragging: boolean;
+  labelId: string | null;
+  startWorldPos: { x: number; y: number };
+  labelStartPos: { x: number; y: number };
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -105,8 +121,11 @@ export class PixiStage {
   private app: Application;
   private camera: Camera | null = null;
   private cardContainer: Container;
+  private labelContainer: Container;
   private gridGraphics: Graphics | null = null;
   private cardSprites: Map<string, CardSpriteData> = new Map();
+  private labelSprites: Map<string, LabelSpriteData> = new Map();
+  private canvasLabels: CanvasLabel[] = [];
   private cards: Card[] = [];
   private isInitialized = false;
   private isDestroyed = false;
@@ -140,6 +159,17 @@ export class PixiStage {
   // Double-click detection
   private lastClickTime = 0;
   private lastClickedCard: string | null = null;
+  private lastLabelClickTime = 0;
+  private lastClickedLabel: string | null = null;
+
+  // Label state
+  private labelPlacementMode = false;
+  private labelDragState: LabelDragState = {
+    isDragging: false,
+    labelId: null,
+    startWorldPos: { x: 0, y: 0 },
+    labelStartPos: { x: 0, y: 0 },
+  };
 
   // Card stacking - track cards at each grid position
   private cardStacks: Map<string, string[]> = new Map();
@@ -175,15 +205,20 @@ export class PixiStage {
   private onAddToDeck: (cardName: string) => void;
   private onRemoveFromDeck: (cardName: string) => void;
   private onTextureProgress?: (loaded: number, total: number) => void;
+  private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
+  private onLabelPlacementConsumed?: () => void;
 
   constructor(config: PixiStageConfig) {
     this.onAddToDeck = config.onAddToDeck;
     this.onRemoveFromDeck = config.onRemoveFromDeck;
     this.onTextureProgress = config.onTextureProgress;
+    this.onCanvasLabelsChange = config.onCanvasLabelsChange;
+    this.onLabelPlacementConsumed = config.onLabelPlacementConsumed;
 
     this.app = new Application();
     this.cardContainer = new Container();
     this.cardContainer.sortableChildren = true;
+    this.labelContainer = new Container();
 
     this.initialize(config.container);
   }
@@ -221,6 +256,9 @@ export class PixiStage {
 
     // Add card container
     this.camera.container.addChild(this.cardContainer);
+
+    // Add label container above cards
+    this.camera.container.addChild(this.labelContainer);
 
     // Create selection box graphics (on top)
     this.selectionBox.graphics = new Graphics();
@@ -306,6 +344,37 @@ export class PixiStage {
     const isShiftHeld = event.shiftKey;
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    const clickedLabel = this.getLabelAtPosition(worldPos);
+
+    // Label placement mode: next left-click places a label.
+    if (this.labelPlacementMode && !isRightClick) {
+      this.addLabelAtPosition(worldPos);
+      this.consumeLabelPlacementMode();
+      return;
+    }
+
+    if (clickedLabel) {
+      if (isRightClick) {
+        return;
+      }
+
+      const now = Date.now();
+      const isDoubleClick =
+        now - this.lastLabelClickTime < DOUBLE_CLICK_TIME_MS &&
+        this.lastClickedLabel === clickedLabel;
+
+      this.lastLabelClickTime = now;
+      this.lastClickedLabel = clickedLabel;
+
+      if (isDoubleClick) {
+        this.editLabel(clickedLabel);
+        return;
+      }
+
+      this.startLabelDrag(clickedLabel, worldPos);
+      this.camera.pauseDrag();
+      return;
+    }
 
     this.pointerDownOnSelectedCard = false;
 
@@ -376,6 +445,12 @@ export class PixiStage {
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
 
+    // Update label drag
+    if (this.labelDragState.isDragging) {
+      this.updateLabelDrag(worldPos);
+      return;
+    }
+
     // Update selection box
     if (this.selectionBox.isActive) {
       this.updateSelectionBox(worldPos);
@@ -393,10 +468,34 @@ export class PixiStage {
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
 
+    // End label drag
+    if (this.labelDragState.isDragging && event.button !== 2) {
+      this.endLabelDrag();
+      this.camera.resumeDrag();
+      return;
+    }
+
     // Handle double-right-click for remove from deck
     const isRightClick = event.button === 2;
     if (isRightClick) {
+      const clickedLabel = this.getLabelAtPosition(worldPos);
       const now = Date.now();
+
+      if (
+        clickedLabel &&
+        now - this.lastLabelClickTime < DOUBLE_CLICK_TIME_MS &&
+        this.lastClickedLabel === clickedLabel
+      ) {
+        this.deleteLabel(clickedLabel);
+      }
+
+      this.lastLabelClickTime = now;
+      this.lastClickedLabel = clickedLabel;
+
+      if (clickedLabel) {
+        return;
+      }
+
       const clickedCard = this.getCardAtPosition(worldPos);
       if (
         clickedCard &&
@@ -437,6 +536,193 @@ export class PixiStage {
   /** Look up sprite data by key from either collection or deck sprites */
   private getSpriteData(key: string): CardSpriteData | undefined {
     return this.cardSprites.get(key) ?? this.deckSprites.get(key);
+  }
+
+  private getLabelAtPosition(worldPos: { x: number; y: number }): string | null {
+    for (let i = this.canvasLabels.length - 1; i >= 0; i--) {
+      const label = this.canvasLabels[i];
+      if (!label) continue;
+      const data = this.labelSprites.get(label.id);
+      if (data && this.pointInBounds(worldPos, data.bounds)) {
+        return label.id;
+      }
+    }
+    return null;
+  }
+
+  private setCanvasLabels(labels: CanvasLabel[]): void {
+    if (this.canvasLabelsEqual(this.canvasLabels, labels)) {
+      return;
+    }
+    this.canvasLabels = labels.map((label) => ({ ...label }));
+    this.rebuildLabelSprites();
+  }
+
+  private canvasLabelsEqual(a: CanvasLabel[], b: CanvasLabel[]): boolean {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      const left = a[i];
+      const right = b[i];
+      if (!left || !right) return false;
+      if (
+        left.id !== right.id ||
+        left.text !== right.text ||
+        left.x !== right.x ||
+        left.y !== right.y
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private rebuildLabelSprites(): void {
+    for (const data of this.labelSprites.values()) {
+      data.text.destroy();
+    }
+    this.labelSprites.clear();
+    this.labelContainer.removeChildren();
+
+    for (const label of this.canvasLabels) {
+      const text = new Text({
+        text: label.text,
+        style: {
+          fontFamily: "Arial",
+          fontSize: 28,
+          fill: 0xffffff,
+          stroke: { color: 0x000000, width: 4 },
+        },
+      });
+
+      text.x = label.x;
+      text.y = label.y;
+      this.labelContainer.addChild(text);
+
+      const data: LabelSpriteData = {
+        label: { ...label },
+        text,
+        bounds: { left: 0, top: 0, right: 0, bottom: 0 },
+      };
+
+      this.updateLabelBounds(data);
+      this.labelSprites.set(label.id, data);
+    }
+  }
+
+  private updateLabelBounds(data: LabelSpriteData): void {
+    const padding = 8;
+    data.bounds = {
+      left: data.text.x - padding,
+      top: data.text.y - padding,
+      right: data.text.x + data.text.width + padding,
+      bottom: data.text.y + data.text.height + padding,
+    };
+  }
+
+  private startLabelDrag(labelId: string, worldPos: { x: number; y: number }): void {
+    const data = this.labelSprites.get(labelId);
+    if (!data) return;
+
+    this.labelDragState.isDragging = true;
+    this.labelDragState.labelId = labelId;
+    this.labelDragState.startWorldPos = { ...worldPos };
+    this.labelDragState.labelStartPos = { x: data.label.x, y: data.label.y };
+
+    // Bring dragged label to top.
+    this.labelContainer.addChild(data.text);
+  }
+
+  private updateLabelDrag(worldPos: { x: number; y: number }): void {
+    if (!this.labelDragState.isDragging || !this.labelDragState.labelId) return;
+
+    const data = this.labelSprites.get(this.labelDragState.labelId);
+    if (!data) return;
+
+    const dx = worldPos.x - this.labelDragState.startWorldPos.x;
+    const dy = worldPos.y - this.labelDragState.startWorldPos.y;
+    const x = this.labelDragState.labelStartPos.x + dx;
+    const y = this.labelDragState.labelStartPos.y + dy;
+
+    data.label.x = x;
+    data.label.y = y;
+    data.text.x = x;
+    data.text.y = y;
+    this.updateLabelBounds(data);
+  }
+
+  private endLabelDrag(): void {
+    const { labelId } = this.labelDragState;
+    if (labelId) {
+      const data = this.labelSprites.get(labelId);
+      if (data) {
+        this.canvasLabels = this.canvasLabels.map((label) =>
+          label.id === labelId ? { ...label, x: data.label.x, y: data.label.y } : label,
+        );
+        this.emitCanvasLabelsChange();
+      }
+    }
+
+    this.labelDragState.isDragging = false;
+    this.labelDragState.labelId = null;
+  }
+
+  private addLabelAtPosition(worldPos: { x: number; y: number }): void {
+    const text = window.prompt("Label text", "");
+    if (text === null) return;
+
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    const label: CanvasLabel = {
+      id: crypto.randomUUID(),
+      text: trimmed,
+      x: worldPos.x,
+      y: worldPos.y,
+    };
+
+    this.canvasLabels = [...this.canvasLabels, label];
+    this.rebuildLabelSprites();
+    this.emitCanvasLabelsChange();
+  }
+
+  private editLabel(labelId: string): void {
+    const current = this.canvasLabels.find((label) => label.id === labelId);
+    if (!current) return;
+
+    const next = window.prompt(
+      "Edit label text (leave blank to delete)",
+      current.text,
+    );
+    if (next === null) return;
+
+    const trimmed = next.trim();
+    if (!trimmed) {
+      this.deleteLabel(labelId);
+      return;
+    }
+
+    this.canvasLabels = this.canvasLabels.map((label) =>
+      label.id === labelId ? { ...label, text: trimmed } : label,
+    );
+    this.rebuildLabelSprites();
+    this.emitCanvasLabelsChange();
+  }
+
+  private deleteLabel(labelId: string): void {
+    const next = this.canvasLabels.filter((label) => label.id !== labelId);
+    if (next.length === this.canvasLabels.length) return;
+    this.canvasLabels = next;
+    this.rebuildLabelSprites();
+    this.emitCanvasLabelsChange();
+  }
+
+  private emitCanvasLabelsChange(): void {
+    this.onCanvasLabelsChange?.(this.canvasLabels.map((label) => ({ ...label })));
+  }
+
+  private consumeLabelPlacementMode(): void {
+    this.labelPlacementMode = false;
+    this.onLabelPlacementConsumed?.();
   }
 
   // ============================================================================
@@ -816,8 +1102,10 @@ export class PixiStage {
     deck: Deck | null,
     _activeBoard: ActiveBoard,
     collection: CollectionItem[],
+    canvasLabels: CanvasLabel[],
   ): void {
     this.activeDeck = deck;
+    this.setCanvasLabels(canvasLabels);
 
     // Update collection card quantity badges
     const deckQuantities = new Map<string, number>();
@@ -879,6 +1167,10 @@ export class PixiStage {
     this.applyArchetypeHighlighting();
   }
 
+  setLabelPlacementMode(enabled: boolean): void {
+    this.labelPlacementMode = enabled;
+  }
+
   /**
    * Start texture-driven reveal.
    * Textures begin downloading immediately in a randomized start order,
@@ -936,6 +1228,17 @@ export class PixiStage {
         this.isRevealInProgress = false;
         this.revealFading = true;
         this.revealFadeStart = performance.now();
+
+        // After quick thumbnail reveal, warm full-res textures slowly in the background.
+        const timeoutId = window.setTimeout(() => {
+          this.pendingRevealTimeouts = this.pendingRevealTimeouts.filter(
+            (id) => id !== timeoutId,
+          );
+          if (this.isDestroyed || this.revealRunId !== runId) return;
+          const allNames = all.map((data) => data.layout.name);
+          void lodManager.preloadFullTextures(allNames);
+        }, 1200);
+        this.pendingRevealTimeouts.push(timeoutId);
       }
     };
 
@@ -974,6 +1277,11 @@ export class PixiStage {
     this.pendingRevealTimeouts = [];
     this.revealRunId++;
     this.isRevealInProgress = false;
+
+    for (const data of this.labelSprites.values()) {
+      data.text.destroy();
+    }
+    this.labelSprites.clear();
 
     if (this.isInitialized) {
       this.app.ticker.stop();

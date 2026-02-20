@@ -9,12 +9,14 @@
  */
 
 import type { AppAction } from './AppState';
-import type { Card } from '@/data/dataModels';
+import type { Card, UserData } from '@/data/dataModels';
 import { createGuestUserData } from '@/data/dataModels';
 import { loadUserData, saveUserData } from '@/data/userStorage';
 import { fetchCards } from '@/data/cardService';
-import { getStoredSession } from '@/auth/session';
+import { getStoredSession, type StoredSession } from '@/auth/session';
 import { generateUUID } from '@/utils/uuid';
+import { fetchUserData } from '@/auth/api';
+import { mergeUserData } from '@/data/userSync';
 
 export interface StartupResult {
   success: boolean;
@@ -44,7 +46,7 @@ export async function initializeApp(
     const cardsPromise = loadCards(dispatch);
 
     // Step 3: Load or create user data
-    const userDataPromise = loadOrCreateUserData(dispatch, session?.userId ?? null);
+    const userDataPromise = loadOrCreateUserData(dispatch, session ?? null);
 
     // Wait for both to complete
     const [cardsResult, userDataResult] = await Promise.all([
@@ -84,19 +86,56 @@ async function loadCards(
 
 async function loadOrCreateUserData(
   dispatch: React.Dispatch<AppAction>,
-  userId: string | null
+  session: StoredSession | null
 ): Promise<StartupResult> {
   try {
-    // Try to load existing user data
-    let userData = await loadUserData(userId);
+    let userData: UserData | null = null;
 
-    // If no data exists, create guest data
-    if (!userData) {
-      const guestId = generateUUID();
-      userData = createGuestUserData(guestId);
-      await saveUserData(userData);
+    if (session) {
+      const localData = await loadUserData(session.userId);
+      let serverData: UserData | null = null;
+
+      try {
+        serverData = await fetchUserData(session.userId, session.token);
+      } catch (error) {
+        console.warn('Failed to fetch server user data during startup:', error);
+      }
+
+      if (localData && serverData) {
+        userData = mergeUserData(localData, serverData);
+      } else if (serverData) {
+        userData = serverData;
+      } else if (localData) {
+        userData = localData;
+      } else {
+        userData = {
+          name: session.username,
+          id: session.userId,
+          decks: [],
+          collection: [],
+          selectedArchetype: null,
+          canvasLabels: [],
+        };
+      }
+    } else {
+      userData = await loadUserData(null);
+      if (!userData) {
+        const guestId = generateUUID();
+        userData = createGuestUserData(guestId);
+      }
+
+      dispatch({
+        type: 'SET_SESSION',
+        session: {
+          isGuest: true,
+          userId: userData.id,
+          username: userData.name,
+          token: null,
+        },
+      });
     }
 
+    await saveUserData(userData);
     dispatch({ type: 'SET_USER_DATA', userData });
     return { success: true };
   } catch (error) {

@@ -26,6 +26,8 @@ import { PixiCanvas } from '@/rendering/PixiCanvas';
 import { LoginModal } from '@/ui/LoginModal';
 import { Notifications } from '@/ui/Notifications';
 import { BottomPanel } from '@/ui/BottomPanel';
+import { saveUserData } from '@/data/userStorage';
+import { queueSync, flushSync } from '@/data/userSync';
 import '@/styles/ui.css';
 
 type SplashPhase = 'full' | 'transparent' | 'fading' | 'done';
@@ -88,6 +90,61 @@ export function App() {
       setTimeout(() => setSplashPhase('done'), 3000);
     });
   }, []);
+
+  useEffect(() => {
+    if (!state.userData) return;
+
+    // Always keep a local copy for offline use/recovery.
+    saveUserData(state.userData).catch((error) => {
+      console.error('Failed to save local user data:', error);
+    });
+
+    // Logged-in users additionally sync to backend.
+    if (
+      !state.session.isGuest &&
+      state.session.token &&
+      state.session.userId &&
+      state.userData.id === state.session.userId
+    ) {
+      queueSync(state.userData, state.session.token);
+    }
+  }, [state.userData, state.session.isGuest, state.session.token, state.session.userId]);
+
+  useEffect(() => {
+    const canFlush =
+      !!state.userData &&
+      !state.session.isGuest &&
+      !!state.session.token &&
+      !!state.session.userId &&
+      state.userData.id === state.session.userId;
+
+    if (!canFlush) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && state.userData && state.session.token) {
+        void flushSync(state.userData, state.session.token);
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      if (state.userData && state.session.token) {
+        void flushSync(state.userData, state.session.token);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [
+    state.userData,
+    state.session.isGuest,
+    state.session.token,
+    state.session.userId,
+  ]);
 
   if (startupState === 'error') {
     return <ErrorScreen error={startupError} onRetry={handleRetry} />;

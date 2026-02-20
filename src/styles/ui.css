@@ -530,6 +530,28 @@ body {
   font-size: 0.875rem;
 }
 
+.auth-mode-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.auth-mode-row button {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  background: #1a1a2e;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.auth-mode-row button.active {
+  background: #4a4a8a;
+  border-color: #6a6aba;
+  color: #fff;
+}
+
 .modal-actions {
   display: flex;
   gap: 0.5rem;

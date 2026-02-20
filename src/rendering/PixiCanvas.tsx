@@ -16,6 +16,8 @@ import { useAppState } from "@/app/AppState";
 import { PixiStage } from "./PixiStage";
 import {
   loadArchetypeScores,
+  setCachedArchetypeScores,
+  setArchetypeSaveHandler,
   type ArchetypeScores,
 } from "@/data/archetypeScores";
 
@@ -23,6 +25,8 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<PixiStage | null>(null);
   const { state, dispatch } = useAppState();
+  const userId = state.userData?.id ?? null;
+  const userArchetypeScores = state.userData?.archetypeScores ?? null;
   const [archetypeScores, setArchetypeScores] =
     useState<ArchetypeScores | null>(null);
   const [loadProgress, setLoadProgress] = useState<{
@@ -30,10 +34,52 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     total: number;
   } | null>(null);
 
-  // Load archetype scores once
+  // Load archetype scores from userData (when present) or static seed fallback.
   useEffect(() => {
-    loadArchetypeScores().then(setArchetypeScores);
-  }, []);
+    let cancelled = false;
+
+    if (userArchetypeScores) {
+      setCachedArchetypeScores(userArchetypeScores);
+      setArchetypeScores(userArchetypeScores);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setCachedArchetypeScores(null);
+    loadArchetypeScores().then((scores) => {
+      if (cancelled) return;
+      setArchetypeScores(scores);
+    }).catch((error) => {
+      if (cancelled) return;
+      console.warn("Failed to load archetype seed scores:", error);
+      setArchetypeScores(null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userArchetypeScores]);
+
+  // Route archetype score saves into userData for both guest and logged-in users.
+  useEffect(() => {
+    if (!userId) {
+      setArchetypeSaveHandler(null);
+      return;
+    }
+
+    setArchetypeSaveHandler((scores) => {
+      const cloned =
+        typeof structuredClone === "function"
+          ? structuredClone(scores)
+          : (JSON.parse(JSON.stringify(scores)) as ArchetypeScores);
+      dispatch({ type: "SET_ARCHETYPE_SCORES", scores: cloned });
+    });
+
+    return () => {
+      setArchetypeSaveHandler(null);
+    };
+  }, [userId, dispatch]);
 
   // Stable progress callback (ref-based to avoid recreating PixiStage)
   const progressRef = useRef(setLoadProgress);
@@ -69,6 +115,12 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
             clearTimerId = undefined;
           }, 600);
         }
+      },
+      onCanvasLabelsChange: (labels) => {
+        dispatch({ type: "SET_CANVAS_LABELS", labels });
+      },
+      onLabelPlacementConsumed: () => {
+        dispatch({ type: "SET_LABEL_PLACEMENT_MODE", enabled: false });
       },
     });
 
@@ -107,6 +159,7 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
       activeDeck,
       state.editor.activeBoard,
       state.userData.collection,
+      state.userData.canvasLabels ?? [],
     );
 
     // Pan to deck bounds when a new deck is loaded
@@ -118,6 +171,12 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
       stageRef.current.panToDeckBounds();
     }
   }, [state.userData, state.editor.activeDeckId, state.editor.activeBoard]);
+
+  // Keep label placement mode in sync with UI toggle.
+  useEffect(() => {
+    if (!stageRef.current) return;
+    stageRef.current.setLabelPlacementMode(state.ui.labelPlacementMode);
+  }, [state.ui.labelPlacementMode]);
 
   // Update archetype highlighting
   useEffect(() => {

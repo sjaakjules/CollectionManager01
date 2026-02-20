@@ -5,8 +5,20 @@
   force = true
 
 [[redirects]]
-  from = "/api/save-archetype-scores"
-  to = "/.netlify/functions/archetype-scores?action=save-full"
+  from = "/api/signup"
+  to = "/.netlify/functions/user-auth?action=signup"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/login"
+  to = "/.netlify/functions/user-auth?action=login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/user/*"
+  to = "/.netlify/functions/user-auth?action=user&path=:splat"
   status = 200
   force = true
 

@@ -1,7 +1,7 @@
 /**
  * Archetype scores data
  *
- * Loads card archetype scores from the API (Netlify Function backed by Blob storage).
+ * Loads card archetype scores from static seed data and persists edits via userData.
  * Each card maps to a set of archetype categories with numeric scores.
  * Positive scores indicate synergy, negative scores indicate anti-synergy.
  *
@@ -14,28 +14,46 @@ export type ArchetypeScores = Record<string, Record<string, number>> & {
 
 let cachedScores: ArchetypeScores | null = null;
 let cachedArchetypes: string[] | null = null;
+let externalSaveHandler: ((scores: ArchetypeScores) => void) | null = null;
 
 /**
- * Load archetype scores from the API.
- * Falls back to the static JSON file for local dev without Netlify Functions.
+ * Load archetype scores from static seed data.
  * Results are cached after first load.
  */
 export async function loadArchetypeScores(): Promise<ArchetypeScores> {
   if (cachedScores) return cachedScores;
 
-  // Try API first (works on Netlify), fall back to static file (works in local dev).
-  // Check Content-Type to avoid parsing HTML from SPA fallback as JSON.
-  let response = await fetch('/api/archetype-scores');
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!response.ok || !contentType.includes('application/json')) {
-    response = await fetch('/assets/sorcery_card_archetype_scores.json');
-  }
+  const response = await fetch('/assets/sorcery_card_archetype_scores.json', {
+    cache: 'no-store',
+  });
   if (!response.ok) {
     throw new Error(`Failed to load archetype scores: ${response.status}`);
   }
 
   cachedScores = (await response.json()) as ArchetypeScores;
   return cachedScores;
+}
+
+/**
+ * Override the in-memory scores cache.
+ * Pass null to clear and allow reload from API/static JSON.
+ */
+export function setCachedArchetypeScores(scores: ArchetypeScores | null): void {
+  cachedScores = scores;
+  invalidateArchetypeCache();
+}
+
+/**
+ * Set a persistence callback used to persist scores into userData.
+ * Used to persist scores into account userData.
+ */
+export function setArchetypeSaveHandler(
+  handler: ((scores: ArchetypeScores) => void) | null
+): void {
+  externalSaveHandler = handler;
+  if (externalSaveHandler && dirty) {
+    flushPendingScoreUpdates();
+  }
 }
 
 /**
@@ -92,10 +110,10 @@ export function updateArchetypeScore(
   const next = current + delta;
 
   if (next === 0) {
-    delete scores[cardName][archetype];
+    Reflect.deleteProperty(scores[cardName], archetype);
     // Clean up empty card entries
     if (Object.keys(scores[cardName]).length === 0) {
-      delete scores[cardName];
+      Reflect.deleteProperty(scores, cardName);
     }
   } else {
     scores[cardName][archetype] = next;
@@ -107,10 +125,8 @@ export function updateArchetypeScore(
 /**
  * Persistent save system.
  * The local cache is always the source of truth — every edit mutates it in-place,
- * and we sync the full state to the server.
- * Posts directly to the function URL with ?action=save-full (no redirect dependency).
+ * and we push the full state into userData via the configured save handler.
  */
-const SAVE_URL = '/api/archetype-scores?action=save-full';
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let dirty = false;
 let saveInFlight = false;
@@ -120,22 +136,20 @@ async function doFullSave(): Promise<void> {
   dirty = false;
   saveInFlight = true;
   try {
-    const res = await fetch(SAVE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cachedScores),
-    });
-    if (!res.ok) {
-      console.warn('Save failed with status:', res.status);
+    if (!externalSaveHandler) {
+      // Keep pending until userData persistence is wired.
       dirty = true;
+      return;
     }
+
+    externalSaveHandler(cachedScores);
   } catch (err) {
     console.warn('Failed to save archetype scores:', err);
     dirty = true;
   } finally {
     saveInFlight = false;
     // If new edits came in during the save, schedule another
-    if (dirty) {
+    if (dirty && externalSaveHandler) {
       saveTimer = setTimeout(doFullSave, 300);
     }
   }
@@ -148,7 +162,7 @@ export function saveScoreUpdate(): void {
 }
 
 /**
- * Immediately flush pending saves to the server.
+ * Immediately flush pending saves.
  * Called when switching/deselecting an archetype filter.
  */
 export function flushPendingScoreUpdates(): void {
@@ -160,12 +174,10 @@ export function flushPendingScoreUpdates(): void {
   doFullSave();
 }
 
-// Flush on page close / tab switch using sendBeacon (reliable even during unload)
+// Flush on page close / tab switch.
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
-    if (!dirty || !cachedScores) return;
-    const blob = new Blob([JSON.stringify(cachedScores)], { type: 'application/json' });
-    navigator.sendBeacon(SAVE_URL, blob);
+    flushPendingScoreUpdates();
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
@@ -180,34 +192,44 @@ export function saveArchetypeScores(scores: ArchetypeScores): void {
 }
 
 /**
- * Add a new category via the server API.
+ * Add a new category in-memory, then persist via userData save handler.
  * Returns the sanitized category name on success.
  */
 export async function addCategory(name: string): Promise<string> {
-  const response = await fetch('/api/archetype-scores?action=add-category', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ categoryName: name }),
-  });
+  const sanitized = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
 
-  const data = await response.json() as { ok?: boolean; name?: string; error?: string };
-
-  if (!response.ok) {
-    throw new Error(data.error ?? 'Failed to add category');
+  if (!sanitized) {
+    throw new Error('Invalid category name');
   }
 
-  const sanitized = data.name ?? name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  const scores = (cachedScores ?? {}) as ArchetypeScores;
+  if (!scores.__meta) scores.__meta = { categories: [] };
 
-  // Update local cache
-  if (cachedScores) {
-    if (!cachedScores.__meta) cachedScores.__meta = { categories: [] };
-    if (!cachedScores.__meta.categories.includes(sanitized)) {
-      cachedScores.__meta.categories.push(sanitized);
+  const existingFromData = new Set<string>();
+  for (const [key, val] of Object.entries(scores)) {
+    if (key === '__meta') continue;
+    if (val && typeof val === 'object') {
+      for (const arch of Object.keys(val)) {
+        existingFromData.add(arch);
+      }
     }
   }
 
-  // Invalidate archetype name cache so it's recomputed
+  if (
+    scores.__meta.categories.includes(sanitized) ||
+    existingFromData.has(sanitized)
+  ) {
+    throw new Error('Category already exists');
+  }
+
+  scores.__meta.categories.push(sanitized);
+  cachedScores = scores;
   invalidateArchetypeCache();
+  saveScoreUpdate();
 
   return sanitized;
 }

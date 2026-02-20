@@ -12,6 +12,8 @@ import type {
   Deck,
   ActiveBoard,
   CollectionItem,
+  CanvasLabel,
+  ArchetypeScoresData,
 } from '@/data/dataModels';
 
 // ============================================================================
@@ -53,6 +55,7 @@ export interface UIState {
   loginModalOpen: boolean;
   notifications: Notification[];
   selectedArchetype: string | null;
+  labelPlacementMode: boolean;
 }
 
 export interface Notification {
@@ -85,6 +88,7 @@ export const initialAppState: AppState = {
     loginModalOpen: false,
     notifications: [],
     selectedArchetype: null,
+    labelPlacementMode: false,
   },
 };
 
@@ -108,7 +112,10 @@ export type AppAction =
   | { type: 'TOGGLE_LOGIN_MODAL' }
   | { type: 'ADD_NOTIFICATION'; notification: Omit<Notification, 'id' | 'timestamp'> }
   | { type: 'DISMISS_NOTIFICATION'; id: string }
-  | { type: 'SET_SELECTED_ARCHETYPE'; archetype: string | null };
+  | { type: 'SET_SELECTED_ARCHETYPE'; archetype: string | null }
+  | { type: 'SET_LABEL_PLACEMENT_MODE'; enabled: boolean }
+  | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
+  | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData };
 
 // ============================================================================
 // Reducer
@@ -120,7 +127,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, cards: action.cards, cardsLoaded: true };
 
     case 'SET_USER_DATA':
-      return { ...state, userData: action.userData };
+      return {
+        ...state,
+        userData: normalizeUserData(action.userData),
+        ui: {
+          ...state.ui,
+          selectedArchetype: action.userData.selectedArchetype ?? null,
+        },
+      };
 
     case 'SET_SESSION':
       return { ...state, session: action.session };
@@ -272,19 +286,52 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         },
       };
 
-    case 'SET_SELECTED_ARCHETYPE':
+    case 'SET_SELECTED_ARCHETYPE': {
+      const nextArchetype =
+        state.ui.selectedArchetype === action.archetype ? null : action.archetype;
       return {
         ...state,
         ui: {
           ...state.ui,
-          selectedArchetype:
-            state.ui.selectedArchetype === action.archetype ? null : action.archetype,
+          selectedArchetype: nextArchetype,
         },
+        userData: state.userData
+          ? { ...state.userData, selectedArchetype: nextArchetype }
+          : state.userData,
+      };
+    }
+
+    case 'SET_LABEL_PLACEMENT_MODE':
+      return {
+        ...state,
+        ui: { ...state.ui, labelPlacementMode: action.enabled },
+      };
+
+    case 'SET_CANVAS_LABELS':
+      if (!state.userData) return state;
+      return {
+        ...state,
+        userData: { ...state.userData, canvasLabels: action.labels },
+      };
+
+    case 'SET_ARCHETYPE_SCORES':
+      if (!state.userData) return state;
+      return {
+        ...state,
+        userData: { ...state.userData, archetypeScores: action.scores },
       };
 
     default:
       return state;
   }
+}
+
+function normalizeUserData(userData: UserData): UserData {
+  return {
+    ...userData,
+    selectedArchetype: userData.selectedArchetype ?? null,
+    canvasLabels: userData.canvasLabels ?? [],
+  };
 }
 
 // ============================================================================

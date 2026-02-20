@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
+    "cards:thumbs": "node scripts/generate-card-thumbs.mjs",
+    "cards:thumbs:force": "node scripts/generate-card-thumbs.mjs --force",
     "publish": "pnpm build && netlify deploy --prod --no-build --dir=dist --functions=netlify/functions"
   },
   "dependencies": {

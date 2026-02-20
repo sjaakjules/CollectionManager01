@@ -24,6 +24,40 @@ pnpm dev
 pnpm build
 ```
 
+## Faster Card Startup (Thumbnails)
+
+Generate a thumbnail set from `public/assets/Cards`:
+
+```bash
+pnpm cards:thumbs
+```
+
+Default thumbnail settings are tuned for startup speed:
+- Max size: `256x256` (preserves aspect ratio, no upscaling)
+- WebP quality: `58`
+- WebP effort: `4`
+
+Enable thumbnail LOD loading in Vite:
+
+```bash
+VITE_CARD_LOD_ASSETS=1
+```
+
+Optional custom paths:
+
+```bash
+VITE_CARD_THUMBNAIL_PATH=/assets/CardsThumb
+VITE_CARD_MEDIUM_PATH=/assets/CardsMedium
+```
+
+Example for local dev:
+
+```bash
+VITE_CARD_LOD_ASSETS=1 pnpm dev
+```
+
+For Netlify builds, set the same `VITE_CARD_LOD_ASSETS=1` environment variable in site build settings.
+
 ## Tech Stack
 
 - **React 18** - UI state and panels

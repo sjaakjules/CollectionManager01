@@ -5,7 +5,7 @@
  * Implements debounced saves to avoid excessive API calls.
  */
 
-import type { UserData } from './dataModels';
+import type { UserData, CanvasLabel } from './dataModels';
 import { fetchUserData, updateUserData } from '@/auth/api';
 import { saveUserData } from './userStorage';
 import { debounce } from '@/utils/debounce';
@@ -104,6 +104,16 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
   }
   // Note: We don't merge local collection, server is authoritative
 
+  const labelsById = new Map<string, CanvasLabel>();
+  for (const label of server.canvasLabels ?? []) {
+    labelsById.set(label.id, label);
+  }
+  for (const label of local.canvasLabels ?? []) {
+    if (!labelsById.has(label.id)) {
+      labelsById.set(label.id, label);
+    }
+  }
+
   return {
     ...server,
     decks: Array.from(deckMap.values()),
@@ -111,5 +121,9 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
       name,
       quantity,
     })),
+    selectedArchetype:
+      server.selectedArchetype ?? local.selectedArchetype ?? null,
+    archetypeScores: server.archetypeScores ?? local.archetypeScores,
+    canvasLabels: Array.from(labelsById.values()),
   };
 }

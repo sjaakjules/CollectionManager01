@@ -6,7 +6,8 @@
  */
 
 import { storeSession, clearSession, type StoredSession } from './session';
-import { loginApi, type LoginResponse } from './api';
+import { getStoredSession } from './session';
+import { loginApi, signupApi, type LoginResponse } from './api';
 
 export interface LoginResult {
   userId: string;
@@ -19,6 +20,30 @@ export interface LoginResult {
  */
 export async function login(username: string, password: string): Promise<LoginResult> {
   const response: LoginResponse = await loginApi(username, password);
+
+  const session: StoredSession = {
+    userId: response.userId,
+    username: response.username,
+    token: response.token,
+  };
+
+  storeSession(session);
+
+  return {
+    userId: response.userId,
+    username: response.username,
+    token: response.token,
+  };
+}
+
+/**
+ * Create a new account and start a session
+ */
+export async function signup(
+  username: string,
+  password: string
+): Promise<LoginResult> {
+  const response: LoginResponse = await signupApi(username, password);
 
   const session: StoredSession = {
     userId: response.userId,
@@ -53,15 +78,6 @@ export function isAuthenticated(): boolean {
  * Get current auth token
  */
 export function getAuthToken(): string | null {
-  const session = getStoredSessionSafe();
+  const session = getStoredSession();
   return session?.token ?? null;
-}
-
-function getStoredSessionSafe(): StoredSession | null {
-  try {
-    const { getStoredSession } = require('./session');
-    return getStoredSession();
-  } catch {
-    return null;
-  }
 }

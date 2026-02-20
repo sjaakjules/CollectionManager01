@@ -52,6 +52,29 @@ export async function loginApi(
   return response.json();
 }
 
+/**
+ * Create a new account with username and password
+ */
+export async function signupApi(
+  username: string,
+  password: string
+): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE_URL}/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    const error = await parseError(response);
+    throw new Error(error.message);
+  }
+
+  return response.json();
+}
+
 // ============================================================================
 // User Data Endpoints
 // ============================================================================

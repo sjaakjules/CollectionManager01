@@ -6,14 +6,11 @@
  * - Medium: Used at normal zoom levels
  * - Full: Used when hovering or zoomed in (highest quality)
  *
- * Performance optimizations:
- * - Concurrent loading with configurable batch size
- * - Priority queue for visible cards
- * - Failed load tracking to avoid retries
- * - Texture caching with sync access
- *
- * Currently uses local images from /assets/Cards/ directory.
- * All LOD levels use the same image (webp format already optimized).
+ * By default, all LOD levels fall back to /assets/Cards/*.webp.
+ * Optional separate LOD assets can be enabled with:
+ * - VITE_CARD_LOD_ASSETS=1
+ * - VITE_CARD_THUMBNAIL_PATH=/assets/CardsThumb   (optional)
+ * - VITE_CARD_MEDIUM_PATH=/assets/CardsMedium     (optional)
  */
 
 import { Assets, Texture, TextureSource } from 'pixi.js';
@@ -39,21 +36,34 @@ export const LOD_ZOOM_THRESHOLDS = {
   MEDIUM_MAX: 0.4,
 } as const;
 
-// Local image path
-const LOCAL_IMAGE_PATH = '/assets/Cards';
+const USE_SEPARATE_LOD_ASSETS =
+  import.meta.env.VITE_CARD_LOD_ASSETS === '1' ||
+  import.meta.env.VITE_CARD_LOD_ASSETS === 'true';
+const FULL_IMAGE_PATH = '/assets/Cards';
+const THUMBNAIL_IMAGE_PATH =
+  import.meta.env.VITE_CARD_THUMBNAIL_PATH ?? '/assets/CardsThumb';
+const MEDIUM_IMAGE_PATH =
+  import.meta.env.VITE_CARD_MEDIUM_PATH ?? '/assets/CardsMedium';
 
-// Concurrent texture loads (higher = more parallelism but more memory pressure)
 const CONCURRENT_LOADS = 8;
-
-// Batch size for preloading
 const PRELOAD_BATCH_SIZE = 20;
+const BACKGROUND_CONCURRENT_LOADS = 2;
+const BACKGROUND_BATCH_SIZE = 12;
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface TextureCache {
-  texture?: Texture;
+  [LOD_LEVELS.THUMBNAIL]?: Texture;
+  [LOD_LEVELS.MEDIUM]?: Texture;
+  [LOD_LEVELS.FULL]?: Texture;
+}
+
+interface PreloadOptions {
+  lod?: LODLevel;
+  concurrentLoads?: number;
+  batchSize?: number;
 }
 
 // ============================================================================
@@ -65,12 +75,9 @@ interface TextureCache {
  * e.g., "ö" -> "o", "é" -> "e", "Ä" -> "a"
  */
 function normalizeToAscii(str: string): string {
-  // Use Unicode normalization to decompose characters
-  // NFD splits "ö" into "o" + combining diaeresis
-  // Then we remove the combining marks
   return str
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, ''); // Remove combining diacritical marks
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 /**
@@ -82,11 +89,11 @@ function normalizeToAscii(str: string): string {
 export function cardNameToSlug(cardName: string): string {
   return normalizeToAscii(cardName)
     .toLowerCase()
-    .replace(/['']/g, '')           // Remove apostrophes
-    .replace(/[-\s]+/g, '_')        // Replace hyphens and spaces with underscores
-    .replace(/[^a-z0-9_]/g, '')     // Remove remaining special chars (keep underscores)
-    .replace(/_+/g, '_')            // Collapse multiple underscores
-    .replace(/^_|_$/g, '')          // Trim leading/trailing underscores
+    .replace(/['']/g, '')
+    .replace(/[-\s]+/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
     .trim();
 }
 
@@ -116,145 +123,186 @@ export class LODManager {
    * Get texture for a card at specified LOD level
    * Returns cached texture or loads it if not available
    */
-  async getTexture(cardNameOrSlug: string, _lod: LODLevel): Promise<Texture> {
-    const slug = cardNameOrSlug.includes('_') ? cardNameOrSlug : cardNameToSlug(cardNameOrSlug);
+  async getTexture(cardNameOrSlug: string, lod: LODLevel): Promise<Texture> {
+    const slug = cardNameOrSlug.includes('_')
+      ? cardNameOrSlug
+      : cardNameToSlug(cardNameOrSlug);
+    const loadKey = this.getLoadKey(slug, lod);
 
-    // Skip if we already know this image failed
-    if (this.failedLoads.has(slug)) {
+    if (this.failedLoads.has(loadKey)) {
       return Texture.WHITE;
     }
 
-    // Check cache first
-    const cached = this.cache.get(slug);
-    if (cached?.texture) {
-      return cached.texture;
+    const cachedTexture = this.getCachedTexture(slug, lod);
+    if (cachedTexture) {
+      return cachedTexture;
     }
 
-    // Check if already loading
-    const loadingPromise = this.loadingPromises.get(slug);
+    const loadingPromise = this.loadingPromises.get(loadKey);
     if (loadingPromise) {
       return loadingPromise;
     }
 
-    // Start loading
-    const url = this.getImageUrl(slug);
-    const promise = this.loadTexture(url, slug);
-    this.loadingPromises.set(slug, promise);
+    const promise = this.loadTexture(slug, lod);
+    this.loadingPromises.set(loadKey, promise);
 
     try {
       const texture = await promise;
-      this.cacheTexture(slug, texture);
+      this.cacheTexture(slug, lod, texture);
       return texture;
     } catch {
-      this.failedLoads.add(slug);
+      this.failedLoads.add(loadKey);
       return Texture.WHITE;
     } finally {
-      this.loadingPromises.delete(slug);
+      this.loadingPromises.delete(loadKey);
     }
   }
 
   /**
    * Get texture synchronously if cached, otherwise return null
    */
-  getTextureSync(cardNameOrSlug: string, _lod: LODLevel): Texture | null {
-    const slug = cardNameOrSlug.includes('_') ? cardNameOrSlug : cardNameToSlug(cardNameOrSlug);
-    const cached = this.cache.get(slug);
-    return cached?.texture ?? null;
+  getTextureSync(cardNameOrSlug: string, lod: LODLevel): Texture | null {
+    const slug = cardNameOrSlug.includes('_')
+      ? cardNameOrSlug
+      : cardNameToSlug(cardNameOrSlug);
+    return this.getCachedTexture(slug, lod);
   }
 
   /**
-   * Preload textures for visible cards
-   * Uses concurrent loading with controlled parallelism for better performance
+   * Preload textures with controlled parallelism.
    */
-  async preloadTextures(cardNames: string[]): Promise<void> {
-    // Filter out already loaded/loading/failed
+  async preloadTextures(
+    cardNames: string[],
+    options: PreloadOptions = {},
+  ): Promise<void> {
+    const lod = options.lod ?? LOD_LEVELS.THUMBNAIL;
+    const concurrentLoads = options.concurrentLoads ?? CONCURRENT_LOADS;
+    const batchSize = options.batchSize ?? PRELOAD_BATCH_SIZE;
+
     const toLoad = cardNames.filter((name) => {
       const slug = cardNameToSlug(name);
+      const loadKey = this.getLoadKey(slug, lod);
       return (
-        !this.cache.has(slug) &&
-        !this.failedLoads.has(slug) &&
-        !this.loadingPromises.has(slug)
+        !this.getCachedTexture(slug, lod) &&
+        !this.failedLoads.has(loadKey) &&
+        !this.loadingPromises.has(loadKey)
       );
     });
 
     if (toLoad.length === 0) return;
 
-    // Process in batches with controlled concurrency
-    for (let i = 0; i < toLoad.length; i += PRELOAD_BATCH_SIZE) {
-      const batch = toLoad.slice(i, i + PRELOAD_BATCH_SIZE);
+    for (let i = 0; i < toLoad.length; i += batchSize) {
+      const batch = toLoad.slice(i, i + batchSize);
+      const queue = [...batch];
+      const workerCount = Math.min(concurrentLoads, queue.length);
 
-      // Use a semaphore-like approach for concurrent loading
-      const loadPromises: Promise<void>[] = [];
-      let activeLoads = 0;
-      let batchIndex = 0;
-
-      const loadNext = async (): Promise<void> => {
-        while (batchIndex < batch.length) {
-          if (activeLoads >= CONCURRENT_LOADS) {
-            // Wait for slot to free up
-            await new Promise((resolve) => setTimeout(resolve, 10));
-            continue;
+      const workers: Promise<void>[] = [];
+      for (let worker = 0; worker < workerCount; worker++) {
+        workers.push((async () => {
+          while (queue.length > 0) {
+            const name = queue.shift();
+            if (!name) break;
+            await this.getTexture(name, lod).catch(() => null);
           }
-
-          const name = batch[batchIndex++];
-          if (!name) break;
-
-          activeLoads++;
-          this.getTexture(name, LOD_LEVELS.THUMBNAIL)
-            .catch(() => null)
-            .finally(() => {
-              activeLoads--;
-            });
-        }
-      };
-
-      // Start concurrent loaders
-      for (let j = 0; j < Math.min(CONCURRENT_LOADS, batch.length); j++) {
-        loadPromises.push(loadNext());
+        })());
       }
 
-      await Promise.all(loadPromises);
+      await Promise.all(workers);
     }
+  }
+
+  /**
+   * Slowly preload full-resolution textures in the background.
+   */
+  async preloadFullTextures(cardNames: string[]): Promise<void> {
+    await this.preloadTextures(cardNames, {
+      lod: LOD_LEVELS.FULL,
+      concurrentLoads: BACKGROUND_CONCURRENT_LOADS,
+      batchSize: BACKGROUND_BATCH_SIZE,
+    });
   }
 
   /**
    * Clear cached textures to free memory
    */
   clearCache(): void {
+    const seen = new Set<Texture>();
     for (const cached of this.cache.values()) {
-      cached.texture?.destroy();
+      for (const texture of Object.values(cached)) {
+        if (!texture || seen.has(texture)) continue;
+        seen.add(texture);
+        texture.destroy();
+      }
     }
     this.cache.clear();
     this.failedLoads.clear();
+    this.loadingPromises.clear();
   }
 
   /**
-   * Get number of cached textures
+   * Get number of cached cards
    */
   getCacheSize(): number {
     return this.cache.size;
   }
 
-  private getImageUrl(slug: string): string {
-    return `${LOCAL_IMAGE_PATH}/${slug}.webp`;
+  private getLoadKey(slug: string, lod: LODLevel): string {
+    return `${slug}:${lod}`;
   }
 
-  private async loadTexture(url: string, slug: string): Promise<Texture> {
-    try {
-      // Use Assets.load for proper caching and management
-      const texture = await Assets.load<Texture>(url);
-      return texture;
-    } catch (error) {
-      // Only log once per card to avoid spam
-      if (!this.failedLoads.has(slug)) {
-        console.warn(`Image not found: ${slug}.webp`);
-      }
-      throw error;
+  private getCachedTexture(slug: string, lod: LODLevel): Texture | null {
+    const cached = this.cache.get(slug);
+    if (!cached) return null;
+
+    if (lod === LOD_LEVELS.THUMBNAIL) {
+      return cached.thumbnail ?? cached.medium ?? cached.full ?? null;
     }
+    if (lod === LOD_LEVELS.MEDIUM) {
+      return cached.medium ?? cached.full ?? cached.thumbnail ?? null;
+    }
+    return cached.full ?? cached.medium ?? cached.thumbnail ?? null;
   }
 
-  private cacheTexture(slug: string, texture: Texture): void {
-    this.cache.set(slug, { texture });
+  private getImageUrls(slug: string, lod: LODLevel): string[] {
+    const fullUrl = `${FULL_IMAGE_PATH}/${slug}.webp`;
+    if (!USE_SEPARATE_LOD_ASSETS) {
+      return [fullUrl];
+    }
+
+    let urls: string[];
+    if (lod === LOD_LEVELS.THUMBNAIL) {
+      urls = [`${THUMBNAIL_IMAGE_PATH}/${slug}.webp`, fullUrl];
+    } else if (lod === LOD_LEVELS.MEDIUM) {
+      urls = [`${MEDIUM_IMAGE_PATH}/${slug}.webp`, fullUrl];
+    } else {
+      urls = [fullUrl];
+    }
+
+    return Array.from(new Set(urls));
+  }
+
+  private async loadTexture(slug: string, lod: LODLevel): Promise<Texture> {
+    const urls = this.getImageUrls(slug, lod);
+    let lastError: unknown;
+
+    for (const url of urls) {
+      try {
+        return await Assets.load<Texture>(url);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (!this.failedLoads.has(this.getLoadKey(slug, lod))) {
+      console.warn(`Image not found: ${slug}.webp (${lod})`);
+    }
+    throw lastError ?? new Error(`Failed to load texture for ${slug} (${lod})`);
+  }
+
+  private cacheTexture(slug: string, lod: LODLevel, texture: Texture): void {
+    const cached = this.cache.get(slug) ?? {};
+    cached[lod] = texture;
+    this.cache.set(slug, cached);
   }
 }
 
