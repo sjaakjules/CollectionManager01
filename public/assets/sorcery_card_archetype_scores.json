@@ -728,7 +728,8 @@
   },
   "Entombed": {
     "aggro": 4,
-    "burrowed": 4
+    "burrowed": 4,
+    "voidwalk": 2
   },
   "Ersatz Platz": {
     "aggro": -1

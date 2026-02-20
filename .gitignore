@@ -61,3 +61,6 @@ guest.json
 # Editor directories
 *.sublime-workspace
 *.sublime-project
+
+# Local Netlify folder
+.netlify

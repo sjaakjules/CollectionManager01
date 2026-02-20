@@ -4,6 +4,7 @@
  * Displays archetype category buttons that, when selected,
  * highlight cards in the collection/deck matching that archetype.
  * Also provides a deck URL input to load decks from curiosa.io.
+ * Includes an "Add Category" button to create new categories.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -12,6 +13,8 @@ import {
   loadArchetypeScores,
   getArchetypeNames,
   formatArchetypeName,
+  addCategory,
+  invalidateArchetypeCache,
   type ArchetypeScores,
 } from '@/data/archetypeScores';
 import { fetchCuriosaDeck } from '@/data/curiosaService';
@@ -24,6 +27,12 @@ export function BottomPanel() {
   const [deckUrl, setDeckUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Add-category UI state
+  const [showAddInput, setShowAddInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
     loadArchetypeScores().then((data) => {
@@ -57,12 +66,52 @@ export function BottomPanel() {
     }
   }, [deckUrl, isLoading, dispatch]);
 
+  const handleAddCategory = useCallback(async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed || addingCategory) return;
+
+    setAddingCategory(true);
+    setAddError(null);
+
+    try {
+      const sanitized = await addCategory(trimmed);
+
+      // Refresh the archetype list from updated cache
+      if (scores) {
+        invalidateArchetypeCache();
+        setArchetypes(getArchetypeNames(scores));
+      }
+
+      setNewCategoryName('');
+      setShowAddInput(false);
+
+      // Auto-select the new category
+      dispatch({ type: 'SET_SELECTED_ARCHETYPE', archetype: sanitized });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add category';
+      setAddError(message);
+    } finally {
+      setAddingCategory(false);
+    }
+  }, [newCategoryName, addingCategory, scores, dispatch]);
+
+  const handleAddKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAddCategory();
+    } else if (e.key === 'Escape') {
+      setShowAddInput(false);
+      setNewCategoryName('');
+      setAddError(null);
+    }
+  };
+
   return (
     <div className="bottom-panel">
       {scores && archetypes.length > 0 && (
         <div className="bottom-panel-buttons">
           {archetypes.map((archetype) => (
             <button
+              type="button"
               key={archetype}
               className={`archetype-button ${selectedArchetype === archetype ? 'active' : ''}`}
               onClick={() => handleClick(archetype)}
@@ -70,6 +119,49 @@ export function BottomPanel() {
               {formatArchetypeName(archetype)}
             </button>
           ))}
+
+          {showAddInput ? (
+            <div className="add-category-inline">
+              <input
+                type="text"
+                className="add-category-input"
+                placeholder="Category name..."
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={handleAddKeyDown}
+                disabled={addingCategory}
+                autoFocus
+              />
+              <button
+                type="button"
+                className="add-category-confirm"
+                onClick={handleAddCategory}
+                disabled={!newCategoryName.trim() || addingCategory}
+              >
+                {addingCategory ? '...' : 'Add'}
+              </button>
+              <button
+                type="button"
+                className="add-category-cancel"
+                onClick={() => {
+                  setShowAddInput(false);
+                  setNewCategoryName('');
+                  setAddError(null);
+                }}
+              >
+                ✕
+              </button>
+              {addError && <span className="add-category-error">{addError}</span>}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="archetype-button add-category-btn"
+              onClick={() => setShowAddInput(true)}
+            >
+              +
+            </button>
+          )}
         </div>
       )}
 

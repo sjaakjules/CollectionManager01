@@ -50,7 +50,7 @@ import type {
 } from "@/data/dataModels";
 import {
   updateArchetypeScore,
-  saveArchetypeScores,
+  saveScoreUpdate,
   type ArchetypeScores,
 } from "@/data/archetypeScores";
 import { getThresholdGroup } from "@/data/dataModels";
@@ -1031,8 +1031,8 @@ export class PixiStage {
       }
     }
 
-    // Persist to disk (debounced)
-    saveArchetypeScores(this.archetypeScores);
+    // Persist to server (debounced, granular update for concurrency)
+    saveScoreUpdate(cardName, this.selectedArchetype, delta);
   }
 
   private rebuildCardSprites(): void {
