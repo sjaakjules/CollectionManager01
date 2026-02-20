@@ -150,7 +150,7 @@ export class Camera {
     }
   }
 
-  fitToContent(bounds: CameraBounds, padding = 100): void {
+  fitToContent(bounds: CameraBounds, padding = 100, time = 800): void {
     const width = bounds.right - bounds.left + padding * 2;
     const height = bounds.bottom - bounds.top + padding * 2;
 
@@ -168,7 +168,7 @@ export class Camera {
     this.viewport.animate({
       scale: clampedScale,
       position: { x: centerX, y: centerY },
-      time: 800,
+      time,
       ease: 'easeOutQuad',
     });
 

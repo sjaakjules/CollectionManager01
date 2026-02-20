@@ -48,13 +48,20 @@ export function PixiCanvas() {
     };
   }, [dispatch]);
 
-  // Update stage when cards change
+  // Update stage when cards change, play reveal animation on first load
+  const hasPlayedReveal = useRef(false);
   useEffect(() => {
     if (!stageRef.current || !state.cardsLoaded) return;
     stageRef.current.setCards(state.cards);
+
+    if (!hasPlayedReveal.current) {
+      hasPlayedReveal.current = true;
+      stageRef.current.playRevealAnimation();
+    }
   }, [state.cards, state.cardsLoaded]);
 
-  // Update overlays when deck changes
+  // Update overlays when deck changes, pan to deck on new load
+  const prevDeckIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!stageRef.current || !state.userData) return;
 
@@ -67,6 +74,16 @@ export function PixiCanvas() {
       state.editor.activeBoard,
       state.userData.collection
     );
+
+    // Pan to deck bounds when a new deck is loaded
+    const isNewDeck =
+      activeDeck &&
+      state.editor.activeDeckId !== prevDeckIdRef.current;
+    prevDeckIdRef.current = state.editor.activeDeckId;
+
+    if (isNewDeck) {
+      stageRef.current.panToDeckBounds();
+    }
   }, [state.userData, state.editor.activeDeckId, state.editor.activeBoard]);
 
   // Update archetype highlighting
