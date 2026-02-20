@@ -1,1 +1,4 @@
 autoApproveBuilds: true
+
+onlyBuiltDependencies:
+  - esbuild
