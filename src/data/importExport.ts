@@ -48,6 +48,28 @@ export function exportMainboardToText(deck: Deck): string {
   return deck.boards.mainboard.map((c) => `${c.quantity} ${c.name}`).join('\n');
 }
 
+/**
+ * Export selected cards to "quantity name" lines.
+ */
+export function exportSelectedToText(
+  cards: Array<{ name: string; quantity: number }>,
+): string {
+  return cards.map((c) => `${c.quantity} ${c.name}`).join('\n');
+}
+
+/**
+ * Download plain text content as a local file.
+ */
+export function downloadTextFile(filename: string, text: string): void {
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 // ============================================================================
 // Import
 // ============================================================================

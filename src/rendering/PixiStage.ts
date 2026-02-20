@@ -73,6 +73,7 @@ export interface PixiStageConfig {
   onRemoveFromDeck: (cardName: string) => void;
   onTextureProgress?: (loaded: number, total: number) => void;
   onBackgroundTextureProgress?: (loaded: number, total: number) => void;
+  onSelectionChange?: (selectedCardNames: string[]) => void;
   onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   onLabelPlacementConsumed?: () => void;
 }
@@ -141,7 +142,10 @@ export class PixiStage {
   private cards: Card[] = [];
   private isInitialized = false;
   private isDestroyed = false;
-  private pendingCards: Card[] | null = null;
+  private pendingCardSet:
+    | { cards: Card[]; filteredMode: boolean }
+    | null = null;
+  private collectionFilteredMode = false;
 
   // Culling state
   private lastCullingUpdate = 0;
@@ -220,6 +224,7 @@ export class PixiStage {
   private onRemoveFromDeck: (cardName: string) => void;
   private onTextureProgress?: (loaded: number, total: number) => void;
   private onBackgroundTextureProgress?: (loaded: number, total: number) => void;
+  private onSelectionChange?: (selectedCardNames: string[]) => void;
   private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   private onLabelPlacementConsumed?: () => void;
 
@@ -228,6 +233,7 @@ export class PixiStage {
     this.onRemoveFromDeck = config.onRemoveFromDeck;
     this.onTextureProgress = config.onTextureProgress;
     this.onBackgroundTextureProgress = config.onBackgroundTextureProgress;
+    this.onSelectionChange = config.onSelectionChange;
     this.onCanvasLabelsChange = config.onCanvasLabelsChange;
     this.onLabelPlacementConsumed = config.onLabelPlacementConsumed;
 
@@ -286,9 +292,10 @@ export class PixiStage {
 
     this.isInitialized = true;
 
-    if (this.pendingCards) {
-      this.cards = this.pendingCards;
-      this.pendingCards = null;
+    if (this.pendingCardSet) {
+      this.cards = this.pendingCardSet.cards;
+      this.collectionFilteredMode = this.pendingCardSet.filteredMode;
+      this.pendingCardSet = null;
       // Reset reveal state left by any earlier empty reveal call so culling
       // inside rebuildCardSprites() doesn't prematurely preload textures.
       this.initialRevealCompleted = false;
@@ -440,8 +447,9 @@ export class PixiStage {
         this.camera.pauseDrag();
       } else {
         // Clicked on unselected card - select it and start dragging
-        this.clearSelection();
-        this.selectCard(clickedCard);
+        this.clearSelection(true);
+        this.selectCard(clickedCard, true);
+        this.emitSelectionChange();
         this.pointerDownOnSelectedCard = true;
         this.startCardDrag(worldPos);
         this.camera.pauseDrag();
@@ -745,23 +753,29 @@ export class PixiStage {
   // Selection Management
   // ============================================================================
 
-  private selectCard(cardName: string): void {
+  private selectCard(cardName: string, suppressEmit = false): void {
     this.selectedCards.add(cardName);
     const data = this.getSpriteData(cardName);
     if (data) {
       data.sprite.setSelected(true);
     }
+    if (!suppressEmit) {
+      this.emitSelectionChange();
+    }
   }
 
-  private deselectCard(cardName: string): void {
+  private deselectCard(cardName: string, suppressEmit = false): void {
     this.selectedCards.delete(cardName);
     const data = this.getSpriteData(cardName);
     if (data) {
       data.sprite.setSelected(false);
     }
+    if (!suppressEmit) {
+      this.emitSelectionChange();
+    }
   }
 
-  private clearSelection(): void {
+  private clearSelection(suppressEmit = false): void {
     for (const cardName of this.selectedCards) {
       const data = this.getSpriteData(cardName);
       if (data) {
@@ -769,6 +783,23 @@ export class PixiStage {
       }
     }
     this.selectedCards.clear();
+    if (!suppressEmit) {
+      this.emitSelectionChange();
+    }
+  }
+
+  private getSelectedCardNames(): string[] {
+    const names = new Set<string>();
+    for (const key of this.selectedCards) {
+      const data = this.getSpriteData(key);
+      if (!data) continue;
+      names.add(data.layout.name);
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }
+
+  private emitSelectionChange(): void {
+    this.onSelectionChange?.(this.getSelectedCardNames());
   }
 
   private getCardAtPosition(worldPos: { x: number; y: number }): string | null {
@@ -862,9 +893,7 @@ export class PixiStage {
     for (const cardName of this.dragState.draggedCards) {
       const data = this.getSpriteData(cardName);
       if (data) {
-        const cardSize = data.layout.isLandscape
-          ? CARD_SIZE.LANDSCAPE
-          : CARD_SIZE.PORTRAIT;
+        const cardSize = data.displaySize;
         const isLandscape = data.layout.isLandscape;
 
         // Get current center position
@@ -996,9 +1025,6 @@ export class PixiStage {
       // Skip position updates during animation
       if (skipPositionUpdates) continue;
 
-      const cardSize = data.layout.isLandscape
-        ? CARD_SIZE.LANDSCAPE
-        : CARD_SIZE.PORTRAIT;
       const isSite = data.layout.isLandscape;
 
       // Calculate offset from center of stack
@@ -1011,19 +1037,18 @@ export class PixiStage {
       data.sprite.y = data.basePosition.y + yOffset;
 
       // Update bounds for hit testing
+      const displaySize = data.displaySize;
       data.bounds = {
         left: data.sprite.x,
         top: data.sprite.y,
-        right: data.sprite.x + cardSize.width,
-        bottom: data.sprite.y + cardSize.height,
+        right: data.sprite.x + displaySize.width,
+        bottom: data.sprite.y + displaySize.height,
       };
     }
   }
 
   private updateCardBounds(data: CardSpriteData): void {
-    const cardSize = data.layout.isLandscape
-      ? CARD_SIZE.LANDSCAPE
-      : CARD_SIZE.PORTRAIT;
+    const cardSize = data.displaySize;
     data.bounds = {
       left: data.sprite.x,
       top: data.sprite.y,
@@ -1078,17 +1103,18 @@ export class PixiStage {
 
     if (boxWidth > 10 || boxHeight > 10) {
       // Clear existing selection and select cards in box
-      this.clearSelection();
+      this.clearSelection(true);
       for (const [cardName, data] of this.cardSprites) {
         if (this.boundsIntersect(data.bounds, selectionBounds)) {
-          this.selectCard(cardName);
+          this.selectCard(cardName, true);
         }
       }
       for (const [key, data] of this.deckSprites) {
         if (this.boundsIntersect(data.bounds, selectionBounds)) {
-          this.selectCard(key);
+          this.selectCard(key, true);
         }
       }
+      this.emitSelectionChange();
     }
 
     if (this.selectionBox.graphics) {
@@ -1104,13 +1130,15 @@ export class PixiStage {
   // Public Methods
   // ============================================================================
 
-  setCards(cards: Card[]): void {
+  setCards(cards: Card[], options?: { filteredMode?: boolean }): void {
+    const filteredMode = options?.filteredMode ?? false;
     if (!this.isInitialized) {
-      this.pendingCards = cards;
+      this.pendingCardSet = { cards, filteredMode };
       return;
     }
 
     this.cards = cards;
+    this.collectionFilteredMode = filteredMode;
     this.rebuildCardSprites();
   }
 
@@ -1353,6 +1381,7 @@ export class PixiStage {
     this.isDestroyed = true;
     this.highDetailPreloadQueued = false;
     this.onBackgroundTextureProgress?.(0, 0);
+    this.onSelectionChange?.([]);
 
     for (const id of this.pendingRevealTimeouts) {
       clearTimeout(id);
@@ -1464,7 +1493,10 @@ export class PixiStage {
       cards: layout,
       headers,
       bounds: contentBounds,
-    } = calculateCardLayout({ cards: layoutCards });
+    } = calculateCardLayout({
+      cards: layoutCards,
+      mode: this.collectionFilteredMode ? "filteredFlat" : "grouped",
+    });
 
     // Store collection bounds for deck layout positioning
     this.collectionBounds = contentBounds;
@@ -1780,9 +1812,15 @@ export class PixiStage {
         if (!data.sprite.visible) {
           data.sprite.visible = true;
           cardsToLoad.push(name);
-          if (this.initialRevealCompleted && !this.isRevealInProgress) {
-            data.sprite.updateLOD(this.camera.zoom);
+        }
+
+        if (this.initialRevealCompleted && !this.isRevealInProgress) {
+          // Filter/layout rebuilds recreate sprites; ensure visible cards start
+          // loading immediately even when zoom level hasn't changed yet.
+          if (!data.sprite.isTextureReady) {
+            data.sprite.loadInitialTexture();
           }
+          data.sprite.updateLOD(this.camera.zoom);
         }
       } else {
         if (data.sprite.visible) {
@@ -1798,9 +1836,13 @@ export class PixiStage {
         if (!data.sprite.visible) {
           data.sprite.visible = true;
           cardsToLoad.push(data.layout.name);
-          if (this.initialRevealCompleted && !this.isRevealInProgress) {
-            data.sprite.updateLOD(this.camera.zoom);
+        }
+
+        if (this.initialRevealCompleted && !this.isRevealInProgress) {
+          if (!data.sprite.isTextureReady) {
+            data.sprite.loadInitialTexture();
           }
+          data.sprite.updateLOD(this.camera.zoom);
         }
       } else {
         if (data.sprite.visible) {

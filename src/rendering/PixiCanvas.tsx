@@ -11,7 +11,7 @@
  * State flows one-way: React state -> PixiJS reads state for rendering.
  */
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { useAppState } from "@/app/AppState";
 import { PixiStage } from "./PixiStage";
 import {
@@ -20,6 +20,11 @@ import {
   setArchetypeSaveHandler,
   type ArchetypeScores,
 } from "@/data/archetypeScores";
+import {
+  applyCardFilters,
+  ensureCardFilterState,
+  isCardFilterActive,
+} from "@/data/cardFilters";
 
 export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,6 +32,10 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
   const { state, dispatch } = useAppState();
   const userId = state.userData?.id ?? null;
   const userArchetypeScores = state.userData?.archetypeScores ?? null;
+  const cardFilters = useMemo(
+    () => ensureCardFilterState(state.ui.cardFilters),
+    [state.ui.cardFilters],
+  );
   const [archetypeScores, setArchetypeScores] =
     useState<ArchetypeScores | null>(null);
   const [loadProgress, setLoadProgress] = useState<{
@@ -37,6 +46,15 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     loaded: number;
     total: number;
   } | null>(null);
+
+  const filteredCards = useMemo(
+    () => applyCardFilters(state.cards, cardFilters),
+    [state.cards, cardFilters],
+  );
+  const filteredMode = useMemo(
+    () => isCardFilterActive(cardFilters),
+    [cardFilters],
+  );
 
   // Load archetype scores from userData (when present) or static seed fallback.
   useEffect(() => {
@@ -129,6 +147,9 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
         }
         backgroundProgressRef.current({ loaded, total });
       },
+      onSelectionChange: (selectedCardNames) => {
+        dispatch({ type: "SET_SELECTED_CARD_NAMES", names: selectedCardNames });
+      },
       onCanvasLabelsChange: (labels) => {
         dispatch({ type: "SET_CANVAS_LABELS", labels });
       },
@@ -146,16 +167,19 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     };
   }, [dispatch]);
 
-  // Update stage when cards change, start texture reveal on first load
+  // Keep rendered cards in sync with active filters.
   useEffect(() => {
     if (!stageRef.current || !state.cardsLoaded) return;
 
-    stageRef.current.setCards(state.cards);
+    stageRef.current.setCards(filteredCards, { filteredMode });
+  }, [filteredCards, filteredMode, state.cardsLoaded]);
 
-    // Always reset progress and replay reveal when cards change
+  // Replay reveal/progress only when the source card dataset changes.
+  useEffect(() => {
+    if (!stageRef.current || !state.cardsLoaded) return;
+
     setLoadProgress(null);
     setBackgroundLoadProgress(null);
-
     stageRef.current.startTextureReveal();
   }, [state.cards, state.cardsLoaded]);
 

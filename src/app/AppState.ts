@@ -15,6 +15,11 @@ import type {
   CanvasLabel,
   ArchetypeScoresData,
 } from '@/data/dataModels';
+import {
+  createDefaultCardFilters,
+  ensureCardFilterState,
+  type CardFilterState,
+} from '@/data/cardFilters';
 
 // ============================================================================
 // State Shape
@@ -56,6 +61,8 @@ export interface UIState {
   notifications: Notification[];
   selectedArchetype: string | null;
   labelPlacementMode: boolean;
+  cardFilters: CardFilterState;
+  selectedCardNames: string[];
 }
 
 export interface Notification {
@@ -89,6 +96,8 @@ export const initialAppState: AppState = {
     notifications: [],
     selectedArchetype: null,
     labelPlacementMode: false,
+    cardFilters: createDefaultCardFilters(),
+    selectedCardNames: [],
   },
 };
 
@@ -114,6 +123,9 @@ export type AppAction =
   | { type: 'DISMISS_NOTIFICATION'; id: string }
   | { type: 'SET_SELECTED_ARCHETYPE'; archetype: string | null }
   | { type: 'SET_LABEL_PLACEMENT_MODE'; enabled: boolean }
+  | { type: 'SET_CARD_FILTERS'; filters: CardFilterState }
+  | { type: 'CLEAR_CARD_FILTERS' }
+  | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
   | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
   | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData };
 
@@ -305,6 +317,24 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         ui: { ...state.ui, labelPlacementMode: action.enabled },
+      };
+
+    case 'SET_CARD_FILTERS':
+      return {
+        ...state,
+        ui: { ...state.ui, cardFilters: ensureCardFilterState(action.filters) },
+      };
+
+    case 'CLEAR_CARD_FILTERS':
+      return {
+        ...state,
+        ui: { ...state.ui, cardFilters: createDefaultCardFilters() },
+      };
+
+    case 'SET_SELECTED_CARD_NAMES':
+      return {
+        ...state,
+        ui: { ...state.ui, selectedCardNames: action.names },
       };
 
     case 'SET_CANVAS_LABELS':

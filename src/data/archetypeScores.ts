@@ -8,8 +8,13 @@
  * A __meta key stores explicitly added categories so they persist even with no card scores.
  */
 
+export interface ArchetypeMeta {
+  categories: string[];
+  removedCategories?: string[];
+}
+
 export type ArchetypeScores = Record<string, Record<string, number>> & {
-  __meta?: { categories: string[] };
+  __meta?: ArchetypeMeta;
 };
 
 let cachedScores: ArchetypeScores | null = null;
@@ -65,11 +70,14 @@ export function getArchetypeNames(scores: ArchetypeScores): string[] {
   if (cachedArchetypes) return cachedArchetypes;
 
   const archetypes = new Set<string>();
+  const removed = new Set(scores.__meta?.removedCategories ?? []);
 
   // Include explicitly registered categories from __meta
   if (scores.__meta?.categories) {
     for (const cat of scores.__meta.categories) {
-      archetypes.add(cat);
+      if (!removed.has(cat)) {
+        archetypes.add(cat);
+      }
     }
   }
 
@@ -77,12 +85,21 @@ export function getArchetypeNames(scores: ArchetypeScores): string[] {
   for (const [key, cardScores] of Object.entries(scores)) {
     if (key === '__meta') continue;
     for (const archetype of Object.keys(cardScores)) {
-      archetypes.add(archetype);
+      if (!removed.has(archetype)) {
+        archetypes.add(archetype);
+      }
     }
   }
 
   cachedArchetypes = [...archetypes].sort();
   return cachedArchetypes;
+}
+
+/**
+ * Get removed category names that can be restored via UI.
+ */
+export function getRemovedArchetypeNames(scores: ArchetypeScores): string[] {
+  return [...new Set(scores.__meta?.removedCategories ?? [])].sort();
 }
 
 /**
@@ -191,42 +208,100 @@ export function saveArchetypeScores(scores: ArchetypeScores): void {
   saveScoreUpdate();
 }
 
+function sanitizeCategoryName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+}
+
 /**
  * Add a new category in-memory, then persist via userData save handler.
  * Returns the sanitized category name on success.
  */
 export async function addCategory(name: string): Promise<string> {
-  const sanitized = name
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_]/g, '');
+  const sanitized = sanitizeCategoryName(name);
 
   if (!sanitized) {
     throw new Error('Invalid category name');
   }
 
   const scores = (cachedScores ?? {}) as ArchetypeScores;
-  if (!scores.__meta) scores.__meta = { categories: [] };
+  if (!scores.__meta) scores.__meta = { categories: [], removedCategories: [] };
+  if (!scores.__meta.removedCategories) scores.__meta.removedCategories = [];
 
-  const existingFromData = new Set<string>();
+  const removed = new Set(scores.__meta.removedCategories);
+
+  const visibleFromData = new Set<string>();
   for (const [key, val] of Object.entries(scores)) {
     if (key === '__meta') continue;
     if (val && typeof val === 'object') {
       for (const arch of Object.keys(val)) {
-        existingFromData.add(arch);
+        if (!removed.has(arch)) {
+          visibleFromData.add(arch);
+        }
       }
     }
   }
 
   if (
     scores.__meta.categories.includes(sanitized) ||
-    existingFromData.has(sanitized)
+    visibleFromData.has(sanitized)
   ) {
     throw new Error('Category already exists');
   }
 
-  scores.__meta.categories.push(sanitized);
+  scores.__meta.removedCategories = scores.__meta.removedCategories.filter(
+    (entry) => entry !== sanitized,
+  );
+
+  if (!scores.__meta.categories.includes(sanitized)) {
+    scores.__meta.categories.push(sanitized);
+  }
+
+  cachedScores = scores;
+  invalidateArchetypeCache();
+  saveScoreUpdate();
+
+  return sanitized;
+}
+
+/**
+ * Soft-remove a category from active highlight options.
+ * Removed categories are hidden from selection but can be restored later.
+ */
+export async function removeCategory(name: string): Promise<string> {
+  const sanitized = sanitizeCategoryName(name);
+  if (!sanitized) {
+    throw new Error('Invalid category name');
+  }
+
+  const scores = (cachedScores ?? {}) as ArchetypeScores;
+  if (!scores.__meta) scores.__meta = { categories: [], removedCategories: [] };
+  if (!scores.__meta.removedCategories) scores.__meta.removedCategories = [];
+
+  const hasInMeta = scores.__meta.categories.includes(sanitized);
+  let hasInData = false;
+  for (const [key, val] of Object.entries(scores)) {
+    if (key === '__meta') continue;
+    if (val && typeof val === 'object' && sanitized in val) {
+      hasInData = true;
+      break;
+    }
+  }
+
+  if (!hasInMeta && !hasInData) {
+    throw new Error('Category does not exist');
+  }
+
+  if (!scores.__meta.removedCategories.includes(sanitized)) {
+    scores.__meta.removedCategories.push(sanitized);
+  }
+  scores.__meta.categories = scores.__meta.categories.filter(
+    (entry) => entry !== sanitized,
+  );
+
   cachedScores = scores;
   invalidateArchetypeCache();
   saveScoreUpdate();

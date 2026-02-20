@@ -353,6 +353,7 @@ export interface LayoutConfig {
     primarySet?: string;
     rarity?: CardRarity | null;
   }>;
+  mode?: "grouped" | "filteredFlat";
 }
 
 export interface ContentBounds {
@@ -427,6 +428,17 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
     contentRight = Math.max(contentRight, right);
     contentBottom = Math.max(contentBottom, bottom);
   };
+
+  if (config.mode === "filteredFlat") {
+    const flatCards = layoutFilteredCards(config.cards, updateBounds);
+    const bounds: ContentBounds = {
+      left: contentLeft === Infinity ? 0 : contentLeft,
+      top: contentTop === Infinity ? 0 : contentTop,
+      right: contentRight === -Infinity ? 0 : contentRight,
+      bottom: contentBottom === -Infinity ? 0 : contentBottom,
+    };
+    return { cards: flatCards, headers: [], bounds };
+  }
 
   const avatars = config.cards.filter((c) => c.type === "Avatar");
   const nonAvatars = config.cards.filter((c) => c.type !== "Avatar");
@@ -596,6 +608,71 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   };
 
   return { cards, headers, bounds };
+}
+
+function layoutFilteredCards(
+  inputCards: LayoutConfig["cards"],
+  updateBounds: (centerX: number, centerY: number, isLandscape: boolean) => void,
+): CardLayoutInfo[] {
+  const flatCards: CardLayoutInfo[] = [];
+  const byCostThenName = (
+    a: LayoutConfig["cards"][number],
+    b: LayoutConfig["cards"][number],
+  ) => {
+    if (a.cost !== b.cost) return a.cost - b.cost;
+    return a.name.localeCompare(b.name);
+  };
+
+  const portraitCards = [...inputCards.filter((c) => c.type !== "Site")].sort(
+    byCostThenName,
+  );
+  const siteCards = [...inputCards.filter((c) => c.type === "Site")].sort(
+    byCostThenName,
+  );
+
+  const portraitSpacing = getCardCellSpacing(false);
+  const siteSpacing = getCardCellSpacing(true);
+  const portraitStartGridX = 0;
+  const siteStartGridX =
+    portraitCards.length > 0
+      ? CARDS_PER_ROW.SPELL * portraitSpacing.x + GROUP_GAP_UNITS
+      : 0;
+
+  for (const [index, card] of portraitCards.entries()) {
+    const col = index % CARDS_PER_ROW.SPELL;
+    const row = Math.floor(index / CARDS_PER_ROW.SPELL);
+    const gridX = portraitStartGridX + col * portraitSpacing.x;
+    const gridY = row * portraitSpacing.y;
+    const position = snapGridToPixels(gridX, gridY, false);
+    flatCards.push({
+      name: card.name,
+      position,
+      isLandscape: false,
+      thresholdGroup: card.thresholdGroup,
+      type: card.type,
+      cost: card.cost,
+    });
+    updateBounds(position.x, position.y, false);
+  }
+
+  for (const [index, card] of siteCards.entries()) {
+    const col = index % CARDS_PER_ROW.SITE;
+    const row = Math.floor(index / CARDS_PER_ROW.SITE);
+    const gridX = siteStartGridX + col * siteSpacing.x;
+    const gridY = row * siteSpacing.y;
+    const position = snapGridToPixels(gridX, gridY, true);
+    flatCards.push({
+      name: card.name,
+      position,
+      isLandscape: true,
+      thresholdGroup: card.thresholdGroup,
+      type: card.type,
+      cost: card.cost,
+    });
+    updateBounds(position.x, position.y, true);
+  }
+
+  return flatCards;
 }
 
 function getAvatarSetIndex(setName?: string): number {

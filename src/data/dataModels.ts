@@ -114,7 +114,7 @@ export interface CollectionItem {
 // ============================================================================
 
 export type ArchetypeScoresData = Record<string, Record<string, number>> & {
-  __meta?: { categories: string[] };
+  __meta?: { categories: string[]; removedCategories?: string[] };
 };
 
 export interface CanvasLabel {
