@@ -33,6 +33,7 @@ import {
   calculateDeckLayout,
   DRAWN_GRID,
   CARD_SIZE,
+  DECK_AVATAR_SIZE,
   GRID_LINE,
   HEADER_HEIGHT,
   STACK_OFFSET,
@@ -41,7 +42,12 @@ import {
   type CardLayoutInfo,
   type ContentBounds,
 } from "./Grid";
-import { lodManager } from "./LODManager";
+import {
+  lodManager,
+  LOD_LEVELS,
+  LOD_ZOOM_THRESHOLDS,
+  cardNameToSlug,
+} from "./LODManager";
 import type {
   Card,
   Deck,
@@ -66,6 +72,7 @@ export interface PixiStageConfig {
   onAddToDeck: (cardName: string) => void;
   onRemoveFromDeck: (cardName: string) => void;
   onTextureProgress?: (loaded: number, total: number) => void;
+  onBackgroundTextureProgress?: (loaded: number, total: number) => void;
   onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   onLabelPlacementConsumed?: () => void;
 }
@@ -75,6 +82,7 @@ interface CardSpriteData {
   bounds: { left: number; top: number; right: number; bottom: number };
   layout: CardLayoutInfo;
   gridKey: string;
+  displaySize: { width: number; height: number };
   basePosition: { x: number; y: number }; // Position without stack offset
 }
 
@@ -112,6 +120,10 @@ interface LabelDragState {
 const CULLING_MARGIN = 300;
 const CULLING_THROTTLE_MS = 50;
 const DOUBLE_CLICK_TIME_MS = 300;
+const INITIAL_REVEAL_CONCURRENT_LOADS = 24;
+const ATLAS_CARD_REVEAL_SPREAD_MS = 300;
+const ON_DEMAND_HIGH_DETAIL_CONCURRENT_LOADS = 6;
+const ON_DEMAND_HIGH_DETAIL_BATCH_SIZE = 24;
 
 // ============================================================================
 // PixiStage Class
@@ -200,11 +212,14 @@ export class PixiStage {
   private pendingRevealTimeouts: number[] = [];
   private isRevealInProgress = false;
   private initialRevealCompleted = false;
+  private highDetailPreloadRunning = false;
+  private highDetailPreloadQueued = false;
 
   // Callbacks
   private onAddToDeck: (cardName: string) => void;
   private onRemoveFromDeck: (cardName: string) => void;
   private onTextureProgress?: (loaded: number, total: number) => void;
+  private onBackgroundTextureProgress?: (loaded: number, total: number) => void;
   private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   private onLabelPlacementConsumed?: () => void;
 
@@ -212,6 +227,7 @@ export class PixiStage {
     this.onAddToDeck = config.onAddToDeck;
     this.onRemoveFromDeck = config.onRemoveFromDeck;
     this.onTextureProgress = config.onTextureProgress;
+    this.onBackgroundTextureProgress = config.onBackgroundTextureProgress;
     this.onCanvasLabelsChange = config.onCanvasLabelsChange;
     this.onLabelPlacementConsumed = config.onLabelPlacementConsumed;
 
@@ -1181,6 +1197,13 @@ export class PixiStage {
   async startTextureReveal(): Promise<void> {
     this.isRevealInProgress = true;
     this.initialRevealCompleted = false;
+    this.onBackgroundTextureProgress?.(0, 0);
+
+    for (const id of this.pendingRevealTimeouts) {
+      clearTimeout(id);
+    }
+    this.pendingRevealTimeouts = [];
+
     const runId = ++this.revealRunId;
 
     const all = [...this.cardSprites.values()];
@@ -1217,6 +1240,31 @@ export class PixiStage {
     let revealed = 0;
     this.onTextureProgress?.(0, totalAll);
 
+    const startupLOD = lodManager.getStartupLOD();
+    const atlasAssignments = await lodManager.getAtlasAssignments(
+      all.map((data) => data.layout.name),
+      startupLOD,
+    );
+    const atlasCardCounts = new Map<string, number>();
+    for (const data of all) {
+      const slug = cardNameToSlug(data.layout.name);
+      const atlasId = atlasAssignments.get(slug);
+      if (!atlasId) continue;
+      atlasCardCounts.set(atlasId, (atlasCardCounts.get(atlasId) ?? 0) + 1);
+    }
+    const atlasRevealState = new Map<
+      string,
+      { nextSlot: number; startTimeMs: number | null; slotMs: number }
+    >();
+    for (const [atlasId, count] of atlasCardCounts) {
+      atlasRevealState.set(atlasId, {
+        nextSlot: 0,
+        startTimeMs: null,
+        slotMs:
+          count <= 1 ? 0 : ATLAS_CARD_REVEAL_SPREAD_MS / Math.max(count - 1, 1),
+      });
+    }
+
     // Allow one frame for React to render the loading bar
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => resolve()),
@@ -1228,48 +1276,83 @@ export class PixiStage {
         this.isRevealInProgress = false;
         this.revealFading = true;
         this.revealFadeStart = performance.now();
-
-        // After quick thumbnail reveal, warm full-res textures slowly in the background.
-        const timeoutId = window.setTimeout(() => {
-          this.pendingRevealTimeouts = this.pendingRevealTimeouts.filter(
-            (id) => id !== timeoutId,
-          );
-          if (this.isDestroyed || this.revealRunId !== runId) return;
-          const allNames = all.map((data) => data.layout.name);
-          void lodManager.preloadFullTextures(allNames);
-        }, 1200);
-        this.pendingRevealTimeouts.push(timeoutId);
+        this.queueVisibleHighDetailPreload();
       }
     };
 
-    for (const data of all) {
-      // Start load immediately (parallel)
-      data.sprite.loadInitialTexture();
+    const revealCard = (data: CardSpriteData) => {
+      if (this.isDestroyed || this.revealRunId !== runId) return;
+      // Reveal the sprite only if nothing else already made it visible
+      if (data.sprite.alpha < 0.5) {
+        data.sprite.alpha = 0.5;
+      }
+      revealed++;
+      this.onTextureProgress?.(revealed, totalAll);
+      tryFinish();
+    };
 
-      // Use a local flag instead of checking alpha — other code paths
-      // (e.g. updateDeckOverlays) can change alpha between the time we
-      // set it to 0 and the time this callback fires, which would cause
-      // the old alpha===0 guard to skip every sprite.
-      let counted = false;
-      data.sprite.textureReady.finally(() => {
-        if (this.isDestroyed || this.revealRunId !== runId) return;
-        if (counted) return;
-        counted = true;
+    const scheduleReveal = (data: CardSpriteData) => {
+      const slug = cardNameToSlug(data.layout.name);
+      const atlasId = atlasAssignments.get(slug);
+      if (!atlasId) {
+        revealCard(data);
+        return;
+      }
 
-        // Reveal the sprite only if nothing else already made it visible
-        if (data.sprite.alpha < 0.5) {
-          data.sprite.alpha = 0.5;
+      const state = atlasRevealState.get(atlasId);
+      if (!state || state.slotMs <= 0) {
+        revealCard(data);
+        return;
+      }
+
+      const slot = state.nextSlot++;
+      const now = performance.now();
+      if (state.startTimeMs === null) {
+        state.startTimeMs = now;
+      }
+
+      const targetTimeMs = state.startTimeMs + slot * state.slotMs;
+      const delayMs = Math.max(0, targetTimeMs - now);
+      if (delayMs <= 0) {
+        revealCard(data);
+        return;
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        this.pendingRevealTimeouts = this.pendingRevealTimeouts.filter(
+          (id) => id !== timeoutId,
+        );
+        revealCard(data);
+      }, delayMs);
+      this.pendingRevealTimeouts.push(timeoutId);
+    };
+
+    // Start initial LOD loads in a controlled queue to avoid flooding requests.
+    const queue = [...all];
+    const workerCount = Math.min(INITIAL_REVEAL_CONCURRENT_LOADS, queue.length);
+
+    for (let worker = 0; worker < workerCount; worker++) {
+      void (async () => {
+        while (queue.length > 0) {
+          const data = queue.shift();
+          if (!data) break;
+          if (this.isDestroyed || this.revealRunId !== runId) return;
+
+          data.sprite.loadInitialTexture();
+          await data.sprite.textureReady;
+
+          if (this.isDestroyed || this.revealRunId !== runId) return;
+
+          scheduleReveal(data);
         }
-
-        revealed++;
-        this.onTextureProgress?.(revealed, totalAll);
-        tryFinish();
-      });
+      })();
     }
   }
 
   destroy(): void {
     this.isDestroyed = true;
+    this.highDetailPreloadQueued = false;
+    this.onBackgroundTextureProgress?.(0, 0);
 
     for (const id of this.pendingRevealTimeouts) {
       clearTimeout(id);
@@ -1455,6 +1538,7 @@ export class PixiStage {
         },
         layout: cardLayout,
         gridKey,
+        displaySize: { width: cardSize.width, height: cardSize.height },
         basePosition: { x: topLeftX, y: topLeftY },
       };
 
@@ -1543,9 +1627,11 @@ export class PixiStage {
 
     // Create deck card sprites - one per copy for stacking
     for (const cardLayout of deckLayout) {
-      const cardSize = cardLayout.isLandscape
+      const defaultCardSize = cardLayout.isLandscape
         ? CARD_SIZE.LANDSCAPE
         : CARD_SIZE.PORTRAIT;
+      const cardSize =
+        cardLayout.board === "avatar" ? DECK_AVATAR_SIZE : defaultCardSize;
       const centerX = cardLayout.position.x;
       const centerY = cardLayout.position.y;
       const topLeftX = centerX - cardSize.width / 2;
@@ -1563,6 +1649,7 @@ export class PixiStage {
           isLandscape: cardLayout.isLandscape,
           x: centerX,
           y: centerY,
+          displaySize: cardSize,
         });
 
         const key = `${cardLayout.board}:${cardLayout.name}:${copy}`;
@@ -1577,6 +1664,7 @@ export class PixiStage {
           },
           layout: cardLayout,
           gridKey,
+          displaySize: { width: cardSize.width, height: cardSize.height },
           basePosition: { x: topLeftX, y: topLeftY },
         });
 
@@ -1611,7 +1699,7 @@ export class PixiStage {
         data.sprite.y = data.basePosition.y + yOffset;
         data.sprite.zIndex = i;
 
-        const cardSize = isSite ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const cardSize = data.displaySize;
         data.bounds = {
           left: data.sprite.x,
           top: data.sprite.y,
@@ -1642,6 +1730,7 @@ export class PixiStage {
         data.sprite.updateLOD(zoom);
       }
     }
+    this.queueVisibleHighDetailPreload();
   }
 
   private handleViewportChange(): void {
@@ -1691,6 +1780,9 @@ export class PixiStage {
         if (!data.sprite.visible) {
           data.sprite.visible = true;
           cardsToLoad.push(name);
+          if (this.initialRevealCompleted && !this.isRevealInProgress) {
+            data.sprite.updateLOD(this.camera.zoom);
+          }
         }
       } else {
         if (data.sprite.visible) {
@@ -1706,6 +1798,9 @@ export class PixiStage {
         if (!data.sprite.visible) {
           data.sprite.visible = true;
           cardsToLoad.push(data.layout.name);
+          if (this.initialRevealCompleted && !this.isRevealInProgress) {
+            data.sprite.updateLOD(this.camera.zoom);
+          }
         }
       } else {
         if (data.sprite.visible) {
@@ -1725,6 +1820,70 @@ export class PixiStage {
       !this.isRevealInProgress
     ) {
       lodManager.preloadTextures(cardsToLoad);
+    }
+
+    this.queueVisibleHighDetailPreload();
+  }
+
+  private shouldLoadHighDetail(): boolean {
+    if (!this.camera) return false;
+    if (this.isRevealInProgress || !this.initialRevealCompleted) return false;
+    return this.camera.zoom >= LOD_ZOOM_THRESHOLDS.MEDIUM_MAX;
+  }
+
+  private getVisibleCardNamesForHighDetail(): string[] {
+    const names = new Set<string>();
+    for (const name of this.visibleCardNames) {
+      names.add(name);
+    }
+    for (const [, data] of this.deckSprites) {
+      if (data.sprite.visible) {
+        names.add(data.layout.name);
+      }
+    }
+    return [...names];
+  }
+
+  private queueVisibleHighDetailPreload(): void {
+    if (this.isDestroyed) return;
+    if (!this.shouldLoadHighDetail()) {
+      this.onBackgroundTextureProgress?.(0, 0);
+      return;
+    }
+
+    if (this.highDetailPreloadRunning) {
+      this.highDetailPreloadQueued = true;
+      return;
+    }
+
+    void this.runVisibleHighDetailPreload();
+  }
+
+  private async runVisibleHighDetailPreload(): Promise<void> {
+    if (!this.shouldLoadHighDetail()) {
+      this.onBackgroundTextureProgress?.(0, 0);
+      return;
+    }
+
+    const names = this.getVisibleCardNamesForHighDetail();
+    this.highDetailPreloadRunning = true;
+
+    try {
+      await lodManager.preloadTextures(names, {
+        lod: LOD_LEVELS.FULL,
+        concurrentLoads: ON_DEMAND_HIGH_DETAIL_CONCURRENT_LOADS,
+        batchSize: ON_DEMAND_HIGH_DETAIL_BATCH_SIZE,
+        onProgress: (loaded, total) => {
+          if (this.isDestroyed) return;
+          this.onBackgroundTextureProgress?.(loaded, total);
+        },
+      });
+    } finally {
+      this.highDetailPreloadRunning = false;
+      if (this.highDetailPreloadQueued) {
+        this.highDetailPreloadQueued = false;
+        this.queueVisibleHighDetailPreload();
+      }
     }
   }
 

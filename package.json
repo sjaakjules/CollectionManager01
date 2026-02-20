@@ -11,6 +11,10 @@
     "typecheck": "tsc --noEmit",
     "cards:thumbs": "node scripts/generate-card-thumbs.mjs",
     "cards:thumbs:force": "node scripts/generate-card-thumbs.mjs --force",
+    "cards:atlas": "node scripts/generate-card-thumb-atlases.mjs",
+    "cards:atlas:medium": "node scripts/generate-card-thumb-atlases.mjs --input public/assets/Cards --output public/assets/CardsMediumAtlas --card-width 380 --card-height 531 --atlas-min 16 --atlas-max 24 --quality 68 --effort 4",
+    "cards:thumbs+atlas": "pnpm cards:thumbs && pnpm cards:atlas",
+    "cards:atlas:all": "pnpm cards:atlas && pnpm cards:atlas:medium",
     "publish": "pnpm build && netlify deploy --prod --no-build --dir=dist --functions=netlify/functions"
   },
   "dependencies": {

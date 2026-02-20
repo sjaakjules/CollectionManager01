@@ -33,6 +33,10 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     loaded: number;
     total: number;
   } | null>(null);
+  const [backgroundLoadProgress, setBackgroundLoadProgress] = useState<{
+    loaded: number;
+    total: number;
+  } | null>(null);
 
   // Load archetype scores from userData (when present) or static seed fallback.
   useEffect(() => {
@@ -84,6 +88,8 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
   // Stable progress callback (ref-based to avoid recreating PixiStage)
   const progressRef = useRef(setLoadProgress);
   progressRef.current = setLoadProgress;
+  const backgroundProgressRef = useRef(setBackgroundLoadProgress);
+  backgroundProgressRef.current = setBackgroundLoadProgress;
 
   // Initialize PixiJS stage
   useEffect(() => {
@@ -116,6 +122,13 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
           }, 600);
         }
       },
+      onBackgroundTextureProgress: (loaded, total) => {
+        if (total <= 0 || loaded >= total) {
+          backgroundProgressRef.current(null);
+          return;
+        }
+        backgroundProgressRef.current({ loaded, total });
+      },
       onCanvasLabelsChange: (labels) => {
         dispatch({ type: "SET_CANVAS_LABELS", labels });
       },
@@ -141,6 +154,7 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
 
     // Always reset progress and replay reveal when cards change
     setLoadProgress(null);
+    setBackgroundLoadProgress(null);
 
     stageRef.current.startTextureReveal();
   }, [state.cards, state.cardsLoaded]);
@@ -197,6 +211,11 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     loadProgress !== null &&
     loadProgress.total > 0 &&
     loadProgress.loaded < loadProgress.total;
+  const showBackgroundSpinner =
+    splashDone &&
+    backgroundLoadProgress !== null &&
+    backgroundLoadProgress.total > 0 &&
+    backgroundLoadProgress.loaded < backgroundLoadProgress.total;
 
   return (
     <div
@@ -208,6 +227,12 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
         <TextureLoadingBar
           loaded={loadProgress.loaded}
           total={loadProgress.total}
+        />
+      )}
+      {showBackgroundSpinner && (
+        <BackgroundTextureSpinner
+          loaded={backgroundLoadProgress.loaded}
+          total={backgroundLoadProgress.total}
         />
       )}
     </div>
@@ -236,6 +261,28 @@ function TextureLoadingBar({
       />
       <span className="texture-loading-count">
         {loaded} / {total} ({pct}%)
+      </span>
+    </div>
+  );
+}
+
+function BackgroundTextureSpinner({
+  loaded,
+  total,
+}: {
+  loaded: number;
+  total: number;
+}) {
+  const pct = Math.round((loaded / total) * 100);
+
+  return (
+    <div
+      className="texture-background-spinner"
+      aria-label={`Loading high-detail card images ${loaded} of ${total}`}
+    >
+      <span className="texture-background-spinner-wheel" aria-hidden="true" />
+      <span className="texture-background-spinner-label">
+        Loading High Detail {pct}%
       </span>
     </div>
   );

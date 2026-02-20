@@ -27,6 +27,7 @@ export function BottomPanel() {
   const [deckUrl, setDeckUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLoadDeckInput, setShowLoadDeckInput] = useState(false);
 
   // Add-category UI state
   const [showAddInput, setShowAddInput] = useState(false);
@@ -76,6 +77,7 @@ export function BottomPanel() {
       dispatch({ type: 'CREATE_DECK', deck });
       dispatch({ type: 'SET_ACTIVE_DECK', deckId: deck.id });
       setDeckUrl('');
+      setShowLoadDeckInput(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load deck';
       setError(message);
@@ -87,6 +89,11 @@ export function BottomPanel() {
   const handleOpenAccount = useCallback(() => {
     dispatch({ type: 'TOGGLE_LOGIN_MODAL' });
   }, [dispatch]);
+
+  const handleToggleLoadDeck = useCallback(() => {
+    setShowLoadDeckInput((prev) => !prev);
+    setError(null);
+  }, []);
 
   const handleToggleLabelMode = useCallback(() => {
     dispatch({
@@ -208,26 +215,46 @@ export function BottomPanel() {
           className="archetype-button"
           onClick={handleOpenAccount}
         >
-          {state.session.username ?? 'Account'}
+          {state.session.isGuest ? 'Log In' : (state.session.username ?? 'Account')}
         </button>
 
-        <span className="deck-label">
-          {activeDeck ? activeDeck.name : 'Load Deck'}
-        </span>
-        <div className="load-deck-row">
-          <input
-            type="text"
-            placeholder="curiosa.io deck URL..."
-            value={deckUrl}
-            onChange={(e) => setDeckUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleLoadDeck()}
-            disabled={isLoading}
-          />
-          <button type="button" onClick={handleLoadDeck} disabled={!deckUrl.trim() || isLoading}>
-            {isLoading ? '...' : 'Load'}
-          </button>
-        </div>
-        {error && <div className="load-deck-error">{error}</div>}
+        <button
+          type="button"
+          className={`archetype-button ${showLoadDeckInput ? 'active' : ''}`}
+          onClick={handleToggleLoadDeck}
+        >
+          Load Deck
+        </button>
+
+        {activeDeck && (
+          <span className="deck-label" title={activeDeck.name}>
+            {activeDeck.name}
+          </span>
+        )}
+
+        {showLoadDeckInput && (
+          <>
+            <div className="load-deck-row">
+              <input
+                type="text"
+                placeholder="curiosa.io deck URL..."
+                value={deckUrl}
+                onChange={(e) => setDeckUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLoadDeck()}
+                disabled={isLoading}
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={handleLoadDeck}
+                disabled={!deckUrl.trim() || isLoading}
+              >
+                {isLoading ? '...' : 'Load'}
+              </button>
+            </div>
+            {error && <div className="load-deck-error">{error}</div>}
+          </>
+        )}
       </div>
     </div>
   );

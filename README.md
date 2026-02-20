@@ -32,16 +32,47 @@ Generate a thumbnail set from `public/assets/Cards`:
 pnpm cards:thumbs
 ```
 
+Generate randomized thumbnail atlases (6-10 pages by default):
+
+```bash
+pnpm cards:atlas
+```
+
+Generate randomized medium atlases (380x531 cards, 16-24 pages by default):
+
+```bash
+pnpm cards:atlas:medium
+```
+
+Or generate both in one command:
+
+```bash
+pnpm cards:thumbs+atlas
+```
+
+Generate both atlas sets (thumb + medium):
+
+```bash
+pnpm cards:atlas:all
+```
+
+Re-run atlas commands whenever source card images change so atlas pages stay in sync.
+
 Default thumbnail settings are tuned for startup speed:
 - Max size: `256x256` (preserves aspect ratio, no upscaling)
 - WebP quality: `58`
 - WebP effort: `4`
 
-Enable thumbnail LOD loading in Vite:
+Thumbnail LOD is enabled by default for:
+- Local debug (`.env.development`)
+- Production build/publish (`.env.production`)
 
-```bash
-VITE_CARD_LOD_ASSETS=1
-```
+Atlas loading is enabled by default:
+- `VITE_CARD_THUMBNAIL_ATLAS=1`
+- `VITE_CARD_THUMBNAIL_ATLAS_MANIFEST=/assets/CardsThumbAtlas/manifest.json`
+- `VITE_CARD_MEDIUM_ATLAS=1`
+- `VITE_CARD_MEDIUM_ATLAS_MANIFEST=/assets/CardsMediumAtlas/manifest.json`
+- `VITE_CARD_MIN_LOD=medium` (startup/default loads use medium; thumbnail is skipped)
 
 Optional custom paths:
 
@@ -53,10 +84,13 @@ VITE_CARD_MEDIUM_PATH=/assets/CardsMedium
 Example for local dev:
 
 ```bash
-VITE_CARD_LOD_ASSETS=1 pnpm dev
+pnpm dev
 ```
 
-For Netlify builds, set the same `VITE_CARD_LOD_ASSETS=1` environment variable in site build settings.
+To disable thumbnail LOD temporarily, set `VITE_CARD_LOD_ASSETS=0` in your shell or Netlify env.
+To disable atlas loading but keep per-file thumbnails, set `VITE_CARD_THUMBNAIL_ATLAS=0`.
+To disable medium atlas loading, set `VITE_CARD_MEDIUM_ATLAS=0`.
+To restore thumbnail-first startup, remove `VITE_CARD_MIN_LOD` or set `VITE_CARD_MIN_LOD=thumbnail`.
 
 ## Tech Stack
 

@@ -7,10 +7,10 @@
  * The splash screen overlays the app while data loads,
  * allowing PixiJS to initialize in the background.
  *
- * Animation sequence (3 seconds total after data loads):
+ * Animation sequence (2 seconds total after data loads):
  *   0.0–0.5s  Opaque splash, cards loading invisibly behind
- *   0.5–2.5s  Splash becomes translucent, cards appear at 50% in random order
- *   2.5–3.0s  Splash fades out, cards rise to full opacity
+ *   0.5–1.5s  Splash becomes translucent, cards appear at 50% in random order
+ *   1.5–2.0s  Splash fades out, cards rise to full opacity
  */
 
 import { useReducer, useEffect, useState, useCallback } from 'react';
@@ -58,10 +58,10 @@ export function App() {
 
       // 0.5s: splash becomes translucent so cards show through
       setTimeout(() => { if (!cancelled) setSplashPhase('transparent'); }, 500);
-      // 2.5s: splash starts fading out
-      setTimeout(() => { if (!cancelled) setSplashPhase('fading'); }, 2500);
-      // 3.0s: splash removed
-      setTimeout(() => { if (!cancelled) setSplashPhase('done'); }, 3000);
+      // 1.5s: splash starts fading out
+      setTimeout(() => { if (!cancelled) setSplashPhase('fading'); }, 1500);
+      // 2.0s: splash removed
+      setTimeout(() => { if (!cancelled) setSplashPhase('done'); }, 2000);
     }
 
     startup();
@@ -86,8 +86,8 @@ export function App() {
 
       setStartupState('ready');
       setTimeout(() => setSplashPhase('transparent'), 500);
-      setTimeout(() => setSplashPhase('fading'), 2500);
-      setTimeout(() => setSplashPhase('done'), 3000);
+      setTimeout(() => setSplashPhase('fading'), 1500);
+      setTimeout(() => setSplashPhase('done'), 2000);
     });
   }, []);
 

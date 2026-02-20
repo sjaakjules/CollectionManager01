@@ -118,6 +118,104 @@ function parseBoardData(result: unknown): DeckCard[] {
 }
 
 // ============================================================================
+// Deck metadata parsing (name + author)
+// ============================================================================
+
+function normalizeMetaText(value: string | null | undefined): string {
+  return (value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function sanitizeDeckName(value: string | null | undefined): string | undefined {
+  const text = normalizeMetaText(value)
+    .replace(/\s*(?:\||-|—|•)\s*curiosa(?:\.io)?(?:\s*deck builder)?\s*$/i, "")
+    .trim();
+
+  if (!text) return undefined;
+  if (/^curiosa(?:\.io)?$/i.test(text)) return undefined;
+  return text;
+}
+
+function sanitizeAuthor(value: string | null | undefined): string | undefined {
+  const text = normalizeMetaText(value).replace(/^by\s+/i, "").trim();
+  if (!text) return undefined;
+  if (/^curiosa(?:\.io)?$/i.test(text)) return undefined;
+  return text;
+}
+
+function parseNameAuthorCandidate(
+  candidate: string | null | undefined,
+): { name?: string; author?: string } {
+  const raw = normalizeMetaText(candidate);
+  if (!raw) return {};
+
+  // Common case: "Deck Name by Author"
+  const byMatch = raw.match(/^(.*?)\s+by\s+(.+)$/i);
+  if (byMatch) {
+    return {
+      name: sanitizeDeckName(byMatch[1]),
+      author: sanitizeAuthor(byMatch[2]),
+    };
+  }
+
+  // Common case: "Deck Name | Author | Curiosa"
+  const parts = raw
+    .split("|")
+    .map((p) => normalizeMetaText(p))
+    .filter((p) => p && !/^curiosa(?:\.io)?$/i.test(p));
+
+  if (parts.length >= 2) {
+    return {
+      name: sanitizeDeckName(parts[0]),
+      author: sanitizeAuthor(parts[1]),
+    };
+  }
+
+  if (parts.length === 1) {
+    return { name: sanitizeDeckName(parts[0]) };
+  }
+
+  return { name: sanitizeDeckName(raw) };
+}
+
+function parseDeckMetaFromHtml(html: string): { name?: string; author?: string } {
+  let name: string | undefined;
+  let author: string | undefined;
+
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const titleCandidates = [
+      doc.querySelector('meta[property="og:title"]')?.getAttribute("content"),
+      doc.querySelector('meta[name="twitter:title"]')?.getAttribute("content"),
+      doc.querySelector("title")?.textContent,
+      doc.querySelector("h1")?.textContent,
+    ];
+
+    for (const candidate of titleCandidates) {
+      const parsed = parseNameAuthorCandidate(candidate);
+      if (!name && parsed.name) name = parsed.name;
+      if (!author && parsed.author) author = parsed.author;
+      if (name && author) break;
+    }
+
+    if (!author) {
+      author = sanitizeAuthor(
+        doc.querySelector('meta[name="author"]')?.getAttribute("content"),
+      );
+    }
+
+    if (!author) {
+      author = sanitizeAuthor(
+        doc.querySelector('[rel="author"], .author, .deck-author')?.textContent,
+      );
+    }
+  } catch {
+    // Ignore parser failures and fall back to defaults.
+  }
+
+  return { name, author };
+}
+
+// ============================================================================
 // Public API
 // ============================================================================
 
@@ -156,13 +254,9 @@ export async function fetchCuriosaDeck(urlOrId: string): Promise<Deck> {
 
     if (htmlRes.ok) {
       const html = await htmlRes.text();
-      const m = html.match(/<title>(.*?)<\/title>/i);
-      const title = m?.[1]?.trim();
-      if (title) {
-        const parts = title.split("|");
-        name = parts[0]?.trim() || name;
-        author = parts[1]?.trim() || author;
-      }
+      const parsed = parseDeckMetaFromHtml(html);
+      if (parsed.name) name = parsed.name;
+      if (parsed.author) author = parsed.author;
     }
   } catch {
     // keep defaults

@@ -5,7 +5,7 @@
  * Handles:
  * - Texture display with LOD switching
  * - Visual state (selection, quantity overlay)
- * - Hover state for high-res preview
+ * - Hover state for optional high-res preview (when full LOD is active)
  *
  * Card sizes:
  * - Portrait: 100×140px
@@ -36,6 +36,7 @@ export interface CardSpriteConfig {
   isLandscape: boolean;
   x: number;
   y: number;
+  displaySize?: { width: number; height: number };
 }
 
 export interface CardSpriteState {
@@ -62,7 +63,9 @@ export class CardSprite extends Container {
   private selectionBorder: Graphics;
   private archetypeOutline: Graphics;
   private scoreText: Text;
-  private currentLOD: LODLevel = LOD_LEVELS.THUMBNAIL;
+  private displayWidth: number;
+  private displayHeight: number;
+  private currentLOD: LODLevel = lodManager.getStartupLOD();
   private _isSelected = false;
   private _textureLoaded = false;
   private _initialLoadStarted = false;
@@ -81,11 +84,13 @@ export class CardSprite extends Container {
     });
 
     // Get card dimensions from Grid constants
-    const cardSize = this.isLandscape
+    const defaultCardSize = this.isLandscape
       ? CARD_SIZE.LANDSCAPE
       : CARD_SIZE.PORTRAIT;
-    const width = cardSize.width;
-    const height = cardSize.height;
+    const width = config.displaySize?.width ?? defaultCardSize.width;
+    const height = config.displaySize?.height ?? defaultCardSize.height;
+    this.displayWidth = width;
+    this.displayHeight = height;
 
     // Position is the CENTER of the card - offset to get top-left for container
     this.x = config.x - width / 2;
@@ -177,7 +182,7 @@ export class CardSprite extends Container {
     // multiple code-paths trying to start loads).
     if (this._textureLoaded || this._initialLoadStarted) return;
     this._initialLoadStarted = true;
-    void this.loadTexture(LOD_LEVELS.THUMBNAIL);
+    void this.loadTexture(this.currentLOD);
   }
 
   public get isTextureReady(): boolean {
@@ -229,11 +234,8 @@ export class CardSprite extends Container {
       return;
     }
 
-    const cardSize = this.isLandscape
-      ? CARD_SIZE.LANDSCAPE
-      : CARD_SIZE.PORTRAIT;
-    const w = cardSize.width;
-    const h = cardSize.height;
+    const w = this.displayWidth;
+    const h = this.displayHeight;
 
     let color: number;
     let outlineAlpha: number;
@@ -285,12 +287,9 @@ export class CardSprite extends Container {
    * Get the card's CENTER position in world coordinates
    */
   getCenter(): { x: number; y: number } {
-    const cardSize = this.isLandscape
-      ? CARD_SIZE.LANDSCAPE
-      : CARD_SIZE.PORTRAIT;
     return {
-      x: this.x + cardSize.width / 2,
-      y: this.y + cardSize.height / 2,
+      x: this.x + this.displayWidth / 2,
+      y: this.y + this.displayHeight / 2,
     };
   }
 
@@ -303,17 +302,11 @@ export class CardSprite extends Container {
     right: number;
     bottom: number;
   } {
-    const cardSize = this.isLandscape
-      ? CARD_SIZE.LANDSCAPE
-      : CARD_SIZE.PORTRAIT;
-    const width = cardSize.width;
-    const height = cardSize.height;
-
     return {
       left: this.x,
       top: this.y,
-      right: this.x + width,
-      bottom: this.y + height,
+      right: this.x + this.displayWidth,
+      bottom: this.y + this.displayHeight,
     };
   }
 
@@ -322,7 +315,11 @@ export class CardSprite extends Container {
   // ============================================================================
 
   private onPointerOver(): void {
-    this.loadTexture(LOD_LEVELS.FULL);
+    // Keep hover snappy when already in full-LOD mode, but avoid triggering
+    // full-resolution downloads while zoomed out.
+    if (this.currentLOD === LOD_LEVELS.FULL) {
+      this.loadTexture(LOD_LEVELS.FULL);
+    }
   }
 
   private onPointerOut(): void {
@@ -332,11 +329,16 @@ export class CardSprite extends Container {
   private async loadTexture(lod: LODLevel): Promise<void> {
     try {
       // Try sync first for instant display
+      const hasExactTexture = lodManager.hasExactTexture(this.imageSlug, lod);
       const syncTexture = lodManager.getTextureSync(this.imageSlug, lod);
       if (syncTexture) {
         this.applyTexture(syncTexture);
         this.markTextureLoaded();
-        return;
+        // For higher LOD requests, keep downloading the exact texture if we only
+        // had a fallback (e.g., thumbnail) in cache.
+        if (hasExactTexture || lod === LOD_LEVELS.THUMBNAIL) {
+          return;
+        }
       }
 
       // Load async
@@ -361,11 +363,8 @@ export class CardSprite extends Container {
   }
 
   private applyTexture(texture: Texture): void {
-    const cardSize = this.isLandscape
-      ? CARD_SIZE.LANDSCAPE
-      : CARD_SIZE.PORTRAIT;
-    const targetWidth = cardSize.width;
-    const targetHeight = cardSize.height;
+    const targetWidth = this.displayWidth;
+    const targetHeight = this.displayHeight;
 
     this.sprite.texture = texture;
 

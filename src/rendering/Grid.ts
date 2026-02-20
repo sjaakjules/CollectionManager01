@@ -56,6 +56,15 @@ export const CARD_SIZE = {
   LANDSCAPE: { width: 140, height: 100 },
 } as const;
 
+/**
+ * Deck avatar display size (larger than standard portrait cards).
+ * Height is fixed to 4 snap-grid units.
+ */
+export const DECK_AVATAR_SIZE = {
+  height: SNAP_GRID.height * 4,
+  width: Math.round((CARD_SIZE.PORTRAIT.width / CARD_SIZE.PORTRAIT.height) * SNAP_GRID.height * 4),
+} as const;
+
 /** Card spacing in snap grid cells (how many cells between card centers) */
 export const CARD_CELL_SPACING = {
   PORTRAIT: { x: 2, y: 3 }, // Centers are 2 cells apart horizontally, 3 vertically
@@ -674,8 +683,15 @@ export function calculateDeckLayout(
   let contentRight = -Infinity;
   let contentBottom = -Infinity;
 
-  const updateBounds = (cx: number, cy: number, isLandscape: boolean) => {
-    const s = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+  const updateBounds = (
+    cx: number,
+    cy: number,
+    isLandscape: boolean,
+    sizeOverride?: { width: number; height: number },
+  ) => {
+    const s =
+      sizeOverride ??
+      (isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT);
     contentLeft = Math.min(contentLeft, cx - s.width / 2);
     contentTop = Math.min(contentTop, cy - s.height / 2);
     contentRight = Math.max(contentRight, cx + s.width / 2);
@@ -780,15 +796,21 @@ export function calculateDeckLayout(
 
   // === Avatar + Deck Name Row ===
   // Avatar card on the left, deck name + author text to its right
+  const hasDeckAvatar = deck.boards.avatar.length > 0;
+  const deckTitleCardSize = hasDeckAvatar ? DECK_AVATAR_SIZE : CARD_SIZE.PORTRAIT;
+  const avatarSpacingX = Math.max(
+    CARD_CELL_SPACING.PORTRAIT.x,
+    Math.ceil(DECK_AVATAR_SIZE.width / SNAP_GRID.width),
+  );
+  const avatarRowHeightUnits = hasDeckAvatar ? 4 : CARD_CELL_SPACING.PORTRAIT.y;
   const avatarPos = snapGridToPixels(0, startGridY, false);
-  const avatarTopY = avatarPos.y - CARD_SIZE.PORTRAIT.height / 2;
+  const avatarTopY = avatarPos.y - deckTitleCardSize.height / 2;
 
   // Place avatar cards at the deck title row
   let nameOffsetX = 0;
-  if (deck.boards.avatar.length > 0) {
-    const sp = getCardCellSpacing(false);
+  if (hasDeckAvatar) {
     for (const [i, card] of deck.boards.avatar.entries()) {
-      const pos = snapGridToPixels(i * sp.x, startGridY, false);
+      const pos = snapGridToPixels(i * avatarSpacingX, startGridY, false);
       cards.push({
         name: card.name,
         position: pos,
@@ -799,18 +821,18 @@ export function calculateDeckLayout(
         quantity: card.quantity,
         board: "avatar",
       });
-      updateBounds(pos.x, pos.y, false);
+      updateBounds(pos.x, pos.y, false, DECK_AVATAR_SIZE);
     }
     // Shift deck name to the right of all avatar cards
     nameOffsetX =
       deck.boards.avatar.length *
-        CARD_CELL_SPACING.PORTRAIT.x *
+        avatarSpacingX *
         SNAP_GRID.width +
       SNAP_GRID.width;
   }
 
   // Deck name header - vertically centered with avatar card
-  const nameX = avatarPos.x - CARD_SIZE.PORTRAIT.width / 2 + nameOffsetX;
+  const nameX = avatarPos.x - deckTitleCardSize.width / 2 + nameOffsetX;
   const nameY = avatarTopY;
   headers.push({
     label: deck.name,
@@ -822,7 +844,7 @@ export function calculateDeckLayout(
   contentTop = Math.min(contentTop, avatarTopY);
   contentLeft = Math.min(
     contentLeft,
-    avatarPos.x - CARD_SIZE.PORTRAIT.width / 2,
+    avatarPos.x - deckTitleCardSize.width / 2,
   );
 
   // Author header - sits directly below the deck name
@@ -839,8 +861,7 @@ export function calculateDeckLayout(
   }
 
   // Advance past the title/avatar row
-  const sp = getCardCellSpacing(false);
-  let currentGridY = startGridY + sp.y + GROUP_GAP_UNITS;
+  let currentGridY = startGridY + avatarRowHeightUnits + GROUP_GAP_UNITS;
 
   // === Mainboard ===
   const mainboardStartGridY = currentGridY;
