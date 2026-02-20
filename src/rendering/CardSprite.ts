@@ -18,9 +18,14 @@
  * This class only reports pointer events and updates visuals.
  */
 
-import { Container, Sprite, Graphics, Text, Texture } from 'pixi.js';
-import { CARD_SIZE } from './Grid';
-import { lodManager, LOD_LEVELS, type LODLevel, cardNameToSlug } from './LODManager';
+import { Container, Sprite, Graphics, Text, Texture } from "pixi.js";
+import { CARD_SIZE } from "./Grid";
+import {
+  lodManager,
+  LOD_LEVELS,
+  type LODLevel,
+  cardNameToSlug,
+} from "./LODManager";
 
 // ============================================================================
 // Types
@@ -35,7 +40,7 @@ export interface CardSpriteConfig {
 
 export interface CardSpriteState {
   quantity: number;
-  quantityColor: 'white' | 'black' | 'red';
+  quantityColor: "white" | "black" | "red";
   isHighlighted: boolean;
 }
 
@@ -60,6 +65,7 @@ export class CardSprite extends Container {
   private currentLOD: LODLevel = LOD_LEVELS.THUMBNAIL;
   private _isSelected = false;
   private _textureLoaded = false;
+  private _initialLoadStarted = false;
   private resolveTextureReady!: () => void;
 
   constructor(config: CardSpriteConfig) {
@@ -75,7 +81,9 @@ export class CardSprite extends Container {
     });
 
     // Get card dimensions from Grid constants
-    const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const cardSize = this.isLandscape
+      ? CARD_SIZE.LANDSCAPE
+      : CARD_SIZE.PORTRAIT;
     const width = cardSize.width;
     const height = cardSize.height;
 
@@ -83,11 +91,12 @@ export class CardSprite extends Container {
     this.x = config.x - width / 2;
     this.y = config.y - height / 2;
 
-    // Create sprite with placeholder (dark gray)
+    // Create sprite with placeholder (hidden until real texture loads)
     this.sprite = new Sprite(Texture.WHITE);
     this.sprite.width = width;
     this.sprite.height = height;
     this.sprite.tint = 0x2a2a3e;
+    this.sprite.visible = false;
 
     // Apply rotation for landscape cards (Sites)
     // Rotate 90 degrees clockwise so the card reads correctly left-to-right
@@ -115,11 +124,11 @@ export class CardSprite extends Container {
     this.overlay = new Container();
     const fontSize = Math.round(Math.min(width, height) * 0.25); // 25% of smaller dimension
     this.quantityText = new Text({
-      text: '',
+      text: "",
       style: {
-        fontFamily: 'Arial',
+        fontFamily: "Arial",
         fontSize,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         fill: 0xffffff,
         stroke: { color: 0x000000, width: 2 },
       },
@@ -134,11 +143,11 @@ export class CardSprite extends Container {
     // Archetype score text (centered on card)
     const scoreFontSize = Math.round(Math.min(width, height) * 0.35);
     this.scoreText = new Text({
-      text: '',
+      text: "",
       style: {
-        fontFamily: 'Arial',
+        fontFamily: "Arial",
         fontSize: scoreFontSize,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         fill: 0xffffff,
         stroke: { color: 0x000000, width: 3 },
       },
@@ -150,20 +159,30 @@ export class CardSprite extends Container {
     this.addChild(this.scoreText);
 
     // Enable interactivity - events are handled by PixiStage
-    this.eventMode = 'static';
-    this.cursor = 'pointer';
+    this.eventMode = "static";
+    this.cursor = "pointer";
 
     // Hover handlers for high-res preview
-    this.on('pointerover', this.onPointerOver, this);
-    this.on('pointerout', this.onPointerOut, this);
-
-    // Load initial texture (defer to avoid blocking)
-    this.loadTexture(LOD_LEVELS.THUMBNAIL);
+    this.on("pointerover", this.onPointerOver, this);
+    this.on("pointerout", this.onPointerOut, this);
   }
 
   // ============================================================================
   // Public Methods
   // ============================================================================
+
+  /** Trigger the initial texture load. Called externally so load order can be controlled. */
+  loadInitialTexture(): void {
+    // Avoid re-scheduling initial loads (important for refresh/resume and for
+    // multiple code-paths trying to start loads).
+    if (this._textureLoaded || this._initialLoadStarted) return;
+    this._initialLoadStarted = true;
+    void this.loadTexture(LOD_LEVELS.THUMBNAIL);
+  }
+
+  public get isTextureReady(): boolean {
+    return this._textureLoaded;
+  }
 
   get isSelected(): boolean {
     return this._isSelected;
@@ -210,7 +229,9 @@ export class CardSprite extends Container {
       return;
     }
 
-    const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const cardSize = this.isLandscape
+      ? CARD_SIZE.LANDSCAPE
+      : CARD_SIZE.PORTRAIT;
     const w = cardSize.width;
     const h = cardSize.height;
 
@@ -236,11 +257,15 @@ export class CardSprite extends Container {
     // Draw outline
     this.archetypeOutline.clear();
     this.archetypeOutline.rect(0, 0, w, h);
-    this.archetypeOutline.stroke({ width: borderWidth, color, alpha: outlineAlpha });
+    this.archetypeOutline.stroke({
+      width: borderWidth,
+      color,
+      alpha: outlineAlpha,
+    });
     this.archetypeOutline.visible = true;
 
     // Draw score value
-    const sign = score > 0 ? '+' : '';
+    const sign = score > 0 ? "+" : "";
     this.scoreText.text = `${sign}${score}`;
     this.scoreText.style.fill = color;
     this.scoreText.visible = true;
@@ -260,7 +285,9 @@ export class CardSprite extends Container {
    * Get the card's CENTER position in world coordinates
    */
   getCenter(): { x: number; y: number } {
-    const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const cardSize = this.isLandscape
+      ? CARD_SIZE.LANDSCAPE
+      : CARD_SIZE.PORTRAIT;
     return {
       x: this.x + cardSize.width / 2,
       y: this.y + cardSize.height / 2,
@@ -270,8 +297,15 @@ export class CardSprite extends Container {
   /**
    * Get the card's bounding box in world coordinates
    */
-  getWorldBounds(): { left: number; top: number; right: number; bottom: number } {
-    const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+  getWorldBounds(): {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } {
+    const cardSize = this.isLandscape
+      ? CARD_SIZE.LANDSCAPE
+      : CARD_SIZE.PORTRAIT;
     const width = cardSize.width;
     const height = cardSize.height;
 
@@ -318,6 +352,10 @@ export class CardSprite extends Container {
   }
 
   private markTextureLoaded(): void {
+    // Once any texture has been successfully applied (or we've decided to proceed
+    // with a placeholder), we consider the "initial" texture ready.
+    this._initialLoadStarted = true;
+
     if (!this._textureLoaded) {
       this._textureLoaded = true;
       this.resolveTextureReady();
@@ -325,7 +363,9 @@ export class CardSprite extends Container {
   }
 
   private applyTexture(texture: Texture): void {
-    const cardSize = this.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const cardSize = this.isLandscape
+      ? CARD_SIZE.LANDSCAPE
+      : CARD_SIZE.PORTRAIT;
     const targetWidth = cardSize.width;
     const targetHeight = cardSize.height;
 
@@ -341,15 +381,16 @@ export class CardSprite extends Container {
     }
 
     this.sprite.tint = 0xffffff;
+    this.sprite.visible = true;
   }
 
-  private getQuantityColor(color: 'white' | 'black' | 'red'): number {
+  private getQuantityColor(color: "white" | "black" | "red"): number {
     switch (color) {
-      case 'white':
+      case "white":
         return 0xffffff;
-      case 'black':
+      case "black":
         return 0x000000;
-      case 'red':
+      case "red":
         return 0xff0000;
     }
   }

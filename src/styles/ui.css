@@ -142,6 +142,42 @@ body {
 }
 
 /* ============================================================================
+   Texture Loading Bar
+   ============================================================================ */
+
+.texture-loading-bar {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 240px;
+  height: 24px;
+  background: rgba(26, 26, 46, 0.85);
+  border: 1px solid rgba(100, 100, 180, 0.4);
+  border-radius: 4px;
+  z-index: 150;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.texture-loading-fill {
+  height: 100%;
+  background: rgba(100, 100, 180, 0.5);
+  transition: width 0.3s ease-out;
+}
+
+.texture-loading-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+
+/* ============================================================================
    Error Screen
    ============================================================================ */
 

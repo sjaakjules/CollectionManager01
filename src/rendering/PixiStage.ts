@@ -19,9 +19,15 @@
  * - Click on stacked card: Brings it to front of stack
  */
 
-import { Application, Container, Graphics, Text, FederatedPointerEvent } from 'pixi.js';
-import { Camera, type CameraBounds } from './Camera';
-import { CardSprite, type CardSpriteState } from './CardSprite';
+import {
+  Application,
+  Container,
+  Graphics,
+  Text,
+  FederatedPointerEvent,
+} from "pixi.js";
+import { Camera, type CameraBounds } from "./Camera";
+import { CardSprite, type CardSpriteState } from "./CardSprite";
 import {
   calculateCardLayout,
   calculateDeckLayout,
@@ -34,16 +40,20 @@ import {
   pixelsToSnapGrid,
   type CardLayoutInfo,
   type ContentBounds,
-} from './Grid';
-import { lodManager } from './LODManager';
+} from "./Grid";
+import { lodManager } from "./LODManager";
 import type {
   Card,
   Deck,
   ActiveBoard,
   CollectionItem,
-} from '@/data/dataModels';
-import { updateArchetypeScore, saveArchetypeScores, type ArchetypeScores } from '@/data/archetypeScores';
-import { getThresholdGroup } from '@/data/dataModels';
+} from "@/data/dataModels";
+import {
+  updateArchetypeScore,
+  saveArchetypeScores,
+  type ArchetypeScores,
+} from "@/data/archetypeScores";
+import { getThresholdGroup } from "@/data/dataModels";
 
 // ============================================================================
 // Types
@@ -53,6 +63,7 @@ export interface PixiStageConfig {
   container: HTMLElement;
   onAddToDeck: (cardName: string) => void;
   onRemoveFromDeck: (cardName: string) => void;
+  onTextureProgress?: (loaded: number, total: number) => void;
 }
 
 interface CardSpriteData {
@@ -138,7 +149,12 @@ export class PixiStage {
   // Deck display state
   private deckSprites: Map<string, CardSpriteData> = new Map();
   private deckHeaderLabels: Text[] = [];
-  private collectionBounds: ContentBounds = { left: 0, top: 0, right: 0, bottom: 0 };
+  private collectionBounds: ContentBounds = {
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+  };
   private deckBounds: ContentBounds = { left: 0, top: 0, right: 0, bottom: 0 };
   private activeDeck: Deck | null = null;
 
@@ -149,14 +165,20 @@ export class PixiStage {
   // Reveal animation state
   private revealFading = false;
   private revealFadeStart = 0;
+  private revealRunId = 0;
+  private pendingRevealTimeouts: number[] = [];
+  private isRevealInProgress = false;
+  private initialRevealCompleted = false;
 
   // Callbacks
   private onAddToDeck: (cardName: string) => void;
   private onRemoveFromDeck: (cardName: string) => void;
+  private onTextureProgress?: (loaded: number, total: number) => void;
 
   constructor(config: PixiStageConfig) {
     this.onAddToDeck = config.onAddToDeck;
     this.onRemoveFromDeck = config.onRemoveFromDeck;
+    this.onTextureProgress = config.onTextureProgress;
 
     this.app = new Application();
     this.cardContainer = new Container();
@@ -174,7 +196,7 @@ export class PixiStage {
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
-      powerPreference: 'high-performance',
+      powerPreference: "high-performance",
     });
 
     if (this.isDestroyed) {
@@ -227,10 +249,13 @@ export class PixiStage {
 
     const bounds = this.camera.getVisibleBounds();
 
-    const startX = Math.floor(bounds.left / DRAWN_GRID.width) * DRAWN_GRID.width;
-    const startY = Math.floor(bounds.top / DRAWN_GRID.height) * DRAWN_GRID.height;
+    const startX =
+      Math.floor(bounds.left / DRAWN_GRID.width) * DRAWN_GRID.width;
+    const startY =
+      Math.floor(bounds.top / DRAWN_GRID.height) * DRAWN_GRID.height;
     const endX = Math.ceil(bounds.right / DRAWN_GRID.width) * DRAWN_GRID.width;
-    const endY = Math.ceil(bounds.bottom / DRAWN_GRID.height) * DRAWN_GRID.height;
+    const endY =
+      Math.ceil(bounds.bottom / DRAWN_GRID.height) * DRAWN_GRID.height;
 
     for (let x = startX; x <= endX; x += DRAWN_GRID.width) {
       this.gridGraphics.moveTo(x, startY);
@@ -257,14 +282,15 @@ export class PixiStage {
     if (!this.camera) return;
 
     const viewport = this.camera.viewport;
-    viewport.eventMode = 'static';
+    viewport.eventMode = "static";
 
-    viewport.on('pointerdown', this.onPointerDown.bind(this));
-    viewport.on('pointermove', this.onPointerMove.bind(this));
-    viewport.on('pointerup', this.onPointerUp.bind(this));
-    viewport.on('pointerupoutside', this.onPointerUp.bind(this));
+    viewport.on("pointerdown", this.onPointerDown.bind(this));
+    viewport.on("pointermove", this.onPointerMove.bind(this));
+    viewport.on("pointerup", this.onPointerUp.bind(this));
+    // cspell:disable-next-line
+    viewport.on("pointerupoutside", this.onPointerUp.bind(this));
 
-    this.app.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    this.app.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
   private onPointerDown(event: FederatedPointerEvent): void {
@@ -471,7 +497,7 @@ export class PixiStage {
 
   private pointInBounds(
     point: { x: number; y: number },
-    bounds: { left: number; top: number; right: number; bottom: number }
+    bounds: { left: number; top: number; right: number; bottom: number },
   ): boolean {
     return (
       point.x >= bounds.left &&
@@ -529,7 +555,9 @@ export class PixiStage {
     for (const cardName of this.dragState.draggedCards) {
       const data = this.getSpriteData(cardName);
       if (data) {
-        const cardSize = data.layout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const cardSize = data.layout.isLandscape
+          ? CARD_SIZE.LANDSCAPE
+          : CARD_SIZE.PORTRAIT;
         const isLandscape = data.layout.isLandscape;
 
         // Get current center position
@@ -556,11 +584,15 @@ export class PixiStage {
         };
 
         // Update grid key for stacking (use snap grid position)
-        const gridPos = pixelsToSnapGrid(snappedCenter.x, snappedCenter.y, isLandscape);
+        const gridPos = pixelsToSnapGrid(
+          snappedCenter.x,
+          snappedCenter.y,
+          isLandscape,
+        );
         const isDeckSprite = this.deckSprites.has(cardName);
         data.gridKey = isDeckSprite
           ? `deck:${gridPos.x},${gridPos.y}`
-          : `${isLandscape ? 'L' : 'P'}:${gridPos.x},${gridPos.y}`;
+          : `${isLandscape ? "L" : "P"}:${gridPos.x},${gridPos.y}`;
 
         // Restore original zIndex (will be recalculated by rebuildCardStacks)
         const originalZ = this.dragState.cardOriginalZIndices.get(cardName);
@@ -621,7 +653,10 @@ export class PixiStage {
    * - Sites (landscape): offset upward (names on bottom visible)
    * @param skipPositionUpdates - If true, only update z-indices (during animation)
    */
-  private applyStackOffsets(cardNames: string[], skipPositionUpdates = false): void {
+  private applyStackOffsets(
+    cardNames: string[],
+    skipPositionUpdates = false,
+  ): void {
     const stackSize = cardNames.length;
 
     if (stackSize <= 1) {
@@ -654,7 +689,9 @@ export class PixiStage {
       // Skip position updates during animation
       if (skipPositionUpdates) continue;
 
-      const cardSize = data.layout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const cardSize = data.layout.isLandscape
+        ? CARD_SIZE.LANDSCAPE
+        : CARD_SIZE.PORTRAIT;
       const isSite = data.layout.isLandscape;
 
       // Calculate offset from center of stack
@@ -677,7 +714,9 @@ export class PixiStage {
   }
 
   private updateCardBounds(data: CardSpriteData): void {
-    const cardSize = data.layout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const cardSize = data.layout.isLandscape
+      ? CARD_SIZE.LANDSCAPE
+      : CARD_SIZE.PORTRAIT;
     data.bounds = {
       left: data.sprite.x,
       top: data.sprite.y,
@@ -771,7 +810,7 @@ export class PixiStage {
   updateDeckOverlays(
     deck: Deck | null,
     _activeBoard: ActiveBoard,
-    collection: CollectionItem[]
+    collection: CollectionItem[],
   ): void {
     this.activeDeck = deck;
 
@@ -780,7 +819,8 @@ export class PixiStage {
     const collectionQuantities = new Map<string, number>();
 
     if (deck) {
-      for (const board of ['mainboard', 'sideboard', 'avatar'] as const) {
+      // cspell:disable-next-line
+      for (const board of ["mainboard", "sideboard", "avatar"] as const) {
         for (const card of deck.boards[board]) {
           const current = deckQuantities.get(card.name) ?? 0;
           deckQuantities.set(card.name, current + card.quantity);
@@ -797,12 +837,12 @@ export class PixiStage {
       const collectionQty = collectionQuantities.get(name) ?? 0;
       const hasCollection = collection.length > 0;
 
-      let quantityColor: CardSpriteState['quantityColor'] = 'white';
+      let quantityColor: CardSpriteState["quantityColor"] = "white";
       if (hasCollection && deckQty > 0) {
         if (deckQty > collectionQty) {
-          quantityColor = 'red';
+          quantityColor = "red";
         } else if (collectionQty === 0) {
-          quantityColor = 'black';
+          quantityColor = "black";
         }
       }
 
@@ -825,7 +865,7 @@ export class PixiStage {
 
   updateArchetypeHighlight(
     archetype: string | null,
-    scores: ArchetypeScores | null
+    scores: ArchetypeScores | null,
   ): void {
     this.selectedArchetype = archetype;
     this.archetypeScores = scores;
@@ -833,64 +873,94 @@ export class PixiStage {
   }
 
   /**
-   * Play the startup reveal animation.
-   *   0–500ms:   All cards + headers hidden (alpha 0)
-   *   500–2500ms: Cards appear in random order at alpha 0.5
-   *   2500–3000ms: Smooth fade from 0.5 → 1.0 (driven by ticker)
+   * Start texture-driven reveal.
+   * Textures begin downloading immediately in a randomized start order,
+   * and each card is revealed as soon as its texture is ready.
+   * Cards start at alpha=0, become 0.5 as they're revealed, then all
+   * fade to 1.0 once every card has been revealed.
    */
-  playRevealAnimation(): void {
-    // Hide all cards and headers
-    for (const data of this.cardSprites.values()) {
+  startTextureReveal(): void {
+    this.isRevealInProgress = true;
+    this.initialRevealCompleted = false;
+    const runId = ++this.revealRunId;
+
+    const all = [...this.cardSprites.values()];
+    const totalAll = all.length;
+
+    if (totalAll === 0) {
+      this.onTextureProgress?.(0, 0);
+      this.isRevealInProgress = false;
+      this.initialRevealCompleted = true;
+      return;
+    }
+
+    // Start invisible so refresh always looks random
+    for (const data of all) {
       data.sprite.alpha = 0;
     }
+
     for (const label of this.headerLabels) {
-      label.alpha = 0;
+      label.alpha = 0.5;
     }
 
-    // Shuffle card names for random reveal order (Fisher-Yates)
-    const names: string[] = [...this.cardSprites.keys()];
-    for (let i = names.length - 1; i > 0; i--) {
+    // Fisher–Yates shuffle
+    for (let i = all.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      const a = names[i] as string;
-      const b = names[j] as string;
-      names[i] = b;
-      names[j] = a;
+
+      const temp = all[i]!;
+      all[i] = all[j]!;
+      all[j] = temp;
     }
 
-    // At 500ms: start staggered reveal over 2000ms
-    setTimeout(() => {
-      // Fade in headers immediately
-      for (const label of this.headerLabels) {
-        label.alpha = 0.5;
+    let revealed = 0;
+    this.onTextureProgress?.(0, totalAll);
+
+    const tryFinish = () => {
+      if (revealed >= totalAll && !this.initialRevealCompleted) {
+        this.initialRevealCompleted = true;
+        this.isRevealInProgress = false;
+        this.revealFading = true;
+        this.revealFadeStart = performance.now();
       }
+    };
 
-      const batchCount = 40;
-      const batchSize = Math.ceil(names.length / batchCount);
-      const interval = 2000 / batchCount; // 50ms per batch
+    for (const data of all) {
+      // Start load immediately (parallel)
+      data.sprite.loadInitialTexture();
 
-      let idx = 0;
-      const timer = setInterval(() => {
-        const end = Math.min(idx + batchSize, names.length);
-        for (let i = idx; i < end; i++) {
-          const name = names[i];
-          if (!name) continue;
-          const data = this.cardSprites.get(name);
-          if (data) data.sprite.alpha = 0.5;
-        }
-        idx = end;
-        if (idx >= names.length) clearInterval(timer);
-      }, interval);
-    }, 500);
+      data.sprite.textureReady
+        .then(() => {
+          if (this.isDestroyed || this.revealRunId !== runId) return;
 
-    // At 2500ms: start smooth ticker-based fade 0.5 → 1.0
-    setTimeout(() => {
-      this.revealFading = true;
-      this.revealFadeStart = performance.now();
-    }, 2500);
+          if (data.sprite.alpha === 0) {
+            data.sprite.alpha = 0.5;
+            revealed++;
+            this.onTextureProgress?.(revealed, totalAll);
+            tryFinish();
+          }
+        })
+        .catch(() => {
+          if (this.isDestroyed || this.revealRunId !== runId) return;
+
+          if (data.sprite.alpha === 0) {
+            data.sprite.alpha = 0.5;
+            revealed++;
+            this.onTextureProgress?.(revealed, totalAll);
+            tryFinish();
+          }
+        });
+    }
   }
 
   destroy(): void {
     this.isDestroyed = true;
+
+    for (const id of this.pendingRevealTimeouts) {
+      clearTimeout(id);
+    }
+    this.pendingRevealTimeouts = [];
+    this.revealRunId++;
+    this.isRevealInProgress = false;
 
     if (this.isInitialized) {
       this.app.ticker.stop();
@@ -935,7 +1005,7 @@ export class PixiStage {
       this.archetypeScores,
       cardName,
       this.selectedArchetype,
-      delta
+      delta,
     );
 
     // Update the clicked card's sprite immediately
@@ -976,12 +1046,21 @@ export class PixiStage {
       type: card.guardian.type,
       thresholdGroup: getThresholdGroup(card.guardian.thresholds),
       cost: card.guardian.cost,
-      isLandscape: card.guardian.type === 'Site',
+      isLandscape: card.guardian.type === "Site",
       primarySet: card.sets[0]?.name,
-      rarity: card.guardian.rarity as 'Ordinary' | 'Exceptional' | 'Elite' | 'Unique' | null,
+      rarity: card.guardian.rarity as
+        | "Ordinary"
+        | "Exceptional"
+        | "Elite"
+        | "Unique"
+        | null,
     }));
 
-    const { cards: layout, headers, bounds: contentBounds } = calculateCardLayout({ cards: layoutCards });
+    const {
+      cards: layout,
+      headers,
+      bounds: contentBounds,
+    } = calculateCardLayout({ cards: layoutCards });
 
     // Store collection bounds for deck layout positioning
     this.collectionBounds = contentBounds;
@@ -994,14 +1073,14 @@ export class PixiStage {
     // Create group header labels
     const subgroupFontSize = HEADER_HEIGHT * 0.3;
     for (const header of headers) {
-      const isTypeSubgroup = header.kind === 'type-subgroup';
+      const isTypeSubgroup = header.kind === "type-subgroup";
       const text = new Text({
         text: header.label,
         style: {
-          fontFamily: 'Arial',
+          fontFamily: "Arial",
           fontSize: isTypeSubgroup ? subgroupFontSize : HEADER_HEIGHT,
           fill: 0x888888,
-          fontWeight: isTypeSubgroup ? 'normal' : 'bold',
+          fontWeight: isTypeSubgroup ? "normal" : "bold",
         },
       });
       text.x = header.position.x;
@@ -1010,9 +1089,21 @@ export class PixiStage {
       this.headerLabels.push(text);
     }
 
-    // Create sprites at their final positions
-    for (const cardLayout of layout) {
-      const cardSize = cardLayout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    // Shuffle layout BEFORE sprite creation to remove Map insertion bias
+    const shuffledLayout = [...layout];
+    for (let i = shuffledLayout.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+
+      const temp = shuffledLayout[i]!;
+      shuffledLayout[i] = shuffledLayout[j]!;
+      shuffledLayout[j] = temp;
+    }
+
+    // Create sprites in randomized order
+    for (const cardLayout of shuffledLayout) {
+      const cardSize = cardLayout.isLandscape
+        ? CARD_SIZE.LANDSCAPE
+        : CARD_SIZE.PORTRAIT;
       const isLandscape = cardLayout.isLandscape;
 
       const centerX = cardLayout.position.x;
@@ -1029,7 +1120,7 @@ export class PixiStage {
       const topLeftY = centerY - cardSize.height / 2;
 
       const gridPos = pixelsToSnapGrid(centerX, centerY, isLandscape);
-      const gridKey = `${isLandscape ? 'L' : 'P'}:${gridPos.x},${gridPos.y}`;
+      const gridKey = `${isLandscape ? "L" : "P"}:${gridPos.x},${gridPos.y}`;
 
       const spriteData: CardSpriteData = {
         sprite,
@@ -1072,17 +1163,29 @@ export class PixiStage {
     if (!this.activeDeck || this.cards.length === 0) return;
 
     // Build card lookup from loaded card database
-    const cardLookup = new Map<string, { type: import('@/data/dataModels').CardType; cost: number; isLandscape: boolean; thresholdGroup: import('@/data/dataModels').ThresholdGroup }>();
+    const cardLookup = new Map<
+      string,
+      {
+        type: import("@/data/dataModels").CardType;
+        cost: number;
+        isLandscape: boolean;
+        thresholdGroup: import("@/data/dataModels").ThresholdGroup;
+      }
+    >();
     for (const card of this.cards) {
       cardLookup.set(card.name, {
         type: card.guardian.type,
         cost: card.guardian.cost,
-        isLandscape: card.guardian.type === 'Site',
+        isLandscape: card.guardian.type === "Site",
         thresholdGroup: getThresholdGroup(card.guardian.thresholds),
       });
     }
 
-    const { cards: deckLayout, headers, bounds: newDeckBounds } = calculateDeckLayout({
+    const {
+      cards: deckLayout,
+      headers,
+      bounds: newDeckBounds,
+    } = calculateDeckLayout({
       deck: this.activeDeck,
       cardLookup,
       collectionBottom: this.collectionBounds.bottom,
@@ -1093,17 +1196,17 @@ export class PixiStage {
     // Create deck header labels with kind-specific sizing
     const deckSmallFontSize = HEADER_HEIGHT * 0.3;
     for (const header of headers) {
-      const isDeckName = header.kind === 'deck-name';
-      const isBoard = header.kind === 'deck-board';
-      const isAuthor = header.kind === 'deck-author';
+      const isDeckName = header.kind === "deck-name";
+      const isBoard = header.kind === "deck-board";
+      const isAuthor = header.kind === "deck-author";
       const fontSize = isDeckName ? HEADER_HEIGHT : deckSmallFontSize;
       const fill = isAuthor ? 0x666666 : 0x888888;
-      const fontWeight = (isDeckName || isBoard) ? 'bold' : 'normal';
+      const fontWeight = isDeckName || isBoard ? "bold" : "normal";
 
       const text = new Text({
         text: header.label,
         style: {
-          fontFamily: 'Arial',
+          fontFamily: "Arial",
           fontSize,
           fill,
           fontWeight,
@@ -1117,12 +1220,18 @@ export class PixiStage {
 
     // Create deck card sprites - one per copy for stacking
     for (const cardLayout of deckLayout) {
-      const cardSize = cardLayout.isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const cardSize = cardLayout.isLandscape
+        ? CARD_SIZE.LANDSCAPE
+        : CARD_SIZE.PORTRAIT;
       const centerX = cardLayout.position.x;
       const centerY = cardLayout.position.y;
       const topLeftX = centerX - cardSize.width / 2;
       const topLeftY = centerY - cardSize.height / 2;
-      const gridPos = pixelsToSnapGrid(centerX, centerY, cardLayout.isLandscape);
+      const gridPos = pixelsToSnapGrid(
+        centerX,
+        centerY,
+        cardLayout.isLandscape,
+      );
       const gridKey = `deck:${cardLayout.board}:${gridPos.x},${gridPos.y}`;
 
       for (let copy = 0; copy < cardLayout.quantity; copy++) {
@@ -1187,6 +1296,11 @@ export class PixiStage {
           bottom: data.sprite.y + cardSize.height,
         };
       }
+    }
+
+    // Load textures for deck sprites (they don't participate in the reveal animation)
+    for (const data of this.deckSprites.values()) {
+      data.sprite.loadInitialTexture();
     }
 
     this.performCulling();
@@ -1279,14 +1393,21 @@ export class PixiStage {
 
     this.visibleCardNames = newVisible;
 
-    if (cardsToLoad.length > 0) {
+    // During the initial reveal we let `startTextureReveal()` own texture loading so
+    // it can randomize start order and drive the progress UI. After reveal completes,
+    // culling can freely preload as the user pans/zooms.
+    if (
+      cardsToLoad.length > 0 &&
+      this.initialRevealCompleted &&
+      !this.isRevealInProgress
+    ) {
       lodManager.preloadTextures(cardsToLoad);
     }
   }
 
   private boundsIntersect(
     a: { left: number; top: number; right: number; bottom: number },
-    b: CameraBounds
+    b: CameraBounds,
   ): boolean {
     return !(
       a.right < b.left ||
@@ -1319,5 +1440,4 @@ export class PixiStage {
       }
     }
   }
-
 }

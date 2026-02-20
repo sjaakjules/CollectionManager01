@@ -1,0 +1,19 @@
+[[redirects]]
+  from = "/api/curiosa/*"
+  to = "https://curiosa.io/:splat"
+  status = 200
+  force = true
+  [redirects.headers]
+    Origin = "https://curiosa.io"
+    Referer = "https://curiosa.io/"
+
+[[redirects]]
+  from = "/api/sorcery/*"
+  to = "https://api.sorcerytcg.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
