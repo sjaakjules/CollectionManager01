@@ -126,8 +126,11 @@ function normalizeMetaText(value: string | null | undefined): string {
 }
 
 function sanitizeDeckName(value: string | null | undefined): string | undefined {
-  const text = normalizeMetaText(value)
+  const normalized = normalizeMetaText(value)
     .replace(/\s*(?:\||-|—|•)\s*curiosa(?:\.io)?(?:\s*deck builder)?\s*$/i, "")
+    .trim();
+  const text = (normalized.split("|")[0] ?? "")
+    .replace(/\s*\|+\s*$/g, "")
     .trim();
 
   if (!text) return undefined;

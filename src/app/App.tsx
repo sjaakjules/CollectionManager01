@@ -13,7 +13,7 @@
  *   1.5–2.0s  Splash fades out, cards rise to full opacity
  */
 
-import { useReducer, useEffect, useState, useCallback } from 'react';
+import { useReducer, useEffect, useState, useCallback, useMemo } from 'react';
 import {
   AppContext,
   appReducer,
@@ -26,8 +26,17 @@ import { PixiCanvas } from '@/rendering/PixiCanvas';
 import { LoginModal } from '@/ui/LoginModal';
 import { Notifications } from '@/ui/Notifications';
 import { BottomPanel } from '@/ui/BottomPanel';
+import { StacksPanel } from '@/ui/StacksPanel';
 import { saveUserData } from '@/data/userStorage';
 import { queueSync, flushSync } from '@/data/userSync';
+import type { Deck } from '@/data/dataModels';
+import {
+  createDeckZone,
+  createEmptyZone,
+  cardNameToOrientationMap,
+  moveZoneIntoQuadrantPreservingCards,
+  sanitizeDeckZoneName,
+} from '@/zones/zones';
 import '@/styles/ui.css';
 
 type SplashPhase = 'full' | 'transparent' | 'fading' | 'done';
@@ -39,6 +48,158 @@ export function App() {
   );
   const [startupError, setStartupError] = useState<string | null>(null);
   const [splashPhase, setSplashPhase] = useState<SplashPhase>('full');
+  const [focusZoneRequest, setFocusZoneRequest] = useState<{
+    zoneId: string;
+    nonce: number;
+  } | null>(null);
+  const [openStackRequest, setOpenStackRequest] = useState<{
+    stackId: string;
+    nonce: number;
+  } | null>(null);
+  const zones = state.userData?.zones ?? [];
+  const cardOrientationMap = useMemo(
+    () => cardNameToOrientationMap(state.cards),
+    [state.cards],
+  );
+
+  const handleZonesChange = useCallback(
+    (nextZones: typeof zones) => {
+      dispatch({ type: 'SET_ZONES', zones: nextZones });
+    },
+    [dispatch],
+  );
+
+  const createNamedZone = useCallback((name: string): string | null => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+
+    const created = createEmptyZone(
+      'custom',
+      trimmed,
+      zones.filter((zone) => zone.type === 'custom').length,
+      zones,
+    );
+    const next = [...zones, created];
+    dispatch({ type: 'SET_ZONES', zones: next });
+    if (created) {
+      setFocusZoneRequest({ zoneId: created.id, nonce: Date.now() });
+    }
+    return created.id;
+  }, [dispatch, zones]);
+
+  const createStackZone = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+
+    const zone = createEmptyZone(
+      'stack',
+      trimmed,
+      zones.filter((entry) => entry.type === 'stack').length,
+      zones,
+    );
+    const createdId = zone.id;
+    dispatch({ type: 'SET_ZONES', zones: [...zones, zone] });
+
+    if (createdId) {
+      setFocusZoneRequest({ zoneId: createdId, nonce: Date.now() });
+    }
+    return createdId;
+  }, [dispatch, zones]);
+
+  const createDeckZoneFromDeck = useCallback(
+    (deck: Deck): string | null => {
+      dispatch({ type: 'CREATE_DECK', deck });
+      dispatch({ type: 'SET_ACTIVE_DECK', deckId: deck.id });
+
+      let zoneId: string | null = null;
+      const existingZone = zones.find(
+        (zone) => zone.type === 'deck' && zone.deckId === deck.id,
+      );
+      const nextZones = existingZone
+        ? zones.map((zone) =>
+            zone.id === existingZone.id
+              ? {
+                  ...moveZoneIntoQuadrantPreservingCards(
+                    zone,
+                    zones.filter(
+                      (entry) => entry.type === 'deck' && entry.pinned,
+                    ).length,
+                    zones,
+                  ),
+                  name: sanitizeDeckZoneName(deck.name),
+                  avatarCardName: deck.boards.avatar[0]?.name ?? null,
+                  deckAuthor: deck.author ?? null,
+                }
+              : zone,
+          )
+        : [
+            ...zones,
+            createDeckZone(
+              deck,
+              cardOrientationMap,
+              zones.filter((zone) => zone.type === 'deck').length,
+              zones,
+            ),
+          ];
+      zoneId =
+        existingZone?.id ??
+        nextZones.find(
+          (zone) => zone.type === 'deck' && zone.deckId === deck.id,
+        )?.id ??
+        null;
+      dispatch({ type: 'SET_ZONES', zones: nextZones });
+
+      if (zoneId) {
+        setFocusZoneRequest({ zoneId, nonce: Date.now() });
+      }
+      return zoneId;
+    },
+    [cardOrientationMap, dispatch, zones],
+  );
+
+  const setZonePinned = useCallback((zoneId: string, pinned: boolean) => {
+    const nextZones = zones.map((zone) => {
+      if (zone.id !== zoneId) return zone;
+      if (zone.pinned === pinned) return zone;
+      if (!pinned) return { ...zone, pinned: false };
+
+      return moveZoneIntoQuadrantPreservingCards(
+        { ...zone, pinned: true },
+        zones.filter((entry) => entry.type === zone.type && entry.pinned).length,
+        zones,
+      );
+    });
+    dispatch({ type: 'SET_ZONES', zones: nextZones });
+  }, [dispatch, zones]);
+
+  const deleteZone = useCallback((zoneId: string) => {
+    const nextZones = zones.filter((zone) => zone.id !== zoneId);
+    dispatch({ type: 'SET_ZONES', zones: nextZones });
+  }, [dispatch, zones]);
+
+  const focusZone = useCallback((zoneId: string) => {
+    const nextZones = zones.map((zone) => {
+      if (zone.id !== zoneId) return zone;
+      if (zone.pinned) return zone;
+      return moveZoneIntoQuadrantPreservingCards(
+        { ...zone, pinned: true },
+        zones.filter((entry) => entry.type === zone.type && entry.pinned).length,
+        zones,
+      );
+    });
+    dispatch({ type: 'SET_ZONES', zones: nextZones });
+    setFocusZoneRequest({ zoneId, nonce: Date.now() });
+  }, [dispatch, zones]);
+
+  const removeCardFromStack = useCallback((zoneId: string, cardName: string) => {
+    const nextZones = zones.map((zone) => {
+      if (zone.id !== zoneId || zone.type !== 'stack') return zone;
+      const nextCards = zone.cards.filter((card) => card.cardName !== cardName);
+      if (nextCards.length === zone.cards.length) return zone;
+      return { ...zone, cards: nextCards };
+    });
+    dispatch({ type: 'SET_ZONES', zones: nextZones });
+  }, [dispatch, zones]);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,8 +318,30 @@ export function App() {
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       <div className="app-container">
-        <PixiCanvas splashDone={splashPhase === 'done'} />
-        <BottomPanel />
+        <PixiCanvas
+          splashDone={splashPhase === 'done'}
+          zones={zones}
+          onZonesChange={handleZonesChange}
+          onStackZoneHeaderClick={(zoneId) =>
+            setOpenStackRequest({ stackId: zoneId, nonce: Date.now() })
+          }
+          focusZoneRequest={focusZoneRequest}
+        />
+        <StacksPanel
+          zones={zones}
+          onCreateStack={createStackZone}
+          onSetZonePinned={setZonePinned}
+          onFocusZone={focusZone}
+          onRemoveCardFromStack={removeCardFromStack}
+          openStackRequest={openStackRequest}
+        />
+        <BottomPanel
+          zones={zones}
+          onCreateNamedZone={createNamedZone}
+          onCreateDeckZone={createDeckZoneFromDeck}
+          onDeleteZone={deleteZone}
+          onFocusZone={focusZone}
+        />
         <LoginModal />
         <Notifications />
       </div>

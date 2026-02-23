@@ -82,6 +82,7 @@ export function LoginModal() {
         collection: [],
         selectedArchetype: null,
         canvasLabels: [],
+        zones: [],
       };
     },
     []

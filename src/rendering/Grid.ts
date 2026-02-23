@@ -62,7 +62,11 @@ export const CARD_SIZE = {
  */
 export const DECK_AVATAR_SIZE = {
   height: SNAP_GRID.height * 4,
-  width: Math.round((CARD_SIZE.PORTRAIT.width / CARD_SIZE.PORTRAIT.height) * SNAP_GRID.height * 4),
+  width: Math.round(
+    (CARD_SIZE.PORTRAIT.width / CARD_SIZE.PORTRAIT.height) *
+      SNAP_GRID.height *
+      4,
+  ),
 } as const;
 
 /** Card spacing in snap grid cells (how many cells between card centers) */
@@ -612,7 +616,11 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
 
 function layoutFilteredCards(
   inputCards: LayoutConfig["cards"],
-  updateBounds: (centerX: number, centerY: number, isLandscape: boolean) => void,
+  updateBounds: (
+    centerX: number,
+    centerY: number,
+    isLandscape: boolean,
+  ) => void,
 ): CardLayoutInfo[] {
   const flatCards: CardLayoutInfo[] = [];
   const byCostThenName = (
@@ -767,8 +775,7 @@ export function calculateDeckLayout(
     sizeOverride?: { width: number; height: number },
   ) => {
     const s =
-      sizeOverride ??
-      (isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT);
+      sizeOverride ?? (isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT);
     contentLeft = Math.min(contentLeft, cx - s.width / 2);
     contentTop = Math.min(contentTop, cy - s.height / 2);
     contentRight = Math.max(contentRight, cx + s.width / 2);
@@ -874,7 +881,9 @@ export function calculateDeckLayout(
   // === Avatar + Deck Name Row ===
   // Avatar card on the left, deck name + author text to its right
   const hasDeckAvatar = deck.boards.avatar.length > 0;
-  const deckTitleCardSize = hasDeckAvatar ? DECK_AVATAR_SIZE : CARD_SIZE.PORTRAIT;
+  const deckTitleCardSize = hasDeckAvatar
+    ? DECK_AVATAR_SIZE
+    : CARD_SIZE.PORTRAIT;
   const avatarSpacingX = Math.max(
     CARD_CELL_SPACING.PORTRAIT.x,
     Math.ceil(DECK_AVATAR_SIZE.width / SNAP_GRID.width),
@@ -902,9 +911,7 @@ export function calculateDeckLayout(
     }
     // Shift deck name to the right of all avatar cards
     nameOffsetX =
-      deck.boards.avatar.length *
-        avatarSpacingX *
-        SNAP_GRID.width +
+      deck.boards.avatar.length * avatarSpacingX * SNAP_GRID.width +
       SNAP_GRID.width;
   }
 

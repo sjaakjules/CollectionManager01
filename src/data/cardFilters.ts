@@ -19,9 +19,14 @@ export interface CardFilterCriteria {
   defenceMax: number | null;
 }
 
+export interface CardFilterClause {
+  criteria: CardFilterCriteria;
+  enabled: boolean;
+}
+
 export interface CardFilterState {
   draft: CardFilterCriteria;
-  clauses: CardFilterCriteria[];
+  clauses: CardFilterClause[];
 }
 
 export function createEmptyCardFilterCriteria(): CardFilterCriteria {
@@ -121,6 +126,30 @@ function parseCriteria(input: unknown): CardFilterCriteria {
   return normalizeFilterCriteria(criteria);
 }
 
+function parseClause(input: unknown): CardFilterClause {
+  if (!input || typeof input !== "object") {
+    return {
+      criteria: createEmptyCardFilterCriteria(),
+      enabled: true,
+    };
+  }
+
+  const data = input as Record<string, unknown>;
+
+  if ("criteria" in data || "enabled" in data) {
+    return {
+      criteria: parseCriteria(data.criteria),
+      enabled: data.enabled !== false,
+    };
+  }
+
+  // Backward compatibility for older clause arrays that were plain criteria objects.
+  return {
+    criteria: parseCriteria(data),
+    enabled: true,
+  };
+}
+
 export function ensureCardFilterState(value: unknown): CardFilterState {
   if (!value || typeof value !== "object") {
     return createDefaultCardFilters();
@@ -130,7 +159,7 @@ export function ensureCardFilterState(value: unknown): CardFilterState {
   if ("draft" in data || "clauses" in data) {
     const draft = parseCriteria(data.draft);
     const clausesRaw = Array.isArray(data.clauses) ? data.clauses : [];
-    const clauses = clausesRaw.map((entry) => parseCriteria(entry));
+    const clauses = clausesRaw.map((entry) => parseClause(entry));
     return { draft, clauses };
   }
 
@@ -150,6 +179,11 @@ function normalizeTokens(values: string[]): string[] {
   return Array.from(
     new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean)),
   );
+}
+
+function toLowerSafe(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.toLowerCase();
 }
 
 function withinRange(
@@ -183,7 +217,9 @@ export function isCardFilterCriteriaEmpty(criteria: CardFilterCriteria): boolean
 }
 
 export function isCardFilterActive(filters: CardFilterState): boolean {
-  return ensureCardFilterState(filters).clauses.length > 0;
+  return ensureCardFilterState(filters).clauses.some(
+    (clause) => clause.enabled && !isCardFilterCriteriaEmpty(clause.criteria),
+  );
 }
 
 export function normalizeFilterCriteria(
@@ -210,28 +246,30 @@ function matchesCriteria(card: Card, criteria: CardFilterCriteria): boolean {
   }
 
   if (normalized.sets.length > 0) {
-    const cardSets = card.sets.map((setEntry) => setEntry.name.toLowerCase());
+    const cardSets = card.sets
+      .map((setEntry) => toLowerSafe(setEntry?.name))
+      .filter(Boolean);
     if (!normalized.sets.some((setName) => cardSets.includes(setName))) {
       return false;
     }
   }
 
   if (normalized.types.length > 0) {
-    const cardType = card.guardian.type.toLowerCase();
+    const cardType = toLowerSafe(card.guardian?.type);
     if (!normalized.types.includes(cardType)) {
       return false;
     }
   }
 
   if (normalized.rarities.length > 0) {
-    const rarity = card.guardian.rarity.toLowerCase();
+    const rarity = toLowerSafe(card.guardian?.rarity);
     if (!normalized.rarities.includes(rarity)) {
       return false;
     }
   }
 
   if (normalized.subType) {
-    const subTypes = card.subTypes.toLowerCase();
+    const subTypes = toLowerSafe(card.subTypes);
     if (!subTypes.includes(normalized.subType)) {
       return false;
     }
@@ -239,7 +277,9 @@ function matchesCriteria(card: Card, criteria: CardFilterCriteria): boolean {
 
   if (normalized.artist) {
     const artists = card.sets.flatMap((setEntry) =>
-      setEntry.variants.map((variant) => variant.artist.toLowerCase()),
+      setEntry.variants
+        .map((variant) => toLowerSafe(variant?.artist))
+        .filter(Boolean),
     );
     if (!artists.includes(normalized.artist)) {
       return false;
@@ -248,8 +288,9 @@ function matchesCriteria(card: Card, criteria: CardFilterCriteria): boolean {
 
   if (normalized.thresholds.length > 0) {
     const selectedThresholds = new Set(normalized.thresholds);
+    const thresholds = card.guardian?.thresholds;
     const activeElements = (["air", "earth", "fire", "water"] as const).filter(
-      (element) => card.guardian.thresholds[element] > 0,
+      (element) => (thresholds?.[element] ?? 0) > 0,
     );
 
     if (normalized.thresholdMode === "inclusive") {
@@ -284,12 +325,15 @@ export function applyCardFilters(
   filters: CardFilterState,
 ): Card[] {
   const safeFilters = ensureCardFilterState(filters);
+  const activeClauses = safeFilters.clauses.filter(
+    (clause) => clause.enabled && !isCardFilterCriteriaEmpty(clause.criteria),
+  );
 
-  if (!isCardFilterActive(safeFilters)) {
+  if (activeClauses.length === 0) {
     return cards;
   }
 
   return cards.filter((card) =>
-    safeFilters.clauses.some((criteria) => matchesCriteria(card, criteria)),
+    activeClauses.some((clause) => matchesCriteria(card, clause.criteria)),
   );
 }

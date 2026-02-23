@@ -136,6 +136,7 @@ export interface UserData {
   selectedArchetype?: string | null;
   archetypeScores?: ArchetypeScoresData;
   canvasLabels?: CanvasLabel[];
+  zones?: import('@/zones/zones').ZoneModel[];
 }
 
 // ============================================================================
@@ -194,6 +195,7 @@ export function createGuestUserData(id: string): UserData {
     collection: [],
     selectedArchetype: null,
     canvasLabels: [],
+    zones: [],
   };
 }
 

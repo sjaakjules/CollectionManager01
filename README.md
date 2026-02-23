@@ -151,8 +151,27 @@ src/
 
 ### Canvas & Interaction
 
-- [ ] "Add Category" functionality for custom highlight groups
-- [ ] Text / labeling — users can place, move, and edit labels on the canvas
+- [x] "Add Category" functionality for custom highlight groups
+- [x] Text / labeling — users can place, move, and edit labels on the canvas
+      • Define quadrants: Add 4 fixed world regions on the canvas: Main (top-right), Decks (bottom-right), Stacks (bottom-left), Named Zones (top-left).
+      • Main quadrant = source grid: Cards can be filtered and dragged, but on release snap back to their original positions (never permanently move).
+      • Implement Zones (data + render): Create a Zone model (id, name, type: custom/stack/deck, pinned, bounds, card instances) and render zones as outlined regions with a header.
+      • Copy cards from main into zones: Dragging a card into any zone creates a duplicate card instance inside that zone (source stays put).
+      • Create named zones: Add “+” in a right panel to create a new named zone, pinned on the canvas by default into the Named Zones quadrant at a standard size/position.
+      • Zone card interactions: Allow multiple card instances per zone; instances are draggable and snap to grid.
+      • Drag zone by header: Dragging a zone header moves the zone and all contained cards, snapping to grid on release.
+      • Zones on top + block main hover: Zones render above main cards; while pointer is over a zone, disable main-card previews beneath. Preview should preview the card that is visibly on top.
+      • Auto-expand zone bounds: When instances are placed outside current bounds, expand the zone rectangle to fit contents + padding.
+      • Remove card from zone: On hovering a card instance, show a top-right delete button to remove that instance from the zone.
+      • Right-side Zones Panel: Add a panel listing Decks and Named Zones with distinct styling to tell the decks from the Named zones.
+      • Panel navigation: Clicking a zone in the panel moves the camera to that zone; if it’s not on-canvas, re-add it first in the correct quadrant.
+      • Hide/unhide zones (not delete): “X” on a zone removes it from the canvas but keeps it in the panel (toggle pinned).
+      • Stacks: load to canvas: Add a load button (public/assets/buttons/load.png) in the Stacks panel to create/pin a stack zone in the Stacks quadrant.
+      • Stacks: two-way sync: Changes on canvas update the panel state and changes in panel update the canvas state.
+      • Stacks: remove from canvas: Stack zones can be removed from the canvas but remain listed in the Stacks panel.
+      • Decks: load from URL → deck quadrant: Loading a deck creates a deck zone pinned in the Decks quadrant.
+      • Deck subzones: Deck zone contains labeled subzones: Mainboard, Sideboard, Maybeboard, plus Avatar shown in the header.
+      • Decks: add deck control in panel: Move the “add deck” button to the right zone panel using public/assets/buttons/deck.png and visually distinguish deck zones from custom zones.
 
 ### Card Info & Rules
 

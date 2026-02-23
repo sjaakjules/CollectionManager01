@@ -15,6 +15,7 @@ import type {
   CanvasLabel,
   ArchetypeScoresData,
 } from '@/data/dataModels';
+import type { ZoneModel, ZoneType } from '@/zones/zones';
 import {
   createDefaultCardFilters,
   ensureCardFilterState,
@@ -127,7 +128,8 @@ export type AppAction =
   | { type: 'CLEAR_CARD_FILTERS' }
   | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
   | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
-  | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData };
+  | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData }
+  | { type: 'SET_ZONES'; zones: ZoneModel[] };
 
 // ============================================================================
 // Reducer
@@ -139,14 +141,17 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, cards: action.cards, cardsLoaded: true };
 
     case 'SET_USER_DATA':
-      return {
-        ...state,
-        userData: normalizeUserData(action.userData),
-        ui: {
-          ...state.ui,
-          selectedArchetype: action.userData.selectedArchetype ?? null,
-        },
-      };
+      {
+        const normalized = normalizeUserData(action.userData);
+        return {
+          ...state,
+          userData: normalized,
+          ui: {
+            ...state.ui,
+            selectedArchetype: normalized.selectedArchetype ?? null,
+          },
+        };
+      }
 
     case 'SET_SESSION':
       return { ...state, session: action.session };
@@ -351,9 +356,111 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         userData: { ...state.userData, archetypeScores: action.scores },
       };
 
+    case 'SET_ZONES':
+      if (!state.userData) return state;
+      return {
+        ...state,
+        userData: { ...state.userData, zones: normalizeZones(action.zones) },
+      };
+
     default:
       return state;
   }
+}
+
+function parseFiniteNumber(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function parseString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function parseZoneType(value: unknown): ZoneType {
+  if (value === 'custom' || value === 'stack' || value === 'deck') {
+    return value;
+  }
+  return 'custom';
+}
+
+function defaultZoneSize(type: ZoneType): { width: number; height: number } {
+  if (type === 'deck') return { width: 1400, height: 1200 };
+  return { width: 980, height: 780 };
+}
+
+function createFallbackId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeZones(value: unknown): ZoneModel[] {
+  if (!Array.isArray(value)) return [];
+
+  const zones: ZoneModel[] = [];
+  for (const rawZone of value) {
+    if (!rawZone || typeof rawZone !== 'object') continue;
+    const zoneRecord = rawZone as Record<string, unknown>;
+    const type = parseZoneType(zoneRecord.type);
+    const defaults = defaultZoneSize(type);
+    const boundsRecord =
+      zoneRecord.bounds && typeof zoneRecord.bounds === 'object'
+        ? (zoneRecord.bounds as Record<string, unknown>)
+        : null;
+
+    const cardsRaw = Array.isArray(zoneRecord.cards) ? zoneRecord.cards : [];
+    const cards = cardsRaw
+      .map((rawCard) => {
+        if (!rawCard || typeof rawCard !== 'object') return null;
+        const cardRecord = rawCard as Record<string, unknown>;
+        const cardName = parseString(cardRecord.cardName).trim();
+        if (!cardName) return null;
+        const board = parseString(cardRecord.board);
+        let normalizedBoard: ActiveBoard | null = null;
+        if (
+          board === 'mainboard' ||
+          board === 'sideboard' ||
+          board === 'avatar' ||
+          board === 'maybeboard'
+        ) {
+          normalizedBoard = board;
+        }
+        return {
+          id: parseString(cardRecord.id, createFallbackId('zone-card')),
+          cardName,
+          x: parseFiniteNumber(cardRecord.x, 0),
+          y: parseFiniteNumber(cardRecord.y, 0),
+          board: normalizedBoard,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+    zones.push({
+      id: parseString(zoneRecord.id, createFallbackId('zone')),
+      name: parseString(zoneRecord.name, 'Zone'),
+      type,
+      pinned: zoneRecord.pinned !== false,
+      bounds: {
+        x: parseFiniteNumber(boundsRecord?.x, 0),
+        y: parseFiniteNumber(boundsRecord?.y, 0),
+        width: parseFiniteNumber(boundsRecord?.width, defaults.width),
+        height: parseFiniteNumber(boundsRecord?.height, defaults.height),
+      },
+      cards,
+      deckId: parseString(zoneRecord.deckId).trim() || undefined,
+      avatarCardName:
+        typeof zoneRecord.avatarCardName === 'string'
+          ? zoneRecord.avatarCardName
+          : null,
+      deckAuthor:
+        typeof zoneRecord.deckAuthor === 'string'
+          ? zoneRecord.deckAuthor
+          : null,
+    });
+  }
+
+  return zones;
 }
 
 function normalizeUserData(userData: UserData): UserData {
@@ -361,6 +468,7 @@ function normalizeUserData(userData: UserData): UserData {
     ...userData,
     selectedArchetype: userData.selectedArchetype ?? null,
     canvasLabels: userData.canvasLabels ?? [],
+    zones: normalizeZones(userData.zones),
   };
 }
 

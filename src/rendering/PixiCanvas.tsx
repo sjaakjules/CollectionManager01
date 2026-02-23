@@ -13,7 +13,8 @@
 
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { useAppState } from "@/app/AppState";
-import { PixiStage } from "./PixiStage";
+import { PixiStage, type CardDragDropPayload } from "./PixiStage";
+import { cardNameToSlug } from "./LODManager";
 import {
   loadArchetypeScores,
   setCachedArchetypeScores,
@@ -25,8 +26,25 @@ import {
   ensureCardFilterState,
   isCardFilterActive,
 } from "@/data/cardFilters";
+import type { ZoneModel } from "@/zones/zones";
 
-export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
+interface PixiCanvasProps {
+  splashDone: boolean;
+  zones: ZoneModel[];
+  onCardDragDrop?: (payload: CardDragDropPayload) => void;
+  onZonesChange?: (zones: ZoneModel[]) => void;
+  onStackZoneHeaderClick?: (zoneId: string) => void;
+  focusZoneRequest?: { zoneId: string; nonce: number } | null;
+}
+
+export function PixiCanvas({
+  splashDone,
+  zones,
+  onCardDragDrop,
+  onZonesChange,
+  onStackZoneHeaderClick,
+  focusZoneRequest,
+}: PixiCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<PixiStage | null>(null);
   const { state, dispatch } = useAppState();
@@ -46,6 +64,8 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     loaded: number;
     total: number;
   } | null>(null);
+  const [hoveredCardName, setHoveredCardName] = useState<string | null>(null);
+  const [isPointerOverStacksPanel, setIsPointerOverStacksPanel] = useState(false);
 
   const filteredCards = useMemo(
     () => applyCardFilters(state.cards, cardFilters),
@@ -108,6 +128,12 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
   progressRef.current = setLoadProgress;
   const backgroundProgressRef = useRef(setBackgroundLoadProgress);
   backgroundProgressRef.current = setBackgroundLoadProgress;
+  const cardDragDropRef = useRef(onCardDragDrop);
+  cardDragDropRef.current = onCardDragDrop;
+  const zonesChangeRef = useRef(onZonesChange);
+  zonesChangeRef.current = onZonesChange;
+  const stackZoneHeaderClickRef = useRef(onStackZoneHeaderClick);
+  stackZoneHeaderClickRef.current = onStackZoneHeaderClick;
 
   // Initialize PixiJS stage
   useEffect(() => {
@@ -156,12 +182,25 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
       onLabelPlacementConsumed: () => {
         dispatch({ type: "SET_LABEL_PLACEMENT_MODE", enabled: false });
       },
+      onHoveredCardChange: (cardName) => {
+        setHoveredCardName(cardName);
+      },
+      onCardDragDrop: (payload) => {
+        cardDragDropRef.current?.(payload);
+      },
+      onZonesChange: (nextZones) => {
+        zonesChangeRef.current?.(nextZones);
+      },
+      onStackZoneHeaderClick: (zoneId) => {
+        stackZoneHeaderClickRef.current?.(zoneId);
+      },
     });
 
     stageRef.current = stage;
 
     return () => {
       if (clearTimerId !== undefined) clearTimeout(clearTimerId);
+      setHoveredCardName(null);
       stage.destroy();
       stageRef.current = null;
     };
@@ -174,6 +213,11 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     stageRef.current.setCards(filteredCards, { filteredMode });
   }, [filteredCards, filteredMode, state.cardsLoaded]);
 
+  useEffect(() => {
+    if (!stageRef.current) return;
+    stageRef.current.setZones(zones);
+  }, [zones]);
+
   // Replay reveal/progress only when the source card dataset changes.
   useEffect(() => {
     if (!stageRef.current || !state.cardsLoaded) return;
@@ -183,32 +227,22 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     stageRef.current.startTextureReveal();
   }, [state.cards, state.cardsLoaded]);
 
-  // Update overlays when deck changes, pan to deck on new load
-  const prevDeckIdRef = useRef<string | null>(null);
+  // Update overlays when user data changes. Deck rendering is zone-driven.
   useEffect(() => {
     if (!stageRef.current || !state.userData) return;
 
-    const activeDeck = state.editor.activeDeckId
-      ? (state.userData.decks.find((d) => d.id === state.editor.activeDeckId) ??
-        null)
-      : null;
-
     stageRef.current.updateDeckOverlays(
-      activeDeck,
+      null,
       state.editor.activeBoard,
       state.userData.collection,
       state.userData.canvasLabels ?? [],
     );
-
-    // Pan to deck bounds when a new deck is loaded
-    const isNewDeck =
-      activeDeck && state.editor.activeDeckId !== prevDeckIdRef.current;
-    prevDeckIdRef.current = state.editor.activeDeckId;
-
-    if (isNewDeck) {
-      stageRef.current.panToDeckBounds();
-    }
   }, [state.userData, state.editor.activeDeckId, state.editor.activeBoard]);
+
+  useEffect(() => {
+    if (!stageRef.current || !focusZoneRequest) return;
+    stageRef.current.focusZone(focusZoneRequest.zoneId);
+  }, [focusZoneRequest]);
 
   // Keep label placement mode in sync with UI toggle.
   useEffect(() => {
@@ -225,6 +259,23 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     );
   }, [state.ui.selectedArchetype, archetypeScores]);
 
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const overStacksPanel =
+        event.target instanceof Element &&
+        !!event.target.closest(".stacks-panel, .zones-slide-panel, .zones-tabs");
+
+      setIsPointerOverStacksPanel((prev) =>
+        prev === overStacksPanel ? prev : overStacksPanel,
+      );
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+    };
+  }, []);
+
   // Prevent context menu on canvas (for right-click interactions)
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -240,6 +291,14 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
     backgroundLoadProgress !== null &&
     backgroundLoadProgress.total > 0 &&
     backgroundLoadProgress.loaded < backgroundLoadProgress.total;
+  const hoveredCardPreviewSrc = hoveredCardName
+    ? `/assets/Cards/${cardNameToSlug(hoveredCardName)}.webp`
+    : null;
+  const hoveredCardIsLandscape = useMemo(() => {
+    if (!hoveredCardName) return false;
+    const card = state.cards.find((entry) => entry.name === hoveredCardName);
+    return card?.guardian?.type === "Site";
+  }, [hoveredCardName, state.cards]);
 
   return (
     <div
@@ -258,6 +317,18 @@ export function PixiCanvas({ splashDone }: { splashDone: boolean }) {
           loaded={backgroundLoadProgress.loaded}
           total={backgroundLoadProgress.total}
         />
+      )}
+      {hoveredCardPreviewSrc && !isPointerOverStacksPanel && (
+        <div
+          className={`card-hover-preview ${hoveredCardIsLandscape ? "landscape" : ""}`}
+          aria-hidden="true"
+        >
+          <img
+            className={hoveredCardIsLandscape ? "landscape" : ""}
+            src={hoveredCardPreviewSrc}
+            alt={hoveredCardName ?? "Card preview"}
+          />
+        </div>
       )}
     </div>
   );

@@ -125,5 +125,6 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
       server.selectedArchetype ?? local.selectedArchetype ?? null,
     archetypeScores: server.archetypeScores ?? local.archetypeScores,
     canvasLabels: Array.from(labelsById.values()),
+    zones: server.zones ?? local.zones ?? [],
   };
 }

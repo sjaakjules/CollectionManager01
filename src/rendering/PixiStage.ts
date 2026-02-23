@@ -32,6 +32,7 @@ import {
   calculateCardLayout,
   calculateDeckLayout,
   DRAWN_GRID,
+  CARD_CELL_SPACING,
   CARD_SIZE,
   DECK_AVATAR_SIZE,
   GRID_LINE,
@@ -54,6 +55,7 @@ import type {
   ActiveBoard,
   CollectionItem,
   CanvasLabel,
+  CardType,
 } from "@/data/dataModels";
 import {
   updateArchetypeScore,
@@ -62,6 +64,15 @@ import {
   type ArchetypeScores,
 } from "@/data/archetypeScores";
 import { getThresholdGroup } from "@/data/dataModels";
+import {
+  QUADRANT_BOUNDS,
+  ZONE_DECK_HEADER_HEIGHT,
+  ZONE_DEFAULT_SIZE,
+  ZONE_HEADER_HEIGHT,
+  sanitizeDeckZoneName,
+  type ZoneModel,
+  type ZoneCardInstance,
+} from "@/zones/zones";
 
 // ============================================================================
 // Types
@@ -76,6 +87,16 @@ export interface PixiStageConfig {
   onSelectionChange?: (selectedCardNames: string[]) => void;
   onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   onLabelPlacementConsumed?: () => void;
+  onHoveredCardChange?: (cardName: string | null) => void;
+  onZonesChange?: (zones: ZoneModel[]) => void;
+  onStackZoneHeaderClick?: (zoneId: string) => void;
+  onCardDragDrop?: (payload: CardDragDropPayload) => void;
+}
+
+export interface CardDragDropPayload {
+  cardNames: string[];
+  clientX: number;
+  clientY: number;
 }
 
 interface CardSpriteData {
@@ -92,6 +113,8 @@ interface DragState {
   draggedCards: Set<string>;
   startWorldPos: { x: number; y: number };
   cardStartPositions: Map<string, { x: number; y: number }>;
+  cardStartBasePositions: Map<string, { x: number; y: number }>;
+  cardStartGridKeys: Map<string, string>;
   cardOriginalZIndices: Map<string, number>;
 }
 
@@ -114,6 +137,45 @@ interface LabelDragState {
   labelStartPos: { x: number; y: number };
 }
 
+interface ZoneCardSpriteData {
+  key: string;
+  zoneId: string;
+  instanceId: string;
+  cardName: string;
+  cardType: CardType | null;
+  sprite: CardSprite;
+  bounds: { left: number; top: number; right: number; bottom: number };
+  displaySize: { width: number; height: number };
+}
+
+interface ZoneHeaderData {
+  bounds: { left: number; top: number; right: number; bottom: number };
+  closeBounds: { left: number; top: number; right: number; bottom: number };
+  sortBounds: { left: number; top: number; right: number; bottom: number };
+}
+
+interface ZoneCardDragState {
+  isDragging: boolean;
+  key: string | null;
+  zoneId: string | null;
+  instanceId: string | null;
+  startWorldPos: { x: number; y: number };
+  startCardPos: { x: number; y: number };
+}
+
+interface ZoneDragState {
+  isDragging: boolean;
+  zoneId: string | null;
+  startWorldPos: { x: number; y: number };
+  startBounds: { x: number; y: number } | null;
+}
+
+interface DraggedCardPlacement {
+  cardName: string;
+  centerX: number;
+  centerY: number;
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -125,6 +187,34 @@ const INITIAL_REVEAL_CONCURRENT_LOADS = 24;
 const ATLAS_CARD_REVEAL_SPREAD_MS = 300;
 const ON_DEMAND_HIGH_DETAIL_CONCURRENT_LOADS = 6;
 const ON_DEMAND_HIGH_DETAIL_BATCH_SIZE = 24;
+const ZONE_BODY_PADDING = 14;
+const ZONE_AUTO_EXPAND_PADDING = 24;
+const ZONE_DELETE_SIZE = 18;
+const MAIN_QUADRANT_CARD_PADDING = 220;
+const ZONE_DECK_BOARD_GAP = 10;
+const ZONE_DECK_BOARD_INNER_LEFT = 12;
+const ZONE_DECK_CARD_TOP_GAP = DRAWN_GRID.height;
+const ZONE_DECK_BOARD_BOTTOM_PADDING = 10;
+const ZONE_DECK_TYPE_GAP = Math.round(DRAWN_GRID.height * 0.5);
+const ZONE_SORT_BUTTON_WIDTH = 48;
+const ZONE_SORT_BUTTON_HEIGHT = 20;
+const ZONE_DECK_AVATAR_CENTER_GRID_X = 1;
+const ZONE_DECK_AVATAR_CENTER_GRID_Y = 2;
+const ZONE_DECK_AVATAR_TITLE_GAP = 20;
+const ZONE_DECK_HEADER_X_OFFSET = DRAWN_GRID.width * 0.5;
+const ZONE_DECK_MIN_BOARD_HEIGHT = {
+  mainboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP + 6,
+  sideboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP - 6,
+  maybeboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP - 2,
+} as const;
+const ZONE_SORT_TYPE_ORDER: Record<CardType, number> = {
+  Minion: 0,
+  Magic: 1,
+  Aura: 2,
+  Artifact: 3,
+  Site: 4,
+  Avatar: 5,
+};
 
 // ============================================================================
 // PixiStage Class
@@ -134,9 +224,29 @@ export class PixiStage {
   private app: Application;
   private camera: Camera | null = null;
   private cardContainer: Container;
+  private zoneContainer: Container;
+  private zoneDropPreviewContainer: Container;
   private labelContainer: Container;
   private gridGraphics: Graphics | null = null;
+  private quadrantGraphics: Graphics | null = null;
   private cardSprites: Map<string, CardSpriteData> = new Map();
+  private zoneCardSprites: Map<string, ZoneCardSpriteData> = new Map();
+  private zoneFrames: Map<
+    string,
+    {
+      frame: Graphics;
+      title: Text;
+      subzoneLabels: Text[];
+      avatarSprite: CardSprite | null;
+    }
+  > = new Map();
+  private zoneHeaderBounds: Map<string, ZoneHeaderData> = new Map();
+  private zoneDeleteOverlay: Graphics | null = null;
+  private zoneDropPreviewOverlay: Graphics | null = null;
+  private zoneDropPreviewSprites: CardSprite[] = [];
+  private zoneDropPreviewSignature: string | null = null;
+  private hoveredZoneCardKey: string | null = null;
+  private zones: ZoneModel[] = [];
   private labelSprites: Map<string, LabelSpriteData> = new Map();
   private canvasLabels: CanvasLabel[] = [];
   private cards: Card[] = [];
@@ -154,6 +264,8 @@ export class PixiStage {
 
   // Selection state
   private selectedCards: Set<string> = new Set();
+  private selectedZoneCardKeys: Set<string> = new Set();
+  private selectedZoneId: string | null = null;
 
   // Drag state
   private dragState: DragState = {
@@ -161,9 +273,26 @@ export class PixiStage {
     draggedCards: new Set(),
     startWorldPos: { x: 0, y: 0 },
     cardStartPositions: new Map(),
+    cardStartBasePositions: new Map(),
+    cardStartGridKeys: new Map(),
     cardOriginalZIndices: new Map(),
   };
   private pointerDownOnSelectedCard = false;
+  private stacksDropVisualActive = false;
+  private zoneCardDragState: ZoneCardDragState = {
+    isDragging: false,
+    key: null,
+    zoneId: null,
+    instanceId: null,
+    startWorldPos: { x: 0, y: 0 },
+    startCardPos: { x: 0, y: 0 },
+  };
+  private zoneDragState: ZoneDragState = {
+    isDragging: false,
+    zoneId: null,
+    startWorldPos: { x: 0, y: 0 },
+    startBounds: null,
+  };
 
   // Selection box state
   private selectionBox: SelectionBoxState = {
@@ -175,6 +304,8 @@ export class PixiStage {
   // Double-click detection
   private lastClickTime = 0;
   private lastClickedCard: string | null = null;
+  private lastZoneCardClickTime = 0;
+  private lastClickedZoneCardKey: string | null = null;
   private lastLabelClickTime = 0;
   private lastClickedLabel: string | null = null;
 
@@ -227,6 +358,11 @@ export class PixiStage {
   private onSelectionChange?: (selectedCardNames: string[]) => void;
   private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   private onLabelPlacementConsumed?: () => void;
+  private onHoveredCardChange?: (cardName: string | null) => void;
+  private onZonesChange?: (zones: ZoneModel[]) => void;
+  private onStackZoneHeaderClick?: (zoneId: string) => void;
+  private onCardDragDrop?: (payload: CardDragDropPayload) => void;
+  private hoveredCardName: string | null = null;
 
   constructor(config: PixiStageConfig) {
     this.onAddToDeck = config.onAddToDeck;
@@ -236,10 +372,18 @@ export class PixiStage {
     this.onSelectionChange = config.onSelectionChange;
     this.onCanvasLabelsChange = config.onCanvasLabelsChange;
     this.onLabelPlacementConsumed = config.onLabelPlacementConsumed;
+    this.onHoveredCardChange = config.onHoveredCardChange;
+    this.onZonesChange = config.onZonesChange;
+    this.onStackZoneHeaderClick = config.onStackZoneHeaderClick;
+    this.onCardDragDrop = config.onCardDragDrop;
 
     this.app = new Application();
     this.cardContainer = new Container();
     this.cardContainer.sortableChildren = true;
+    this.zoneContainer = new Container();
+    this.zoneContainer.sortableChildren = true;
+    this.zoneDropPreviewContainer = new Container();
+    this.zoneDropPreviewContainer.sortableChildren = true;
     this.labelContainer = new Container();
 
     this.initialize(config.container);
@@ -275,9 +419,15 @@ export class PixiStage {
     // Create background grid graphics (behind cards)
     this.gridGraphics = new Graphics();
     this.camera.container.addChild(this.gridGraphics);
+    this.quadrantGraphics = new Graphics();
+    this.camera.container.addChild(this.quadrantGraphics);
 
     // Add card container
     this.camera.container.addChild(this.cardContainer);
+    // Zones always render above source cards.
+    this.camera.container.addChild(this.zoneContainer);
+    // Drop preview draws above zone visuals.
+    this.camera.container.addChild(this.zoneDropPreviewContainer);
 
     // Add label container above cards
     this.camera.container.addChild(this.labelContainer);
@@ -285,6 +435,10 @@ export class PixiStage {
     // Create selection box graphics (on top)
     this.selectionBox.graphics = new Graphics();
     this.camera.container.addChild(this.selectionBox.graphics);
+    this.zoneDeleteOverlay = new Graphics();
+    this.camera.container.addChild(this.zoneDeleteOverlay);
+    this.zoneDropPreviewOverlay = new Graphics();
+    this.zoneDropPreviewContainer.addChild(this.zoneDropPreviewOverlay);
 
     this.setupPointerEvents();
 
@@ -338,6 +492,22 @@ export class PixiStage {
       color: GRID_LINE.COLOR,
       alpha: GRID_LINE.ALPHA,
     });
+
+    this.drawQuadrantGuides();
+  }
+
+  private drawQuadrantGuides(): void {
+    if (!this.quadrantGraphics) return;
+
+    this.quadrantGraphics.clear();
+    for (const bounds of Object.values(QUADRANT_BOUNDS)) {
+      this.quadrantGraphics.rect(bounds.x, bounds.y, bounds.width, bounds.height);
+      this.quadrantGraphics.stroke({
+        width: 2,
+        color: 0x56618e,
+        alpha: 0.25,
+      });
+    }
   }
 
   // ============================================================================
@@ -355,8 +525,483 @@ export class PixiStage {
     viewport.on("pointerup", this.onPointerUp.bind(this));
     // cspell:disable-next-line
     viewport.on("pointerupoutside", this.onPointerUp.bind(this));
+    viewport.on("pointerleave", () => {
+      this.setHoveredCard(null);
+      this.setStacksDropVisual(false);
+      this.clearZoneDropPreview();
+      this.hoveredZoneCardKey = null;
+      this.drawZoneDeleteOverlay();
+    });
 
     this.app.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+    this.app.canvas.addEventListener("pointerleave", () => {
+      this.setHoveredCard(null);
+      this.setStacksDropVisual(false);
+      this.clearZoneDropPreview();
+      this.hoveredZoneCardKey = null;
+      this.drawZoneDeleteOverlay();
+    });
+  }
+
+  private setHoveredCard(cardName: string | null): void {
+    if (this.hoveredCardName === cardName) return;
+    this.hoveredCardName = cardName;
+    this.onHoveredCardChange?.(cardName);
+  }
+
+  private getOpenStacksPanelElement(): HTMLElement | null {
+    const element = document.querySelector(".stacks-panel.open");
+    return element instanceof HTMLElement ? element : null;
+  }
+
+  private getStacksDropTargetAtPoint(clientX: number, clientY: number): Element | null {
+    const target = document.elementFromPoint(clientX, clientY);
+    if (!(target instanceof Element)) return null;
+
+    return target.closest(".stacks-panel.open, .stack-tab, .stack-tab-add");
+  }
+
+  private isPointInsideStacksDropTarget(clientX: number, clientY: number): boolean {
+    return this.getStacksDropTargetAtPoint(clientX, clientY) !== null;
+  }
+
+  private isPointInsideOpenStacksPanel(clientX: number, clientY: number): boolean {
+    const dropTarget = this.getStacksDropTargetAtPoint(clientX, clientY);
+    return dropTarget instanceof HTMLElement && dropTarget.classList.contains("stacks-panel");
+  }
+
+  private getStackZoneIdFromDropTarget(clientX: number, clientY: number): string | null {
+    const dropTarget = this.getStacksDropTargetAtPoint(clientX, clientY);
+    if (!(dropTarget instanceof HTMLElement)) return null;
+
+    const stackTarget = dropTarget.closest("[data-stack-zone-id]");
+    if (!(stackTarget instanceof HTMLElement)) return null;
+
+    const zoneId = stackTarget.dataset.stackZoneId;
+    if (!zoneId) return null;
+
+    const matching = this.zones.find(
+      (zone) => zone.id === zoneId && zone.type === "stack",
+    );
+    return matching ? matching.id : null;
+  }
+
+  private setStacksDropVisual(active: boolean): void {
+    if (this.stacksDropVisualActive === active) return;
+    this.stacksDropVisualActive = active;
+
+    const panel = this.getOpenStacksPanelElement();
+    if (!panel) return;
+    panel.classList.toggle("drop-ready", active);
+  }
+
+  private cloneZones(zones: ZoneModel[]): ZoneModel[] {
+    return zones.map((zone) => ({
+      ...zone,
+      bounds: { ...zone.bounds },
+      cards: zone.cards.map((card) => ({ ...card })),
+    }));
+  }
+
+  private emitZonesChange(): void {
+    this.onZonesChange?.(this.cloneZones(this.zones));
+  }
+
+  private getCardType(cardName: string): CardType | null {
+    const card = this.cards.find((entry) => entry.name === cardName);
+    return card?.guardian.type ?? null;
+  }
+
+  private getCardCost(cardName: string): number {
+    const card = this.cards.find((entry) => entry.name === cardName);
+    const cost = card?.guardian.cost;
+    return Number.isFinite(cost) ? (cost ?? 0) : 0;
+  }
+
+  private getZoneSortTypeRank(type: CardType | null): number {
+    if (!type) return Number.MAX_SAFE_INTEGER;
+    return ZONE_SORT_TYPE_ORDER[type] ?? Number.MAX_SAFE_INTEGER;
+  }
+
+  private getZoneSortGroup(
+    type: CardType | null,
+  ): "Minion" | "Magic" | "Aura" | "Artifact" | "Site" | "Avatar" | "other" {
+    if (
+      type === "Minion" ||
+      type === "Magic" ||
+      type === "Aura" ||
+      type === "Artifact" ||
+      type === "Site" ||
+      type === "Avatar"
+    ) {
+      return type;
+    }
+    return "other";
+  }
+
+  private getZoneDisplayName(zone: ZoneModel): string {
+    if (zone.type !== "deck") {
+      return zone.name;
+    }
+    return sanitizeDeckZoneName(zone.name);
+  }
+
+  private isLandscapeCard(cardName: string): boolean {
+    return this.getCardType(cardName) === "Site";
+  }
+
+  private getZoneHeaderHeight(zone: ZoneModel): number {
+    return zone.type === "deck" ? ZONE_DECK_HEADER_HEIGHT : ZONE_HEADER_HEIGHT;
+  }
+
+  private getZoneCardAtPosition(
+    worldPos: { x: number; y: number },
+    options?: { zoneId?: string },
+  ): ZoneCardSpriteData | null {
+    let top: ZoneCardSpriteData | null = null;
+    let topZ = -Infinity;
+    let topOrder = -Infinity;
+
+    for (const data of this.zoneCardSprites.values()) {
+      if (options?.zoneId && data.zoneId !== options.zoneId) continue;
+      if (!this.pointInBounds(worldPos, data.bounds)) continue;
+
+      const z = data.sprite.zIndex;
+      const order = this.zoneContainer.getChildIndex(data.sprite);
+      if (z > topZ || (z === topZ && order > topOrder)) {
+        top = data;
+        topZ = z;
+        topOrder = order;
+      }
+    }
+
+    return top;
+  }
+
+  private getZoneAtPosition(worldPos: { x: number; y: number }): ZoneModel | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone) continue;
+      if (
+        worldPos.x >= zone.bounds.x &&
+        worldPos.x <= zone.bounds.x + zone.bounds.width &&
+        worldPos.y >= zone.bounds.y &&
+        worldPos.y <= zone.bounds.y + zone.bounds.height
+      ) {
+        return zone;
+      }
+    }
+    return null;
+  }
+
+  private getZoneHeaderAtPosition(worldPos: { x: number; y: number }): ZoneModel | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone) continue;
+      const headerHeight = this.getZoneHeaderHeight(zone);
+      const headerBounds = this.zoneHeaderBounds.get(zone.id)?.bounds ?? {
+        left: zone.bounds.x,
+        top: zone.bounds.y,
+        right: zone.bounds.x + zone.bounds.width,
+        bottom: zone.bounds.y + headerHeight,
+      };
+      if (this.pointInBounds(worldPos, headerBounds)) {
+        return zone;
+      }
+    }
+    return null;
+  }
+
+  private getZoneCloseTargetAtPosition(
+    worldPos: { x: number; y: number },
+  ): ZoneModel | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone) continue;
+      const closeBounds = this.zoneHeaderBounds.get(zone.id)?.closeBounds;
+      if (!closeBounds) continue;
+      if (this.pointInBounds(worldPos, closeBounds)) {
+        return zone;
+      }
+    }
+    return null;
+  }
+
+  private getZoneSortTargetAtPosition(
+    worldPos: { x: number; y: number },
+  ): ZoneModel | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone) continue;
+      const sortBounds = this.zoneHeaderBounds.get(zone.id)?.sortBounds;
+      if (!sortBounds) continue;
+      if (this.pointInBounds(worldPos, sortBounds)) {
+        return zone;
+      }
+    }
+    return null;
+  }
+
+  private layoutZoneBoardCards(
+    cards: ZoneCardInstance[],
+    options: {
+      left: number;
+      top: number;
+      width: number;
+      leadingGap: number;
+      minHeight: number;
+    },
+  ): number {
+    if (cards.length === 0) {
+      return options.top + options.minHeight;
+    }
+
+    const stacksByName = new Map<
+      string,
+      {
+        cardName: string;
+        type: CardType | null;
+        cost: number;
+        instances: ZoneCardInstance[];
+      }
+    >();
+    for (const card of cards) {
+      const stack = stacksByName.get(card.cardName);
+      if (stack) {
+        stack.instances.push(card);
+        continue;
+      }
+      stacksByName.set(card.cardName, {
+        cardName: card.cardName,
+        type: this.getCardType(card.cardName),
+        cost: this.getCardCost(card.cardName),
+        instances: [card],
+      });
+    }
+
+    const sortedStacks = Array.from(stacksByName.values()).sort((left, right) => {
+      const typeDelta =
+        this.getZoneSortTypeRank(left.type) - this.getZoneSortTypeRank(right.type);
+      if (typeDelta !== 0) return typeDelta;
+
+      const costDelta = left.cost - right.cost;
+      if (costDelta !== 0) return costDelta;
+
+      return left.cardName.localeCompare(right.cardName);
+    });
+
+    const groups = new Map<
+      "Minion" | "Magic" | "Aura" | "Artifact" | "Site" | "Avatar" | "other",
+      typeof sortedStacks
+    >();
+    for (const stack of sortedStacks) {
+      const key = this.getZoneSortGroup(stack.type);
+      const list = groups.get(key) ?? [];
+      list.push(stack);
+      groups.set(key, list);
+    }
+
+    const groupOrder = [
+      "Minion",
+      "Magic",
+      "Aura",
+      "Artifact",
+      "Site",
+      "Avatar",
+      "other",
+    ] as const;
+    const nonEmptyGroups = groupOrder.filter(
+      (key) => (groups.get(key)?.length ?? 0) > 0,
+    );
+
+    let groupTop = options.top + options.leadingGap;
+    let boardBottom = options.top + options.minHeight;
+    const availableWidth = Math.max(CARD_SIZE.PORTRAIT.width, options.width);
+
+    nonEmptyGroups.forEach((groupKey, groupIndex) => {
+      const groupStacks = groups.get(groupKey) ?? [];
+      const isLandscape = groupKey === "Site";
+      const cardSize = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const spacing = isLandscape
+        ? CARD_CELL_SPACING.LANDSCAPE
+        : CARD_CELL_SPACING.PORTRAIT;
+      const stepX = spacing.x * DRAWN_GRID.width;
+      const stepY = spacing.y * DRAWN_GRID.height;
+      const columns = Math.max(
+        1,
+        Math.floor((availableWidth - cardSize.width) / stepX) + 1,
+      );
+
+      let groupBottom = groupTop;
+      groupStacks.forEach((stack, stackIndex) => {
+        const col = stackIndex % columns;
+        const row = Math.floor(stackIndex / columns);
+        const x = options.left + col * stepX;
+        const y = groupTop + row * stepY;
+        const snapped = snapCardCenter(
+          x + cardSize.width / 2,
+          y + cardSize.height / 2,
+          isLandscape,
+        );
+        const nextX = snapped.x - cardSize.width / 2;
+        const nextY = snapped.y - cardSize.height / 2;
+
+        stack.instances.forEach((instance) => {
+          instance.x = nextX;
+          instance.y = nextY;
+        });
+        groupBottom = Math.max(
+          groupBottom,
+          nextY + cardSize.height + ZONE_DECK_BOARD_BOTTOM_PADDING,
+        );
+      });
+
+      boardBottom = Math.max(boardBottom, groupBottom);
+      groupTop =
+        groupBottom +
+        (groupIndex < nonEmptyGroups.length - 1 ? ZONE_DECK_TYPE_GAP : 0);
+    });
+
+    return boardBottom;
+  }
+
+  private sortZoneCards(
+    zoneId: string,
+    options?: { emitChange?: boolean },
+  ): void {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone || zone.cards.length === 0) return;
+
+    const nextCards = zone.cards.map((card) => ({ ...card }));
+    const headerHeight = this.getZoneHeaderHeight(zone);
+    const bodyLeft = zone.bounds.x + ZONE_BODY_PADDING;
+    const bodyTop = zone.bounds.y + headerHeight + ZONE_BODY_PADDING;
+    const bodyWidth = Math.max(
+      CARD_SIZE.PORTRAIT.width,
+      zone.bounds.width - ZONE_BODY_PADDING * 2,
+    );
+
+    if (zone.type === "deck") {
+      let cursorY = bodyTop;
+      const boardOrder: Array<Exclude<ActiveBoard, "avatar">> = [
+        "mainboard",
+        "sideboard",
+        "maybeboard",
+      ];
+
+      for (const board of boardOrder) {
+        const boardCards = nextCards.filter((card) => {
+          const normalizedBoard =
+            card.board === "mainboard" ||
+            card.board === "sideboard" ||
+            card.board === "maybeboard"
+              ? card.board
+              : "mainboard";
+          if (normalizedBoard !== board) return false;
+          card.board = normalizedBoard;
+          return true;
+        });
+        const boardBottom = this.layoutZoneBoardCards(boardCards, {
+          left: bodyLeft + ZONE_DECK_BOARD_INNER_LEFT,
+          top: cursorY,
+          width: bodyWidth - ZONE_DECK_BOARD_INNER_LEFT * 2,
+          leadingGap: ZONE_DECK_CARD_TOP_GAP,
+          minHeight: ZONE_DECK_MIN_BOARD_HEIGHT[board],
+        });
+        cursorY = boardBottom + ZONE_DECK_BOARD_GAP;
+      }
+    } else {
+      this.layoutZoneBoardCards(nextCards, {
+        left: bodyLeft + ZONE_DECK_BOARD_INNER_LEFT,
+        top: bodyTop,
+        width: bodyWidth - ZONE_DECK_BOARD_INNER_LEFT * 2,
+        leadingGap: 0,
+        minHeight: CARD_SIZE.PORTRAIT.height + ZONE_BODY_PADDING,
+      });
+    }
+
+    zone.cards = nextCards;
+    this.reconcileZoneBounds(zone.id, { preserveTopLeft: true });
+    this.rebuildZoneVisuals();
+    if (options?.emitChange ?? true) {
+      this.emitZonesChange();
+    }
+  }
+
+  private hideZoneFromCanvas(zoneId: string): void {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone || !zone.pinned) return;
+    zone.pinned = false;
+    this.rebuildZoneVisuals();
+    this.emitZonesChange();
+  }
+
+  private getDeleteButtonBounds(data: ZoneCardSpriteData): {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } {
+    return {
+      left: data.bounds.right - ZONE_DELETE_SIZE - 4,
+      top: data.bounds.top + 4,
+      right: data.bounds.right - 4,
+      bottom: data.bounds.top + ZONE_DELETE_SIZE + 4,
+    };
+  }
+
+  private drawZoneDeleteOverlay(): void {
+    if (!this.zoneDeleteOverlay) return;
+    this.zoneDeleteOverlay.clear();
+
+    if (!this.hoveredZoneCardKey) return;
+    const data = this.zoneCardSprites.get(this.hoveredZoneCardKey);
+    if (!data) return;
+
+    const bounds = this.getDeleteButtonBounds(data);
+    const centerX = (bounds.left + bounds.right) / 2;
+    const centerY = (bounds.top + bounds.bottom) / 2;
+    const radius = (bounds.right - bounds.left) / 2;
+
+    this.zoneDeleteOverlay.circle(centerX, centerY, radius);
+    this.zoneDeleteOverlay.fill({ color: 0x1b1b2f, alpha: 0.94 });
+    this.zoneDeleteOverlay.stroke({ width: 1.5, color: 0xc8d0ff, alpha: 0.8 });
+    this.zoneDeleteOverlay.moveTo(bounds.left + 4, bounds.top + 4);
+    this.zoneDeleteOverlay.lineTo(bounds.right - 4, bounds.bottom - 4);
+    this.zoneDeleteOverlay.moveTo(bounds.right - 4, bounds.top + 4);
+    this.zoneDeleteOverlay.lineTo(bounds.left + 4, bounds.bottom - 4);
+    this.zoneDeleteOverlay.stroke({ width: 1.4, color: 0xf2f4ff, alpha: 0.92 });
+  }
+
+  private updateHoveredFromWorldPos(worldPos: { x: number; y: number }): void {
+    const zoneCard = this.getZoneCardAtPosition(worldPos);
+    const zoneUnderPointer = this.getZoneAtPosition(worldPos);
+
+    this.hoveredZoneCardKey = zoneCard?.key ?? null;
+    this.drawZoneDeleteOverlay();
+
+    if (zoneCard) {
+      this.setHoveredCard(zoneCard.cardName);
+      return;
+    }
+
+    if (zoneUnderPointer) {
+      this.setHoveredCard(null);
+      return;
+    }
+
+    const cardKey = this.getCardAtPosition(worldPos);
+    if (!cardKey) {
+      this.setHoveredCard(null);
+      return;
+    }
+
+    const data = this.getSpriteData(cardKey);
+    this.setHoveredCard(data?.layout.name ?? null);
   }
 
   private onPointerDown(event: FederatedPointerEvent): void {
@@ -367,6 +1012,42 @@ export class PixiStage {
     const isShiftHeld = event.shiftKey;
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    this.clearZoneDropPreview();
+    const clickedZoneSort = this.getZoneSortTargetAtPosition(worldPos);
+    if (!isRightClick && clickedZoneSort) {
+      this.cancelSelectionBox();
+      this.sortZoneCards(clickedZoneSort.id);
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    const clickedZoneClose = this.getZoneCloseTargetAtPosition(worldPos);
+    if (!isRightClick && clickedZoneClose) {
+      this.cancelSelectionBox();
+      this.hideZoneFromCanvas(clickedZoneClose.id);
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    const clickedZoneCard = this.getZoneCardAtPosition(worldPos);
+    const clickedZoneHeader = this.getZoneHeaderAtPosition(worldPos);
+    if (
+      !isRightClick &&
+      this.hoveredZoneCardKey &&
+      clickedZoneCard &&
+      clickedZoneCard.key === this.hoveredZoneCardKey
+    ) {
+      const deleteBounds = this.getDeleteButtonBounds(clickedZoneCard);
+      if (this.pointInBounds(worldPos, deleteBounds)) {
+        this.removeZoneCardInstance(clickedZoneCard.zoneId, clickedZoneCard.instanceId);
+        this.emitZonesChange();
+        this.hoveredZoneCardKey = null;
+        this.drawZoneDeleteOverlay();
+        this.updateHoveredFromWorldPos(worldPos);
+        return;
+      }
+    }
+
     const clickedLabel = this.getLabelAtPosition(worldPos);
 
     // Label placement mode: next left-click places a label.
@@ -399,6 +1080,68 @@ export class PixiStage {
       return;
     }
 
+    if (!isRightClick && clickedZoneCard) {
+      this.cancelSelectionBox();
+      this.clearMainSelection(true);
+
+      if (isShiftHeld) {
+        if (
+          this.selectedZoneId !== null &&
+          this.selectedZoneId !== clickedZoneCard.zoneId
+        ) {
+          this.clearZoneSelection();
+        }
+        if (this.selectedZoneCardKeys.has(clickedZoneCard.key)) {
+          this.deselectZoneCard(clickedZoneCard.key);
+        } else {
+          this.selectZoneCard(clickedZoneCard.key);
+        }
+        this.emitSelectionChange();
+        this.updateHoveredFromWorldPos(worldPos);
+        return;
+      }
+
+      if (
+        !this.selectedZoneCardKeys.has(clickedZoneCard.key) ||
+        this.selectedZoneId !== clickedZoneCard.zoneId
+      ) {
+        this.clearZoneSelection();
+        this.selectZoneCard(clickedZoneCard.key);
+      }
+      this.emitSelectionChange();
+
+      const now = Date.now();
+      const isDoubleClick =
+        now - this.lastZoneCardClickTime < DOUBLE_CLICK_TIME_MS &&
+        this.lastClickedZoneCardKey === clickedZoneCard.key;
+      this.lastZoneCardClickTime = now;
+      this.lastClickedZoneCardKey = clickedZoneCard.key;
+
+      if (isDoubleClick) {
+        this.duplicateZoneCardInstance(
+          clickedZoneCard.zoneId,
+          clickedZoneCard.instanceId,
+        );
+        this.emitZonesChange();
+        this.updateHoveredFromWorldPos(worldPos);
+        return;
+      }
+
+      this.startZoneCardDrag(clickedZoneCard, worldPos);
+      this.camera.pauseDrag();
+      return;
+    }
+
+    if (!isRightClick && clickedZoneHeader) {
+      this.cancelSelectionBox();
+      if (clickedZoneHeader.type === "stack") {
+        this.onStackZoneHeaderClick?.(clickedZoneHeader.id);
+      }
+      this.startZoneDrag(clickedZoneHeader.id, worldPos);
+      this.camera.pauseDrag();
+      return;
+    }
+
     this.pointerDownOnSelectedCard = false;
 
     // Right-click always pans (do nothing special, let viewport handle it)
@@ -409,6 +1152,7 @@ export class PixiStage {
     const clickedCard = this.getCardAtPosition(worldPos);
 
     if (clickedCard) {
+      this.clearZoneSelection();
       const wasSelected = this.selectedCards.has(clickedCard);
 
       // Check for double-click
@@ -462,6 +1206,8 @@ export class PixiStage {
       this.startSelectionBox(worldPos);
       this.camera.pauseDrag();
     }
+
+    this.updateHoveredFromWorldPos(worldPos);
   }
 
   private onPointerMove(event: FederatedPointerEvent): void {
@@ -471,26 +1217,67 @@ export class PixiStage {
 
     // Update label drag
     if (this.labelDragState.isDragging) {
+      this.clearZoneDropPreview();
       this.updateLabelDrag(worldPos);
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    // Update zone header drag
+    if (this.zoneDragState.isDragging) {
+      this.clearZoneDropPreview();
+      this.updateZoneDrag(worldPos);
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    // Update zone card drag
+    if (this.zoneCardDragState.isDragging) {
+      this.clearZoneDropPreview();
+      this.updateZoneCardDrag(worldPos);
+      this.updateHoveredFromWorldPos(worldPos);
       return;
     }
 
     // Update selection box
     if (this.selectionBox.isActive) {
+      this.clearZoneDropPreview();
       this.updateSelectionBox(worldPos);
+      this.updateHoveredFromWorldPos(worldPos);
       return;
     }
 
     // Update card drag
     if (this.dragState.isDragging && this.pointerDownOnSelectedCard) {
-      this.updateCardDrag(worldPos);
+      const rect = this.app.canvas.getBoundingClientRect();
+      const clientX = rect.left + event.globalX;
+      const clientY = rect.top + event.globalY;
+      const overStacksPanel = this.isPointInsideOpenStacksPanel(clientX, clientY);
+
+      this.setStacksDropVisual(overStacksPanel);
+      if (!overStacksPanel) {
+        this.updateCardDrag(worldPos);
+        const hoveredZone = this.getZoneAtPosition(worldPos);
+        this.updateZoneDropPreview(
+          hoveredZone,
+          worldPos,
+          this.getDraggedCardPlacements(),
+        );
+      } else {
+        this.clearZoneDropPreview();
+      }
+    } else {
+      this.clearZoneDropPreview();
     }
+
+    this.updateHoveredFromWorldPos(worldPos);
   }
 
   private onPointerUp(event: FederatedPointerEvent): void {
     if (!this.camera) return;
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    this.clearZoneDropPreview();
 
     // End label drag
     if (this.labelDragState.isDragging && event.button !== 2) {
@@ -520,6 +1307,10 @@ export class PixiStage {
         return;
       }
 
+      if (this.getZoneAtPosition(worldPos)) {
+        return;
+      }
+
       const clickedCard = this.getCardAtPosition(worldPos);
       if (
         clickedCard &&
@@ -537,6 +1328,20 @@ export class PixiStage {
       return;
     }
 
+    if (this.zoneCardDragState.isDragging) {
+      this.endZoneCardDrag(worldPos);
+      this.camera.resumeDrag();
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    if (this.zoneDragState.isDragging) {
+      this.endZoneDrag(worldPos);
+      this.camera.resumeDrag();
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
     // End selection box
     if (this.selectionBox.isActive) {
       this.endSelectionBox(worldPos);
@@ -546,11 +1351,54 @@ export class PixiStage {
 
     // End card drag
     if (this.dragState.isDragging) {
-      this.endCardDrag();
+      const rect = this.app.canvas.getBoundingClientRect();
+      const clientX = rect.left + event.globalX;
+      const clientY = rect.top + event.globalY;
+      const draggedPlacements = this.getDraggedCardPlacements();
+      const droppedInStacksTarget = this.isPointInsideStacksDropTarget(
+        clientX,
+        clientY,
+      );
+      const droppedStackZoneId = droppedInStacksTarget
+        ? this.getStackZoneIdFromDropTarget(clientX, clientY)
+        : null;
+      const draggedCardNames = this.getDraggedCardNames();
+      const droppedZone = this.getZoneAtPosition(worldPos);
+      const shouldDropToStackTarget =
+        !!droppedStackZoneId && draggedCardNames.length > 0;
+      const shouldDropToCanvasZone =
+        !droppedInStacksTarget && !!droppedZone && draggedCardNames.length > 0;
+      if (shouldDropToCanvasZone && droppedZone) {
+        this.copyCardsIntoZone(droppedZone.id, draggedCardNames, worldPos, {
+          placements: draggedPlacements,
+        });
+      }
+      this.endCardDrag(true);
       this.camera.resumeDrag();
+      this.setStacksDropVisual(false);
+
+      if (shouldDropToStackTarget && droppedStackZoneId) {
+        this.copyCardsIntoZone(droppedStackZoneId, draggedCardNames, worldPos, {
+          useZonePlacement: true,
+          placements: draggedPlacements,
+        });
+      } else if (
+        droppedInStacksTarget &&
+        !shouldDropToCanvasZone &&
+        draggedCardNames.length > 0 &&
+        this.onCardDragDrop
+      ) {
+        this.onCardDragDrop({
+          cardNames: draggedCardNames,
+          clientX,
+          clientY,
+        });
+      }
     }
 
+    this.setStacksDropVisual(false);
     this.pointerDownOnSelectedCard = false;
+    this.updateHoveredFromWorldPos(worldPos);
   }
 
   // ============================================================================
@@ -753,6 +1601,19 @@ export class PixiStage {
   // Selection Management
   // ============================================================================
 
+  private clearMainSelection(suppressEmit = false): void {
+    for (const cardName of this.selectedCards) {
+      const data = this.getSpriteData(cardName);
+      if (data) {
+        data.sprite.setSelected(false);
+      }
+    }
+    this.selectedCards.clear();
+    if (!suppressEmit) {
+      this.emitSelectionChange();
+    }
+  }
+
   private selectCard(cardName: string, suppressEmit = false): void {
     this.selectedCards.add(cardName);
     const data = this.getSpriteData(cardName);
@@ -775,14 +1636,66 @@ export class PixiStage {
     }
   }
 
-  private clearSelection(suppressEmit = false): void {
-    for (const cardName of this.selectedCards) {
-      const data = this.getSpriteData(cardName);
+  private selectZoneCard(key: string): void {
+    const data = this.zoneCardSprites.get(key);
+    if (!data) return;
+
+    if (this.selectedZoneId && this.selectedZoneId !== data.zoneId) {
+      this.clearZoneSelection();
+    }
+
+    this.selectedZoneId = data.zoneId;
+    this.selectedZoneCardKeys.add(key);
+    data.sprite.setSelected(true);
+  }
+
+  private deselectZoneCard(key: string): void {
+    this.selectedZoneCardKeys.delete(key);
+    const data = this.zoneCardSprites.get(key);
+    if (data) {
+      data.sprite.setSelected(false);
+    }
+    if (this.selectedZoneCardKeys.size === 0) {
+      this.selectedZoneId = null;
+    }
+  }
+
+  private clearZoneSelection(): void {
+    for (const key of this.selectedZoneCardKeys) {
+      const data = this.zoneCardSprites.get(key);
       if (data) {
         data.sprite.setSelected(false);
       }
     }
-    this.selectedCards.clear();
+    this.selectedZoneCardKeys.clear();
+    this.selectedZoneId = null;
+  }
+
+  private syncZoneSelectionVisuals(): void {
+    const nextSelectedKeys = new Set<string>();
+    let zoneId: string | null = null;
+
+    for (const key of this.selectedZoneCardKeys) {
+      const data = this.zoneCardSprites.get(key);
+      if (!data) continue;
+      if (zoneId === null) {
+        zoneId = data.zoneId;
+      }
+      if (data.zoneId !== zoneId) continue;
+      nextSelectedKeys.add(key);
+    }
+
+    for (const [key, data] of this.zoneCardSprites) {
+      data.sprite.setSelected(nextSelectedKeys.has(key));
+    }
+
+    this.selectedZoneCardKeys = nextSelectedKeys;
+    this.selectedZoneId = zoneId;
+  }
+
+  private clearSelection(suppressEmit = false): void {
+    this.clearMainSelection(true);
+    this.clearZoneSelection();
     if (!suppressEmit) {
       this.emitSelectionChange();
     }
@@ -805,29 +1718,37 @@ export class PixiStage {
   private getCardAtPosition(worldPos: { x: number; y: number }): string | null {
     let topCard: string | null = null;
     let topZIndex = -Infinity;
+    let topDrawOrder = -Infinity;
+
+    const considerCard = (cardKey: string, data: CardSpriteData): void => {
+      if (!this.pointInBounds(worldPos, data.bounds)) return;
+
+      const zIndex = data.sprite.zIndex;
+      const drawOrder =
+        data.sprite.parent === this.cardContainer
+          ? this.cardContainer.getChildIndex(data.sprite)
+          : -1;
+      const isHigherLayer =
+        zIndex > topZIndex || (zIndex === topZIndex && drawOrder > topDrawOrder);
+
+      if (!isHigherLayer) return;
+
+      topCard = cardKey;
+      topZIndex = zIndex;
+      topDrawOrder = drawOrder;
+    };
 
     // Check collection sprites
     for (const cardName of this.visibleCardNames) {
       const data = this.cardSprites.get(cardName);
-      if (data && this.pointInBounds(worldPos, data.bounds)) {
-        const zIndex = data.sprite.zIndex;
-        if (zIndex > topZIndex) {
-          topZIndex = zIndex;
-          topCard = cardName;
-        }
-      }
+      if (!data) continue;
+      considerCard(cardName, data);
     }
 
     // Check deck sprites
     for (const [key, data] of this.deckSprites) {
       if (!data.sprite.visible) continue;
-      if (this.pointInBounds(worldPos, data.bounds)) {
-        const zIndex = data.sprite.zIndex;
-        if (zIndex > topZIndex) {
-          topZIndex = zIndex;
-          topCard = key;
-        }
-      }
+      considerCard(key, data);
     }
 
     return topCard;
@@ -854,6 +1775,8 @@ export class PixiStage {
     this.dragState.startWorldPos = { ...worldPos };
     this.dragState.draggedCards = new Set(this.selectedCards);
     this.dragState.cardStartPositions.clear();
+    this.dragState.cardStartBasePositions.clear();
+    this.dragState.cardStartGridKeys.clear();
     this.dragState.cardOriginalZIndices.clear();
 
     // Use a high zIndex so dragged cards appear above all others
@@ -866,6 +1789,11 @@ export class PixiStage {
           x: data.sprite.x,
           y: data.sprite.y,
         });
+        this.dragState.cardStartBasePositions.set(cardName, {
+          x: data.basePosition.x,
+          y: data.basePosition.y,
+        });
+        this.dragState.cardStartGridKeys.set(cardName, data.gridKey);
         // Store original zIndex and set high one for dragging
         this.dragState.cardOriginalZIndices.set(cardName, data.sprite.zIndex);
         data.sprite.zIndex = dragZIndex;
@@ -889,12 +1817,43 @@ export class PixiStage {
     }
   }
 
-  private endCardDrag(): void {
+  private endCardDrag(revertToStart = false): void {
     for (const cardName of this.dragState.draggedCards) {
       const data = this.getSpriteData(cardName);
       if (data) {
         const cardSize = data.displaySize;
         const isLandscape = data.layout.isLandscape;
+
+        if (revertToStart) {
+          const startPos = this.dragState.cardStartPositions.get(cardName);
+          const startBasePos =
+            this.dragState.cardStartBasePositions.get(cardName) ?? startPos;
+          const startGridKey = this.dragState.cardStartGridKeys.get(cardName);
+
+          if (startPos) {
+            data.sprite.x = startPos.x;
+            data.sprite.y = startPos.y;
+          }
+          if (startBasePos) {
+            data.basePosition = { x: startBasePos.x, y: startBasePos.y };
+          }
+          if (startGridKey) {
+            data.gridKey = startGridKey;
+          }
+
+          data.bounds = {
+            left: data.sprite.x,
+            top: data.sprite.y,
+            right: data.sprite.x + cardSize.width,
+            bottom: data.sprite.y + cardSize.height,
+          };
+
+          const originalZ = this.dragState.cardOriginalZIndices.get(cardName);
+          if (originalZ !== undefined) {
+            data.sprite.zIndex = originalZ;
+          }
+          continue;
+        }
 
         // Get current center position
         const centerX = data.sprite.x + cardSize.width / 2;
@@ -943,7 +1902,726 @@ export class PixiStage {
     this.dragState.isDragging = false;
     this.dragState.draggedCards.clear();
     this.dragState.cardStartPositions.clear();
+    this.dragState.cardStartBasePositions.clear();
+    this.dragState.cardStartGridKeys.clear();
     this.dragState.cardOriginalZIndices.clear();
+    this.clearZoneDropPreview();
+  }
+
+  private getDraggedCardNames(): string[] {
+    const names: string[] = [];
+    for (const key of this.dragState.draggedCards) {
+      const data = this.getSpriteData(key);
+      if (!data) continue;
+      names.push(data.layout.name);
+    }
+    return names;
+  }
+
+  private getDraggedCardPlacements(): DraggedCardPlacement[] {
+    const placements: DraggedCardPlacement[] = [];
+    for (const key of this.dragState.draggedCards) {
+      const data = this.getSpriteData(key);
+      if (!data) continue;
+      placements.push({
+        cardName: data.layout.name,
+        centerX: data.sprite.x + data.displaySize.width / 2,
+        centerY: data.sprite.y + data.displaySize.height / 2,
+      });
+    }
+    return placements;
+  }
+
+  // ============================================================================
+  // Zone Interaction
+  // ============================================================================
+
+  private startZoneCardDrag(
+    zoneCard: ZoneCardSpriteData,
+    worldPos: { x: number; y: number },
+  ): void {
+    this.zoneCardDragState.isDragging = true;
+    this.zoneCardDragState.key = zoneCard.key;
+    this.zoneCardDragState.zoneId = zoneCard.zoneId;
+    this.zoneCardDragState.instanceId = zoneCard.instanceId;
+    this.zoneCardDragState.startWorldPos = { ...worldPos };
+    this.zoneCardDragState.startCardPos = {
+      x: zoneCard.sprite.x,
+      y: zoneCard.sprite.y,
+    };
+
+    const zone = this.zones.find((entry) => entry.id === zoneCard.zoneId);
+    if (zone) {
+      const instanceIndex = zone.cards.findIndex(
+        (entry) => entry.id === zoneCard.instanceId,
+      );
+      if (instanceIndex !== -1) {
+        const [instance] = zone.cards.splice(instanceIndex, 1);
+        if (instance) {
+          zone.cards.push(instance);
+        }
+      }
+    }
+
+    zoneCard.sprite.zIndex = 30000;
+    this.zoneContainer.sortChildren();
+  }
+
+  private updateZoneCardDrag(worldPos: { x: number; y: number }): void {
+    if (!this.zoneCardDragState.isDragging || !this.zoneCardDragState.key) return;
+
+    const zoneCard = this.zoneCardSprites.get(this.zoneCardDragState.key);
+    if (!zoneCard) return;
+
+    const dx = worldPos.x - this.zoneCardDragState.startWorldPos.x;
+    const dy = worldPos.y - this.zoneCardDragState.startWorldPos.y;
+
+    zoneCard.sprite.x = this.zoneCardDragState.startCardPos.x + dx;
+    zoneCard.sprite.y = this.zoneCardDragState.startCardPos.y + dy;
+    zoneCard.bounds = {
+      left: zoneCard.sprite.x,
+      top: zoneCard.sprite.y,
+      right: zoneCard.sprite.x + zoneCard.displaySize.width,
+      bottom: zoneCard.sprite.y + zoneCard.displaySize.height,
+    };
+    this.drawZoneDeleteOverlay();
+  }
+
+  private endZoneCardDrag(worldPos: { x: number; y: number }): void {
+    const drag = this.zoneCardDragState;
+    if (!drag.zoneId || !drag.instanceId || !drag.key) {
+      this.zoneCardDragState = {
+        isDragging: false,
+        key: null,
+        zoneId: null,
+        instanceId: null,
+        startWorldPos: { x: 0, y: 0 },
+        startCardPos: { x: 0, y: 0 },
+      };
+      return;
+    }
+
+    const zone = this.zones.find((entry) => entry.id === drag.zoneId);
+    const zoneCard = this.zoneCardSprites.get(drag.key);
+    if (!zone || !zoneCard) {
+      this.zoneCardDragState = {
+        isDragging: false,
+        key: null,
+        zoneId: null,
+        instanceId: null,
+        startWorldPos: { x: 0, y: 0 },
+        startCardPos: { x: 0, y: 0 },
+      };
+      return;
+    }
+
+    const isLandscape = zoneCard.cardType === "Site";
+    const snapped = snapCardCenter(
+      zoneCard.sprite.x + zoneCard.displaySize.width / 2,
+      zoneCard.sprite.y + zoneCard.displaySize.height / 2,
+      isLandscape,
+    );
+    const nextX = snapped.x - zoneCard.displaySize.width / 2;
+    const nextY = snapped.y - zoneCard.displaySize.height / 2;
+    const nextCenter = {
+      x: nextX + zoneCard.displaySize.width / 2,
+      y: nextY + zoneCard.displaySize.height / 2,
+    };
+    const movedBoard =
+      zone.type === "deck"
+        ? this.getDeckBoardForPosition(zone, nextCenter) ??
+          this.getDeckBoardForPosition(zone, worldPos)
+        : null;
+    const draggedInstance = zone.cards.find(
+      (instance) => instance.id === drag.instanceId,
+    );
+    const fallbackBoard =
+      draggedInstance?.board === "mainboard" ||
+      draggedInstance?.board === "sideboard" ||
+      draggedInstance?.board === "maybeboard"
+        ? draggedInstance.board
+        : "mainboard";
+    const resolvedBoard = zone.type === "deck" ? movedBoard ?? fallbackBoard : null;
+
+    zone.cards = zone.cards.map((instance) =>
+      instance.id === drag.instanceId
+        ? {
+            ...instance,
+            x: nextX,
+            y: nextY,
+            board:
+              zone.type === "deck" ? resolvedBoard : instance.board,
+          }
+        : instance,
+    );
+    this.reconcileZoneBounds(zone.id, { anchorBoard: resolvedBoard });
+    this.zoneCardDragState = {
+      isDragging: false,
+      key: null,
+      zoneId: null,
+      instanceId: null,
+      startWorldPos: { x: 0, y: 0 },
+      startCardPos: { x: 0, y: 0 },
+    };
+    this.rebuildZoneVisuals();
+    this.emitZonesChange();
+  }
+
+  private startZoneDrag(zoneId: string, worldPos: { x: number; y: number }): void {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone) return;
+
+    this.zoneDragState = {
+      isDragging: true,
+      zoneId,
+      startWorldPos: { ...worldPos },
+      startBounds: { x: zone.bounds.x, y: zone.bounds.y },
+    };
+    this.clearSelection();
+  }
+
+  private updateZoneDrag(worldPos: { x: number; y: number }): void {
+    if (!this.zoneDragState.isDragging || !this.zoneDragState.zoneId) return;
+    if (!this.zoneDragState.startBounds) return;
+
+    const zone = this.zones.find((entry) => entry.id === this.zoneDragState.zoneId);
+    if (!zone) {
+      this.zoneDragState = {
+        isDragging: false,
+        zoneId: null,
+        startWorldPos: { x: 0, y: 0 },
+        startBounds: null,
+      };
+      return;
+    }
+
+    const dx = worldPos.x - this.zoneDragState.startWorldPos.x;
+    const dy = worldPos.y - this.zoneDragState.startWorldPos.y;
+    const targetX = this.zoneDragState.startBounds.x + dx;
+    const targetY = this.zoneDragState.startBounds.y + dy;
+    const moveX = targetX - zone.bounds.x;
+    const moveY = targetY - zone.bounds.y;
+
+    if (moveX === 0 && moveY === 0) return;
+
+    zone.bounds.x = targetX;
+    zone.bounds.y = targetY;
+    zone.cards = zone.cards.map((card) => ({
+      ...card,
+      x: card.x + moveX,
+      y: card.y + moveY,
+    }));
+    this.rebuildZoneVisuals();
+  }
+
+  private endZoneDrag(_worldPos: { x: number; y: number }): void {
+    if (!this.zoneDragState.zoneId || !this.zoneDragState.startBounds) {
+      this.zoneDragState = {
+        isDragging: false,
+        zoneId: null,
+        startWorldPos: { x: 0, y: 0 },
+        startBounds: null,
+      };
+      return;
+    }
+
+    const zone = this.zones.find((entry) => entry.id === this.zoneDragState.zoneId);
+    if (!zone) return;
+
+    const startBounds = this.zoneDragState.startBounds;
+    const rawDeltaX = zone.bounds.x - startBounds.x;
+    const rawDeltaY = zone.bounds.y - startBounds.y;
+    const snappedDeltaX =
+      Math.round(rawDeltaX / DRAWN_GRID.width) * DRAWN_GRID.width;
+    const snappedDeltaY =
+      Math.round(rawDeltaY / DRAWN_GRID.height) * DRAWN_GRID.height;
+    const snappedX = startBounds.x + snappedDeltaX;
+    const snappedY = startBounds.y + snappedDeltaY;
+    const dx = snappedX - zone.bounds.x;
+    const dy = snappedY - zone.bounds.y;
+    zone.bounds.x = snappedX;
+    zone.bounds.y = snappedY;
+    zone.cards = zone.cards.map((card) => ({
+      ...card,
+      x: card.x + dx,
+      y: card.y + dy,
+    }));
+    this.zoneDragState = {
+      isDragging: false,
+      zoneId: null,
+      startWorldPos: { x: 0, y: 0 },
+      startBounds: null,
+    };
+    this.rebuildZoneVisuals();
+    this.emitZonesChange();
+  }
+
+  private removeZoneCardInstance(zoneId: string, instanceId: string): void {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone) return;
+
+    zone.cards = zone.cards.filter((entry) => entry.id !== instanceId);
+    this.reconcileZoneBounds(zone.id);
+    this.rebuildZoneVisuals();
+  }
+
+  private duplicateZoneCardInstance(zoneId: string, instanceId: string): void {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone) return;
+    if (zone.type === "stack") return;
+
+    const source = zone.cards.find((entry) => entry.id === instanceId);
+    if (!source) return;
+
+    const sourceBoard =
+      zone.type === "deck" &&
+      (source.board === "mainboard" ||
+        source.board === "sideboard" ||
+        source.board === "maybeboard")
+        ? source.board
+        : zone.type === "deck"
+          ? "mainboard"
+          : null;
+
+    const duplicate: ZoneCardInstance = {
+      id:
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      cardName: source.cardName,
+      x: source.x,
+      y: source.y,
+      board: sourceBoard,
+    };
+
+    zone.cards = [...zone.cards, duplicate];
+    this.reconcileZoneBounds(zone.id, { anchorBoard: sourceBoard });
+    this.rebuildZoneVisuals();
+  }
+
+  private getDeckBoardForPosition(
+    zone: ZoneModel,
+    worldPos: { x: number; y: number },
+  ): Exclude<ActiveBoard, "avatar"> | null {
+    if (zone.type !== "deck") return null;
+    const rects = this.getDeckBoardRects(zone.bounds, zone);
+    const boards: Array<Exclude<ActiveBoard, "avatar">> = [
+      "mainboard",
+      "sideboard",
+      "maybeboard",
+    ];
+
+    for (const board of boards) {
+      const rect = rects[board];
+      if (
+        worldPos.x >= rect.x &&
+        worldPos.x <= rect.x + rect.width &&
+        worldPos.y >= rect.y &&
+        worldPos.y <= rect.y + rect.height
+      ) {
+        return board;
+      }
+    }
+
+    return null;
+  }
+
+  private planZoneCardAdditions(
+    zone: ZoneModel,
+    cardNames: string[],
+    worldPos: { x: number; y: number },
+    options?: {
+      useZonePlacement?: boolean;
+      placements?: DraggedCardPlacement[];
+      previewIds?: boolean;
+    },
+  ): {
+    additions: ZoneCardInstance[];
+    anchorBoard: Exclude<ActiveBoard, "avatar"> | null;
+  } {
+    const enforceUnique = zone.type === "stack";
+    const existingNames = enforceUnique
+      ? new Set(zone.cards.map((card) => card.cardName))
+      : null;
+    const queuedNames = enforceUnique ? new Set<string>() : null;
+    const useZonePlacement = options?.useZonePlacement ?? false;
+    const placements = options?.placements ?? [];
+    const placementQueueByName = new Map<string, DraggedCardPlacement[]>();
+    for (const placement of placements) {
+      const queue = placementQueueByName.get(placement.cardName) ?? [];
+      queue.push(placement);
+      placementQueueByName.set(placement.cardName, queue);
+    }
+
+    const entries: DraggedCardPlacement[] = cardNames.map((cardName) => {
+      const queue = placementQueueByName.get(cardName);
+      const match = queue && queue.length > 0 ? queue.shift() : null;
+      if (match) {
+        return {
+          cardName,
+          centerX: match.centerX,
+          centerY: match.centerY,
+        };
+      }
+      return {
+        cardName,
+        centerX: worldPos.x,
+        centerY: worldPos.y,
+      };
+    });
+
+    if (useZonePlacement && entries.length > 0) {
+      const headerHeight = this.getZoneHeaderHeight(zone);
+      const minCenterX = entries.reduce(
+        (min, entry) => Math.min(min, entry.centerX),
+        Number.POSITIVE_INFINITY,
+      );
+      const minCenterY = entries.reduce(
+        (min, entry) => Math.min(min, entry.centerY),
+        Number.POSITIVE_INFINITY,
+      );
+      const anchorCenterX =
+        zone.bounds.x +
+        ZONE_BODY_PADDING +
+        ZONE_DECK_BOARD_INNER_LEFT +
+        CARD_SIZE.PORTRAIT.width / 2;
+      const anchorCenterY =
+        zone.bounds.y +
+        headerHeight +
+        ZONE_BODY_PADDING +
+        CARD_SIZE.PORTRAIT.height / 2;
+      for (const entry of entries) {
+        entry.centerX = anchorCenterX + (entry.centerX - minCenterX);
+        entry.centerY = anchorCenterY + (entry.centerY - minCenterY);
+      }
+    }
+
+    const fallbackDeckBoard =
+      zone.type === "deck"
+        ? this.getDeckBoardForPosition(zone, worldPos) ?? "mainboard"
+        : null;
+    let anchorBoard: Exclude<ActiveBoard, "avatar"> | null = fallbackDeckBoard;
+    const additions: ZoneCardInstance[] = [];
+
+    entries.forEach((entry, index) => {
+      if (
+        enforceUnique &&
+        (existingNames?.has(entry.cardName) || queuedNames?.has(entry.cardName))
+      ) {
+        return;
+      }
+      queuedNames?.add(entry.cardName);
+
+      const isLandscape = this.isLandscapeCard(entry.cardName);
+      const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const snapped = snapCardCenter(
+        entry.centerX,
+        entry.centerY,
+        isLandscape,
+      );
+      const snappedCenter = { x: snapped.x, y: snapped.y };
+      const boardForCard =
+        zone.type === "deck"
+          ? this.getDeckBoardForPosition(zone, snappedCenter) ??
+            fallbackDeckBoard ??
+            "mainboard"
+          : null;
+      if (zone.type === "deck" && additions.length === 0) {
+        anchorBoard = boardForCard;
+      }
+
+      additions.push({
+        id: options?.previewIds
+          ? `preview:${zone.id}:${index}:${entry.cardName}`
+          : typeof crypto !== "undefined" &&
+              typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        cardName: entry.cardName,
+        x: snapped.x - size.width / 2,
+        y: snapped.y - size.height / 2,
+        board: zone.type === "deck" ? boardForCard : null,
+      });
+    });
+
+    return { additions, anchorBoard };
+  }
+
+  private computeZoneBoundsFromCards(
+    zone: ZoneModel,
+    cards: ZoneCardInstance[],
+  ): { x: number; y: number; width: number; height: number } {
+    const usesDefaultMin = !(zone.type === "deck" && cards.length > 0);
+    const minSize = usesDefaultMin
+      ? ZONE_DEFAULT_SIZE[zone.type]
+      : { width: 0, height: 0 };
+    const headerHeight = this.getZoneHeaderHeight(zone);
+
+    if (cards.length === 0) {
+      return {
+        x: zone.bounds.x,
+        y: zone.bounds.y,
+        width: minSize.width,
+        height: minSize.height,
+      };
+    }
+
+    let minCardLeft = Number.POSITIVE_INFINITY;
+    let minCardTop = Number.POSITIVE_INFINITY;
+    let maxCardRight = Number.NEGATIVE_INFINITY;
+    let maxCardBottom = Number.NEGATIVE_INFINITY;
+
+    for (const instance of cards) {
+      const isLandscape = this.isLandscapeCard(instance.cardName);
+      const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      minCardLeft = Math.min(minCardLeft, instance.x);
+      minCardTop = Math.min(minCardTop, instance.y);
+      maxCardRight = Math.max(maxCardRight, instance.x + size.width);
+      maxCardBottom = Math.max(maxCardBottom, instance.y + size.height);
+    }
+
+    const nextX = minCardLeft - (ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING);
+    const nextY =
+      minCardTop -
+      (headerHeight + ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING);
+    const nextRight = maxCardRight + ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING;
+    const nextBottom = maxCardBottom + ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING;
+
+    return {
+      x: nextX,
+      y: nextY,
+      width: Math.max(minSize.width, nextRight - nextX),
+      height: Math.max(minSize.height, nextBottom - nextY),
+    };
+  }
+
+  private updateZoneDropPreview(
+    zone: ZoneModel | null,
+    worldPos: { x: number; y: number },
+    placements: DraggedCardPlacement[],
+  ): void {
+    if (!zone || placements.length === 0) {
+      this.clearZoneDropPreview();
+      return;
+    }
+
+    const cardNames = placements.map((entry) => entry.cardName);
+    const { additions } = this.planZoneCardAdditions(zone, cardNames, worldPos, {
+      placements,
+      previewIds: true,
+    });
+    if (additions.length === 0) {
+      this.clearZoneDropPreview();
+      return;
+    }
+
+    const previewBounds = this.computeZoneBoundsFromCards(zone, [
+      ...zone.cards,
+      ...additions,
+    ]);
+    const signature =
+      `${zone.id}:${Math.round(previewBounds.x)},${Math.round(previewBounds.y)},` +
+      `${Math.round(previewBounds.width)},${Math.round(previewBounds.height)}:` +
+      additions
+        .map(
+          (entry) =>
+            `${entry.cardName}@${Math.round(entry.x)},${Math.round(entry.y)}:${
+              entry.board ?? "none"
+            }`,
+        )
+        .join("|");
+    if (signature === this.zoneDropPreviewSignature) return;
+
+    this.clearZoneDropPreview();
+    this.zoneDropPreviewSignature = signature;
+
+    const overlay = this.zoneDropPreviewOverlay;
+    if (overlay) {
+      const headerHeight = this.getZoneHeaderHeight(zone);
+      overlay.visible = true;
+      overlay.clear();
+      overlay.roundRect(
+        previewBounds.x,
+        previewBounds.y,
+        previewBounds.width,
+        previewBounds.height,
+        8,
+      );
+      overlay.fill({ color: 0x4f64bf, alpha: 0.13 });
+      overlay.stroke({ width: 2, color: 0xa7b5ff, alpha: 0.78 });
+      overlay.roundRect(
+        previewBounds.x,
+        previewBounds.y,
+        previewBounds.width,
+        headerHeight,
+        8,
+      );
+      overlay.fill({ color: 0x5f72cc, alpha: 0.1 });
+      overlay.stroke({ width: 1, color: 0xc3cdfc, alpha: 0.58 });
+    }
+
+    additions.forEach((addition, index) => {
+      const isLandscape = this.isLandscapeCard(addition.cardName);
+      const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const sprite = new CardSprite({
+        name: addition.cardName,
+        isLandscape,
+        x: addition.x + size.width / 2,
+        y: addition.y + size.height / 2,
+      });
+      sprite.eventMode = "none";
+      sprite.cursor = "default";
+      sprite.alpha = 0.4;
+      sprite.zIndex = 25000 + index;
+      sprite.loadInitialTexture();
+      this.zoneDropPreviewContainer.addChild(sprite);
+      this.zoneDropPreviewSprites.push(sprite);
+    });
+    this.zoneDropPreviewContainer.sortChildren();
+  }
+
+  private clearZoneDropPreview(): void {
+    if (!this.zoneDropPreviewSignature && this.zoneDropPreviewSprites.length === 0) {
+      if (this.zoneDropPreviewOverlay?.visible) {
+        this.zoneDropPreviewOverlay.clear();
+        this.zoneDropPreviewOverlay.visible = false;
+      }
+      return;
+    }
+
+    this.zoneDropPreviewSignature = null;
+    if (this.zoneDropPreviewOverlay) {
+      this.zoneDropPreviewOverlay.clear();
+      this.zoneDropPreviewOverlay.visible = false;
+    }
+    for (const sprite of this.zoneDropPreviewSprites) {
+      sprite.destroy();
+    }
+    this.zoneDropPreviewSprites = [];
+  }
+
+  private copyCardsIntoZone(
+    zoneId: string,
+    cardNames: string[],
+    worldPos: { x: number; y: number },
+    options?: { useZonePlacement?: boolean; placements?: DraggedCardPlacement[] },
+  ): void {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone) return;
+    const { additions, anchorBoard } = this.planZoneCardAdditions(
+      zone,
+      cardNames,
+      worldPos,
+      {
+        useZonePlacement: options?.useZonePlacement ?? false,
+        placements: options?.placements ?? [],
+      },
+    );
+
+    if (additions.length === 0) {
+      return;
+    }
+
+    zone.cards = [...zone.cards, ...additions];
+
+    if (zone.type === "stack") {
+      this.reconcileZoneBounds(zone.id);
+      this.rebuildZoneVisuals();
+      this.emitZonesChange();
+      return;
+    }
+
+    this.reconcileZoneBounds(zone.id, { anchorBoard });
+    this.rebuildZoneVisuals();
+    this.emitZonesChange();
+  }
+
+  private reconcileZoneBounds(
+    zoneId: string,
+    options?: {
+      anchorBoard?: ActiveBoard | null;
+      preserveTopLeft?: boolean;
+    },
+  ): void {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone) return;
+
+    const usesDefaultMin = !(zone.type === "deck" && zone.cards.length > 0);
+    const minSize = usesDefaultMin
+      ? ZONE_DEFAULT_SIZE[zone.type]
+      : { width: 0, height: 0 };
+    const headerHeight = this.getZoneHeaderHeight(zone);
+    if (zone.cards.length === 0) {
+      zone.bounds.width = minSize.width;
+      zone.bounds.height = minSize.height;
+      return;
+    }
+
+    let minCardLeft = Infinity;
+    let minCardTop = Infinity;
+    let maxCardRight = -Infinity;
+    let maxCardBottom = -Infinity;
+
+    for (const instance of zone.cards) {
+      const isLandscape = this.isLandscapeCard(instance.cardName);
+      const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      minCardLeft = Math.min(minCardLeft, instance.x);
+      minCardTop = Math.min(minCardTop, instance.y);
+      maxCardRight = Math.max(maxCardRight, instance.x + size.width);
+      maxCardBottom = Math.max(maxCardBottom, instance.y + size.height);
+    }
+
+    if (
+      minCardLeft === Infinity ||
+      minCardTop === Infinity ||
+      maxCardRight === -Infinity ||
+      maxCardBottom === -Infinity
+    ) {
+      return;
+    }
+
+    const nextX = minCardLeft - (ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING);
+    const nextY =
+      minCardTop -
+      (headerHeight + ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING);
+    const nextRight = maxCardRight + ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING;
+    const nextBottom = maxCardBottom + ZONE_BODY_PADDING + ZONE_AUTO_EXPAND_PADDING;
+
+    const prevX = zone.bounds.x;
+    const prevY = zone.bounds.y;
+    if (options?.preserveTopLeft) {
+      zone.bounds.width = Math.max(minSize.width, nextRight - prevX);
+      zone.bounds.height = Math.max(minSize.height, nextBottom - prevY);
+      return;
+    }
+
+    zone.bounds.x = nextX;
+    zone.bounds.y = nextY;
+    zone.bounds.width = Math.max(minSize.width, nextRight - nextX);
+    zone.bounds.height = Math.max(minSize.height, nextBottom - nextY);
+
+    if (zone.type === "deck" && zone.cards.length > 0) {
+      const anchorBoard =
+        options?.anchorBoard === "mainboard" ||
+        options?.anchorBoard === "sideboard" ||
+        options?.anchorBoard === "maybeboard"
+          ? options.anchorBoard
+          : null;
+      if (!anchorBoard) return;
+
+      const dx = nextX - prevX;
+      const dy = nextY - prevY;
+      if (dx === 0 && dy === 0) return;
+
+      zone.cards = zone.cards.map((card) => {
+        if (card.board === anchorBoard) return card;
+        return {
+          ...card,
+          x: card.x + dx,
+          y: card.y + dy,
+        };
+      });
+    }
   }
 
   // ============================================================================
@@ -1102,21 +2780,60 @@ export class PixiStage {
     const boxHeight = Math.abs(worldPos.y - start.y);
 
     if (boxWidth > 10 || boxHeight > 10) {
-      // Clear existing selection and select cards in box
-      this.clearSelection(true);
-      for (const [cardName, data] of this.cardSprites) {
-        if (this.boundsIntersect(data.bounds, selectionBounds)) {
-          this.selectCard(cardName, true);
-        }
+      const zoneHitsById = new Map<string, string[]>();
+      for (const [key, data] of this.zoneCardSprites) {
+        if (!this.boundsIntersect(data.bounds, selectionBounds)) continue;
+        const hits = zoneHitsById.get(data.zoneId) ?? [];
+        hits.push(key);
+        zoneHitsById.set(data.zoneId, hits);
       }
-      for (const [key, data] of this.deckSprites) {
-        if (this.boundsIntersect(data.bounds, selectionBounds)) {
-          this.selectCard(key, true);
+
+      this.clearSelection(true);
+
+      if (zoneHitsById.size > 0) {
+        const selectionCenter = {
+          x: (selectionBounds.left + selectionBounds.right) / 2,
+          y: (selectionBounds.top + selectionBounds.bottom) / 2,
+        };
+        const centerZoneId = this.getZoneAtPosition(selectionCenter)?.id ?? null;
+        let targetZoneId =
+          centerZoneId && zoneHitsById.has(centerZoneId) ? centerZoneId : null;
+
+        if (!targetZoneId) {
+          let bestCount = -1;
+          for (const [zoneId, keys] of zoneHitsById) {
+            if (keys.length <= bestCount) continue;
+            bestCount = keys.length;
+            targetZoneId = zoneId;
+          }
+        }
+
+        if (targetZoneId) {
+          const targetKeys = zoneHitsById.get(targetZoneId) ?? [];
+          this.selectedZoneId = targetZoneId;
+          for (const key of targetKeys) {
+            this.selectZoneCard(key);
+          }
+        }
+      } else {
+        for (const [cardName, data] of this.cardSprites) {
+          if (this.boundsIntersect(data.bounds, selectionBounds)) {
+            this.selectCard(cardName, true);
+          }
+        }
+        for (const [key, data] of this.deckSprites) {
+          if (this.boundsIntersect(data.bounds, selectionBounds)) {
+            this.selectCard(key, true);
+          }
         }
       }
       this.emitSelectionChange();
     }
 
+    this.cancelSelectionBox();
+  }
+
+  private cancelSelectionBox(): void {
     if (this.selectionBox.graphics) {
       this.selectionBox.graphics.clear();
       this.selectionBox.graphics.visible = false;
@@ -1140,6 +2857,31 @@ export class PixiStage {
     this.cards = cards;
     this.collectionFilteredMode = filteredMode;
     this.rebuildCardSprites();
+  }
+
+  setZones(zones: ZoneModel[]): void {
+    this.zones = this.cloneZones(zones);
+    this.clearZoneDropPreview();
+    this.rebuildZoneVisuals();
+  }
+
+  focusZone(zoneId: string): void {
+    if (!this.camera) return;
+    const zone = this.zones.find((entry) => entry.id === zoneId && entry.pinned);
+    if (!zone) return;
+
+    const safeWidth = Math.max(zone.bounds.width, DRAWN_GRID.width);
+    const safeHeight = Math.max(zone.bounds.height, DRAWN_GRID.height);
+    this.camera.fitToContent(
+      {
+        left: zone.bounds.x,
+        top: zone.bounds.y,
+        right: zone.bounds.x + safeWidth,
+        bottom: zone.bounds.y + safeHeight,
+      },
+      120,
+      450,
+    );
   }
 
   updateDeckOverlays(
@@ -1379,6 +3121,7 @@ export class PixiStage {
 
   destroy(): void {
     this.isDestroyed = true;
+    this.setHoveredCard(null);
     this.highDetailPreloadQueued = false;
     this.onBackgroundTextureProgress?.(0, 0);
     this.onSelectionChange?.([]);
@@ -1394,6 +3137,8 @@ export class PixiStage {
       data.text.destroy();
     }
     this.labelSprites.clear();
+    this.clearZoneDropPreview();
+    this.clearZoneVisuals();
 
     if (this.isInitialized) {
       this.app.ticker.stop();
@@ -1458,7 +3203,437 @@ export class PixiStage {
     saveScoreUpdate();
   }
 
+  private clearZoneVisuals(): void {
+    this.clearZoneDropPreview();
+    for (const data of this.zoneCardSprites.values()) {
+      data.sprite.destroy();
+    }
+    this.zoneCardSprites.clear();
+
+    for (const frame of this.zoneFrames.values()) {
+      frame.frame.destroy();
+      frame.title.destroy();
+      frame.avatarSprite?.destroy();
+      for (const label of frame.subzoneLabels) {
+        label.destroy();
+      }
+    }
+    this.zoneFrames.clear();
+    this.zoneHeaderBounds.clear();
+    this.zoneContainer.removeChildren();
+    this.hoveredZoneCardKey = null;
+    this.drawZoneDeleteOverlay();
+  }
+
+  private getDeckBoardRects(
+    bounds: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    },
+    zone: ZoneModel,
+  ): {
+    mainboard: { x: number; y: number; width: number; height: number };
+    sideboard: { x: number; y: number; width: number; height: number };
+    maybeboard: { x: number; y: number; width: number; height: number };
+  } {
+    const bodyTop = bounds.y + this.getZoneHeaderHeight(zone) + ZONE_BODY_PADDING;
+    const left = bounds.x + ZONE_BODY_PADDING;
+    const width = bounds.width - ZONE_BODY_PADDING * 2;
+    const boardGap = ZONE_DECK_BOARD_GAP;
+    const boardBottomPadding = ZONE_DECK_BOARD_BOTTOM_PADDING;
+    const minBoardHeights = {
+      mainboard: ZONE_DECK_MIN_BOARD_HEIGHT.mainboard,
+      sideboard: ZONE_DECK_MIN_BOARD_HEIGHT.sideboard,
+      maybeboard: ZONE_DECK_MIN_BOARD_HEIGHT.maybeboard,
+    } as const;
+
+    const maxBottomByBoard: Partial<
+      Record<Exclude<ActiveBoard, "avatar">, number>
+    > = {};
+    for (const card of zone.cards) {
+      if (
+        card.board !== "mainboard" &&
+        card.board !== "sideboard" &&
+        card.board !== "maybeboard"
+      ) {
+        continue;
+      }
+      const isLandscape = this.isLandscapeCard(card.cardName);
+      const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const bottom = card.y + size.height + boardBottomPadding;
+      const previous = maxBottomByBoard[card.board] ?? -Infinity;
+      maxBottomByBoard[card.board] = Math.max(previous, bottom);
+    }
+
+    let cursorY = bodyTop;
+    const mainboardHeight = Math.max(
+      minBoardHeights.mainboard,
+      (maxBottomByBoard.mainboard ?? -Infinity) - cursorY,
+    );
+    const mainboard = {
+      x: left,
+      y: cursorY,
+      width,
+      height: mainboardHeight,
+    };
+    cursorY = mainboard.y + mainboard.height + boardGap;
+
+    const sideboardHeight = Math.max(
+      minBoardHeights.sideboard,
+      (maxBottomByBoard.sideboard ?? -Infinity) - cursorY,
+    );
+    const sideboard = {
+      x: left,
+      y: cursorY,
+      width,
+      height: sideboardHeight,
+    };
+    cursorY = sideboard.y + sideboard.height + boardGap;
+
+    const maybeboardHeight = Math.max(
+      minBoardHeights.maybeboard,
+      (maxBottomByBoard.maybeboard ?? -Infinity) - cursorY,
+    );
+    const maybeboard = {
+      x: left,
+      y: cursorY,
+      width,
+      height: maybeboardHeight,
+    };
+
+    return { mainboard, sideboard, maybeboard };
+  }
+
+  private drawZoneFrame(
+    zone: ZoneModel,
+    zoneIndex: number,
+  ): {
+    frame: Graphics;
+    title: Text;
+    subzoneLabels: Text[];
+    avatarSprite: CardSprite | null;
+  } {
+    const frame = new Graphics();
+    const headerHeight = this.getZoneHeaderHeight(zone);
+    const closeButtonSize = Math.max(20, Math.min(32, headerHeight - 16));
+    const buttonMargin = 6;
+    const buttonTop = zone.bounds.y + buttonMargin;
+    const closeButtonRight = zone.bounds.x + zone.bounds.width - buttonMargin;
+    frame.zIndex = 2000 + zoneIndex * 1000;
+    frame.rect(zone.bounds.x, zone.bounds.y, zone.bounds.width, zone.bounds.height);
+    frame.fill({ color: 0x111528, alpha: 0.88 });
+    frame.stroke({ width: 2, color: 0x626fb2, alpha: 0.92 });
+
+    frame.rect(zone.bounds.x, zone.bounds.y, zone.bounds.width, headerHeight);
+    frame.fill({ color: 0x1f2746, alpha: 0.96 });
+    frame.stroke({ width: 1, color: 0x7d89cf, alpha: 0.88 });
+
+    const closeBounds = {
+      left: closeButtonRight - closeButtonSize,
+      top: buttonTop,
+      right: closeButtonRight,
+      bottom: buttonTop + closeButtonSize,
+    };
+    const sortAnchorLeft =
+      zone.type === "deck" && zone.avatarCardName
+        ? zone.bounds.x +
+          ZONE_DECK_AVATAR_CENTER_GRID_X * DRAWN_GRID.width +
+          ZONE_DECK_HEADER_X_OFFSET -
+          DECK_AVATAR_SIZE.width / 2 +
+          DECK_AVATAR_SIZE.width +
+          ZONE_DECK_AVATAR_TITLE_GAP
+        : zone.type === "deck"
+          ? zone.bounds.x + 10 + ZONE_DECK_HEADER_X_OFFSET
+          : zone.bounds.x + 10;
+    const minSortLeft = zone.bounds.x + buttonMargin;
+    const maxSortLeft = closeBounds.left - buttonMargin - ZONE_SORT_BUTTON_WIDTH;
+    const sortLeft = Math.max(
+      minSortLeft,
+      Math.min(sortAnchorLeft, maxSortLeft),
+    );
+    const sortBounds = {
+      right: sortLeft + ZONE_SORT_BUTTON_WIDTH,
+      bottom: zone.bounds.y + headerHeight - buttonMargin,
+      left: sortLeft,
+      top:
+        zone.bounds.y +
+        headerHeight -
+        buttonMargin -
+        ZONE_SORT_BUTTON_HEIGHT,
+    };
+    frame.roundRect(
+      sortBounds.left,
+      sortBounds.top,
+      ZONE_SORT_BUTTON_WIDTH,
+      ZONE_SORT_BUTTON_HEIGHT,
+      6,
+    );
+    frame.fill({ color: 0x2a3152, alpha: 0.94 });
+    frame.stroke({ width: 1, color: 0x98a4e8, alpha: 0.85 });
+
+    const sortGlyph = new Text({
+      text: "sort",
+      style: {
+        fontFamily: "Arial",
+        fontSize: 11,
+        fill: 0xeef2ff,
+        fontWeight: "bold",
+      },
+    });
+    sortGlyph.x =
+      sortBounds.left + (ZONE_SORT_BUTTON_WIDTH - sortGlyph.width) / 2;
+    sortGlyph.y =
+      sortBounds.top + (ZONE_SORT_BUTTON_HEIGHT - sortGlyph.height) / 2 - 1;
+    sortGlyph.zIndex = frame.zIndex + 2;
+
+    frame.roundRect(
+      closeBounds.left,
+      closeBounds.top,
+      closeButtonSize,
+      closeButtonSize,
+      6,
+    );
+    frame.fill({ color: 0x2a3152, alpha: 0.94 });
+    frame.stroke({ width: 1, color: 0x98a4e8, alpha: 0.85 });
+    frame.moveTo(closeBounds.left + 5, closeBounds.top + 5);
+    frame.lineTo(closeBounds.right - 5, closeBounds.bottom - 5);
+    frame.moveTo(closeBounds.right - 5, closeBounds.top + 5);
+    frame.lineTo(closeBounds.left + 5, closeBounds.bottom - 5);
+    frame.stroke({ width: 1.6, color: 0xf0f3ff, alpha: 0.9 });
+
+    const subzoneLabels: Text[] = [sortGlyph];
+    if (zone.type === "deck") {
+      const boardRects = this.getDeckBoardRects(zone.bounds, zone);
+
+      frame.rect(
+        boardRects.mainboard.x,
+        boardRects.mainboard.y,
+        boardRects.mainboard.width,
+        boardRects.mainboard.height,
+      );
+      frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
+      frame.rect(
+        boardRects.sideboard.x,
+        boardRects.sideboard.y,
+        boardRects.sideboard.width,
+        boardRects.sideboard.height,
+      );
+      frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
+      frame.rect(
+        boardRects.maybeboard.x,
+        boardRects.maybeboard.y,
+        boardRects.maybeboard.width,
+        boardRects.maybeboard.height,
+      );
+      frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
+
+      const labels: Array<{
+        text: string;
+        x: number;
+        y: number;
+      }> = [
+        {
+          text: "Mainboard",
+          x: boardRects.mainboard.x + 8,
+          y: boardRects.mainboard.y + 6,
+        },
+        {
+          text: "Sideboard",
+          x: boardRects.sideboard.x + 8,
+          y: boardRects.sideboard.y + 6,
+        },
+        {
+          text: "Maybeboard",
+          x: boardRects.maybeboard.x + 8,
+          y: boardRects.maybeboard.y + 6,
+        },
+      ];
+
+      for (const labelInfo of labels) {
+        const label = new Text({
+          text: labelInfo.text,
+          style: {
+            fontFamily: "Arial",
+            fontSize: 13,
+            fill: 0x98a3de,
+            fontWeight: "bold",
+          },
+        });
+        label.x = labelInfo.x;
+        label.y = labelInfo.y;
+        label.zIndex = frame.zIndex + 2;
+        this.zoneContainer.addChild(label);
+        subzoneLabels.push(label);
+      }
+    }
+
+    let avatarSprite: CardSprite | null = null;
+    let titleX =
+      zone.type === "deck"
+        ? zone.bounds.x + 10 + ZONE_DECK_HEADER_X_OFFSET
+        : zone.bounds.x + 10;
+    let deckHeaderTopY: number | null = null;
+    if (zone.type === "deck" && zone.avatarCardName) {
+      const avatarHeight = CARD_SIZE.PORTRAIT.height;
+      const avatarWidth = CARD_SIZE.PORTRAIT.width;
+      const avatarCenterX =
+        zone.bounds.x +
+        ZONE_DECK_AVATAR_CENTER_GRID_X * DRAWN_GRID.width +
+        ZONE_DECK_HEADER_X_OFFSET;
+      const avatarCenterY =
+        zone.bounds.y + ZONE_DECK_AVATAR_CENTER_GRID_Y * DRAWN_GRID.height;
+      const avatarLeft = avatarCenterX - avatarWidth / 2;
+      const avatarTop = avatarCenterY - avatarHeight / 2;
+      avatarSprite = new CardSprite({
+        name: zone.avatarCardName,
+        isLandscape: false,
+        x: avatarCenterX,
+        y: avatarCenterY,
+        displaySize: { width: avatarWidth, height: avatarHeight },
+      });
+      avatarSprite.zIndex = frame.zIndex + 2;
+      avatarSprite.loadInitialTexture();
+      avatarSprite.updateLOD(this.camera?.zoom ?? 0.1);
+      this.zoneContainer.addChild(avatarSprite);
+      titleX = avatarLeft + avatarWidth + ZONE_DECK_AVATAR_TITLE_GAP;
+      deckHeaderTopY = avatarTop;
+    }
+
+    const titleText = this.getZoneDisplayName(zone);
+    const title = new Text({
+      text: titleText,
+      style: {
+        fontFamily: "Arial",
+        fontSize: HEADER_HEIGHT * 0.3,
+        fill: zone.type === "deck" ? 0xa8b5ff : zone.type === "stack" ? 0x9de5ff : 0xf1d6a0,
+        fontWeight: "bold",
+      },
+    });
+    title.x = titleX;
+    if (zone.type === "deck" && zone.deckAuthor) {
+      title.y = deckHeaderTopY ?? zone.bounds.y + 8;
+      const author = new Text({
+        text: zone.deckAuthor,
+        style: {
+          fontFamily: "Arial",
+          fontSize: 12,
+          fill: 0x9aa6de,
+          fontWeight: "normal",
+        },
+      });
+      author.x = titleX;
+      author.y = title.y + title.height + 2;
+      author.zIndex = frame.zIndex + 2;
+      this.zoneContainer.addChild(author);
+      subzoneLabels.push(author);
+    } else if (zone.type === "deck" && deckHeaderTopY !== null) {
+      title.y = deckHeaderTopY;
+    } else {
+      title.y = zone.bounds.y + Math.max(4, (headerHeight - title.height) / 2);
+    }
+    title.zIndex = frame.zIndex + 2;
+
+    this.zoneContainer.addChild(frame);
+    this.zoneContainer.addChild(sortGlyph);
+    this.zoneContainer.addChild(title);
+    this.zoneHeaderBounds.set(zone.id, {
+      bounds: {
+        left: zone.bounds.x,
+        top: zone.bounds.y,
+        right: zone.bounds.x + zone.bounds.width,
+        bottom: zone.bounds.y + headerHeight,
+      },
+      closeBounds,
+      sortBounds,
+    });
+
+    return { frame, title, subzoneLabels, avatarSprite };
+  }
+
+  private rebuildZoneVisuals(): void {
+    this.clearZoneVisuals();
+    if (!this.camera) return;
+
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    pinnedZones.forEach((zone, zoneIndex) => {
+      const frameData = this.drawZoneFrame(zone, zoneIndex);
+      this.zoneFrames.set(zone.id, frameData);
+
+      const stacks = new Map<string, ZoneCardInstance[]>();
+      for (const instance of zone.cards) {
+        const isLandscape = this.isLandscapeCard(instance.cardName);
+        const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const centerX = instance.x + size.width / 2;
+        const centerY = instance.y + size.height / 2;
+        const grid = pixelsToSnapGrid(centerX, centerY, isLandscape);
+        const stackKey = `${instance.board ?? "zone"}:${
+          isLandscape ? "L" : "P"
+        }:${grid.x},${grid.y}`;
+        let stack = stacks.get(stackKey);
+        if (!stack) {
+          stack = [];
+          stacks.set(stackKey, stack);
+        }
+        stack.push(instance);
+      }
+
+      let instanceIndex = 0;
+      for (const stack of stacks.values()) {
+        const stackSize = stack.length;
+        const totalOffset = (stackSize - 1) * STACK_OFFSET;
+        stack.forEach((instance, stackIndex) => {
+          const key = `${zone.id}:${instance.id}`;
+          const isLandscape = this.isLandscapeCard(instance.cardName);
+          const cardSize = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+          const indexOffset = stackIndex * STACK_OFFSET - totalOffset / 2;
+          const yOffset = isLandscape ? -indexOffset : indexOffset;
+          const drawX = instance.x;
+          const drawY = instance.y + yOffset;
+          const centerX = drawX + cardSize.width / 2;
+          const centerY = drawY + cardSize.height / 2;
+          const sprite = new CardSprite({
+            name: instance.cardName,
+            isLandscape,
+            x: centerX,
+            y: centerY,
+          });
+          sprite.setSelected(this.selectedZoneCardKeys.has(key));
+          sprite.zIndex = frameData.frame.zIndex + 10 + instanceIndex;
+          sprite.loadInitialTexture();
+          sprite.updateLOD(this.camera?.zoom ?? 0.1);
+
+          this.zoneContainer.addChild(sprite);
+
+          this.zoneCardSprites.set(key, {
+            key,
+            zoneId: zone.id,
+            instanceId: instance.id,
+            cardName: instance.cardName,
+            cardType: this.getCardType(instance.cardName),
+            sprite,
+            bounds: {
+              left: drawX,
+              top: drawY,
+              right: drawX + cardSize.width,
+              bottom: drawY + cardSize.height,
+            },
+            displaySize: { width: cardSize.width, height: cardSize.height },
+          });
+          instanceIndex += 1;
+        });
+      }
+    });
+
+    this.zoneContainer.sortChildren();
+    this.syncZoneSelectionVisuals();
+    this.drawZoneDeleteOverlay();
+  }
+
   private rebuildCardSprites(): void {
+    this.setHoveredCard(null);
+
     for (const data of this.cardSprites.values()) {
       data.sprite.destroy();
     }
@@ -1472,7 +3647,10 @@ export class PixiStage {
     this.clearSelection();
     this.cardStacks.clear();
 
-    if (this.cards.length === 0) return;
+    if (this.cards.length === 0) {
+      this.rebuildZoneVisuals();
+      return;
+    }
 
     const layoutCards = this.cards.map((card) => ({
       name: card.name,
@@ -1498,17 +3676,44 @@ export class PixiStage {
       mode: this.collectionFilteredMode ? "filteredFlat" : "grouped",
     });
 
+    const mainQuadrant = QUADRANT_BOUNDS.main;
+    const targetLeft = mainQuadrant.x + MAIN_QUADRANT_CARD_PADDING;
+    const targetBottom =
+      mainQuadrant.y + mainQuadrant.height - MAIN_QUADRANT_CARD_PADDING;
+    const offsetX = targetLeft - contentBounds.left;
+    const offsetY = targetBottom - contentBounds.bottom;
+    const shiftedLayout = layout.map((entry) => ({
+      ...entry,
+      position: {
+        x: entry.position.x + offsetX,
+        y: entry.position.y + offsetY,
+      },
+    }));
+    const shiftedHeaders = headers.map((header) => ({
+      ...header,
+      position: {
+        x: header.position.x + offsetX,
+        y: header.position.y + offsetY,
+      },
+    }));
+    const shiftedBounds = {
+      left: contentBounds.left + offsetX,
+      top: contentBounds.top + offsetY,
+      right: contentBounds.right + offsetX,
+      bottom: contentBounds.bottom + offsetY,
+    };
+
     // Store collection bounds for deck layout positioning
-    this.collectionBounds = contentBounds;
+    this.collectionBounds = shiftedBounds;
 
     // Move camera to content area before creating sprites
-    if (layout.length > 0 && this.camera) {
-      this.camera.fitToContent(contentBounds, 100);
+    if (shiftedLayout.length > 0 && this.camera) {
+      this.camera.fitToContent(shiftedBounds, 100);
     }
 
     // Create group header labels
     const subgroupFontSize = HEADER_HEIGHT * 0.3;
-    for (const header of headers) {
+    for (const header of shiftedHeaders) {
       const isTypeSubgroup = header.kind === "type-subgroup";
       const text = new Text({
         text: header.label,
@@ -1526,7 +3731,7 @@ export class PixiStage {
     }
 
     // Shuffle layout BEFORE sprite creation to remove Map insertion bias
-    const shuffledLayout = [...layout];
+    const shuffledLayout = [...shiftedLayout];
     for (let i = shuffledLayout.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       const a = shuffledLayout[i];
@@ -1553,6 +3758,8 @@ export class PixiStage {
         x: centerX,
         y: centerY,
       });
+      sprite.on("pointerover", () => this.setHoveredCard(cardLayout.name));
+      sprite.on("pointerout", () => this.setHoveredCard(null));
 
       const topLeftX = centerX - cardSize.width / 2;
       const topLeftY = centerY - cardSize.height / 2;
@@ -1581,6 +3788,7 @@ export class PixiStage {
     this.rebuildCardStacks();
     this.performCulling();
     this.drawGrid();
+    this.rebuildZoneVisuals();
 
     // Rebuild deck display if a deck is active
     if (this.activeDeck) {
@@ -1589,6 +3797,8 @@ export class PixiStage {
   }
 
   private rebuildDeckSprites(): void {
+    this.setHoveredCard(null);
+
     // Clean up old deck sprites
     for (const data of this.deckSprites.values()) {
       data.sprite.destroy();
@@ -1683,6 +3893,8 @@ export class PixiStage {
           y: centerY,
           displaySize: cardSize,
         });
+        sprite.on("pointerover", () => this.setHoveredCard(cardLayout.name));
+        sprite.on("pointerout", () => this.setHoveredCard(null));
 
         const key = `${cardLayout.board}:${cardLayout.name}:${copy}`;
 
@@ -1761,6 +3973,9 @@ export class PixiStage {
       if (data.sprite.visible) {
         data.sprite.updateLOD(zoom);
       }
+    }
+    for (const data of this.zoneCardSprites.values()) {
+      data.sprite.updateLOD(zoom);
     }
     this.queueVisibleHighDetailPreload();
   }
