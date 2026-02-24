@@ -2,6 +2,10 @@
  * User-facing rule violation messages
  *
  * Centralizes all validation message strings for consistency.
+ *
+ * Related files:
+ * - `src/rules/deckRules.ts` (message consumers)
+ * - `src/data/dataModels.ts` (deck limit constants)
  */
 
 import { DECK_LIMITS } from '@/data/dataModels';
@@ -43,7 +47,14 @@ const MESSAGE_TEMPLATES: Record<RuleViolationType, (params: MessageParams) => st
 };
 
 /**
- * Get user-facing message for a rule violation
+ * Resolve display text for a rule-violation code.
+ *
+ * Inputs:
+ * - `type`: Rule violation identifier.
+ * - `params`: Optional interpolation values for the chosen template.
+ *
+ * Outputs:
+ * - Returns human-readable message string.
  */
 export function getRuleMessage(type: RuleViolationType, params: MessageParams): string {
   const template = MESSAGE_TEMPLATES[type];
@@ -51,7 +62,13 @@ export function getRuleMessage(type: RuleViolationType, params: MessageParams): 
 }
 
 /**
- * Get short description of deck limits for display
+ * Build quick-reference deck-limit lines for UI display.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns an ordered array of limit description strings.
  */
 export function getDeckLimitsDescription(): string[] {
   return [

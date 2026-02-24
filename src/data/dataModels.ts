@@ -5,6 +5,11 @@
  * - Card data from the Sorcery API
  * - User data stored in guest.json / username.json
  * - Deck and collection structures
+ *
+ * Related files:
+ * - `src/app/AppState.ts` (state contracts and reducer payloads)
+ * - `src/data/importExport.ts` (deck serialization/parsing)
+ * - `src/rules/deckRules.ts` (deck validation logic)
  */
 
 // ============================================================================
@@ -171,6 +176,16 @@ export const DECK_LIMITS = {
 // Factory Functions
 // ============================================================================
 
+/**
+ * Create a new empty deck skeleton.
+ *
+ * Inputs:
+ * - `name`: Deck display name.
+ * - `id`: Stable deck identifier.
+ *
+ * Outputs:
+ * - Returns initialized `Deck` with empty boards and timestamps.
+ */
 export function createEmptyDeck(name: string, id: string): Deck {
   const now = new Date().toISOString();
   return {
@@ -187,6 +202,15 @@ export function createEmptyDeck(name: string, id: string): Deck {
   };
 }
 
+/**
+ * Create default guest user data for first-time/offline sessions.
+ *
+ * Inputs:
+ * - `id`: Guest user id.
+ *
+ * Outputs:
+ * - Returns initialized `UserData` with empty collections/decks.
+ */
 export function createGuestUserData(id: string): UserData {
   return {
     name: 'Guest',
@@ -203,14 +227,41 @@ export function createGuestUserData(id: string): UserData {
 // Type Guards
 // ============================================================================
 
+/**
+ * Check whether a card type belongs to spell-style boards.
+ *
+ * Inputs:
+ * - `type`: Card type to test.
+ *
+ * Outputs:
+ * - Returns `true` for non-site, non-avatar card types.
+ */
 export function isSpellType(type: CardType): boolean {
   return type !== 'Site' && type !== 'Avatar';
 }
 
+/**
+ * Check whether a card type is a site.
+ *
+ * Inputs:
+ * - `type`: Card type to test.
+ *
+ * Outputs:
+ * - Returns `true` when type is `Site`.
+ */
 export function isSiteType(type: CardType): boolean {
   return type === 'Site';
 }
 
+/**
+ * Check whether a card type is an avatar.
+ *
+ * Inputs:
+ * - `type`: Card type to test.
+ *
+ * Outputs:
+ * - Returns `true` when type is `Avatar`.
+ */
 export function isAvatarType(type: CardType): boolean {
   return type === 'Avatar';
 }
@@ -219,6 +270,15 @@ export function isAvatarType(type: CardType): boolean {
 // Threshold Helpers
 // ============================================================================
 
+/**
+ * Collapse elemental thresholds into a UI-friendly threshold group.
+ *
+ * Inputs:
+ * - `thresholds`: Element thresholds from card guardian stats.
+ *
+ * Outputs:
+ * - Returns one of `air|earth|fire|water|multiple|none`.
+ */
 export function getThresholdGroup(thresholds: Thresholds): ThresholdGroup {
   const active: Element[] = [];
 

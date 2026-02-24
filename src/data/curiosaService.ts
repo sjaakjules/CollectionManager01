@@ -10,6 +10,11 @@
  * - PROD: Netlify proxies via `public/_redirects`
  *
  * Respects rate limits via x-ratelimit-* response headers.
+ *
+ * Related files:
+ * - `src/ui/BottomPanel.tsx` and `src/ui/ZonesPanel.tsx` (deck URL import flows)
+ * - `src/data/importExport.ts` (text-based import/export support)
+ * - `vite.config.ts` and `public/_redirects` (proxy routing)
  */
 
 import type { Deck, DeckCard } from "./dataModels";
@@ -225,6 +230,12 @@ function parseDeckMetaFromHtml(html: string): { name?: string; author?: string }
 /**
  * Extract deck ID from a curiosa.io URL or raw ID
  * Handles: "https://curiosa.io/decks/abc123", "curiosa.io/decks/abc123", "abc123"
+ *
+ * Inputs:
+ * - `urlOrId`: Full deck URL or plain deck identifier.
+ *
+ * Outputs:
+ * - Returns normalized deck id token.
  */
 export function extractDeckId(urlOrId: string): string {
   const trimmed = urlOrId.trim().replace(/\/+$/, "");
@@ -240,6 +251,13 @@ export function extractDeckId(urlOrId: string): string {
  * Makes two proxied requests:
  *   1. GET /api/curiosa/decks/{id}  →  HTML page (parse <title> for name/author)
  *   2. GET /api/curiosa/api/trpc/…  →  tRPC batch (board data)
+ *
+ * Inputs:
+ * - `urlOrId`: Curiosa deck URL or deck id.
+ *
+ * Outputs:
+ * - Resolves to an internal `Deck` model with parsed boards and metadata.
+ * - Throws when URL/id is invalid or Curiosa responses are malformed.
  */
 export async function fetchCuriosaDeck(urlOrId: string): Promise<Deck> {
   const deckId = extractDeckId(urlOrId);

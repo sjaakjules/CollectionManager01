@@ -1,3 +1,18 @@
+/**
+ * Zone model utilities for canvas organization and deck/stack placement.
+ *
+ * Responsibilities:
+ * - Define zone/card instance contracts used by reducer + renderer.
+ * - Place zones into fixed world quadrants with overlap avoidance.
+ * - Build zone payloads for imported decks and stack/named zones.
+ *
+ * Related files:
+ * - `src/app/App.tsx` (zone creation/pinning workflows)
+ * - `src/app/AppState.ts` (zone persistence in reducer state)
+ * - `src/rendering/PixiStage.ts` (zone rendering and interactions)
+ * - `src/rendering/Grid.ts` (snap-to-grid and card geometry constants)
+ */
+
 import type { Card, Deck, DeckCard, ActiveBoard, CardType } from "@/data/dataModels";
 import {
   CARD_CELL_SPACING,
@@ -42,6 +57,15 @@ const QUADRANT_SIZE = 12000;
 const QUADRANT_PADDING = 220;
 const ZONE_SPREAD_STEP = 110;
 
+/**
+ * Clean imported deck names for display in deck-zone headers.
+ *
+ * Inputs:
+ * - `name`: Raw deck title from import source.
+ *
+ * Outputs:
+ * - Returns sanitized display name with Curiosa suffixes removed.
+ */
 export function sanitizeDeckZoneName(name: string | null | undefined): string {
   const normalized = (name ?? "").replace(/\s+/g, " ").trim();
   if (!normalized) {
@@ -99,20 +123,56 @@ function randomId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/**
+ * Create a unique zone id using the zone type as prefix.
+ *
+ * Inputs:
+ * - `type`: Zone type (`custom`, `stack`, `deck`).
+ *
+ * Outputs:
+ * - Returns a unique id string.
+ */
 export function createZoneId(type: ZoneType): string {
   return randomId(type);
 }
 
+/**
+ * Create a unique id for a card instance inside a zone.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns a unique zone-card id string.
+ */
 export function createZoneCardId(): string {
   return randomId("zone-card");
 }
 
+/**
+ * Map a zone type to its fixed world quadrant.
+ *
+ * Inputs:
+ * - `type`: Zone type value.
+ *
+ * Outputs:
+ * - Returns destination quadrant key.
+ */
 export function getZoneQuadrant(type: ZoneType): ZoneQuadrant {
   if (type === "deck") return "decks";
   if (type === "stack") return "stacks";
   return "named";
 }
 
+/**
+ * Resolve quadrant for an existing zone model.
+ *
+ * Inputs:
+ * - `zone`: Zone model.
+ *
+ * Outputs:
+ * - Returns quadrant that should contain the zone.
+ */
 export function getQuadrantByZoneId(zone: ZoneModel): ZoneQuadrant {
   return getZoneQuadrant(zone.type);
 }
@@ -141,6 +201,18 @@ function clampBoundsToQuadrant(
   return { x: clampedX, y: clampedY, width: size.width, height: size.height };
 }
 
+/**
+ * Compute pinned zone bounds inside a quadrant while avoiding overlaps.
+ *
+ * Inputs:
+ * - `quadrant`: Target world quadrant.
+ * - `size`: Requested zone size.
+ * - `existingCount`: Count hint used to spread default placement.
+ * - `occupiedBounds`: Existing pinned zone bounds in the same quadrant.
+ *
+ * Outputs:
+ * - Returns clamped, collision-aware bounds for the new/moved zone.
+ */
 export function createZoneBoundsForQuadrant(
   quadrant: ZoneQuadrant,
   size: { width: number; height: number },
@@ -235,6 +307,18 @@ export function createZoneBoundsForQuadrant(
   return baseBounds;
 }
 
+/**
+ * Create an empty pinned zone with quadrant-aware default bounds.
+ *
+ * Inputs:
+ * - `type`: Zone type (`custom`/`stack`/`deck`).
+ * - `name`: Display name for the zone.
+ * - `existingSameTypeCount`: Count hint for spread offset.
+ * - `existingZones`: Existing zones used to avoid overlap.
+ *
+ * Outputs:
+ * - Returns a new `ZoneModel` with no cards.
+ */
 export function createEmptyZone(
   type: ZoneType,
   name: string,
@@ -363,6 +447,18 @@ function snapPointForCard(
   };
 }
 
+/**
+ * Build a deck zone populated with card instances laid out by board/type.
+ *
+ * Inputs:
+ * - `deck`: Deck data to project into a zone.
+ * - `cardInfoByName`: Card orientation/type metadata map.
+ * - `existingDeckCount`: Count hint for initial quadrant spread.
+ * - `existingZones`: Existing zones used for overlap-aware placement.
+ *
+ * Outputs:
+ * - Returns a pinned `ZoneModel` with deck metadata and positioned cards.
+ */
 export function createDeckZone(
   deck: Deck,
   cardInfoByName: Map<string, CardOrientationInfo>,
@@ -515,6 +611,17 @@ export function createDeckZone(
   };
 }
 
+/**
+ * Re-pin a zone into its quadrant using collision-aware bounds.
+ *
+ * Inputs:
+ * - `zone`: Zone to place.
+ * - `existingCount`: Count hint for spread offset.
+ * - `existingZones`: Existing zones for overlap avoidance.
+ *
+ * Outputs:
+ * - Returns the moved zone with updated bounds and `pinned: true`.
+ */
 export function moveZoneIntoQuadrant(
   zone: ZoneModel,
   existingCount: number,
@@ -538,6 +645,17 @@ export function moveZoneIntoQuadrant(
   return { ...zone, pinned: true, bounds };
 }
 
+/**
+ * Move a zone to quadrant placement and translate contained cards by the same delta.
+ *
+ * Inputs:
+ * - `zone`: Zone to reposition.
+ * - `existingCount`: Count hint for spread offset.
+ * - `existingZones`: Existing zones for overlap avoidance.
+ *
+ * Outputs:
+ * - Returns moved zone where card instance coordinates remain relative to zone origin.
+ */
 export function moveZoneIntoQuadrantPreservingCards(
   zone: ZoneModel,
   existingCount: number,
@@ -560,6 +678,15 @@ export function moveZoneIntoQuadrantPreservingCards(
   };
 }
 
+/**
+ * Build lookup metadata for card orientation/type/cost by card name.
+ *
+ * Inputs:
+ * - `cards`: Full card catalog.
+ *
+ * Outputs:
+ * - Returns map keyed by card name, used for zone layout decisions.
+ */
 export function cardNameToOrientationMap(
   cards: Card[],
 ): Map<string, CardOrientationInfo> {

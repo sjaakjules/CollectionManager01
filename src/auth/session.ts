@@ -3,6 +3,10 @@
  *
  * Stores and retrieves authentication session data.
  * Uses sessionStorage for tab-scoped sessions or localStorage for persistent.
+ *
+ * Related files:
+ * - `src/auth/authService.ts` (login/logout orchestration)
+ * - `src/app/Startup.ts` (session bootstrap on app launch)
  */
 
 const SESSION_KEY = 'sorcery_session';
@@ -14,7 +18,13 @@ export interface StoredSession {
 }
 
 /**
- * Store session data
+ * Persist session payload to browser storage.
+ *
+ * Inputs:
+ * - `session`: Session payload with user id/name/token.
+ *
+ * Outputs:
+ * - Returns `void` after best-effort storage write.
  */
 export function storeSession(session: StoredSession): void {
   try {
@@ -25,7 +35,13 @@ export function storeSession(session: StoredSession): void {
 }
 
 /**
- * Get stored session
+ * Read session payload from browser storage.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns parsed `StoredSession` or `null` when missing/invalid.
  */
 export function getStoredSession(): StoredSession | null {
   try {
@@ -38,7 +54,13 @@ export function getStoredSession(): StoredSession | null {
 }
 
 /**
- * Clear session data (logout)
+ * Remove persisted session payload.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns `void` after best-effort removal.
  */
 export function clearSession(): void {
   try {
@@ -49,7 +71,13 @@ export function clearSession(): void {
 }
 
 /**
- * Check if session exists
+ * Check whether a valid session payload exists.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns `true` if a session can be read, otherwise `false`.
  */
 export function hasSession(): boolean {
   return getStoredSession() !== null;

@@ -1,3 +1,17 @@
+/**
+ * Left-side stacks panel for creating, browsing, and filtering stack zones.
+ *
+ * Responsibilities:
+ * - List stack zones and open a stack detail drawer.
+ * - Trigger stack creation and canvas focus actions.
+ * - Filter visible stack cards by threshold group and card orientation metadata.
+ *
+ * Related files:
+ * - `src/zones/zones.ts` (stack zone model)
+ * - `src/rendering/PixiStage.ts` (stack zone interactions on canvas)
+ * - `src/app/App.tsx` (panel callbacks and zone state updates)
+ */
+
 import { useEffect, useMemo, useState, useCallback, type CSSProperties } from "react";
 import {
   getThresholdGroup,
@@ -35,6 +49,20 @@ const STACK_ELEMENT_FILTERS: Array<{
   { id: "none", icon: "/assets/buttons/none.png", label: "None" },
 ];
 
+/**
+ * Render the stack-zone tabs and stack-card drawer UI.
+ *
+ * Inputs:
+ * - `zones`: Full zone list; stack zones are filtered from this array.
+ * - `onCreateStack`: Callback to create a new stack zone.
+ * - `onSetZonePinned`: Callback to pin/unpin a stack on canvas.
+ * - `onFocusZone`: Callback to center camera on a zone.
+ * - `onRemoveCardFromStack`: Callback to remove a card from the active stack.
+ * - `openStackRequest`: Optional external request to open a specific stack.
+ *
+ * Outputs:
+ * - Returns React markup for tabs + panel; user actions call callbacks.
+ */
 export function StacksPanel({
   zones,
   onCreateStack,

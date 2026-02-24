@@ -3,6 +3,11 @@
  *
  * Uses IndexedDB via idb-keyval for reliable storage.
  * Falls back to localStorage if IndexedDB unavailable.
+ *
+ * Related files:
+ * - `src/app/Startup.ts` (initial user hydration)
+ * - `src/app/App.tsx` (autosave path)
+ * - `src/data/userSync.ts` (backend + local mirror)
  */
 
 import { get, set, del } from 'idb-keyval';
@@ -12,8 +17,13 @@ const STORAGE_KEY = 'sorcery_user_data';
 const GUEST_KEY = 'sorcery_guest_data';
 
 /**
- * Load user data from storage
- * @param userId - User ID for logged-in users, null for guest
+ * Load user data from local persistent storage.
+ *
+ * Inputs:
+ * - `userId`: Logged-in user id, or `null` for guest data.
+ *
+ * Outputs:
+ * - Resolves to stored `UserData` or `null` when unavailable.
  */
 export async function loadUserData(userId: string | null): Promise<UserData | null> {
   try {
@@ -27,7 +37,13 @@ export async function loadUserData(userId: string | null): Promise<UserData | nu
 }
 
 /**
- * Save user data to storage
+ * Persist user data to IndexedDB/localStorage fallback.
+ *
+ * Inputs:
+ * - `userData`: Full user snapshot to store.
+ *
+ * Outputs:
+ * - Resolves `void` when write attempt completes.
  */
 export async function saveUserData(userData: UserData): Promise<void> {
   try {
@@ -40,7 +56,13 @@ export async function saveUserData(userData: UserData): Promise<void> {
 }
 
 /**
- * Delete user data from storage
+ * Delete persisted data for a specific logged-in user.
+ *
+ * Inputs:
+ * - `userId`: User id to delete.
+ *
+ * Outputs:
+ * - Resolves `void` when delete attempt completes.
  */
 export async function deleteUserData(userId: string): Promise<void> {
   try {
@@ -52,7 +74,13 @@ export async function deleteUserData(userId: string): Promise<void> {
 }
 
 /**
- * Clear all stored data (for testing/debug)
+ * Clear guest data from storage (testing/debug helper).
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Resolves `void` when clear attempt completes.
  */
 export async function clearAllData(): Promise<void> {
   try {

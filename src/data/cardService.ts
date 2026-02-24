@@ -6,6 +6,11 @@
  *
  * In development, requests are proxied through Vite to avoid CORS issues.
  * In production, requests go directly to the API (requires proper CORS headers).
+ *
+ * Related files:
+ * - `src/app/Startup.ts` (initial load)
+ * - `src/data/dataModels.ts` (typed card contracts)
+ * - `vite.config.ts` and `public/_redirects` (proxy routing)
  */
 
 import type { Card } from "./dataModels";
@@ -20,7 +25,14 @@ const FETCH_TIMEOUT_MS = 20_000;
 const RETRY_COUNT = 2;
 
 /**
- * Fetch all cards from the API or cache
+ * Fetch all cards from cache or API with retry/fallback behavior.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Resolves to a `Card[]` from cache or network.
+ * - Throws when both network and cache are unavailable.
  */
 export async function fetchCards(): Promise<Card[]> {
   // Try cache first
@@ -62,7 +74,13 @@ export async function fetchCards(): Promise<Card[]> {
 }
 
 /**
- * Force refresh card data from API
+ * Clear cache and force a fresh network fetch.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Resolves to a fresh `Card[]` payload.
  */
 export async function refreshCards(): Promise<Card[]> {
   await clearCardCache();
@@ -70,14 +88,27 @@ export async function refreshCards(): Promise<Card[]> {
 }
 
 /**
- * Get card by name
+ * Lookup a card by name (case-insensitive).
+ *
+ * Inputs:
+ * - `cards`: Card catalog to search.
+ * - `name`: Card name to match.
+ *
+ * Outputs:
+ * - Returns the matching `Card` when found, otherwise `undefined`.
  */
 export function findCardByName(cards: Card[], name: string): Card | undefined {
   return cards.find((c) => c.name.toLowerCase() === name.toLowerCase());
 }
 
 /**
- * Get all unique card types
+ * Build sorted list of unique guardian types.
+ *
+ * Inputs:
+ * - `cards`: Card catalog to summarize.
+ *
+ * Outputs:
+ * - Returns sorted unique type names.
  */
 export function getCardTypes(cards: Card[]): string[] {
   const types = new Set<string>();
@@ -88,7 +119,13 @@ export function getCardTypes(cards: Card[]): string[] {
 }
 
 /**
- * Get all unique elements
+ * Build sorted list of unique card element strings.
+ *
+ * Inputs:
+ * - `cards`: Card catalog to summarize.
+ *
+ * Outputs:
+ * - Returns sorted unique element names.
  */
 export function getElements(cards: Card[]): string[] {
   const elements = new Set<string>();

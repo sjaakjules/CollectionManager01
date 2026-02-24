@@ -3,6 +3,11 @@
  *
  * Provides typed methods for backend communication.
  * All requests include auth token in Authorization header.
+ *
+ * Related files:
+ * - `src/auth/authService.ts` (auth orchestration)
+ * - `src/data/userSync.ts` (pull/push user data)
+ * - `src/app/Startup.ts` (startup user bootstrap)
  */
 
 import type { UserData } from '@/data/dataModels';
@@ -30,7 +35,14 @@ export interface ApiError {
 // ============================================================================
 
 /**
- * Login with username and password
+ * Perform backend login request.
+ *
+ * Inputs:
+ * - `username`: Account username.
+ * - `password`: Account password.
+ *
+ * Outputs:
+ * - Resolves to auth/session payload for the authenticated user.
  */
 export async function loginApi(
   username: string,
@@ -53,7 +65,14 @@ export async function loginApi(
 }
 
 /**
- * Create a new account with username and password
+ * Perform backend signup request.
+ *
+ * Inputs:
+ * - `username`: Requested account username.
+ * - `password`: Requested account password.
+ *
+ * Outputs:
+ * - Resolves to auth/session payload for the created user.
  */
 export async function signupApi(
   username: string,
@@ -80,7 +99,14 @@ export async function signupApi(
 // ============================================================================
 
 /**
- * Fetch user data from server
+ * Fetch persisted user data from backend.
+ *
+ * Inputs:
+ * - `userId`: User identifier.
+ * - `token`: Bearer auth token.
+ *
+ * Outputs:
+ * - Resolves to `UserData`, `null` on 404, or throws on other failures.
  */
 export async function fetchUserData(
   userId: string,
@@ -106,7 +132,15 @@ export async function fetchUserData(
 }
 
 /**
- * Update user data on server
+ * Persist the full user payload to backend.
+ *
+ * Inputs:
+ * - `userId`: User identifier.
+ * - `data`: Full `UserData` payload to persist.
+ * - `token`: Bearer auth token.
+ *
+ * Outputs:
+ * - Resolves `void` on success; throws on request failure.
  */
 export async function updateUserData(
   userId: string,

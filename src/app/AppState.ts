@@ -3,6 +3,12 @@
  *
  * This module defines the central state store for the application.
  * React components subscribe to state changes; PixiJS reads state but doesn't modify it.
+ *
+ * Related files:
+ * - `src/app/App.tsx` (provider + dispatch wiring)
+ * - `src/app/Startup.ts` (initial state hydration)
+ * - `src/data/dataModels.ts` (persisted domain types)
+ * - `src/zones/zones.ts` (zone model normalization)
  */
 
 import { createContext, useContext } from 'react';
@@ -135,6 +141,16 @@ export type AppAction =
 // Reducer
 // ============================================================================
 
+/**
+ * Main reducer for all app-level state transitions.
+ *
+ * Inputs:
+ * - `state`: Current immutable app state snapshot.
+ * - `action`: Discriminated action payload describing a state transition.
+ *
+ * Outputs:
+ * - Returns the next immutable `AppState`.
+ */
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_CARDS':
@@ -483,6 +499,16 @@ export interface AppContextValue {
 
 export const AppContext = createContext<AppContextValue | null>(null);
 
+/**
+ * React hook for consuming app state context.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns `{ state, dispatch }` from `AppContext`.
+ * - Throws if called outside `AppContext.Provider`.
+ */
 export function useAppState(): AppContextValue {
   const context = useContext(AppContext);
   if (!context) {
@@ -495,15 +521,45 @@ export function useAppState(): AppContextValue {
 // Selectors
 // ============================================================================
 
+/**
+ * Resolve the currently active deck from reducer state.
+ *
+ * Inputs:
+ * - `state`: Current app state.
+ *
+ * Outputs:
+ * - Returns the active `Deck` when available, otherwise `null`.
+ */
 export function selectActiveDeck(state: AppState): Deck | null {
   if (!state.userData || !state.editor.activeDeckId) return null;
   return state.userData.decks.find((d) => d.id === state.editor.activeDeckId) ?? null;
 }
 
+/**
+ * Lookup a card by its exact name from the loaded card index.
+ *
+ * Inputs:
+ * - `state`: Current app state.
+ * - `name`: Card name to match.
+ *
+ * Outputs:
+ * - Returns the matched `Card`, otherwise `null`.
+ */
 export function selectCardByName(state: AppState, name: string): Card | null {
   return state.cards.find((c) => c.name === name) ?? null;
 }
 
+/**
+ * Get quantity of a card in a specific board (or active board by default).
+ *
+ * Inputs:
+ * - `state`: Current app state.
+ * - `cardName`: Card name to count.
+ * - `board`: Optional board override.
+ *
+ * Outputs:
+ * - Returns quantity for that board, or `0` when unavailable.
+ */
 export function selectDeckCardQuantity(
   state: AppState,
   cardName: string,
@@ -517,6 +573,16 @@ export function selectDeckCardQuantity(
   return card?.quantity ?? 0;
 }
 
+/**
+ * Get aggregate quantity of a card across deck boards tracked by rules.
+ *
+ * Inputs:
+ * - `state`: Current app state.
+ * - `cardName`: Card name to count.
+ *
+ * Outputs:
+ * - Returns total quantity across `mainboard`, `sideboard`, and `avatar`.
+ */
 export function selectTotalDeckCardQuantity(state: AppState, cardName: string): number {
   const deck = selectActiveDeck(state);
   if (!deck) return 0;
@@ -529,6 +595,16 @@ export function selectTotalDeckCardQuantity(state: AppState, cardName: string): 
   return total;
 }
 
+/**
+ * Get quantity of a card owned in the user collection.
+ *
+ * Inputs:
+ * - `state`: Current app state.
+ * - `cardName`: Card name to count.
+ *
+ * Outputs:
+ * - Returns collection quantity or `0` when missing.
+ */
 export function selectCollectionQuantity(state: AppState, cardName: string): number {
   if (!state.userData) return 0;
   const item = state.userData.collection.find((c) => c.name === cardName);

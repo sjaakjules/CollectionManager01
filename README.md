@@ -118,6 +118,25 @@ src/
 └── styles/       # CSS styles
 ```
 
+## Core Scripts
+
+Key runtime modules and how they connect:
+
+| File | What it does | Related modules |
+| --- | --- | --- |
+| `src/main.tsx` | Bootstraps React into `#root` | `src/app/App.tsx` |
+| `src/app/App.tsx` | App shell, startup flow, zone + persistence wiring | `src/app/Startup.ts`, `src/app/AppState.ts`, `src/rendering/PixiCanvas.tsx` |
+| `src/app/AppState.ts` | Global reducer, context, selectors | `src/data/dataModels.ts`, `src/data/cardFilters.ts`, `src/zones/zones.ts` |
+| `src/app/Startup.ts` | Session/card/user bootstrapping | `src/auth/session.ts`, `src/data/cardService.ts`, `src/data/userStorage.ts` |
+| `src/rendering/PixiCanvas.tsx` | React <-> Pixi bridge and loading overlays | `src/rendering/PixiStage.ts`, `src/data/cardFilters.ts` |
+| `src/zones/zones.ts` | Zone model + quadrant placement/layout helpers | `src/rendering/Grid.ts`, `src/app/App.tsx` |
+| `src/data/cardFilters.ts` | Filter state + card matching engine | `src/ui/BottomPanel.tsx`, `src/rendering/PixiCanvas.tsx` |
+| `src/data/curiosaService.ts` | Curiosa URL import and deck payload parsing | `src/ui/ZonesPanel.tsx`, `src/ui/BottomPanel.tsx` |
+| `src/data/importExport.ts` | Deck text import/export helpers | `src/ui/BottomPanel.tsx` |
+| `src/data/userSync.ts` | Debounced server sync + merge strategy | `src/auth/api.ts`, `src/app/App.tsx` |
+
+All of the modules above include top-of-file headers and exported function docs with explicit input/output notes.
+
 ## Deck Building Rules
 
 - 1 Avatar
@@ -135,49 +154,9 @@ src/
 | Add card to deck      | Double left-click  |
 | Remove card from deck | Double right-click |
 
-## Roadmap
+## Open Work
 
-### Account & Persistence
-
-- [ ] Account signup and login (no personal info required)
-- [ ] Auto-save edits when logged in — each edit saves state automatically
-
-### Deck & Collection Tools
-
-- [ ] "Save Selected" button — download a text file with `quantity name` per line (e.g. `4 Crawler`)
-- [ ] Filter cards — show a subset of the collection by:
-  - Set, type, sub-type, threshold (inclusive or exclusive), cost, attack, defence, rarity, artist
-  - Filter with Text search across card JSON data
-
-### Canvas & Interaction
-
-- [x] "Add Category" functionality for custom highlight groups
-- [x] Text / labeling — users can place, move, and edit labels on the canvas
-      • Define quadrants: Add 4 fixed world regions on the canvas: Main (top-right), Decks (bottom-right), Stacks (bottom-left), Named Zones (top-left).
-      • Main quadrant = source grid: Cards can be filtered and dragged, but on release snap back to their original positions (never permanently move).
-      • Implement Zones (data + render): Create a Zone model (id, name, type: custom/stack/deck, pinned, bounds, card instances) and render zones as outlined regions with a header.
-      • Copy cards from main into zones: Dragging a card into any zone creates a duplicate card instance inside that zone (source stays put).
-      • Create named zones: Add “+” in a right panel to create a new named zone, pinned on the canvas by default into the Named Zones quadrant at a standard size/position.
-      • Zone card interactions: Allow multiple card instances per zone; instances are draggable and snap to grid.
-      • Drag zone by header: Dragging a zone header moves the zone and all contained cards, snapping to grid on release.
-      • Zones on top + block main hover: Zones render above main cards; while pointer is over a zone, disable main-card previews beneath. Preview should preview the card that is visibly on top.
-      • Auto-expand zone bounds: When instances are placed outside current bounds, expand the zone rectangle to fit contents + padding.
-      • Remove card from zone: On hovering a card instance, show a top-right delete button to remove that instance from the zone.
-      • Right-side Zones Panel: Add a panel listing Decks and Named Zones with distinct styling to tell the decks from the Named zones.
-      • Panel navigation: Clicking a zone in the panel moves the camera to that zone; if it’s not on-canvas, re-add it first in the correct quadrant.
-      • Hide/unhide zones (not delete): “X” on a zone removes it from the canvas but keeps it in the panel (toggle pinned).
-      • Stacks: load to canvas: Add a load button (public/assets/buttons/load.png) in the Stacks panel to create/pin a stack zone in the Stacks quadrant.
-      • Stacks: two-way sync: Changes on canvas update the panel state and changes in panel update the canvas state.
-      • Stacks: remove from canvas: Stack zones can be removed from the canvas but remain listed in the Stacks panel.
-      • Decks: load from URL → deck quadrant: Loading a deck creates a deck zone pinned in the Decks quadrant.
-      • Deck subzones: Deck zone contains labeled subzones: Mainboard, Sideboard, Maybeboard, plus Avatar shown in the header.
-      • Decks: add deck control in panel: Move the “add deck” button to the right zone panel using public/assets/buttons/deck.png and visually distinguish deck zones from custom zones.
-
-### Card Info & Rules
-
-- [ ] Show rule text for selected card in side panel
-- [ ] Codex keyword links — words in rule text that appear in the codex are clickable
-- [ ] Codex search panel below rule text — updates when a codex keyword is selected, mimics curiosa.io codex behavior
+Unimplemented or partially implemented changes are tracked in [`ToDos.md`](ToDos.md).
 
 ## Development
 

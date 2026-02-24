@@ -1,8 +1,8 @@
 /**
  * Root React component
  *
- * Sets up the app context provider, orchestrates startup,
- * and renders the main layout with PixiJS canvas and UI panels.
+ * Sets up app context, orchestrates startup, and renders the
+ * Pixi canvas plus deck/zone UI panels.
  *
  * The splash screen overlays the app while data loads,
  * allowing PixiJS to initialize in the background.
@@ -11,6 +11,12 @@
  *   0.0–0.5s  Opaque splash, cards loading invisibly behind
  *   0.5–1.5s  Splash becomes translucent, cards appear at 50% in random order
  *   1.5–2.0s  Splash fades out, cards rise to full opacity
+ *
+ * Related files:
+ * - `src/app/AppState.ts` (global reducer and app context)
+ * - `src/app/Startup.ts` (startup orchestration)
+ * - `src/rendering/PixiCanvas.tsx` (canvas host)
+ * - `src/zones/zones.ts` (zone creation and placement utilities)
  */
 
 import { useReducer, useEffect, useState, useCallback, useMemo } from 'react';
@@ -41,6 +47,15 @@ import '@/styles/ui.css';
 
 type SplashPhase = 'full' | 'transparent' | 'fading' | 'done';
 
+/**
+ * App shell that wires startup, persistence, and UI/canvas coordination.
+ *
+ * Inputs:
+ * - None (component reads from reducer state and local side effects).
+ *
+ * Outputs:
+ * - Returns the root React element tree for the application.
+ */
 export function App() {
   const [state, dispatch] = useReducer(appReducer, initialAppState);
   const [startupState, setStartupState] = useState<'loading' | 'ready' | 'error'>(

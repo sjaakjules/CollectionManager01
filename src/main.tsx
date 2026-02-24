@@ -1,5 +1,13 @@
 /**
- * Application entry point
+ * Application entry point for the React client.
+ *
+ * Responsibilities:
+ * - Resolve the root DOM container.
+ * - Mount the React tree in Strict Mode.
+ *
+ * Related files:
+ * - `src/app/App.tsx` (root application component)
+ * - `index.html` (`#root` mount node)
  */
 
 import { StrictMode } from "react";

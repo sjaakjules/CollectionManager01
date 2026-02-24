@@ -7,6 +7,11 @@
  * - 30 sites maximum
  * - 10 sideboard cards
  * - Rarity limits (Ordinary 4x, Exceptional 3x, Elite 2x, Unique 1x)
+ *
+ * Related files:
+ * - `src/ui/BottomPanel.tsx` (validation feedback in UI)
+ * - `src/rules/ruleMessages.ts` (localized message text)
+ * - `src/data/dataModels.ts` (deck/card contracts and limits)
  */
 
 import type { Card, Deck, CardRarity } from '@/data/dataModels';
@@ -33,7 +38,14 @@ export interface ValidationResult {
 // ============================================================================
 
 /**
- * Validate a deck against all rules
+ * Validate a deck against all Sorcery rule constraints.
+ *
+ * Inputs:
+ * - `deck`: Deck to validate.
+ * - `cardDatabase`: Card metadata lookup for type/rarity checks.
+ *
+ * Outputs:
+ * - Returns validation summary with `isValid` and detailed `errors`.
  */
 export function validateDeck(deck: Deck, cardDatabase: Card[]): ValidationResult {
   const errors: ValidationError[] = [];
@@ -134,7 +146,15 @@ export function validateDeck(deck: Deck, cardDatabase: Card[]): ValidationResult
 }
 
 /**
- * Check if adding a card would violate rules
+ * Check whether adding one copy of a card is currently legal.
+ *
+ * Inputs:
+ * - `deck`: Current deck state.
+ * - `cardName`: Card to add.
+ * - `cardDatabase`: Card metadata lookup.
+ *
+ * Outputs:
+ * - Returns `{ allowed, reason? }` with denial reason when blocked.
  */
 export function canAddCard(
   deck: Deck,
@@ -172,7 +192,13 @@ export function canAddCard(
 }
 
 /**
- * Get rarity limit for a card
+ * Resolve copy limit for a rarity tier.
+ *
+ * Inputs:
+ * - `rarity`: Card rarity value.
+ *
+ * Outputs:
+ * - Returns max allowed copies for that rarity.
  */
 export function getRarityLimit(rarity: CardRarity): number {
   return DECK_LIMITS.RARITY_LIMITS[rarity];

@@ -1,3 +1,17 @@
+/**
+ * Right-side zones panel for named zones and deck zones.
+ *
+ * Responsibilities:
+ * - Create named zones and deck zones (via Curiosa URL import).
+ * - Toggle zone visibility on canvas and focus existing zones.
+ * - Surface zone-level actions (hide, center, delete).
+ *
+ * Related files:
+ * - `src/data/curiosaService.ts` (deck URL fetch/import)
+ * - `src/zones/zones.ts` (zone data model)
+ * - `src/app/App.tsx` (zone callback wiring)
+ */
+
 import { useMemo, useState, useCallback, useEffect } from "react";
 import type { Deck } from "@/data/dataModels";
 import { fetchCuriosaDeck } from "@/data/curiosaService";
@@ -14,10 +28,33 @@ interface ZonesPanelProps {
 
 const EDGE_TRIGGER_PX = 72;
 
+/**
+ * Build card-count status text for a zone row/header.
+ *
+ * Inputs:
+ * - `zone`: Zone model to summarize.
+ *
+ * Outputs:
+ * - Returns text showing card count and canvas visibility.
+ */
 function zoneCountLabel(zone: ZoneModel): string {
   return `${zone.cards.length} cards ${zone.pinned ? "on canvas" : "hidden"}`;
 }
 
+/**
+ * Render the zones tabs and selected zone details drawer.
+ *
+ * Inputs:
+ * - `zones`: All zone models.
+ * - `onCreateNamedZone`: Callback to create custom zone.
+ * - `onCreateDeckZone`: Callback to create deck-backed zone.
+ * - `onDeleteZone`: Callback to remove zone.
+ * - `onSetZonePinned`: Callback to pin/unpin zone.
+ * - `onFocusZone`: Callback to center camera on zone.
+ *
+ * Outputs:
+ * - Returns React markup for zone controls and action drawer.
+ */
 export function ZonesPanel({
   zones,
   onCreateNamedZone,

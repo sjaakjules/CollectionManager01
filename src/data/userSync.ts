@@ -3,6 +3,11 @@
  *
  * Handles syncing local changes to the server when logged in.
  * Implements debounced saves to avoid excessive API calls.
+ *
+ * Related files:
+ * - `src/app/App.tsx` (auto-save and unload flush hooks)
+ * - `src/auth/api.ts` (remote fetch/update endpoints)
+ * - `src/data/userStorage.ts` (local persistence fallback)
  */
 
 import type { UserData, CanvasLabel } from './dataModels';
@@ -17,8 +22,14 @@ let pendingSync: UserData | null = null;
 let syncInProgress = false;
 
 /**
- * Queue user data for syncing to server
- * Debounced to avoid excessive API calls
+ * Queue user data for debounced backend sync.
+ *
+ * Inputs:
+ * - `userData`: Full user data snapshot to sync.
+ * - `token`: Auth token used for API authorization.
+ *
+ * Outputs:
+ * - Schedules sync work and returns immediately (`void`).
  */
 export const queueSync = debounce(async (userData: UserData, token: string) => {
   if (syncInProgress) {
@@ -30,7 +41,14 @@ export const queueSync = debounce(async (userData: UserData, token: string) => {
 }, SYNC_DEBOUNCE_MS);
 
 /**
- * Fetch fresh user data from server
+ * Fetch latest user data from backend and mirror it locally.
+ *
+ * Inputs:
+ * - `userId`: Authenticated user id.
+ * - `token`: Auth token used for API authorization.
+ *
+ * Outputs:
+ * - Resolves to server `UserData` when available; returns `null` on failure.
  */
 export async function pullUserData(
   userId: string,
@@ -49,7 +67,14 @@ export async function pullUserData(
 }
 
 /**
- * Force immediate sync (use when logging out or closing)
+ * Force immediate sync, bypassing debounce queue.
+ *
+ * Inputs:
+ * - `userData`: User data snapshot to persist remotely.
+ * - `token`: Auth token used for API authorization.
+ *
+ * Outputs:
+ * - Resolves when the sync attempt completes.
  */
 export async function flushSync(userData: UserData, token: string): Promise<void> {
   queueSync.cancel();
@@ -80,6 +105,13 @@ async function performSync(userData: UserData, token: string): Promise<void> {
 /**
  * Merge local guest data with server user data
  * Server data takes precedence for conflicts
+ *
+ * Inputs:
+ * - `local`: Local/offline user snapshot.
+ * - `server`: Server-authoritative user snapshot.
+ *
+ * Outputs:
+ * - Returns merged `UserData` preserving server precedence.
  */
 export function mergeUserData(local: UserData, server: UserData): UserData {
   // Simple merge strategy: keep all decks, dedupe by ID

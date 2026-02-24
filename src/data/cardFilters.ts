@@ -1,3 +1,17 @@
+/**
+ * Card filtering model and evaluation utilities.
+ *
+ * Responsibilities:
+ * - Define filter state shape used by UI and persistence.
+ * - Normalize legacy filter payloads into the current structure.
+ * - Evaluate card collections against active filter clauses.
+ *
+ * Related files:
+ * - `src/app/AppState.ts` (stores and clears filter state)
+ * - `src/ui/BottomPanel.tsx` (filter editing UI)
+ * - `src/rendering/PixiCanvas.tsx` (applies filters before rendering)
+ */
+
 import type { Card } from "./dataModels";
 
 export type ThresholdFilterMode = "inclusive" | "exclusive";
@@ -29,6 +43,15 @@ export interface CardFilterState {
   clauses: CardFilterClause[];
 }
 
+/**
+ * Build a blank filter criteria object with neutral defaults.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns a `CardFilterCriteria` that matches all cards.
+ */
 export function createEmptyCardFilterCriteria(): CardFilterCriteria {
   return {
     searchText: "",
@@ -48,6 +71,15 @@ export function createEmptyCardFilterCriteria(): CardFilterCriteria {
   };
 }
 
+/**
+ * Create the default filter state used for first load/reset actions.
+ *
+ * Inputs:
+ * - None.
+ *
+ * Outputs:
+ * - Returns `{ draft, clauses }` with empty criteria and no active clauses.
+ */
 export function createDefaultCardFilters(): CardFilterState {
   return {
     draft: createEmptyCardFilterCriteria(),
@@ -150,6 +182,15 @@ function parseClause(input: unknown): CardFilterClause {
   };
 }
 
+/**
+ * Normalize unknown persisted data into a valid `CardFilterState`.
+ *
+ * Inputs:
+ * - `value`: Unknown value from persistence or migration paths.
+ *
+ * Outputs:
+ * - Returns a safe `CardFilterState` compatible with current UI logic.
+ */
 export function ensureCardFilterState(value: unknown): CardFilterState {
   if (!value || typeof value !== "object") {
     return createDefaultCardFilters();
@@ -198,6 +239,15 @@ function withinRange(
   return true;
 }
 
+/**
+ * Determine whether a criteria object has no active constraints.
+ *
+ * Inputs:
+ * - `criteria`: Criteria object to inspect.
+ *
+ * Outputs:
+ * - Returns `true` when every criterion is empty, otherwise `false`.
+ */
 export function isCardFilterCriteriaEmpty(criteria: CardFilterCriteria): boolean {
   return (
     criteria.searchText.trim().length === 0 &&
@@ -216,12 +266,30 @@ export function isCardFilterCriteriaEmpty(criteria: CardFilterCriteria): boolean
   );
 }
 
+/**
+ * Determine whether the filter state currently constrains card results.
+ *
+ * Inputs:
+ * - `filters`: Current filter state.
+ *
+ * Outputs:
+ * - Returns `true` when at least one enabled, non-empty clause exists.
+ */
 export function isCardFilterActive(filters: CardFilterState): boolean {
   return ensureCardFilterState(filters).clauses.some(
     (clause) => clause.enabled && !isCardFilterCriteriaEmpty(clause.criteria),
   );
 }
 
+/**
+ * Canonicalize criteria text/list fields for stable matching.
+ *
+ * Inputs:
+ * - `criteria`: Raw criteria from UI/persistence.
+ *
+ * Outputs:
+ * - Returns normalized criteria (trimmed/lowercased/deduplicated tokens).
+ */
 export function normalizeFilterCriteria(
   criteria: CardFilterCriteria,
 ): CardFilterCriteria {
@@ -320,6 +388,16 @@ function matchesCriteria(card: Card, criteria: CardFilterCriteria): boolean {
   return true;
 }
 
+/**
+ * Apply active filter clauses to a card list.
+ *
+ * Inputs:
+ * - `cards`: Source cards to evaluate.
+ * - `filters`: Filter state containing enabled clauses.
+ *
+ * Outputs:
+ * - Returns cards matching any enabled clause, or the original list when no clause is active.
+ */
 export function applyCardFilters(
   cards: Card[],
   filters: CardFilterState,

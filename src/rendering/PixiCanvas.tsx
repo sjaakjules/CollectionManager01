@@ -9,6 +9,11 @@
  *
  * IMPORTANT: React does NOT directly manipulate PixiJS objects.
  * State flows one-way: React state -> PixiJS reads state for rendering.
+ *
+ * Related files:
+ * - `src/rendering/PixiStage.ts` (imperative Pixi scene implementation)
+ * - `src/app/App.tsx` (prop wiring and zone events)
+ * - `src/data/cardFilters.ts` and `src/data/archetypeScores.ts` (render inputs)
  */
 
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
@@ -37,6 +42,20 @@ interface PixiCanvasProps {
   focusZoneRequest?: { zoneId: string; nonce: number } | null;
 }
 
+/**
+ * Canvas host component that bridges reducer state into PixiStage.
+ *
+ * Inputs:
+ * - `splashDone`: Whether splash transition is complete.
+ * - `zones`: Current zone models to render.
+ * - `onCardDragDrop`: Optional callback for drag/drop outcomes.
+ * - `onZonesChange`: Optional callback when Pixi mutates zones.
+ * - `onStackZoneHeaderClick`: Optional callback when stack zone header is clicked.
+ * - `focusZoneRequest`: Optional one-shot zone focus request.
+ *
+ * Outputs:
+ * - Returns React markup containing the Pixi mount container and loading overlays.
+ */
 export function PixiCanvas({
   splashDone,
   zones,

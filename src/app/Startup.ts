@@ -6,6 +6,12 @@
  * 2. Load card data from API
  * 3. Load or create user data
  * 4. Initialize app state
+ *
+ * Related files:
+ * - `src/app/App.tsx` (calls `initializeApp`)
+ * - `src/auth/session.ts` (session bootstrap)
+ * - `src/data/cardService.ts` (card bootstrap)
+ * - `src/data/userStorage.ts` and `src/data/userSync.ts` (user data hydration/merge)
  */
 
 import type { AppAction } from './AppState';
@@ -23,6 +29,15 @@ export interface StartupResult {
   error?: string;
 }
 
+/**
+ * Bootstrap cards, session, and user data, then dispatch initial app actions.
+ *
+ * Inputs:
+ * - `dispatch`: App reducer dispatch function.
+ *
+ * Outputs:
+ * - Resolves to `{ success: true }` on completion or `{ success: false, error }` on failure.
+ */
 export async function initializeApp(
   dispatch: React.Dispatch<AppAction>
 ): Promise<StartupResult> {

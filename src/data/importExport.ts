@@ -3,6 +3,11 @@
  *
  * Export format: "quantity name" per line (e.g., "4 Cave Trolls")
  * Import: Parse text, match card names, highlight unknown cards
+ *
+ * Related files:
+ * - `src/ui/BottomPanel.tsx` (import/export UI actions)
+ * - `src/data/dataModels.ts` (deck/card structures)
+ * - `src/data/curiosaService.ts` (Curiosa deck ingestion)
  */
 
 import type { Card, Deck, DeckCard, DeckBoards } from './dataModels';
@@ -14,7 +19,13 @@ import { generateUUID } from '@/utils/uuid';
 // ============================================================================
 
 /**
- * Export a deck to text format
+ * Export all deck boards into Curiosa-style plain text.
+ *
+ * Inputs:
+ * - `deck`: Deck to serialize.
+ *
+ * Outputs:
+ * - Returns newline-delimited text with optional board headers.
  */
 export function exportDeckToText(deck: Deck): string {
   const lines: string[] = [];
@@ -42,7 +53,13 @@ export function exportDeckToText(deck: Deck): string {
 }
 
 /**
- * Export only mainboard (simple format for sharing)
+ * Export only mainboard cards as plain `quantity name` lines.
+ *
+ * Inputs:
+ * - `deck`: Deck containing mainboard cards.
+ *
+ * Outputs:
+ * - Returns mainboard-only text payload.
  */
 export function exportMainboardToText(deck: Deck): string {
   return deck.boards.mainboard.map((c) => `${c.quantity} ${c.name}`).join('\n');
@@ -50,6 +67,12 @@ export function exportMainboardToText(deck: Deck): string {
 
 /**
  * Export selected cards to "quantity name" lines.
+ *
+ * Inputs:
+ * - `cards`: Card names and quantities chosen by the user.
+ *
+ * Outputs:
+ * - Returns newline-delimited text payload.
  */
 export function exportSelectedToText(
   cards: Array<{ name: string; quantity: number }>,
@@ -59,6 +82,13 @@ export function exportSelectedToText(
 
 /**
  * Download plain text content as a local file.
+ *
+ * Inputs:
+ * - `filename`: Browser download filename.
+ * - `text`: Plain-text file contents.
+ *
+ * Outputs:
+ * - Triggers a browser file download; returns `void`.
  */
 export function downloadTextFile(filename: string, text: string): void {
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -81,10 +111,15 @@ export interface ImportResult {
 }
 
 /**
- * Import deck from text
- * @param text - Text in "quantity name" format
- * @param deckName - Name for the new deck
- * @param cardDatabase - Card database for validation
+ * Parse plain-text deck content into internal deck structure.
+ *
+ * Inputs:
+ * - `text`: Deck text in `quantity name` or compatible line variants.
+ * - `deckName`: Name assigned to the imported deck.
+ * - `cardDatabase`: Known cards for canonical matching/validation.
+ *
+ * Outputs:
+ * - Returns `{ deck, unknownCards, warnings }` with parsing diagnostics.
  */
 export function importDeckFromText(
   text: string,
@@ -199,6 +234,16 @@ export interface CuriosaDeckData {
   maybeboard: DeckCard[];
 }
 
+/**
+ * Convert Curiosa deck payload into internal `ImportResult`.
+ *
+ * Inputs:
+ * - `data`: Curiosa board payload.
+ * - `cardDatabase`: Known cards for canonical name matching.
+ *
+ * Outputs:
+ * - Returns `{ deck, unknownCards, warnings }` ready for reducer insertion.
+ */
 export function importFromCuriosaDeck(
   data: CuriosaDeckData,
   cardDatabase: Card[]
