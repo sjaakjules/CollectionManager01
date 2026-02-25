@@ -21,7 +21,7 @@ import type {
   CanvasLabel,
   ArchetypeScoresData,
 } from '@/data/dataModels';
-import type { ZoneModel, ZoneType } from '@/zones/zones';
+import type { ZoneDeckVariant, ZoneModel, ZoneType } from '@/zones/zones';
 import {
   createDefaultCardFilters,
   ensureCardFilterState,
@@ -452,6 +452,29 @@ function normalizeZones(value: unknown): ZoneModel[] {
       })
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
+    const deckVariantsRaw = Array.isArray(zoneRecord.deckVariants)
+      ? zoneRecord.deckVariants
+      : [];
+    const deckVariants: ZoneDeckVariant[] = deckVariantsRaw
+      .map((rawVariant, index) => {
+        if (!rawVariant || typeof rawVariant !== 'object') return null;
+        const variantRecord = rawVariant as Record<string, unknown>;
+        const activeCardIdsRaw = Array.isArray(variantRecord.activeCardIds)
+          ? variantRecord.activeCardIds
+          : [];
+        const activeCardIds = activeCardIdsRaw
+          .filter((entry): entry is string => typeof entry === 'string')
+          .map((entry) => entry.trim())
+          .filter(Boolean);
+        const fallbackName = index === 0 ? 'Main' : `Variant ${index + 1}`;
+        return {
+          id: parseString(variantRecord.id, createFallbackId('zone-variant')),
+          name: parseString(variantRecord.name, fallbackName).trim() || fallbackName,
+          activeCardIds,
+        };
+      })
+      .filter((entry): entry is ZoneDeckVariant => entry !== null);
+
     zones.push({
       id: parseString(zoneRecord.id, createFallbackId('zone')),
       name: parseString(zoneRecord.name, 'Zone'),
@@ -473,6 +496,8 @@ function normalizeZones(value: unknown): ZoneModel[] {
         typeof zoneRecord.deckAuthor === 'string'
           ? zoneRecord.deckAuthor
           : null,
+      deckVariants,
+      activeDeckVariantId: parseString(zoneRecord.activeDeckVariantId).trim() || null,
     });
   }
 

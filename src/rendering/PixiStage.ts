@@ -56,6 +56,7 @@ import type {
   CollectionItem,
   CanvasLabel,
   CardType,
+  ThresholdGroup,
 } from "@/data/dataModels";
 import {
   updateArchetypeScore,
@@ -63,13 +64,15 @@ import {
   flushPendingScoreUpdates,
   type ArchetypeScores,
 } from "@/data/archetypeScores";
-import { getThresholdGroup } from "@/data/dataModels";
+import { DECK_LIMITS, getThresholdGroup } from "@/data/dataModels";
 import {
   QUADRANT_BOUNDS,
   ZONE_DECK_HEADER_HEIGHT,
   ZONE_DEFAULT_SIZE,
   ZONE_HEADER_HEIGHT,
+  createZoneDeckVariantId,
   sanitizeDeckZoneName,
+  type ZoneDeckVariant,
   type ZoneModel,
   type ZoneCardInstance,
 } from "@/zones/zones";
@@ -148,10 +151,29 @@ interface ZoneCardSpriteData {
   displaySize: { width: number; height: number };
 }
 
+interface DeckGraphHoverSeries {
+  label: string;
+  color: number;
+  values: number[];
+  decimals: number;
+}
+
+interface DeckGraphHoverRegion {
+  bounds: { left: number; top: number; right: number; bottom: number };
+  manaCosts: number[];
+  series: DeckGraphHoverSeries[];
+}
+
 interface ZoneHeaderData {
   bounds: { left: number; top: number; right: number; bottom: number };
   closeBounds: { left: number; top: number; right: number; bottom: number };
   sortBounds: { left: number; top: number; right: number; bottom: number };
+  variantTabBounds: Array<{
+    variantId: string;
+    isAdd: boolean;
+    bounds: { left: number; top: number; right: number; bottom: number };
+  }>;
+  graphHoverRegions: DeckGraphHoverRegion[];
 }
 
 interface ZoneCardDragState {
@@ -170,10 +192,106 @@ interface ZoneDragState {
   startBounds: { x: number; y: number } | null;
 }
 
+type QuickTransferCategory = "deck" | "stack";
+
+interface QuickTransferCategoryBounds {
+  category: QuickTransferCategory;
+  bounds: { left: number; top: number; right: number; bottom: number };
+}
+
+interface QuickTransferZoneBounds {
+  zoneId: string;
+  bounds: { left: number; top: number; right: number; bottom: number };
+}
+
+interface QuickTransferState {
+  active: boolean;
+  anchorScreenPos: { x: number; y: number } | null;
+  categoryHover: QuickTransferCategory | null;
+  categoryHoverStartMs: number;
+  expandedCategory: QuickTransferCategory | null;
+  zoneHoverId: string | null;
+  categoryBounds: QuickTransferCategoryBounds[];
+  zoneBounds: QuickTransferZoneBounds[];
+}
+
 interface DraggedCardPlacement {
   cardName: string;
   centerX: number;
   centerY: number;
+}
+
+type DeckZoneBoard = "mainboard" | "sideboard";
+
+interface DeckVariantDialogResult {
+  name: string;
+  sourceVariantId: string | null;
+}
+
+interface DeckCostBucketStats {
+  total: number;
+  byType: Record<"Minion" | "Magic" | "Aura" | "Artifact", number>;
+  byThreshold: Record<ThresholdGroup, number>;
+}
+
+interface DeckHeaderStats {
+  spellsTotal: number;
+  sitesTotal: number;
+  collectionTotal: number;
+  spellTypeCounts: Record<"Minion" | "Magic" | "Aura" | "Artifact", number>;
+  minionInfo: {
+    total: number;
+    topKeywords: Array<{
+      label: string;
+      count: number;
+    }>;
+  };
+  duplicateViolations: Array<{
+    name: string;
+    count: number;
+    limit: number;
+  }>;
+  costBuckets: Record<"low" | "mid" | "high", DeckCostBucketStats>;
+  spellThresholdTotals: Record<"air" | "earth" | "fire" | "water", number> & {
+    total: number;
+  };
+  averageSpellThresholds: number;
+  averageThresholdsPerMana: number;
+  siteThresholdTotals: Record<"air" | "earth" | "fire" | "water", number>;
+  siteProviderCounts: Record<"air" | "earth" | "fire" | "water", number>;
+  manaCosts: number[];
+  manaCardCurve: {
+    total: number[];
+    air: number[];
+    earth: number[];
+    fire: number[];
+    water: number[];
+  };
+  elementLoadPerMana: {
+    all: number[];
+    minion: number[];
+    magic: number[];
+    aura: number[];
+  };
+}
+
+interface DeckKeywordSpec {
+  id:
+    | "airborne"
+    | "voidwalk"
+    | "burrowing"
+    | "submerge"
+    | "stealthDefenceless"
+    | "lanceFirstStrike"
+    | "spellcaster"
+    | "charge"
+    | "ranged"
+    | "evil"
+    | "lethal"
+    | "ward";
+  label: string;
+  rulesPatterns: RegExp[];
+  subTypePatterns?: RegExp[];
 }
 
 // ============================================================================
@@ -190,12 +308,17 @@ const ON_DEMAND_HIGH_DETAIL_BATCH_SIZE = 24;
 const ZONE_BODY_PADDING = 14;
 const ZONE_AUTO_EXPAND_PADDING = 24;
 const ZONE_DELETE_SIZE = 18;
+const ZONE_CARD_ACTION_GAP = 4;
 const MAIN_QUADRANT_CARD_PADDING = 220;
 const ZONE_DECK_BOARD_GAP = 10;
 const ZONE_DECK_BOARD_INNER_LEFT = 12;
 const ZONE_DECK_CARD_TOP_GAP = DRAWN_GRID.height;
 const ZONE_DECK_BOARD_BOTTOM_PADDING = 10;
 const ZONE_DECK_TYPE_GAP = Math.round(DRAWN_GRID.height * 0.5);
+const ZONE_DECK_TAB_HEIGHT = 22;
+const ZONE_DECK_TAB_GAP = 6;
+const ZONE_DECK_TAB_PADDING_X = 12;
+const ZONE_DECK_ADD_TAB_WIDTH = 24;
 const ZONE_SORT_BUTTON_WIDTH = 48;
 const ZONE_SORT_BUTTON_HEIGHT = 20;
 const ZONE_DECK_AVATAR_CENTER_GRID_X = 1;
@@ -205,7 +328,46 @@ const ZONE_DECK_HEADER_X_OFFSET = DRAWN_GRID.width * 0.5;
 const ZONE_DECK_MIN_BOARD_HEIGHT = {
   mainboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP + 6,
   sideboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP - 6,
-  maybeboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP - 2,
+} as const;
+const ZONE_DECK_STATS_COL_GAP = 10;
+const ZONE_DECK_STATS_TITLE_SIZE = 11;
+const ZONE_DECK_STATS_LINE_SIZE = 10;
+const ZONE_DECK_STATS_LINE_GAP = 2;
+const ZONE_DECK_STATS_TEXT_FILLS = {
+  title: 0xdbe4ff,
+  line: 0xbdd0ff,
+  subtle: 0x9eb4ee,
+} as const;
+const ZONE_DECK_STATS_TEXT_STROKE = { color: 0x0d1224, width: 1 };
+const ZONE_DECK_GRAPH_COLORS = {
+  total: 0xf2f5ff,
+  air: 0x9bdcff,
+  earth: 0x9fe07e,
+  fire: 0xffac76,
+  water: 0x70bcff,
+  all: 0xf1f5ff,
+  minion: 0x7fd0ff,
+  magic: 0xff94c6,
+  aura: 0xa9eb7a,
+  artifact: 0xf5d977,
+} as const;
+const ZONE_DECK_GRAPH_LINE_WIDTH = 0.9;
+const ZONE_DECK_GRAPH_HOVER_DOT_RADIUS = 2.7;
+const QUICK_TRANSFER_HOLD_MS = 500;
+const QUICK_TRANSFER_CATEGORY_WIDTH = 112;
+const QUICK_TRANSFER_BOX_HEIGHT = 28;
+const QUICK_TRANSFER_ZONE_WIDTH = 142;
+const QUICK_TRANSFER_GAP = 10;
+const QUICK_TRANSFER_EDGE_PADDING = 8;
+const QUICK_TRANSFER_COLORS = {
+  baseFill: 0x161626,
+  hoverFill: 0x3a3a5a,
+  activeFill: 0x4a4a8a,
+  baseBorder: 0x3a3a5a,
+  activeBorder: 0x6a6aba,
+  baseText: 0xb8b8cc,
+  hoverText: 0xe0e0e0,
+  activeText: 0xffffff,
 } as const;
 const ZONE_SORT_TYPE_ORDER: Record<CardType, number> = {
   Minion: 0,
@@ -215,6 +377,74 @@ const ZONE_SORT_TYPE_ORDER: Record<CardType, number> = {
   Site: 4,
   Avatar: 5,
 };
+const DECK_KEYWORD_SPECS: DeckKeywordSpec[] = [
+  {
+    id: "airborne",
+    label: "Airborne",
+    rulesPatterns: [/\bairborne\b/i],
+  },
+  {
+    id: "voidwalk",
+    label: "Voidwalk",
+    rulesPatterns: [/\bvoidwalk\b/i],
+  },
+  {
+    id: "burrowing",
+    label: "Burrowing",
+    rulesPatterns: [/\bburrowing\b/i],
+  },
+  {
+    id: "submerge",
+    label: "Submerge",
+    rulesPatterns: [/\bsubmerge\b/i],
+  },
+  {
+    id: "stealthDefenceless",
+    label: "Stealth/Def",
+    rulesPatterns: [
+      /\bstealth\b/i,
+      /\bdefenceless\b/i,
+      /\bdefenseless\b/i,
+      /\bundefended\b/i,
+    ],
+  },
+  {
+    id: "lanceFirstStrike",
+    label: "Lance/First",
+    rulesPatterns: [/\blance\b/i, /\bfirst strike\b/i],
+  },
+  {
+    id: "spellcaster",
+    label: "Spellcaster",
+    rulesPatterns: [/\bspellcaster\b/i],
+  },
+  {
+    id: "charge",
+    label: "Charge",
+    rulesPatterns: [/\bcharge\b/i],
+  },
+  {
+    id: "ranged",
+    label: "Ranged",
+    rulesPatterns: [/\branged\b/i],
+  },
+  {
+    id: "evil",
+    label: "Evil",
+    rulesPatterns: [/\bevil\b/i],
+    subTypePatterns: [/\bmonster\b/i, /\bdemon\b/i, /\bundead\b/i],
+  },
+  {
+    id: "lethal",
+    label: "Lethal",
+    rulesPatterns: [/\blethal\b/i],
+  },
+  {
+    id: "ward",
+    label: "Ward",
+    rulesPatterns: [/\bward\b/i],
+  },
+];
 
 // ============================================================================
 // PixiStage Class
@@ -236,15 +466,26 @@ export class PixiStage {
     {
       frame: Graphics;
       title: Text;
-      subzoneLabels: Text[];
+      subzoneLabels: Container[];
       avatarSprite: CardSprite | null;
     }
   > = new Map();
   private zoneHeaderBounds: Map<string, ZoneHeaderData> = new Map();
   private zoneDeleteOverlay: Graphics | null = null;
+  private deckGraphTooltipBox: Graphics | null = null;
+  private deckGraphTooltipText: Text | null = null;
+  private deckGraphHoverDots: Graphics | null = null;
   private zoneDropPreviewOverlay: Graphics | null = null;
   private zoneDropPreviewSprites: CardSprite[] = [];
   private zoneDropPreviewSignature: string | null = null;
+  private quickTransferOverlay: Graphics | null = null;
+  private quickTransferOverlayTexts: Text[] = [];
+  private deckCardDeletePromptRoot: HTMLElement | null = null;
+  private deckCardDeletePromptPointerHandler: ((event: PointerEvent) => void) | null = null;
+  private deckCardDeletePromptKeyHandler: ((event: KeyboardEvent) => void) | null = null;
+  private deckVariantDialogRoot: HTMLElement | null = null;
+  private deckVariantDialogKeydownHandler: ((event: KeyboardEvent) => void) | null = null;
+  private deckVariantDialogOpen = false;
   private hoveredZoneCardKey: string | null = null;
   private zones: ZoneModel[] = [];
   private labelSprites: Map<string, LabelSpriteData> = new Map();
@@ -292,6 +533,16 @@ export class PixiStage {
     zoneId: null,
     startWorldPos: { x: 0, y: 0 },
     startBounds: null,
+  };
+  private quickTransferState: QuickTransferState = {
+    active: false,
+    anchorScreenPos: null,
+    categoryHover: null,
+    categoryHoverStartMs: 0,
+    expandedCategory: null,
+    zoneHoverId: null,
+    categoryBounds: [],
+    zoneBounds: [],
   };
 
   // Selection box state
@@ -363,6 +614,8 @@ export class PixiStage {
   private onStackZoneHeaderClick?: (zoneId: string) => void;
   private onCardDragDrop?: (payload: CardDragDropPayload) => void;
   private hoveredCardName: string | null = null;
+  private lastPointerScreenPos: { x: number; y: number } | null = null;
+  private quickTransferLastTickMs = 0;
 
   constructor(config: PixiStageConfig) {
     this.onAddToDeck = config.onAddToDeck;
@@ -437,6 +690,9 @@ export class PixiStage {
     this.camera.container.addChild(this.selectionBox.graphics);
     this.zoneDeleteOverlay = new Graphics();
     this.camera.container.addChild(this.zoneDeleteOverlay);
+    this.quickTransferOverlay = new Graphics();
+    this.quickTransferOverlay.zIndex = 9_999_995;
+    this.app.stage.addChild(this.quickTransferOverlay);
     this.zoneDropPreviewOverlay = new Graphics();
     this.zoneDropPreviewContainer.addChild(this.zoneDropPreviewOverlay);
 
@@ -529,6 +785,9 @@ export class PixiStage {
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
       this.clearZoneDropPreview();
+      this.hideDeckGraphHoverTooltip();
+      this.deactivateQuickTransfer();
+      this.lastPointerScreenPos = null;
       this.hoveredZoneCardKey = null;
       this.drawZoneDeleteOverlay();
     });
@@ -538,6 +797,9 @@ export class PixiStage {
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
       this.clearZoneDropPreview();
+      this.hideDeckGraphHoverTooltip();
+      this.deactivateQuickTransfer();
+      this.lastPointerScreenPos = null;
       this.hoveredZoneCardKey = null;
       this.drawZoneDeleteOverlay();
     });
@@ -547,6 +809,14 @@ export class PixiStage {
     if (this.hoveredCardName === cardName) return;
     this.hoveredCardName = cardName;
     this.onHoveredCardChange?.(cardName);
+  }
+
+  private getRenderResolution(): number {
+    const dpr =
+      typeof window !== "undefined" && Number.isFinite(window.devicePixelRatio)
+        ? window.devicePixelRatio
+        : 1;
+    return Math.max(2, dpr || 1);
   }
 
   private getOpenStacksPanelElement(): HTMLElement | null {
@@ -595,16 +865,736 @@ export class PixiStage {
     panel.classList.toggle("drop-ready", active);
   }
 
+  private resetQuickTransferState(): void {
+    this.quickTransferState = {
+      active: false,
+      anchorScreenPos: null,
+      categoryHover: null,
+      categoryHoverStartMs: 0,
+      expandedCategory: null,
+      zoneHoverId: null,
+      categoryBounds: [],
+      zoneBounds: [],
+    };
+  }
+
+  private clearQuickTransferOverlay(): void {
+    this.quickTransferOverlay?.clear();
+    for (const text of this.quickTransferOverlayTexts) {
+      text.destroy();
+    }
+    this.quickTransferOverlayTexts = [];
+    this.quickTransferState.categoryBounds = [];
+    this.quickTransferState.zoneBounds = [];
+  }
+
+  private deactivateQuickTransfer(): void {
+    this.clearQuickTransferOverlay();
+    this.resetQuickTransferState();
+    this.quickTransferLastTickMs = 0;
+  }
+
+  private addQuickTransferText(
+    text: string,
+    options: {
+      x: number;
+      y: number;
+      maxWidth: number;
+      fill: number;
+      fontSize?: number;
+      bold?: boolean;
+      strokeWidth?: number;
+    },
+  ): Text {
+    const label = new Text({
+      text,
+      style: {
+        fontFamily: "Arial",
+        fontSize: options.fontSize ?? 11,
+        fill: options.fill,
+        fontWeight: options.bold ? "800" : "700",
+        stroke: { color: 0x000000, width: options.strokeWidth ?? 2 },
+      },
+    });
+    label.resolution = this.getRenderResolution();
+    label.alpha = 1;
+    label.zIndex = 10_000_001;
+    label.eventMode = "none";
+    label.x = Math.round(options.x);
+    label.y = Math.round(options.y);
+    while (label.width > options.maxWidth && label.text.length > 4) {
+      label.text = `${label.text.slice(0, -4).trimEnd()}...`;
+    }
+    this.quickTransferOverlayTexts.push(label);
+    this.app.stage.addChild(label);
+    return label;
+  }
+
+  private getQuickTransferTargets(category: QuickTransferCategory): ZoneModel[] {
+    const zoneType = category === "deck" ? "deck" : "stack";
+    return this.zones
+      .filter((zone) => zone.type === zoneType)
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  private getQuickTransferCategoryAtPosition(
+    screenPos: { x: number; y: number },
+  ): QuickTransferCategory | null {
+    for (const entry of this.quickTransferState.categoryBounds) {
+      if (this.pointInBounds(screenPos, entry.bounds)) {
+        return entry.category;
+      }
+    }
+    return null;
+  }
+
+  private getQuickTransferZoneAtPosition(screenPos: { x: number; y: number }): string | null {
+    for (const entry of this.quickTransferState.zoneBounds) {
+      if (this.pointInBounds(screenPos, entry.bounds)) {
+        return entry.zoneId;
+      }
+    }
+    return null;
+  }
+
+  private drawQuickTransferOverlay(
+    screenPos: { x: number; y: number },
+    nowMs = performance.now(),
+  ): void {
+    const overlay = this.quickTransferOverlay;
+    if (!overlay) return;
+
+    this.clearQuickTransferOverlay();
+    if (!this.quickTransferState.active) return;
+
+    const view = {
+      left: 0,
+      top: 0,
+      right: this.app.screen.width,
+      bottom: this.app.screen.height,
+    };
+    const categoryWidth = QUICK_TRANSFER_CATEGORY_WIDTH;
+    const boxHeight = QUICK_TRANSFER_BOX_HEIGHT;
+    const zoneWidth = QUICK_TRANSFER_ZONE_WIDTH;
+    const gap = QUICK_TRANSFER_GAP;
+    const edgePadding = QUICK_TRANSFER_EDGE_PADDING;
+    const cornerRadius = 7;
+    const borderWidth = 1;
+    const textInsetX = 8;
+    const textInsetY = 6;
+    const holdInset = 4;
+    const holdHeight = 2;
+    const titleFontSize = 12;
+    const rowFontSize = 10;
+    const textStrokeWidth = 2;
+
+    const pairWidth =
+      categoryWidth * 2 + gap * 3;
+    let stackLeft =
+      screenPos.x - categoryWidth - gap;
+    let deckLeft = screenPos.x + gap;
+    const minLeft = view.left + edgePadding;
+    const maxRight = view.right - edgePadding;
+    const currentLeft = stackLeft;
+    const currentRight = deckLeft + categoryWidth;
+    if (currentLeft < minLeft) {
+      const shift = minLeft - currentLeft;
+      stackLeft += shift;
+      deckLeft += shift;
+    } else if (currentRight > maxRight) {
+      const shift = currentRight - maxRight;
+      stackLeft -= shift;
+      deckLeft -= shift;
+    }
+
+    const minPairLeft = view.left + edgePadding;
+    const maxPairLeft = view.right - edgePadding - pairWidth;
+    const pairLeft = Math.max(minPairLeft, Math.min(stackLeft - gap, maxPairLeft));
+    stackLeft = pairLeft + gap;
+    deckLeft = stackLeft + categoryWidth + gap;
+
+    const top = Math.max(
+      view.top + edgePadding,
+      Math.min(
+        screenPos.y - 72,
+        view.bottom -
+          edgePadding -
+          boxHeight,
+      ),
+    );
+
+    const categories: Array<{
+      category: QuickTransferCategory;
+      label: string;
+      left: number;
+    }> = [
+      {
+        category: "stack",
+        label: "Stacks",
+        left: stackLeft,
+      },
+      {
+        category: "deck",
+        label: "Decks",
+        left: deckLeft,
+      },
+    ];
+
+    categories.forEach((entry) => {
+      const left = entry.left;
+      const right = left + categoryWidth;
+      const bottom = top + boxHeight;
+      const isExpanded = this.quickTransferState.expandedCategory === entry.category;
+      const isHover = this.quickTransferState.categoryHover === entry.category;
+      const hoverElapsed = isHover
+        ? Math.max(0, nowMs - this.quickTransferState.categoryHoverStartMs)
+        : 0;
+      const holdProgress =
+        isExpanded || this.quickTransferState.expandedCategory === entry.category
+          ? 1
+          : Math.min(1, hoverElapsed / QUICK_TRANSFER_HOLD_MS);
+
+      overlay.roundRect(
+        left,
+        top,
+        categoryWidth,
+        boxHeight,
+        cornerRadius,
+      );
+      overlay.fill({
+        color: isExpanded
+          ? QUICK_TRANSFER_COLORS.activeFill
+          : isHover
+            ? QUICK_TRANSFER_COLORS.hoverFill
+            : QUICK_TRANSFER_COLORS.baseFill,
+        alpha: 1,
+      });
+      overlay.stroke({
+        width: borderWidth,
+        color: isExpanded
+          ? QUICK_TRANSFER_COLORS.activeBorder
+          : QUICK_TRANSFER_COLORS.baseBorder,
+        alpha: 1,
+      });
+
+      if (isHover && !isExpanded && holdProgress > 0) {
+        const progressWidth = Math.max(
+          borderWidth,
+          (categoryWidth - holdInset * 2) * holdProgress,
+        );
+        overlay.roundRect(
+          left + holdInset,
+          bottom - holdInset,
+          progressWidth,
+          holdHeight,
+          holdHeight / 2,
+        );
+        overlay.fill({ color: 0xd4d6ff, alpha: 1 });
+      }
+
+      this.quickTransferState.categoryBounds.push({
+        category: entry.category,
+        bounds: { left, top, right, bottom },
+      });
+
+      const text = this.addQuickTransferText(entry.label, {
+        x: left + textInsetX,
+        y: top + textInsetY,
+        maxWidth: categoryWidth - textInsetX * 2,
+        fill: isExpanded
+          ? QUICK_TRANSFER_COLORS.activeText
+          : isHover
+            ? QUICK_TRANSFER_COLORS.hoverText
+            : QUICK_TRANSFER_COLORS.baseText,
+        fontSize: titleFontSize,
+        bold: true,
+        strokeWidth: textStrokeWidth,
+      });
+      text.x = left + (categoryWidth - text.width) / 2;
+    });
+
+    const expandedCategory = this.quickTransferState.expandedCategory;
+    if (!expandedCategory) return;
+
+    const zoneTargets = this.getQuickTransferTargets(expandedCategory);
+    const expandedCategoryLeft =
+      categories.find((entry) => entry.category === expandedCategory)?.left ??
+      (expandedCategory === "stack"
+        ? view.left + edgePadding
+        : view.right - edgePadding - categoryWidth);
+    const zoneTop = top + boxHeight + gap;
+    const zoneLeftRaw =
+      expandedCategory === "deck"
+        ? expandedCategoryLeft + categoryWidth - zoneWidth
+        : expandedCategoryLeft;
+    const zoneLeft = Math.max(
+      view.left + edgePadding,
+      Math.min(
+        zoneLeftRaw,
+        view.right - edgePadding - zoneWidth,
+      ),
+    );
+    const maxRows = Math.max(
+      1,
+      Math.floor(
+        (view.bottom - edgePadding - zoneTop + gap) /
+          (boxHeight + gap),
+      ),
+    );
+    const visibleTargets = zoneTargets.slice(0, maxRows);
+
+    if (zoneTargets.length === 0) {
+      const noDataWidth = zoneWidth;
+      overlay.roundRect(zoneLeft, zoneTop, noDataWidth, boxHeight, cornerRadius);
+      overlay.fill({ color: QUICK_TRANSFER_COLORS.baseFill, alpha: 1 });
+      overlay.stroke({
+        width: borderWidth,
+        color: QUICK_TRANSFER_COLORS.baseBorder,
+        alpha: 1,
+      });
+      this.addQuickTransferText(
+        expandedCategory === "deck" ? "No saved decks" : "No saved stacks",
+        {
+          x: zoneLeft + textInsetX,
+          y: zoneTop + textInsetY,
+          maxWidth: noDataWidth - textInsetX * 2,
+          fill: QUICK_TRANSFER_COLORS.hoverText,
+          fontSize: rowFontSize,
+          bold: true,
+          strokeWidth: textStrokeWidth,
+        },
+      );
+      return;
+    }
+
+    visibleTargets.forEach((zone, index) => {
+      const topY = zoneTop + index * (boxHeight + gap);
+      const right = zoneLeft + zoneWidth;
+      const bottom = topY + boxHeight;
+      const isHover = this.quickTransferState.zoneHoverId === zone.id;
+      const pulse = isHover ? 0.72 + Math.sin(nowMs / 130) * 0.1 : 0.7;
+
+      overlay.roundRect(
+        zoneLeft,
+        topY,
+        zoneWidth,
+        boxHeight,
+        cornerRadius,
+      );
+      overlay.fill({
+        color: isHover
+          ? QUICK_TRANSFER_COLORS.activeFill
+          : QUICK_TRANSFER_COLORS.baseFill,
+        alpha: 1,
+      });
+      overlay.stroke({
+        width: borderWidth,
+        color: isHover
+          ? QUICK_TRANSFER_COLORS.activeBorder
+          : QUICK_TRANSFER_COLORS.baseBorder,
+        alpha: isHover ? Math.max(0.9, pulse) : 0.95,
+      });
+
+      this.quickTransferState.zoneBounds.push({
+        zoneId: zone.id,
+        bounds: { left: zoneLeft, top: topY, right, bottom },
+      });
+
+      this.addQuickTransferText(zone.name.trim() || "(Unnamed)", {
+        x: zoneLeft + textInsetX,
+        y: topY + textInsetY,
+        maxWidth: zoneWidth - textInsetX * 2,
+        fill: isHover
+          ? QUICK_TRANSFER_COLORS.activeText
+          : QUICK_TRANSFER_COLORS.hoverText,
+        fontSize: rowFontSize,
+        bold: true,
+        strokeWidth: textStrokeWidth,
+      });
+    });
+
+    const hiddenCount = zoneTargets.length - visibleTargets.length;
+    if (hiddenCount > 0) {
+      const noteTop =
+        zoneTop +
+        visibleTargets.length * (boxHeight + gap);
+      if (noteTop + boxHeight <= view.bottom - edgePadding) {
+        overlay.roundRect(zoneLeft, noteTop, zoneWidth, boxHeight, cornerRadius);
+        overlay.fill({ color: QUICK_TRANSFER_COLORS.hoverFill, alpha: 1 });
+        overlay.stroke({
+          width: borderWidth,
+          color: QUICK_TRANSFER_COLORS.activeBorder,
+          alpha: 1,
+        });
+        this.addQuickTransferText(`+${hiddenCount} more`, {
+          x: zoneLeft + textInsetX,
+          y: noteTop + textInsetY,
+          maxWidth: zoneWidth - textInsetX * 2,
+          fill: QUICK_TRANSFER_COLORS.activeText,
+          fontSize: rowFontSize,
+          bold: true,
+          strokeWidth: textStrokeWidth,
+        });
+      }
+    }
+  }
+
+  private updateQuickTransferHover(
+    screenPos: { x: number; y: number },
+    nowMs = performance.now(),
+  ): void {
+    if (!this.quickTransferState.active) return;
+    this.quickTransferLastTickMs = nowMs;
+    const anchorScreenPos = this.quickTransferState.anchorScreenPos ?? screenPos;
+    this.drawQuickTransferOverlay(anchorScreenPos, nowMs);
+
+    const categoryHit = this.getQuickTransferCategoryAtPosition(screenPos);
+    if (!this.quickTransferState.expandedCategory) {
+      if (categoryHit) {
+        if (this.quickTransferState.categoryHover !== categoryHit) {
+          this.quickTransferState.categoryHover = categoryHit;
+          this.quickTransferState.categoryHoverStartMs = nowMs;
+        } else if (nowMs - this.quickTransferState.categoryHoverStartMs >= QUICK_TRANSFER_HOLD_MS) {
+          this.quickTransferState.expandedCategory = categoryHit;
+          this.quickTransferState.zoneHoverId = null;
+        }
+      } else {
+        this.quickTransferState.categoryHover = null;
+        this.quickTransferState.categoryHoverStartMs = 0;
+      }
+    } else {
+      if (categoryHit && categoryHit !== this.quickTransferState.expandedCategory) {
+        this.quickTransferState.expandedCategory = categoryHit;
+        this.quickTransferState.categoryHover = categoryHit;
+        this.quickTransferState.categoryHoverStartMs = nowMs;
+        this.quickTransferState.zoneHoverId = null;
+      }
+      this.quickTransferState.zoneHoverId = this.getQuickTransferZoneAtPosition(screenPos);
+    }
+
+    this.drawQuickTransferOverlay(anchorScreenPos, nowMs);
+  }
+
+  private beginQuickTransferDrag(
+    cardKey: string,
+    worldPos: { x: number; y: number },
+    screenPos: { x: number; y: number },
+  ): boolean {
+    if (!this.cardSprites.has(cardKey)) return false;
+    const hasTargets = this.zones.some(
+      (zone) => zone.type === "deck" || zone.type === "stack",
+    );
+    if (!hasTargets) return false;
+
+    this.clearSelection(true);
+    this.selectCard(cardKey, true);
+    this.emitSelectionChange();
+
+    this.pointerDownOnSelectedCard = true;
+    this.startCardDrag(worldPos);
+    this.camera?.pauseDrag();
+    this.quickTransferState.active = true;
+    this.quickTransferState.anchorScreenPos = { ...screenPos };
+    this.quickTransferState.categoryHover = null;
+    this.quickTransferState.categoryHoverStartMs = 0;
+    this.quickTransferState.expandedCategory = null;
+    this.quickTransferState.zoneHoverId = null;
+    this.quickTransferState.categoryBounds = [];
+    this.quickTransferState.zoneBounds = [];
+    this.quickTransferLastTickMs = 0;
+    this.updateQuickTransferHover(screenPos);
+    return true;
+  }
+
+  private completeQuickTransferDrop(
+    worldPos: { x: number; y: number },
+    screenPos: { x: number; y: number },
+  ): void {
+    if (!this.quickTransferState.active) return;
+
+    this.updateQuickTransferHover(screenPos);
+    const dropZoneId = this.getQuickTransferZoneAtPosition(screenPos);
+    const draggedCardNames = this.getDraggedCardNames();
+    const draggedPlacements = this.getDraggedCardPlacements();
+
+    this.endCardDrag(true);
+    this.pointerDownOnSelectedCard = false;
+    this.camera?.resumeDrag();
+    this.setStacksDropVisual(false);
+
+    if (dropZoneId && draggedCardNames.length > 0) {
+      this.copyCardsIntoZone(dropZoneId, draggedCardNames, worldPos, {
+        useZonePlacement: true,
+        placements: draggedPlacements,
+      });
+    }
+    this.deactivateQuickTransfer();
+  }
+
   private cloneZones(zones: ZoneModel[]): ZoneModel[] {
     return zones.map((zone) => ({
       ...zone,
       bounds: { ...zone.bounds },
       cards: zone.cards.map((card) => ({ ...card })),
+      deckVariants: zone.deckVariants?.map((variant) => ({
+        ...variant,
+        activeCardIds: [...variant.activeCardIds],
+      })),
+      activeDeckVariantId: zone.activeDeckVariantId ?? null,
     }));
   }
 
   private emitZonesChange(): void {
     this.onZonesChange?.(this.cloneZones(this.zones));
+  }
+
+  private closeDeckCardDeletePrompt(): void {
+    if (this.deckCardDeletePromptPointerHandler) {
+      window.removeEventListener("pointerdown", this.deckCardDeletePromptPointerHandler, true);
+      this.deckCardDeletePromptPointerHandler = null;
+    }
+    if (this.deckCardDeletePromptKeyHandler) {
+      window.removeEventListener("keydown", this.deckCardDeletePromptKeyHandler, true);
+      this.deckCardDeletePromptKeyHandler = null;
+    }
+    if (this.deckCardDeletePromptRoot?.parentNode) {
+      this.deckCardDeletePromptRoot.parentNode.removeChild(this.deckCardDeletePromptRoot);
+    }
+    this.deckCardDeletePromptRoot = null;
+  }
+
+  private getDeckCardActiveVariants(
+    zoneId: string,
+    instanceId: string,
+  ): Array<{ id: string; name: string; isActiveVariant: boolean }> {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone || zone.type !== "deck") return [];
+
+    const variants = this.ensureDeckZoneVariants(zone);
+    const matches = variants
+      .filter((variant) => variant.activeCardIds.includes(instanceId))
+      .map((variant) => ({
+        id: variant.id,
+        name: variant.name,
+        isActiveVariant: zone.activeDeckVariantId === variant.id,
+      }));
+
+    matches.sort((left, right) => {
+      if (left.isActiveVariant !== right.isActiveVariant) {
+        return left.isActiveVariant ? -1 : 1;
+      }
+      return left.name.localeCompare(right.name);
+    });
+    return matches;
+  }
+
+  private deactivateDeckZoneCardInVariant(
+    zoneId: string,
+    instanceId: string,
+    variantId: string,
+  ): boolean {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone || zone.type !== "deck") return false;
+    const variants = this.ensureDeckZoneVariants(zone);
+    const variant = variants.find((entry) => entry.id === variantId);
+    if (!variant) return false;
+    if (!variant.activeCardIds.includes(instanceId)) return false;
+
+    variant.activeCardIds = variant.activeCardIds.filter((cardId) => cardId !== instanceId);
+    if (zone.activeDeckVariantId === variantId) {
+      this.moveDeckZoneCardToStackBack(zone, instanceId);
+    }
+    return true;
+  }
+
+  private showDeckCardDeletePrompt(
+    zoneId: string,
+    instanceId: string,
+    anchorClientX: number,
+    anchorClientY: number,
+  ): void {
+    if (typeof document === "undefined") return;
+    const activeVariants = this.getDeckCardActiveVariants(zoneId, instanceId);
+    if (activeVariants.length === 0) {
+      this.closeDeckCardDeletePrompt();
+      this.removeZoneCardInstance(zoneId, instanceId);
+      this.emitZonesChange();
+      this.hoveredZoneCardKey = null;
+      this.drawZoneDeleteOverlay();
+      return;
+    }
+
+    this.closeDeckCardDeletePrompt();
+
+    const panel = document.createElement("div");
+    panel.style.position = "fixed";
+    panel.style.zIndex = "10001";
+    panel.style.minWidth = "188px";
+    panel.style.maxWidth = "260px";
+    panel.style.maxHeight = "320px";
+    panel.style.overflowY = "auto";
+    panel.style.padding = "8px";
+    panel.style.background = "rgba(22, 22, 38, 0.98)";
+    panel.style.border = "1px solid #3a3a5a";
+    panel.style.borderRadius = "10px";
+    panel.style.boxShadow = "0 10px 24px rgba(0, 0, 0, 0.38)";
+    panel.style.display = "grid";
+    panel.style.gap = "6px";
+    panel.style.fontFamily = "Arial, sans-serif";
+
+    const title = document.createElement("div");
+    title.textContent = "Deactivate in variants";
+    title.style.fontSize = "11px";
+    title.style.fontWeight = "700";
+    title.style.color = "#d4d6ff";
+    title.style.letterSpacing = "0.02em";
+    title.style.padding = "0 2px 2px";
+    panel.appendChild(title);
+
+    for (const variant of activeVariants) {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+      row.style.gap = "8px";
+      row.style.padding = "6px 8px";
+      row.style.border = "1px solid #3a3a5a";
+      row.style.borderRadius = "8px";
+      row.style.background = variant.isActiveVariant ? "#4a4a8a" : "rgba(22, 22, 38, 0.92)";
+
+      const name = document.createElement("span");
+      name.textContent = variant.name;
+      name.style.fontSize = "12px";
+      name.style.fontWeight = variant.isActiveVariant ? "700" : "600";
+      name.style.color = variant.isActiveVariant ? "#ffffff" : "#e0e0e0";
+      name.style.whiteSpace = "nowrap";
+      name.style.overflow = "hidden";
+      name.style.textOverflow = "ellipsis";
+      row.appendChild(name);
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.textContent = "X";
+      removeButton.title = `Deactivate in ${variant.name}`;
+      removeButton.style.width = "20px";
+      removeButton.style.height = "20px";
+      removeButton.style.minWidth = "20px";
+      removeButton.style.border = "1px solid #6a6aba";
+      removeButton.style.borderRadius = "6px";
+      removeButton.style.background = "#3a3a5a";
+      removeButton.style.color = "#ffffff";
+      removeButton.style.fontSize = "11px";
+      removeButton.style.fontWeight = "800";
+      removeButton.style.cursor = "pointer";
+      removeButton.style.opacity = "0";
+      removeButton.style.transition = "opacity 0.12s ease, background 0.12s ease";
+      row.appendChild(removeButton);
+
+      row.addEventListener("mouseenter", () => {
+        removeButton.style.opacity = "1";
+      });
+      row.addEventListener("mouseleave", () => {
+        removeButton.style.opacity = "0";
+      });
+      removeButton.addEventListener("mouseenter", () => {
+        removeButton.style.background = "#4a4a8a";
+      });
+      removeButton.addEventListener("mouseleave", () => {
+        removeButton.style.background = "#3a3a5a";
+      });
+      removeButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const changed = this.deactivateDeckZoneCardInVariant(zoneId, instanceId, variant.id);
+        if (!changed) return;
+
+        this.rebuildZoneVisuals();
+        this.emitZonesChange();
+
+        const remaining = this.getDeckCardActiveVariants(zoneId, instanceId);
+        if (remaining.length === 0) {
+          this.closeDeckCardDeletePrompt();
+          this.removeZoneCardInstance(zoneId, instanceId);
+          this.emitZonesChange();
+          this.hoveredZoneCardKey = null;
+          this.drawZoneDeleteOverlay();
+          return;
+        }
+        this.showDeckCardDeletePrompt(zoneId, instanceId, anchorClientX, anchorClientY);
+      });
+
+      panel.appendChild(row);
+    }
+
+    const clamp = (
+      value: number,
+      minValue: number,
+      maxValue: number,
+    ): number => Math.max(minValue, Math.min(value, maxValue));
+    const panelWidth = 220;
+    const estimatedHeight = 52 + activeVariants.length * 36;
+    const left = clamp(
+      anchorClientX + 10,
+      8,
+      window.innerWidth - panelWidth - 8,
+    );
+    const top = clamp(
+      anchorClientY + 10,
+      8,
+      window.innerHeight - Math.min(estimatedHeight, 320) - 8,
+    );
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
+
+    document.body.appendChild(panel);
+    this.deckCardDeletePromptRoot = panel;
+
+    this.deckCardDeletePromptPointerHandler = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        this.closeDeckCardDeletePrompt();
+        return;
+      }
+      if (!this.deckCardDeletePromptRoot?.contains(target)) {
+        this.closeDeckCardDeletePrompt();
+      }
+    };
+    this.deckCardDeletePromptKeyHandler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        this.closeDeckCardDeletePrompt();
+      }
+    };
+    window.addEventListener("pointerdown", this.deckCardDeletePromptPointerHandler, true);
+    window.addEventListener("keydown", this.deckCardDeletePromptKeyHandler, true);
+  }
+
+  private handleZoneCardDelete(
+    zoneCard: ZoneCardSpriteData,
+    clientX: number,
+    clientY: number,
+  ): void {
+    const zone = this.zones.find((entry) => entry.id === zoneCard.zoneId);
+    if (!zone || zone.type !== "deck") {
+      this.closeDeckCardDeletePrompt();
+      this.removeZoneCardInstance(zoneCard.zoneId, zoneCard.instanceId);
+      this.emitZonesChange();
+      this.hoveredZoneCardKey = null;
+      this.drawZoneDeleteOverlay();
+      return;
+    }
+
+    const activeVariants = this.getDeckCardActiveVariants(zone.id, zoneCard.instanceId);
+    if (activeVariants.length === 0) {
+      this.closeDeckCardDeletePrompt();
+      this.removeZoneCardInstance(zone.id, zoneCard.instanceId);
+      this.emitZonesChange();
+      this.hoveredZoneCardKey = null;
+      this.drawZoneDeleteOverlay();
+      return;
+    }
+
+    this.showDeckCardDeletePrompt(zone.id, zoneCard.instanceId, clientX, clientY);
   }
 
   private getCardType(cardName: string): CardType | null {
@@ -652,6 +1642,1209 @@ export class PixiStage {
 
   private getZoneHeaderHeight(zone: ZoneModel): number {
     return zone.type === "deck" ? ZONE_DECK_HEADER_HEIGHT : ZONE_HEADER_HEIGHT;
+  }
+
+  private normalizeDeckBoard(board: ActiveBoard | null | undefined): DeckZoneBoard {
+    return board === "sideboard" ? "sideboard" : "mainboard";
+  }
+
+  private createEmptyDeckCostBucket(): DeckCostBucketStats {
+    return {
+      total: 0,
+      byType: {
+        Minion: 0,
+        Magic: 0,
+        Aura: 0,
+        Artifact: 0,
+      },
+      byThreshold: {
+        air: 0,
+        earth: 0,
+        fire: 0,
+        water: 0,
+        multiple: 0,
+        none: 0,
+      },
+    };
+  }
+
+  private getDeckCostBucketKey(cost: number): "low" | "mid" | "high" {
+    if (cost <= 2) return "low";
+    if (cost <= 5) return "mid";
+    return "high";
+  }
+
+  private matchesDeckKeyword(card: Card, keyword: DeckKeywordSpec): boolean {
+    const rulesText = card.guardian.rulesText ?? "";
+    const subTypes = card.subTypes ?? "";
+
+    const inRules = keyword.rulesPatterns.some((pattern) => pattern.test(rulesText));
+    if (inRules) return true;
+    if (!keyword.subTypePatterns || keyword.subTypePatterns.length === 0) return false;
+    return keyword.subTypePatterns.some((pattern) => pattern.test(subTypes));
+  }
+
+  private formatDeckStatNumber(value: number): string {
+    if (!Number.isFinite(value)) return "0";
+    return value.toFixed(2).replace(/\.?0+$/, "");
+  }
+
+  private formatDeckStatPercent(value: number, total: number): string {
+    if (total <= 0) return "0%";
+    return `${Math.round((value / total) * 100)}%`;
+  }
+
+  private formatDeckAuthorLabel(author: string): string {
+    const trimmed = author.trim();
+    if (!trimmed) return "";
+    return /^by\b/i.test(trimmed) ? trimmed : `by ${trimmed}`;
+  }
+
+  private addDeckHeaderText(
+    elements: Container[],
+    options: {
+      text: string;
+      x: number;
+      y: number;
+      zIndex: number;
+      maxWidth?: number;
+      fontSize?: number;
+      fill?: number;
+      bold?: boolean;
+    },
+  ): Text {
+    const text = new Text({
+      text: options.text,
+      style: {
+        fontFamily: "Arial",
+        fontSize: options.fontSize ?? ZONE_DECK_STATS_LINE_SIZE,
+        fill: options.fill ?? ZONE_DECK_STATS_TEXT_FILLS.line,
+        fontWeight: options.bold ? "bold" : "normal",
+        stroke: ZONE_DECK_STATS_TEXT_STROKE,
+      },
+    });
+    text.resolution = this.getRenderResolution();
+    text.x = Math.round(options.x);
+    text.y = Math.round(options.y);
+    text.zIndex = options.zIndex;
+
+    if ((options.maxWidth ?? 0) > 0) {
+      while (text.width > (options.maxWidth ?? 0) && text.text.length > 4) {
+        text.text = `${text.text.slice(0, -4).trimEnd()}...`;
+      }
+    }
+
+    this.zoneContainer.addChild(text);
+    elements.push(text);
+    return text;
+  }
+
+  private drawDeckHeaderLineGraph(
+    elements: Container[],
+    options: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      zIndex: number;
+      manaCosts: number[];
+      series: Array<{
+        label: string;
+        color: number;
+        values: number[];
+        decimals?: number;
+      }>;
+      yFormatter?: (value: number) => string;
+    },
+  ): DeckGraphHoverRegion | null {
+    if (options.width < 120 || options.height < 64) return null;
+
+    const panel = new Graphics();
+    panel.zIndex = options.zIndex;
+    panel.roundRect(options.x, options.y, options.width, options.height, 8);
+    panel.fill({ color: 0x1a2243, alpha: 0.58 });
+    panel.stroke({ width: 1, color: 0x6b7ac0, alpha: 0.68 });
+
+    this.zoneContainer.addChild(panel);
+    elements.push(panel);
+
+    const splitIndex = Math.ceil(options.series.length / 2);
+    const leftLegendEntries = options.series.slice(0, splitIndex);
+    const rightLegendEntries = options.series.slice(splitIndex);
+    const leftLegendTexts: Text[] = [];
+    const rightLegendTexts: Text[] = [];
+    const legendTop = options.y + 7;
+    let leftLegendY = legendTop;
+    let rightLegendY = legendTop;
+    let leftLegendWidth = 0;
+    let rightLegendWidth = 0;
+
+    for (const entry of leftLegendEntries) {
+      const text = this.addDeckHeaderText(elements, {
+        text: entry.label,
+        x: options.x + 6,
+        y: leftLegendY,
+        zIndex: options.zIndex + 1,
+        fontSize: 9,
+        fill: entry.color,
+        bold: true,
+      });
+      leftLegendWidth = Math.max(leftLegendWidth, text.width);
+      leftLegendY = text.y + text.height + 2;
+      leftLegendTexts.push(text);
+    }
+
+    for (const entry of rightLegendEntries) {
+      const text = this.addDeckHeaderText(elements, {
+        text: entry.label,
+        x: options.x + options.width - 6,
+        y: rightLegendY,
+        zIndex: options.zIndex + 1,
+        fontSize: 9,
+        fill: entry.color,
+        bold: true,
+      });
+      rightLegendWidth = Math.max(rightLegendWidth, text.width);
+      rightLegendY = text.y + text.height + 2;
+      rightLegendTexts.push(text);
+    }
+
+    for (const text of rightLegendTexts) {
+      text.x = options.x + options.width - 6 - text.width;
+    }
+
+    const innerLeft = options.x + 8 + leftLegendWidth + 10;
+    const innerRight = options.x + options.width - 8 - rightLegendWidth - 10;
+    const innerTop = options.y + 8;
+    const innerBottom = options.y + options.height - 17;
+
+    if (innerRight - innerLeft < 24 || innerBottom - innerTop < 20) return null;
+
+    panel.moveTo(innerLeft, innerTop);
+    panel.lineTo(innerLeft, innerBottom);
+    panel.lineTo(innerRight, innerBottom);
+    panel.stroke({ width: 1, color: 0x8d9ad6, alpha: 0.72 });
+
+    const maxY = options.series.reduce((best, entry) => {
+      for (const value of entry.values) {
+        if (value > best) best = value;
+      }
+      return best;
+    }, 0);
+    if (maxY <= 0) {
+      this.addDeckHeaderText(elements, {
+        text: "No data",
+        x: innerLeft + (innerRight - innerLeft) * 0.34,
+        y: innerTop + (innerBottom - innerTop) * 0.4,
+        zIndex: options.zIndex + 1,
+        fontSize: 10,
+        fill: ZONE_DECK_STATS_TEXT_FILLS.subtle,
+      });
+      return null;
+    }
+
+    const yFormatter =
+      options.yFormatter ?? ((value: number) => this.formatDeckStatNumber(value));
+    const yTickCount = 4;
+    for (let tick = 0; tick <= yTickCount; tick++) {
+      const ratio = tick / yTickCount;
+      const y = innerBottom - ratio * (innerBottom - innerTop);
+      const tickValue = maxY * ratio;
+      panel.moveTo(innerLeft, y);
+      panel.lineTo(innerRight, y);
+      panel.stroke({
+        width: tick === 0 ? 1 : 0.65,
+        color: 0x7183c8,
+        alpha: tick === 0 ? 0.72 : 0.3,
+      });
+
+      const yLabel = this.addDeckHeaderText(elements, {
+        text: yFormatter(tickValue),
+        x: innerLeft - 5,
+        y: y - 4,
+        zIndex: options.zIndex + 1,
+        fontSize: 8,
+        fill: ZONE_DECK_STATS_TEXT_FILLS.subtle,
+      });
+      yLabel.x = innerLeft - 5 - yLabel.width;
+      yLabel.y = y - yLabel.height / 2;
+    }
+
+    const pointCount = Math.max(1, options.manaCosts.length);
+    for (let index = 0; index < pointCount; index++) {
+      const x =
+        pointCount === 1
+          ? innerLeft + (innerRight - innerLeft) / 2
+          : innerLeft + (index / (pointCount - 1)) * (innerRight - innerLeft);
+      panel.moveTo(x, innerBottom);
+      panel.lineTo(x, innerBottom + 3);
+      panel.stroke({ width: 0.7, color: 0x7f90cc, alpha: 0.56 });
+
+      const xLabel = this.addDeckHeaderText(elements, {
+        text: `${options.manaCosts[index] ?? index}`,
+        x: x,
+        y: innerBottom + 4,
+        zIndex: options.zIndex + 1,
+        fontSize: 8,
+        fill: ZONE_DECK_STATS_TEXT_FILLS.subtle,
+      });
+      xLabel.x = Math.max(
+        options.x + 2,
+        Math.min(x - xLabel.width / 2, options.x + options.width - xLabel.width - 2),
+      );
+    }
+
+    type Point = { x: number; y: number };
+    const getSeriesPoints = (values: number[]): Point[] =>
+      values.map((value, index) => {
+        const x =
+          pointCount === 1
+            ? innerLeft + (innerRight - innerLeft) / 2
+            : innerLeft + (index / (pointCount - 1)) * (innerRight - innerLeft);
+        const y = innerBottom - (value / maxY) * (innerBottom - innerTop);
+        return { x, y };
+      });
+
+    const drawSmoothSeries = (points: Point[], color: number): void => {
+      if (points.length === 0) return;
+      const firstPoint = points[0];
+      if (!firstPoint) return;
+      if (points.length === 1) {
+        panel.circle(firstPoint.x, firstPoint.y, 1.5);
+        panel.fill({ color, alpha: 0.95 });
+        return;
+      }
+
+      panel.moveTo(firstPoint.x, firstPoint.y);
+      if (points.length === 2) {
+        panel.lineTo(points[1]?.x ?? innerRight, points[1]?.y ?? innerTop);
+      } else {
+        const tension = 1;
+        const lastPoint = points[points.length - 1] ?? firstPoint;
+        for (let index = 0; index < points.length - 1; index++) {
+          const p0 = points[Math.max(0, index - 1)] ?? firstPoint;
+          const p1 = points[index] ?? firstPoint;
+          const p2 = points[index + 1] ?? lastPoint;
+          const p3 = points[Math.min(points.length - 1, index + 2)] ?? lastPoint;
+
+          const cp1x = p1.x + ((p2.x - p0.x) / 6) * tension;
+          const cp1y = p1.y + ((p2.y - p0.y) / 6) * tension;
+          const cp2x = p2.x - ((p3.x - p1.x) / 6) * tension;
+          const cp2y = p2.y - ((p3.y - p1.y) / 6) * tension;
+          panel.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+        }
+      }
+      panel.stroke({ width: ZONE_DECK_GRAPH_LINE_WIDTH, color, alpha: 0.95 });
+    };
+
+    for (const entry of options.series) {
+      if (entry.values.every((value) => value <= 0)) continue;
+      drawSmoothSeries(getSeriesPoints(entry.values), entry.color);
+    }
+
+    return {
+      bounds: {
+        left: innerLeft,
+        top: innerTop,
+        right: innerRight,
+        bottom: innerBottom,
+      },
+      manaCosts: [...options.manaCosts],
+      series: options.series.map((entry) => ({
+        label: entry.label,
+        color: entry.color,
+        values: [...entry.values],
+        decimals: entry.decimals ?? 0,
+      })),
+    };
+  }
+
+  private renderDeckHeaderStats(
+    zone: ZoneModel,
+    elements: Container[],
+    options: {
+      left: number;
+      top: number;
+      graphTop?: number;
+      right: number;
+      bottom: number;
+      zIndex: number;
+    },
+  ): DeckGraphHoverRegion[] {
+    const hoverRegions: DeckGraphHoverRegion[] = [];
+    const stats = this.computeDeckHeaderStats(zone);
+    if (!stats) return hoverRegions;
+
+    const width = options.right - options.left;
+    const height = options.bottom - options.top;
+    if (width < 460 || height < 64) return hoverRegions;
+
+    const gaps = ZONE_DECK_STATS_COL_GAP * 4;
+    const usableWidth = width - gaps;
+    if (usableWidth <= 0) return hoverRegions;
+
+    const sectionRatios = [0.11, 0.12, 0.14, 0.315, 0.315] as const;
+    const sectionWidths = sectionRatios.map((ratio) => ratio * usableWidth);
+    const sectionX: number[] = [];
+    let cursorX = options.left;
+    for (let index = 0; index < sectionWidths.length; index++) {
+      sectionX.push(cursorX);
+      const sectionWidth = sectionWidths[index] ?? 0;
+      cursorX += sectionWidth + (index < sectionWidths.length - 1 ? ZONE_DECK_STATS_COL_GAP : 0);
+    }
+
+    const addColumn = (column: number, title: string, lines: string[]): void => {
+      const x = sectionX[column] ?? options.left;
+      const maxWidth = sectionWidths[column] ?? 0;
+      const titleText = this.addDeckHeaderText(elements, {
+        text: title,
+        x,
+        y: options.top,
+        zIndex: options.zIndex,
+        maxWidth,
+        fontSize: ZONE_DECK_STATS_TITLE_SIZE,
+        fill: ZONE_DECK_STATS_TEXT_FILLS.title,
+        bold: true,
+      });
+
+      let y = titleText.y + titleText.height + 2;
+      for (const line of lines) {
+        const row = this.addDeckHeaderText(elements, {
+          text: line,
+          x,
+          y,
+          zIndex: options.zIndex,
+          maxWidth,
+          fontSize: ZONE_DECK_STATS_LINE_SIZE,
+          fill: ZONE_DECK_STATS_TEXT_FILLS.line,
+        });
+        y = row.y + row.height + ZONE_DECK_STATS_LINE_GAP;
+        if (y > options.bottom - 12) {
+          break;
+        }
+      }
+    };
+
+    addColumn(0, "Decks", [
+      `Spellbook: ${stats.spellsTotal}`,
+      `Sites: ${stats.sitesTotal}`,
+      `Collection: ${stats.collectionTotal}`,
+    ]);
+
+    addColumn(1, "Spell Types", [
+      `Minions: ${stats.spellTypeCounts.Minion}`,
+      `Magic: ${stats.spellTypeCounts.Magic}`,
+      `Auras: ${stats.spellTypeCounts.Aura}`,
+      `Artifacts: ${stats.spellTypeCounts.Artifact}`,
+    ]);
+
+    const minionTotal = stats.minionInfo.total;
+    const minionRatioText = (value: number): string =>
+      `${value}/${minionTotal} (${this.formatDeckStatPercent(value, minionTotal)})`;
+    const minionInfoLines =
+      stats.minionInfo.topKeywords.length > 0
+        ? stats.minionInfo.topKeywords
+            .slice(0, 4)
+            .map((entry) => `${entry.label}: ${minionRatioText(entry.count)}`)
+        : ["No keyword concentration"];
+    addColumn(2, "Minion Info", minionInfoLines);
+
+    const graphTop = Math.min(options.top, options.graphTop ?? options.top);
+    const graphHeight = Math.max(64, options.bottom - graphTop);
+
+    const manaCurveRegion = this.drawDeckHeaderLineGraph(elements, {
+      x: sectionX[3] ?? options.left,
+      y: graphTop,
+      width: sectionWidths[3] ?? 0,
+      height: graphHeight,
+      zIndex: options.zIndex,
+      manaCosts: stats.manaCosts,
+      series: [
+        {
+          label: "Total",
+          color: ZONE_DECK_GRAPH_COLORS.total,
+          values: stats.manaCardCurve.total,
+          decimals: 0,
+        },
+        {
+          label: "Air",
+          color: ZONE_DECK_GRAPH_COLORS.air,
+          values: stats.manaCardCurve.air,
+          decimals: 0,
+        },
+        {
+          label: "Earth",
+          color: ZONE_DECK_GRAPH_COLORS.earth,
+          values: stats.manaCardCurve.earth,
+          decimals: 0,
+        },
+        {
+          label: "Fire",
+          color: ZONE_DECK_GRAPH_COLORS.fire,
+          values: stats.manaCardCurve.fire,
+          decimals: 0,
+        },
+        {
+          label: "Water",
+          color: ZONE_DECK_GRAPH_COLORS.water,
+          values: stats.manaCardCurve.water,
+          decimals: 0,
+        },
+      ],
+      yFormatter: (value) => `${Math.round(value)}`,
+    });
+    if (manaCurveRegion) hoverRegions.push(manaCurveRegion);
+
+    const thresholdRegion = this.drawDeckHeaderLineGraph(elements, {
+      x: sectionX[4] ?? options.left,
+      y: graphTop,
+      width: sectionWidths[4] ?? 0,
+      height: graphHeight,
+      zIndex: options.zIndex,
+      manaCosts: stats.manaCosts,
+      series: [
+        {
+          label: "All",
+          color: ZONE_DECK_GRAPH_COLORS.all,
+          values: stats.elementLoadPerMana.all,
+          decimals: 1,
+        },
+        {
+          label: "Minion",
+          color: ZONE_DECK_GRAPH_COLORS.minion,
+          values: stats.elementLoadPerMana.minion,
+          decimals: 1,
+        },
+        {
+          label: "Magic",
+          color: ZONE_DECK_GRAPH_COLORS.magic,
+          values: stats.elementLoadPerMana.magic,
+          decimals: 1,
+        },
+        {
+          label: "Aura",
+          color: ZONE_DECK_GRAPH_COLORS.aura,
+          values: stats.elementLoadPerMana.aura,
+          decimals: 1,
+        },
+      ],
+      yFormatter: (value) => this.formatDeckStatNumber(value),
+    });
+    if (thresholdRegion) hoverRegions.push(thresholdRegion);
+
+    return hoverRegions;
+  }
+
+  private computeDeckHeaderStats(zone: ZoneModel): DeckHeaderStats | null {
+    if (zone.type !== "deck") return null;
+
+    const cardLookup = new Map(this.cards.map((card) => [card.name, card]));
+    const activeVariant = this.getActiveDeckZoneVariant(zone);
+    const activeMainIds = new Set(activeVariant?.activeCardIds ?? []);
+    const hasExplicitVariant = activeVariant != null;
+
+    const activeMainboard = zone.cards.filter(
+      (instance) =>
+        this.normalizeDeckBoard(instance.board) === "mainboard" &&
+        (!hasExplicitVariant || activeMainIds.has(instance.id)),
+    );
+    const collectionSideboard = zone.cards.filter(
+      (instance) => this.normalizeDeckBoard(instance.board) === "sideboard",
+    );
+    const collectionTotal = collectionSideboard.length;
+
+    const spellTypeCounts: DeckHeaderStats["spellTypeCounts"] = {
+      Minion: 0,
+      Magic: 0,
+      Aura: 0,
+      Artifact: 0,
+    };
+    const costBuckets: DeckHeaderStats["costBuckets"] = {
+      low: this.createEmptyDeckCostBucket(),
+      mid: this.createEmptyDeckCostBucket(),
+      high: this.createEmptyDeckCostBucket(),
+    };
+    const spellThresholdTotals: DeckHeaderStats["spellThresholdTotals"] = {
+      air: 0,
+      earth: 0,
+      fire: 0,
+      water: 0,
+      total: 0,
+    };
+    const siteThresholdTotals: DeckHeaderStats["siteThresholdTotals"] = {
+      air: 0,
+      earth: 0,
+      fire: 0,
+      water: 0,
+    };
+    const siteProviderCounts: DeckHeaderStats["siteProviderCounts"] = {
+      air: 0,
+      earth: 0,
+      fire: 0,
+      water: 0,
+    };
+    const minionKeywordCounts = new Map<DeckKeywordSpec["id"], number>();
+    for (const keyword of DECK_KEYWORD_SPECS) {
+      minionKeywordCounts.set(keyword.id, 0);
+    }
+    const manaCardCurve = {
+      total: new Map<number, number>(),
+      air: new Map<number, number>(),
+      earth: new Map<number, number>(),
+      fire: new Map<number, number>(),
+      water: new Map<number, number>(),
+    };
+    const thresholdSumByMana = new Map<number, number>();
+    const spellCountByMana = new Map<number, number>();
+    const thresholdSumByManaType = {
+      Minion: new Map<number, number>(),
+      Magic: new Map<number, number>(),
+      Aura: new Map<number, number>(),
+      Artifact: new Map<number, number>(),
+    };
+    const spellCountByManaType = {
+      Minion: new Map<number, number>(),
+      Magic: new Map<number, number>(),
+      Aura: new Map<number, number>(),
+      Artifact: new Map<number, number>(),
+    };
+
+    let spellsTotal = 0;
+    let sitesTotal = 0;
+    let totalSpellMana = 0;
+    let minionTotal = 0;
+
+    const increment = (map: Map<number, number>, key: number, amount = 1): void => {
+      map.set(key, (map.get(key) ?? 0) + amount);
+    };
+
+    for (const instance of activeMainboard) {
+      const card = cardLookup.get(instance.cardName);
+      if (!card) continue;
+
+      const type = card.guardian.type;
+      const thresholds = card.guardian.thresholds;
+      const air = Number.isFinite(thresholds.air) ? thresholds.air : 0;
+      const earth = Number.isFinite(thresholds.earth) ? thresholds.earth : 0;
+      const fire = Number.isFinite(thresholds.fire) ? thresholds.fire : 0;
+      const water = Number.isFinite(thresholds.water) ? thresholds.water : 0;
+
+      if (type === "Site") {
+        sitesTotal += 1;
+        siteThresholdTotals.air += air;
+        siteThresholdTotals.earth += earth;
+        siteThresholdTotals.fire += fire;
+        siteThresholdTotals.water += water;
+        if (air > 0) siteProviderCounts.air += 1;
+        if (earth > 0) siteProviderCounts.earth += 1;
+        if (fire > 0) siteProviderCounts.fire += 1;
+        if (water > 0) siteProviderCounts.water += 1;
+        continue;
+      }
+
+      if (
+        type !== "Minion" &&
+        type !== "Magic" &&
+        type !== "Aura" &&
+        type !== "Artifact"
+      ) {
+        continue;
+      }
+
+      spellsTotal += 1;
+      spellTypeCounts[type] += 1;
+
+      const cost = Number.isFinite(card.guardian.cost)
+        ? Math.max(0, card.guardian.cost)
+        : 0;
+      const manaCost = Math.max(0, Math.trunc(cost));
+      totalSpellMana += cost;
+      const thresholdSum = air + earth + fire + water;
+      spellThresholdTotals.air += air;
+      spellThresholdTotals.earth += earth;
+      spellThresholdTotals.fire += fire;
+      spellThresholdTotals.water += water;
+      spellThresholdTotals.total += thresholdSum;
+      increment(manaCardCurve.total, manaCost);
+      if (air > 0) increment(manaCardCurve.air, manaCost);
+      if (earth > 0) increment(manaCardCurve.earth, manaCost);
+      if (fire > 0) increment(manaCardCurve.fire, manaCost);
+      if (water > 0) increment(manaCardCurve.water, manaCost);
+      increment(thresholdSumByMana, manaCost, thresholdSum);
+      increment(spellCountByMana, manaCost);
+      increment(thresholdSumByManaType[type], manaCost, thresholdSum);
+      increment(spellCountByManaType[type], manaCost);
+
+      const bucket = costBuckets[this.getDeckCostBucketKey(cost)];
+      bucket.total += 1;
+      bucket.byType[type] += 1;
+      bucket.byThreshold[getThresholdGroup(thresholds)] += 1;
+
+      if (type === "Minion") {
+        minionTotal += 1;
+        for (const keyword of DECK_KEYWORD_SPECS) {
+          if (this.matchesDeckKeyword(card, keyword)) {
+            minionKeywordCounts.set(
+              keyword.id,
+              (minionKeywordCounts.get(keyword.id) ?? 0) + 1,
+            );
+          }
+        }
+      }
+    }
+
+    const duplicateCounts = new Map<string, number>();
+    for (const instance of activeMainboard) {
+      duplicateCounts.set(
+        instance.cardName,
+        (duplicateCounts.get(instance.cardName) ?? 0) + 1,
+      );
+    }
+    for (const instance of collectionSideboard) {
+      duplicateCounts.set(
+        instance.cardName,
+        (duplicateCounts.get(instance.cardName) ?? 0) + 1,
+      );
+    }
+
+    const duplicateViolations: DeckHeaderStats["duplicateViolations"] = [];
+    for (const [name, count] of duplicateCounts) {
+      const card = cardLookup.get(name);
+      if (!card) continue;
+      const limit = DECK_LIMITS.RARITY_LIMITS[card.guardian.rarity];
+      if (count > limit) {
+        duplicateViolations.push({ name, count, limit });
+      }
+    }
+    duplicateViolations.sort((left, right) => {
+      const excessDelta =
+        right.count - right.limit - (left.count - left.limit);
+      if (excessDelta !== 0) return excessDelta;
+      if (right.count !== left.count) return right.count - left.count;
+      return left.name.localeCompare(right.name);
+    });
+
+    const topMinionKeywords = DECK_KEYWORD_SPECS.map((keyword) => ({
+      label: keyword.label,
+      count: minionKeywordCounts.get(keyword.id) ?? 0,
+    }))
+      .filter((entry) => entry.count > 0)
+      .sort((left, right) => {
+        if (right.count !== left.count) return right.count - left.count;
+        return left.label.localeCompare(right.label);
+      })
+      .slice(0, 4);
+
+    const manaKeySet = new Set<number>();
+    for (const map of [
+      manaCardCurve.total,
+      manaCardCurve.air,
+      manaCardCurve.earth,
+      manaCardCurve.fire,
+      manaCardCurve.water,
+      thresholdSumByMana,
+      ...Object.values(thresholdSumByManaType),
+      ...Object.values(spellCountByManaType),
+    ]) {
+      for (const key of map.keys()) {
+        manaKeySet.add(key);
+      }
+    }
+    const maxMana = Math.max(0, ...Array.from(manaKeySet));
+    const manaCosts = Array.from({ length: maxMana + 1 }, (_, index) => index);
+    const mapToArray = (map: Map<number, number>): number[] =>
+      manaCosts.map((manaCost) => map.get(manaCost) ?? 0);
+    const ratioArray = (
+      valueMap: Map<number, number>,
+      countMap: Map<number, number>,
+    ): number[] =>
+      manaCosts.map((manaCost) => {
+        const count = countMap.get(manaCost) ?? 0;
+        if (count <= 0) return 0;
+        return (valueMap.get(manaCost) ?? 0) / count;
+      });
+
+    return {
+      spellsTotal,
+      sitesTotal,
+      collectionTotal,
+      spellTypeCounts,
+      minionInfo: {
+        total: minionTotal,
+        topKeywords: topMinionKeywords,
+      },
+      duplicateViolations,
+      costBuckets,
+      spellThresholdTotals,
+      averageSpellThresholds:
+        spellsTotal > 0 ? spellThresholdTotals.total / spellsTotal : 0,
+      averageThresholdsPerMana:
+        totalSpellMana > 0 ? spellThresholdTotals.total / totalSpellMana : 0,
+      siteThresholdTotals,
+      siteProviderCounts,
+      manaCosts,
+      manaCardCurve: {
+        total: mapToArray(manaCardCurve.total),
+        air: mapToArray(manaCardCurve.air),
+        earth: mapToArray(manaCardCurve.earth),
+        fire: mapToArray(manaCardCurve.fire),
+        water: mapToArray(manaCardCurve.water),
+      },
+      elementLoadPerMana: {
+        all: ratioArray(thresholdSumByMana, spellCountByMana),
+        minion: ratioArray(
+          thresholdSumByManaType.Minion,
+          spellCountByManaType.Minion,
+        ),
+        magic: ratioArray(thresholdSumByManaType.Magic, spellCountByManaType.Magic),
+        aura: ratioArray(thresholdSumByManaType.Aura, spellCountByManaType.Aura),
+      },
+    };
+  }
+
+  private getDeckZoneMainCardIds(zone: ZoneModel): Set<string> {
+    const ids = new Set<string>();
+    if (zone.type !== "deck") return ids;
+    for (const card of zone.cards) {
+      if (this.normalizeDeckBoard(card.board) === "mainboard") {
+        ids.add(card.id);
+      }
+    }
+    return ids;
+  }
+
+  private ensureDeckZoneVariants(zone: ZoneModel): ZoneDeckVariant[] {
+    if (zone.type !== "deck") {
+      zone.deckVariants = [];
+      zone.activeDeckVariantId = null;
+      return [];
+    }
+
+    const mainCardIds = this.getDeckZoneMainCardIds(zone);
+    const fallbackActiveIds = zone.cards
+      .filter((card) => card.board === "mainboard" || card.board == null)
+      .map((card) => card.id)
+      .filter((id) => mainCardIds.has(id));
+
+    const sourceVariants = Array.isArray(zone.deckVariants) ? zone.deckVariants : [];
+    const usedIds = new Set<string>();
+    const variants = sourceVariants.map((variant, index) => {
+      const fallbackName = index === 0 ? "Main" : `Variant ${index + 1}`;
+      let id =
+        typeof variant.id === "string" && variant.id.trim()
+          ? variant.id.trim()
+          : createZoneDeckVariantId();
+      while (usedIds.has(id)) {
+        id = createZoneDeckVariantId();
+      }
+      usedIds.add(id);
+
+      const activeIdSet = new Set(
+        Array.isArray(variant.activeCardIds)
+          ? variant.activeCardIds.filter((cardId) => mainCardIds.has(cardId))
+          : [],
+      );
+      return {
+        id,
+        name:
+          typeof variant.name === "string" && variant.name.trim()
+            ? variant.name.trim()
+            : fallbackName,
+        activeCardIds: [...activeIdSet],
+      };
+    });
+
+    if (variants.length === 0) {
+      const id = createZoneDeckVariantId();
+      variants.push({
+        id,
+        name: "Main",
+        activeCardIds: [...new Set(fallbackActiveIds)],
+      });
+      zone.activeDeckVariantId = id;
+    }
+
+    const hasActiveVariant = variants.some(
+      (variant) => variant.id === zone.activeDeckVariantId,
+    );
+    if (!hasActiveVariant) {
+      zone.activeDeckVariantId = variants[0]?.id ?? null;
+    }
+
+    zone.deckVariants = variants;
+    return variants;
+  }
+
+  private getActiveDeckZoneVariant(zone: ZoneModel): ZoneDeckVariant | null {
+    if (zone.type !== "deck") return null;
+    const variants = this.ensureDeckZoneVariants(zone);
+    if (variants.length === 0) return null;
+    return (
+      variants.find((variant) => variant.id === zone.activeDeckVariantId) ??
+      variants[0] ??
+      null
+    );
+  }
+
+  private setActiveDeckZoneVariant(zoneId: string, variantId: string): boolean {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone || zone.type !== "deck") return false;
+    const variants = this.ensureDeckZoneVariants(zone);
+    if (!variants.some((variant) => variant.id === variantId)) return false;
+    if (zone.activeDeckVariantId === variantId) return false;
+    zone.activeDeckVariantId = variantId;
+    return true;
+  }
+
+  private closeDeckVariantDialog(): void {
+    if (this.deckVariantDialogKeydownHandler) {
+      window.removeEventListener("keydown", this.deckVariantDialogKeydownHandler, true);
+      this.deckVariantDialogKeydownHandler = null;
+    }
+    if (this.deckVariantDialogRoot?.parentNode) {
+      this.deckVariantDialogRoot.parentNode.removeChild(this.deckVariantDialogRoot);
+    }
+    this.deckVariantDialogRoot = null;
+    this.deckVariantDialogOpen = false;
+  }
+
+  private showDeckVariantDialog(zone: ZoneModel): Promise<DeckVariantDialogResult | null> {
+    if (this.deckVariantDialogOpen || this.isDestroyed) {
+      return Promise.resolve(null);
+    }
+
+    const variants = this.ensureDeckZoneVariants(zone);
+    const activeVariant = this.getActiveDeckZoneVariant(zone);
+    if (typeof document === "undefined") {
+      return Promise.resolve(null);
+    }
+
+    this.deckVariantDialogOpen = true;
+    return new Promise<DeckVariantDialogResult | null>((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.zIndex = "9999";
+      overlay.style.background = "rgba(10, 12, 20, 0.68)";
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      overlay.style.padding = "18px";
+
+      const panel = document.createElement("div");
+      panel.style.width = "min(420px, calc(100vw - 36px))";
+      panel.style.maxHeight = "calc(100vh - 36px)";
+      panel.style.overflow = "auto";
+      panel.style.background = "#111528";
+      panel.style.border = "1px solid #6b79b8";
+      panel.style.borderRadius = "10px";
+      panel.style.boxShadow = "0 16px 42px rgba(0, 0, 0, 0.55)";
+      panel.style.padding = "16px";
+      panel.style.color = "#edf1ff";
+      panel.style.fontFamily = "Arial, sans-serif";
+      overlay.appendChild(panel);
+
+      const title = document.createElement("h3");
+      title.textContent = "Create Variant";
+      title.style.margin = "0 0 10px 0";
+      title.style.fontSize = "18px";
+      panel.appendChild(title);
+
+      const nameLabel = document.createElement("label");
+      nameLabel.textContent = "Variant name";
+      nameLabel.style.display = "block";
+      nameLabel.style.fontSize = "13px";
+      nameLabel.style.opacity = "0.92";
+      panel.appendChild(nameLabel);
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.value = `Variant ${variants.length + 1}`;
+      nameInput.placeholder = "Variant name";
+      nameInput.style.width = "100%";
+      nameInput.style.marginTop = "6px";
+      nameInput.style.marginBottom = "14px";
+      nameInput.style.padding = "8px 10px";
+      nameInput.style.borderRadius = "8px";
+      nameInput.style.border = "1px solid #7280bf";
+      nameInput.style.background = "#1d2543";
+      nameInput.style.color = "#f3f6ff";
+      panel.appendChild(nameInput);
+
+      const sourceTitle = document.createElement("div");
+      sourceTitle.textContent = "Start from";
+      sourceTitle.style.fontSize = "13px";
+      sourceTitle.style.marginBottom = "8px";
+      sourceTitle.style.opacity = "0.92";
+      panel.appendChild(sourceTitle);
+
+      const optionList = document.createElement("div");
+      optionList.style.display = "grid";
+      optionList.style.gap = "8px";
+      optionList.style.marginBottom = "14px";
+      panel.appendChild(optionList);
+
+      const NONE_SOURCE = "__none__";
+      let selectedSource: string = activeVariant?.id ?? NONE_SOURCE;
+      const checkboxEntries: Array<{ source: string; input: HTMLInputElement }> = [];
+
+      const addOption = (source: string, labelText: string): void => {
+        const row = document.createElement("label");
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "8px";
+        row.style.fontSize = "14px";
+        row.style.padding = "6px 8px";
+        row.style.border = "1px solid #4f5f9f";
+        row.style.borderRadius = "8px";
+        row.style.background = "#1b2340";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.style.width = "16px";
+        input.style.height = "16px";
+        input.checked = source === selectedSource;
+        row.appendChild(input);
+
+        const text = document.createElement("span");
+        text.textContent = labelText;
+        row.appendChild(text);
+        optionList.appendChild(row);
+        checkboxEntries.push({ source, input });
+
+        input.addEventListener("change", () => {
+          if (!input.checked) {
+            input.checked = true;
+            return;
+          }
+          selectedSource = source;
+          for (const entry of checkboxEntries) {
+            entry.input.checked = entry.source === selectedSource;
+          }
+        });
+      };
+
+      addOption(NONE_SOURCE, "None");
+      for (const variant of variants) {
+        addOption(variant.id, variant.name);
+      }
+
+      const errorText = document.createElement("div");
+      errorText.style.minHeight = "18px";
+      errorText.style.color = "#ff9ea9";
+      errorText.style.fontSize = "12px";
+      errorText.style.marginBottom = "8px";
+      panel.appendChild(errorText);
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.justifyContent = "flex-end";
+      actions.style.gap = "10px";
+      panel.appendChild(actions);
+
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.textContent = "Cancel";
+      cancelButton.style.padding = "8px 12px";
+      cancelButton.style.borderRadius = "8px";
+      cancelButton.style.border = "1px solid #6675b6";
+      cancelButton.style.background = "#1f2948";
+      cancelButton.style.color = "#e8eeff";
+      actions.appendChild(cancelButton);
+
+      const createButton = document.createElement("button");
+      createButton.type = "button";
+      createButton.textContent = "Create";
+      createButton.style.padding = "8px 12px";
+      createButton.style.borderRadius = "8px";
+      createButton.style.border = "1px solid #8aa1ff";
+      createButton.style.background = "#2f438a";
+      createButton.style.color = "#f2f6ff";
+      actions.appendChild(createButton);
+
+      const finish = (result: DeckVariantDialogResult | null): void => {
+        window.removeEventListener("keydown", onWindowKeyDown, true);
+        this.closeDeckVariantDialog();
+        resolve(result);
+      };
+
+      const onWindowKeyDown = (event: KeyboardEvent): void => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          finish(null);
+          return;
+        }
+        if (event.key === "Enter") {
+          event.preventDefault();
+          submit();
+        }
+      };
+
+      const submit = (): void => {
+        const name = nameInput.value.trim();
+        if (!name) {
+          errorText.textContent = "Variant name is required.";
+          nameInput.focus();
+          return;
+        }
+        finish({
+          name,
+          sourceVariantId: selectedSource === NONE_SOURCE ? null : selectedSource,
+        });
+      };
+
+      cancelButton.addEventListener("click", () => finish(null));
+      createButton.addEventListener("click", submit);
+      overlay.addEventListener("mousedown", (event) => {
+        if (event.target === overlay) {
+          finish(null);
+        }
+      });
+
+      this.deckVariantDialogKeydownHandler = onWindowKeyDown;
+      window.addEventListener("keydown", onWindowKeyDown, true);
+      document.body.appendChild(overlay);
+      this.deckVariantDialogRoot = overlay;
+      nameInput.focus();
+      nameInput.select();
+    });
+  }
+
+  private async createDeckZoneVariant(zoneId: string): Promise<boolean> {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone || zone.type !== "deck") return false;
+
+    const variants = this.ensureDeckZoneVariants(zone);
+    const dialogResult = await this.showDeckVariantDialog(zone);
+    if (!dialogResult) return false;
+
+    const mainCardIds = this.getDeckZoneMainCardIds(zone);
+    const baseVariant =
+      dialogResult.sourceVariantId == null
+        ? null
+        : variants.find((variant) => variant.id === dialogResult.sourceVariantId) ?? null;
+    const activeCardIds = (baseVariant?.activeCardIds ?? []).filter((cardId) =>
+      mainCardIds.has(cardId),
+    );
+
+    const created: ZoneDeckVariant = {
+      id: createZoneDeckVariantId(),
+      name: dialogResult.name,
+      activeCardIds: [...new Set(activeCardIds)],
+    };
+
+    zone.deckVariants = [...variants, created];
+    zone.activeDeckVariantId = created.id;
+    return true;
+  }
+
+  private getZoneCardStackKey(zone: ZoneModel, instance: ZoneCardInstance): string {
+    const isLandscape = this.isLandscapeCard(instance.cardName);
+    const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const centerX = instance.x + size.width / 2;
+    const centerY = instance.y + size.height / 2;
+    const grid = pixelsToSnapGrid(centerX, centerY, isLandscape);
+    const boardKey =
+      zone.type === "deck"
+        ? this.normalizeDeckBoard(instance.board)
+        : instance.board ?? "zone";
+    return `${boardKey}:${isLandscape ? "L" : "P"}:${grid.x},${grid.y}`;
+  }
+
+  private moveDeckZoneCardToStackBack(zone: ZoneModel, instanceId: string): void {
+    if (zone.type !== "deck") return;
+    const targetIndex = zone.cards.findIndex((entry) => entry.id === instanceId);
+    if (targetIndex < 0) return;
+    const target = zone.cards[targetIndex];
+    if (!target) return;
+    const targetStackKey = this.getZoneCardStackKey(zone, target);
+
+    let firstStackIndex: number | null = null;
+    for (let i = 0; i < zone.cards.length; i++) {
+      const candidate = zone.cards[i];
+      if (!candidate) continue;
+      if (this.getZoneCardStackKey(zone, candidate) !== targetStackKey) continue;
+      firstStackIndex = i;
+      break;
+    }
+    if (firstStackIndex == null || firstStackIndex === targetIndex) {
+      return;
+    }
+
+    const [removed] = zone.cards.splice(targetIndex, 1);
+    if (!removed) return;
+    zone.cards.splice(firstStackIndex, 0, removed);
+  }
+
+  private toggleDeckZoneCardActive(zoneId: string, instanceId: string): boolean {
+    const zone = this.zones.find((entry) => entry.id === zoneId);
+    if (!zone || zone.type !== "deck") return false;
+    const instance = zone.cards.find((entry) => entry.id === instanceId);
+    if (!instance) return false;
+    if (this.normalizeDeckBoard(instance.board) !== "mainboard") return false;
+
+    const activeVariant = this.getActiveDeckZoneVariant(zone);
+    if (!activeVariant) return false;
+
+    if (activeVariant.activeCardIds.includes(instanceId)) {
+      activeVariant.activeCardIds = activeVariant.activeCardIds.filter(
+        (cardId) => cardId !== instanceId,
+      );
+      this.moveDeckZoneCardToStackBack(zone, instanceId);
+    } else {
+      activeVariant.activeCardIds = [...activeVariant.activeCardIds, instanceId];
+    }
+    return true;
+  }
+
+  private removeDeckVariantCardReferences(
+    zone: ZoneModel,
+    removedCardIds: Iterable<string>,
+  ): void {
+    if (zone.type !== "deck") return;
+    const variants = this.ensureDeckZoneVariants(zone);
+    const removed = new Set(removedCardIds);
+    if (removed.size === 0) return;
+    for (const variant of variants) {
+      variant.activeCardIds = variant.activeCardIds.filter((cardId) => !removed.has(cardId));
+    }
+  }
+
+  private syncDeckVariantForBoardChange(
+    zone: ZoneModel,
+    instanceId: string,
+    board: DeckZoneBoard,
+  ): void {
+    if (zone.type !== "deck") return;
+    const variants = this.ensureDeckZoneVariants(zone);
+    if (board === "sideboard") {
+      for (const variant of variants) {
+        variant.activeCardIds = variant.activeCardIds.filter((cardId) => cardId !== instanceId);
+      }
+      return;
+    }
+
+    const activeVariant = this.getActiveDeckZoneVariant(zone);
+    if (!activeVariant) return;
+    if (!activeVariant.activeCardIds.includes(instanceId)) {
+      activeVariant.activeCardIds = [...activeVariant.activeCardIds, instanceId];
+    }
+  }
+
+  private registerDeckVariantAdditions(
+    zone: ZoneModel,
+    additions: ZoneCardInstance[],
+  ): void {
+    if (zone.type !== "deck" || additions.length === 0) return;
+    const activeVariant = this.getActiveDeckZoneVariant(zone);
+    if (!activeVariant) return;
+    const nextIds = new Set(activeVariant.activeCardIds);
+    for (const addition of additions) {
+      if (this.normalizeDeckBoard(addition.board) === "mainboard") {
+        nextIds.add(addition.id);
+      }
+    }
+    activeVariant.activeCardIds = [...nextIds];
   }
 
   private getZoneCardAtPosition(
@@ -741,6 +2934,27 @@ export class PixiStage {
       if (!sortBounds) continue;
       if (this.pointInBounds(worldPos, sortBounds)) {
         return zone;
+      }
+    }
+    return null;
+  }
+
+  private getZoneVariantTabTargetAtPosition(
+    worldPos: { x: number; y: number },
+  ): { zone: ZoneModel; variantId: string | null; isAdd: boolean } | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone || zone.type !== "deck") continue;
+      const tabBounds = this.zoneHeaderBounds.get(zone.id)?.variantTabBounds ?? [];
+      for (const tab of tabBounds) {
+        if (this.pointInBounds(worldPos, tab.bounds)) {
+          return {
+            zone,
+            variantId: tab.isAdd ? null : tab.variantId,
+            isAdd: tab.isAdd,
+          };
+        }
       }
     }
     return null;
@@ -887,20 +3101,14 @@ export class PixiStage {
 
     if (zone.type === "deck") {
       let cursorY = bodyTop;
-      const boardOrder: Array<Exclude<ActiveBoard, "avatar">> = [
+      const boardOrder: DeckZoneBoard[] = [
         "mainboard",
         "sideboard",
-        "maybeboard",
       ];
 
       for (const board of boardOrder) {
         const boardCards = nextCards.filter((card) => {
-          const normalizedBoard =
-            card.board === "mainboard" ||
-            card.board === "sideboard" ||
-            card.board === "maybeboard"
-              ? card.board
-              : "mainboard";
+          const normalizedBoard = this.normalizeDeckBoard(card.board);
           if (normalizedBoard !== board) return false;
           card.board = normalizedBoard;
           return true;
@@ -914,6 +3122,8 @@ export class PixiStage {
         });
         cursorY = boardBottom + ZONE_DECK_BOARD_GAP;
       }
+
+      this.ensureDeckZoneVariants(zone);
     } else {
       this.layoutZoneBoardCards(nextCards, {
         left: bodyLeft + ZONE_DECK_BOARD_INNER_LEFT,
@@ -954,6 +3164,26 @@ export class PixiStage {
     };
   }
 
+  private getDuplicateButtonBounds(data: ZoneCardSpriteData): {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } {
+    const deleteBounds = this.getDeleteButtonBounds(data);
+    return {
+      left: deleteBounds.left - ZONE_DELETE_SIZE - ZONE_CARD_ACTION_GAP,
+      top: deleteBounds.top,
+      right: deleteBounds.left - ZONE_CARD_ACTION_GAP,
+      bottom: deleteBounds.bottom,
+    };
+  }
+
+  private canDuplicateZoneCard(data: ZoneCardSpriteData): boolean {
+    const zone = this.zones.find((entry) => entry.id === data.zoneId);
+    return zone?.type === "deck" || zone?.type === "custom";
+  }
+
   private drawZoneDeleteOverlay(): void {
     if (!this.zoneDeleteOverlay) return;
     this.zoneDeleteOverlay.clear();
@@ -961,6 +3191,22 @@ export class PixiStage {
     if (!this.hoveredZoneCardKey) return;
     const data = this.zoneCardSprites.get(this.hoveredZoneCardKey);
     if (!data) return;
+
+    if (this.canDuplicateZoneCard(data)) {
+      const duplicateBounds = this.getDuplicateButtonBounds(data);
+      const duplicateCenterX = (duplicateBounds.left + duplicateBounds.right) / 2;
+      const duplicateCenterY = (duplicateBounds.top + duplicateBounds.bottom) / 2;
+      const duplicateRadius = (duplicateBounds.right - duplicateBounds.left) / 2;
+
+      this.zoneDeleteOverlay.circle(duplicateCenterX, duplicateCenterY, duplicateRadius);
+      this.zoneDeleteOverlay.fill({ color: 0x223b78, alpha: 0.95 });
+      this.zoneDeleteOverlay.stroke({ width: 1.5, color: 0xbccaff, alpha: 0.85 });
+      this.zoneDeleteOverlay.moveTo(duplicateBounds.left + 4, duplicateCenterY);
+      this.zoneDeleteOverlay.lineTo(duplicateBounds.right - 4, duplicateCenterY);
+      this.zoneDeleteOverlay.moveTo(duplicateCenterX, duplicateBounds.top + 4);
+      this.zoneDeleteOverlay.lineTo(duplicateCenterX, duplicateBounds.bottom - 4);
+      this.zoneDeleteOverlay.stroke({ width: 1.45, color: 0xf2f5ff, alpha: 0.94 });
+    }
 
     const bounds = this.getDeleteButtonBounds(data);
     const centerX = (bounds.left + bounds.right) / 2;
@@ -977,6 +3223,179 @@ export class PixiStage {
     this.zoneDeleteOverlay.stroke({ width: 1.4, color: 0xf2f4ff, alpha: 0.92 });
   }
 
+  private ensureDeckGraphHoverTooltip(): {
+    box: Graphics;
+    text: Text;
+  } {
+    if (!this.deckGraphTooltipBox || !this.deckGraphTooltipText) {
+      const box = new Graphics();
+      box.zIndex = 9_999_998;
+      box.visible = false;
+      const text = new Text({
+        text: "",
+        style: {
+          fontFamily: "Arial",
+          fontSize: 9,
+          fill: 0xecf1ff,
+          fontWeight: "normal",
+          stroke: ZONE_DECK_STATS_TEXT_STROKE,
+        },
+      });
+      text.resolution = this.getRenderResolution();
+      text.zIndex = 9_999_999;
+      text.visible = false;
+      this.zoneContainer.addChild(box);
+      this.zoneContainer.addChild(text);
+      this.deckGraphTooltipBox = box;
+      this.deckGraphTooltipText = text;
+    }
+    return {
+      box: this.deckGraphTooltipBox,
+      text: this.deckGraphTooltipText,
+    };
+  }
+
+  private ensureDeckGraphHoverDots(): Graphics {
+    if (!this.deckGraphHoverDots) {
+      const dots = new Graphics();
+      dots.zIndex = 9_999_997;
+      dots.visible = false;
+      this.zoneContainer.addChild(dots);
+      this.deckGraphHoverDots = dots;
+    }
+    return this.deckGraphHoverDots;
+  }
+
+  private drawDeckGraphHoverDots(region: DeckGraphHoverRegion, index: number): void {
+    const dots = this.ensureDeckGraphHoverDots();
+    dots.clear();
+
+    const pointCount = Math.max(1, region.manaCosts.length);
+    const span = Math.max(1, pointCount - 1);
+    const x =
+      pointCount === 1
+        ? region.bounds.left + (region.bounds.right - region.bounds.left) / 2
+        : region.bounds.left +
+          (index / span) * (region.bounds.right - region.bounds.left);
+    const maxY = region.series.reduce((best, entry) => {
+      for (const value of entry.values) {
+        if (value > best) best = value;
+      }
+      return best;
+    }, 0);
+
+    if (maxY <= 0) {
+      dots.visible = false;
+      return;
+    }
+
+    for (const entry of region.series) {
+      if (entry.values.every((value) => value <= 0)) continue;
+      const value = entry.values[index] ?? 0;
+      const y =
+        region.bounds.bottom -
+        (value / maxY) * (region.bounds.bottom - region.bounds.top);
+      dots.circle(x, y, ZONE_DECK_GRAPH_HOVER_DOT_RADIUS);
+      dots.fill({ color: entry.color, alpha: 0.97 });
+      dots.circle(x, y, ZONE_DECK_GRAPH_HOVER_DOT_RADIUS + 0.95);
+      dots.stroke({ width: 1, color: 0xf6f9ff, alpha: 0.85 });
+    }
+    dots.visible = true;
+  }
+
+  private hideDeckGraphHoverTooltip(): void {
+    if (this.deckGraphTooltipBox) {
+      this.deckGraphTooltipBox.visible = false;
+    }
+    if (this.deckGraphTooltipText) {
+      this.deckGraphTooltipText.visible = false;
+    }
+    if (this.deckGraphHoverDots) {
+      this.deckGraphHoverDots.visible = false;
+      this.deckGraphHoverDots.clear();
+    }
+  }
+
+  private destroyDeckGraphHoverTooltip(): void {
+    this.deckGraphTooltipBox?.destroy();
+    this.deckGraphTooltipText?.destroy();
+    this.deckGraphHoverDots?.destroy();
+    this.deckGraphTooltipBox = null;
+    this.deckGraphTooltipText = null;
+    this.deckGraphHoverDots = null;
+  }
+
+  private getDeckGraphHoverRegionAtPosition(
+    worldPos: { x: number; y: number },
+  ): DeckGraphHoverRegion | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone || zone.type !== "deck") continue;
+      const regions = this.zoneHeaderBounds.get(zone.id)?.graphHoverRegions ?? [];
+      for (const region of regions) {
+        if (this.pointInBounds(worldPos, region.bounds)) {
+          return region;
+        }
+      }
+    }
+    return null;
+  }
+
+  private updateDeckGraphHoverTooltip(worldPos: { x: number; y: number }): void {
+    const region = this.getDeckGraphHoverRegionAtPosition(worldPos);
+    if (!region || region.manaCosts.length === 0) {
+      this.hideDeckGraphHoverTooltip();
+      return;
+    }
+
+    const span = Math.max(1, region.manaCosts.length - 1);
+    const width = Math.max(1, region.bounds.right - region.bounds.left);
+    const ratio = Math.max(
+      0,
+      Math.min(1, (worldPos.x - region.bounds.left) / width),
+    );
+    const index = Math.round(ratio * span);
+    const manaCost = region.manaCosts[index] ?? index;
+    const lines = [`Mana ${manaCost}`];
+    for (const entry of region.series) {
+      const value = entry.values[index] ?? 0;
+      lines.push(`${entry.label}: ${value.toFixed(entry.decimals)}`);
+    }
+
+    const tooltip = this.ensureDeckGraphHoverTooltip();
+    tooltip.text.text = lines.join("\n");
+    const paddingX = 7;
+    const paddingY = 5;
+    const boxWidth = tooltip.text.width + paddingX * 2;
+    const boxHeight = tooltip.text.height + paddingY * 2;
+    let boxX = worldPos.x + 12;
+    let boxY = worldPos.y - boxHeight - 10;
+
+    const viewBounds = this.camera?.getVisibleBounds();
+    if (viewBounds) {
+      boxX = Math.max(
+        viewBounds.left + 4,
+        Math.min(boxX, viewBounds.right - boxWidth - 4),
+      );
+      boxY = Math.max(
+        viewBounds.top + 4,
+        Math.min(boxY, viewBounds.bottom - boxHeight - 4),
+      );
+    }
+
+    tooltip.box.clear();
+    tooltip.box.roundRect(boxX, boxY, boxWidth, boxHeight, 6);
+    tooltip.box.fill({ color: 0x111a35, alpha: 0.94 });
+    tooltip.box.stroke({ width: 1, color: 0x94a7f2, alpha: 0.86 });
+    tooltip.box.visible = true;
+
+    tooltip.text.x = Math.round(boxX + paddingX);
+    tooltip.text.y = Math.round(boxY + paddingY);
+    tooltip.text.visible = true;
+    this.drawDeckGraphHoverDots(region, index);
+  }
+
   private updateHoveredFromWorldPos(worldPos: { x: number; y: number }): void {
     const zoneCard = this.getZoneCardAtPosition(worldPos);
     const zoneUnderPointer = this.getZoneAtPosition(worldPos);
@@ -986,22 +3405,26 @@ export class PixiStage {
 
     if (zoneCard) {
       this.setHoveredCard(zoneCard.cardName);
+      this.updateDeckGraphHoverTooltip(worldPos);
       return;
     }
 
     if (zoneUnderPointer) {
       this.setHoveredCard(null);
+      this.updateDeckGraphHoverTooltip(worldPos);
       return;
     }
 
     const cardKey = this.getCardAtPosition(worldPos);
     if (!cardKey) {
       this.setHoveredCard(null);
+      this.updateDeckGraphHoverTooltip(worldPos);
       return;
     }
 
     const data = this.getSpriteData(cardKey);
     this.setHoveredCard(data?.layout.name ?? null);
+    this.updateDeckGraphHoverTooltip(worldPos);
   }
 
   private onPointerDown(event: FederatedPointerEvent): void {
@@ -1012,7 +3435,34 @@ export class PixiStage {
     const isShiftHeld = event.shiftKey;
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
     this.clearZoneDropPreview();
+    const clickedZoneVariantTab = this.getZoneVariantTabTargetAtPosition(worldPos);
+    if (!isRightClick && clickedZoneVariantTab) {
+      this.cancelSelectionBox();
+      if (clickedZoneVariantTab.isAdd) {
+        this.pointerDownOnSelectedCard = false;
+        void this.createDeckZoneVariant(clickedZoneVariantTab.zone.id).then((changed) => {
+          if (!changed || this.isDestroyed) return;
+          this.rebuildZoneVisuals();
+          this.emitZonesChange();
+        });
+      } else {
+        const changed = clickedZoneVariantTab.variantId
+          ? this.setActiveDeckZoneVariant(
+              clickedZoneVariantTab.zone.id,
+              clickedZoneVariantTab.variantId,
+            )
+          : false;
+        if (changed) {
+          this.rebuildZoneVisuals();
+          this.emitZonesChange();
+        }
+      }
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
     const clickedZoneSort = this.getZoneSortTargetAtPosition(worldPos);
     if (!isRightClick && clickedZoneSort) {
       this.cancelSelectionBox();
@@ -1037,12 +3487,28 @@ export class PixiStage {
       clickedZoneCard &&
       clickedZoneCard.key === this.hoveredZoneCardKey
     ) {
+      if (this.canDuplicateZoneCard(clickedZoneCard)) {
+        const duplicateBounds = this.getDuplicateButtonBounds(clickedZoneCard);
+        if (this.pointInBounds(worldPos, duplicateBounds)) {
+          this.duplicateZoneCardInstance(
+            clickedZoneCard.zoneId,
+            clickedZoneCard.instanceId,
+          );
+          this.rebuildZoneVisuals();
+          this.emitZonesChange();
+          this.updateHoveredFromWorldPos(worldPos);
+          return;
+        }
+      }
+
       const deleteBounds = this.getDeleteButtonBounds(clickedZoneCard);
       if (this.pointInBounds(worldPos, deleteBounds)) {
-        this.removeZoneCardInstance(clickedZoneCard.zoneId, clickedZoneCard.instanceId);
-        this.emitZonesChange();
-        this.hoveredZoneCardKey = null;
-        this.drawZoneDeleteOverlay();
+        const rect = this.app.canvas.getBoundingClientRect();
+        this.handleZoneCardDelete(
+          clickedZoneCard,
+          rect.left + event.globalX,
+          rect.top + event.globalY,
+        );
         this.updateHoveredFromWorldPos(worldPos);
         return;
       }
@@ -1118,11 +3584,24 @@ export class PixiStage {
       this.lastClickedZoneCardKey = clickedZoneCard.key;
 
       if (isDoubleClick) {
-        this.duplicateZoneCardInstance(
-          clickedZoneCard.zoneId,
-          clickedZoneCard.instanceId,
-        );
-        this.emitZonesChange();
+        const zone = this.zones.find((entry) => entry.id === clickedZoneCard.zoneId);
+        if (zone?.type === "deck") {
+          const changed = this.toggleDeckZoneCardActive(
+            clickedZoneCard.zoneId,
+            clickedZoneCard.instanceId,
+          );
+          if (changed) {
+            this.rebuildZoneVisuals();
+            this.emitZonesChange();
+          }
+        } else {
+          this.duplicateZoneCardInstance(
+            clickedZoneCard.zoneId,
+            clickedZoneCard.instanceId,
+          );
+          this.rebuildZoneVisuals();
+          this.emitZonesChange();
+        }
         this.updateHoveredFromWorldPos(worldPos);
         return;
       }
@@ -1168,7 +3647,14 @@ export class PixiStage {
         if (this.selectedArchetype && this.archetypeScores) {
           this.modifyArchetypeScore(clickedCard, +1);
         } else {
-          this.onAddToDeck(clickedCard);
+          const startedQuickTransfer = this.beginQuickTransferDrag(
+            clickedCard,
+            worldPos,
+            { x: event.globalX, y: event.globalY },
+          );
+          if (!startedQuickTransfer) {
+            this.onAddToDeck(clickedCard);
+          }
         }
         return;
       }
@@ -1214,6 +3700,7 @@ export class PixiStage {
     if (!this.camera) return;
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
 
     // Update label drag
     if (this.labelDragState.isDragging) {
@@ -1249,25 +3736,35 @@ export class PixiStage {
 
     // Update card drag
     if (this.dragState.isDragging && this.pointerDownOnSelectedCard) {
-      const rect = this.app.canvas.getBoundingClientRect();
-      const clientX = rect.left + event.globalX;
-      const clientY = rect.top + event.globalY;
-      const overStacksPanel = this.isPointInsideOpenStacksPanel(clientX, clientY);
-
-      this.setStacksDropVisual(overStacksPanel);
-      if (!overStacksPanel) {
-        this.updateCardDrag(worldPos);
-        const hoveredZone = this.getZoneAtPosition(worldPos);
-        this.updateZoneDropPreview(
-          hoveredZone,
-          worldPos,
-          this.getDraggedCardPlacements(),
-        );
-      } else {
+      if (this.quickTransferState.active) {
+        this.setStacksDropVisual(false);
         this.clearZoneDropPreview();
+        this.updateCardDrag(worldPos);
+        this.updateQuickTransferHover({ x: event.globalX, y: event.globalY });
+      } else {
+        const rect = this.app.canvas.getBoundingClientRect();
+        const clientX = rect.left + event.globalX;
+        const clientY = rect.top + event.globalY;
+        const overStacksPanel = this.isPointInsideOpenStacksPanel(clientX, clientY);
+
+        this.setStacksDropVisual(overStacksPanel);
+        if (!overStacksPanel) {
+          this.updateCardDrag(worldPos);
+          const hoveredZone = this.getZoneAtPosition(worldPos);
+          this.updateZoneDropPreview(
+            hoveredZone,
+            worldPos,
+            this.getDraggedCardPlacements(),
+          );
+        } else {
+          this.clearZoneDropPreview();
+        }
       }
     } else {
       this.clearZoneDropPreview();
+      if (this.quickTransferState.active) {
+        this.deactivateQuickTransfer();
+      }
     }
 
     this.updateHoveredFromWorldPos(worldPos);
@@ -1277,6 +3774,7 @@ export class PixiStage {
     if (!this.camera) return;
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
     this.clearZoneDropPreview();
 
     // End label drag
@@ -1346,6 +3844,15 @@ export class PixiStage {
     if (this.selectionBox.isActive) {
       this.endSelectionBox(worldPos);
       this.camera.resumeDrag();
+      return;
+    }
+
+    if (this.dragState.isDragging && this.quickTransferState.active) {
+      this.completeQuickTransferDrop(worldPos, {
+        x: event.globalX,
+        y: event.globalY,
+      });
+      this.updateHoveredFromWorldPos(worldPos);
       return;
     }
 
@@ -1906,6 +4413,9 @@ export class PixiStage {
     this.dragState.cardStartGridKeys.clear();
     this.dragState.cardOriginalZIndices.clear();
     this.clearZoneDropPreview();
+    if (this.quickTransferState.active || this.quickTransferOverlayTexts.length > 0) {
+      this.deactivateQuickTransfer();
+    }
   }
 
   private getDraggedCardNames(): string[] {
@@ -2035,13 +4545,14 @@ export class PixiStage {
     const draggedInstance = zone.cards.find(
       (instance) => instance.id === drag.instanceId,
     );
-    const fallbackBoard =
-      draggedInstance?.board === "mainboard" ||
-      draggedInstance?.board === "sideboard" ||
-      draggedInstance?.board === "maybeboard"
-        ? draggedInstance.board
-        : "mainboard";
-    const resolvedBoard = zone.type === "deck" ? movedBoard ?? fallbackBoard : null;
+    const fallbackBoard = this.normalizeDeckBoard(draggedInstance?.board);
+    const resolvedBoard: DeckZoneBoard | null =
+      zone.type === "deck" ? movedBoard ?? fallbackBoard : null;
+    const movedDistance =
+      Math.abs(nextX - drag.startCardPos.x) + Math.abs(nextY - drag.startCardPos.y);
+    const boardChanged =
+      zone.type === "deck" && resolvedBoard !== fallbackBoard;
+    const hasMeaningfulMove = movedDistance >= 1 || boardChanged;
 
     zone.cards = zone.cards.map((instance) =>
       instance.id === drag.instanceId
@@ -2054,6 +4565,9 @@ export class PixiStage {
           }
         : instance,
     );
+    if (zone.type === "deck" && resolvedBoard && hasMeaningfulMove) {
+      this.syncDeckVariantForBoardChange(zone, drag.instanceId, resolvedBoard);
+    }
     this.reconcileZoneBounds(zone.id, { anchorBoard: resolvedBoard });
     this.zoneCardDragState = {
       isDragging: false,
@@ -2161,6 +4675,7 @@ export class PixiStage {
     if (!zone) return;
 
     zone.cards = zone.cards.filter((entry) => entry.id !== instanceId);
+    this.removeDeckVariantCardReferences(zone, [instanceId]);
     this.reconcileZoneBounds(zone.id);
     this.rebuildZoneVisuals();
   }
@@ -2173,15 +4688,8 @@ export class PixiStage {
     const source = zone.cards.find((entry) => entry.id === instanceId);
     if (!source) return;
 
-    const sourceBoard =
-      zone.type === "deck" &&
-      (source.board === "mainboard" ||
-        source.board === "sideboard" ||
-        source.board === "maybeboard")
-        ? source.board
-        : zone.type === "deck"
-          ? "mainboard"
-          : null;
+    const sourceBoard: DeckZoneBoard | null =
+      zone.type === "deck" ? this.normalizeDeckBoard(source.board) : null;
 
     const duplicate: ZoneCardInstance = {
       id:
@@ -2195,20 +4703,21 @@ export class PixiStage {
     };
 
     zone.cards = [...zone.cards, duplicate];
+    if (zone.type === "deck" && sourceBoard) {
+      this.syncDeckVariantForBoardChange(zone, duplicate.id, sourceBoard);
+    }
     this.reconcileZoneBounds(zone.id, { anchorBoard: sourceBoard });
-    this.rebuildZoneVisuals();
   }
 
   private getDeckBoardForPosition(
     zone: ZoneModel,
     worldPos: { x: number; y: number },
-  ): Exclude<ActiveBoard, "avatar"> | null {
+  ): DeckZoneBoard | null {
     if (zone.type !== "deck") return null;
     const rects = this.getDeckBoardRects(zone.bounds, zone);
-    const boards: Array<Exclude<ActiveBoard, "avatar">> = [
+    const boards: DeckZoneBoard[] = [
       "mainboard",
       "sideboard",
-      "maybeboard",
     ];
 
     for (const board of boards) {
@@ -2237,7 +4746,7 @@ export class PixiStage {
     },
   ): {
     additions: ZoneCardInstance[];
-    anchorBoard: Exclude<ActiveBoard, "avatar"> | null;
+    anchorBoard: DeckZoneBoard | null;
   } {
     const enforceUnique = zone.type === "stack";
     const existingNames = enforceUnique
@@ -2300,7 +4809,7 @@ export class PixiStage {
       zone.type === "deck"
         ? this.getDeckBoardForPosition(zone, worldPos) ?? "mainboard"
         : null;
-    let anchorBoard: Exclude<ActiveBoard, "avatar"> | null = fallbackDeckBoard;
+    let anchorBoard: DeckZoneBoard | null = fallbackDeckBoard;
     const additions: ZoneCardInstance[] = [];
 
     entries.forEach((entry, index) => {
@@ -2523,6 +5032,7 @@ export class PixiStage {
     }
 
     zone.cards = [...zone.cards, ...additions];
+    this.registerDeckVariantAdditions(zone, additions);
 
     if (zone.type === "stack") {
       this.reconcileZoneBounds(zone.id);
@@ -2539,7 +5049,7 @@ export class PixiStage {
   private reconcileZoneBounds(
     zoneId: string,
     options?: {
-      anchorBoard?: ActiveBoard | null;
+      anchorBoard?: DeckZoneBoard | null;
       preserveTopLeft?: boolean;
     },
   ): void {
@@ -2601,12 +5111,7 @@ export class PixiStage {
     zone.bounds.height = Math.max(minSize.height, nextBottom - nextY);
 
     if (zone.type === "deck" && zone.cards.length > 0) {
-      const anchorBoard =
-        options?.anchorBoard === "mainboard" ||
-        options?.anchorBoard === "sideboard" ||
-        options?.anchorBoard === "maybeboard"
-          ? options.anchorBoard
-          : null;
+      const anchorBoard = options?.anchorBoard ?? null;
       if (!anchorBoard) return;
 
       const dx = nextX - prevX;
@@ -2614,11 +5119,17 @@ export class PixiStage {
       if (dx === 0 && dy === 0) return;
 
       zone.cards = zone.cards.map((card) => {
-        if (card.board === anchorBoard) return card;
+        const normalizedBoard = this.normalizeDeckBoard(card.board);
+        if (normalizedBoard === anchorBoard) {
+          return normalizedBoard === card.board
+            ? card
+            : { ...card, board: normalizedBoard };
+        }
         return {
           ...card,
           x: card.x + dx,
           y: card.y + dy,
+          board: normalizedBoard,
         };
       });
     }
@@ -2861,7 +5372,14 @@ export class PixiStage {
 
   setZones(zones: ZoneModel[]): void {
     this.zones = this.cloneZones(zones);
+    for (const zone of this.zones) {
+      if (zone.type === "deck") {
+        this.ensureDeckZoneVariants(zone);
+      }
+    }
     this.clearZoneDropPreview();
+    this.deactivateQuickTransfer();
+    this.closeDeckCardDeletePrompt();
     this.rebuildZoneVisuals();
   }
 
@@ -3132,6 +5650,9 @@ export class PixiStage {
     this.pendingRevealTimeouts = [];
     this.revealRunId++;
     this.isRevealInProgress = false;
+    this.closeDeckVariantDialog();
+    this.closeDeckCardDeletePrompt();
+    this.deactivateQuickTransfer();
 
     for (const data of this.labelSprites.values()) {
       data.text.destroy();
@@ -3205,6 +5726,9 @@ export class PixiStage {
 
   private clearZoneVisuals(): void {
     this.clearZoneDropPreview();
+    this.destroyDeckGraphHoverTooltip();
+    this.deactivateQuickTransfer();
+    this.closeDeckCardDeletePrompt();
     for (const data of this.zoneCardSprites.values()) {
       data.sprite.destroy();
     }
@@ -3236,7 +5760,6 @@ export class PixiStage {
   ): {
     mainboard: { x: number; y: number; width: number; height: number };
     sideboard: { x: number; y: number; width: number; height: number };
-    maybeboard: { x: number; y: number; width: number; height: number };
   } {
     const bodyTop = bounds.y + this.getZoneHeaderHeight(zone) + ZONE_BODY_PADDING;
     const left = bounds.x + ZONE_BODY_PADDING;
@@ -3246,25 +5769,16 @@ export class PixiStage {
     const minBoardHeights = {
       mainboard: ZONE_DECK_MIN_BOARD_HEIGHT.mainboard,
       sideboard: ZONE_DECK_MIN_BOARD_HEIGHT.sideboard,
-      maybeboard: ZONE_DECK_MIN_BOARD_HEIGHT.maybeboard,
     } as const;
 
-    const maxBottomByBoard: Partial<
-      Record<Exclude<ActiveBoard, "avatar">, number>
-    > = {};
+    const maxBottomByBoard: Partial<Record<DeckZoneBoard, number>> = {};
     for (const card of zone.cards) {
-      if (
-        card.board !== "mainboard" &&
-        card.board !== "sideboard" &&
-        card.board !== "maybeboard"
-      ) {
-        continue;
-      }
+      const board = this.normalizeDeckBoard(card.board);
       const isLandscape = this.isLandscapeCard(card.cardName);
       const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
       const bottom = card.y + size.height + boardBottomPadding;
-      const previous = maxBottomByBoard[card.board] ?? -Infinity;
-      maxBottomByBoard[card.board] = Math.max(previous, bottom);
+      const previous = maxBottomByBoard[board] ?? -Infinity;
+      maxBottomByBoard[board] = Math.max(previous, bottom);
     }
 
     let cursorY = bodyTop;
@@ -3290,20 +5804,8 @@ export class PixiStage {
       width,
       height: sideboardHeight,
     };
-    cursorY = sideboard.y + sideboard.height + boardGap;
 
-    const maybeboardHeight = Math.max(
-      minBoardHeights.maybeboard,
-      (maxBottomByBoard.maybeboard ?? -Infinity) - cursorY,
-    );
-    const maybeboard = {
-      x: left,
-      y: cursorY,
-      width,
-      height: maybeboardHeight,
-    };
-
-    return { mainboard, sideboard, maybeboard };
+    return { mainboard, sideboard };
   }
 
   private drawZoneFrame(
@@ -3312,7 +5814,7 @@ export class PixiStage {
   ): {
     frame: Graphics;
     title: Text;
-    subzoneLabels: Text[];
+    subzoneLabels: Container[];
     avatarSprite: CardSprite | null;
   } {
     const frame = new Graphics();
@@ -3336,23 +5838,7 @@ export class PixiStage {
       right: closeButtonRight,
       bottom: buttonTop + closeButtonSize,
     };
-    const sortAnchorLeft =
-      zone.type === "deck" && zone.avatarCardName
-        ? zone.bounds.x +
-          ZONE_DECK_AVATAR_CENTER_GRID_X * DRAWN_GRID.width +
-          ZONE_DECK_HEADER_X_OFFSET -
-          DECK_AVATAR_SIZE.width / 2 +
-          DECK_AVATAR_SIZE.width +
-          ZONE_DECK_AVATAR_TITLE_GAP
-        : zone.type === "deck"
-          ? zone.bounds.x + 10 + ZONE_DECK_HEADER_X_OFFSET
-          : zone.bounds.x + 10;
-    const minSortLeft = zone.bounds.x + buttonMargin;
-    const maxSortLeft = closeBounds.left - buttonMargin - ZONE_SORT_BUTTON_WIDTH;
-    const sortLeft = Math.max(
-      minSortLeft,
-      Math.min(sortAnchorLeft, maxSortLeft),
-    );
+    const sortLeft = zone.bounds.x + buttonMargin;
     const sortBounds = {
       right: sortLeft + ZONE_SORT_BUTTON_WIDTH,
       bottom: zone.bounds.y + headerHeight - buttonMargin,
@@ -3403,7 +5889,9 @@ export class PixiStage {
     frame.lineTo(closeBounds.left + 5, closeBounds.bottom - 5);
     frame.stroke({ width: 1.6, color: 0xf0f3ff, alpha: 0.9 });
 
-    const subzoneLabels: Text[] = [sortGlyph];
+    const variantTabBounds: ZoneHeaderData["variantTabBounds"] = [];
+    const graphHoverRegions: ZoneHeaderData["graphHoverRegions"] = [];
+    const subzoneLabels: Container[] = [sortGlyph];
     if (zone.type === "deck") {
       const boardRects = this.getDeckBoardRects(zone.bounds, zone);
 
@@ -3421,52 +5909,21 @@ export class PixiStage {
         boardRects.sideboard.height,
       );
       frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
-      frame.rect(
-        boardRects.maybeboard.x,
-        boardRects.maybeboard.y,
-        boardRects.maybeboard.width,
-        boardRects.maybeboard.height,
-      );
-      frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
 
-      const labels: Array<{
-        text: string;
-        x: number;
-        y: number;
-      }> = [
-        {
-          text: "Mainboard",
-          x: boardRects.mainboard.x + 8,
-          y: boardRects.mainboard.y + 6,
+      const collectionLabel = new Text({
+        text: "Collection",
+        style: {
+          fontFamily: "Arial",
+          fontSize: 13,
+          fill: 0x98a3de,
+          fontWeight: "bold",
         },
-        {
-          text: "Sideboard",
-          x: boardRects.sideboard.x + 8,
-          y: boardRects.sideboard.y + 6,
-        },
-        {
-          text: "Maybeboard",
-          x: boardRects.maybeboard.x + 8,
-          y: boardRects.maybeboard.y + 6,
-        },
-      ];
-
-      for (const labelInfo of labels) {
-        const label = new Text({
-          text: labelInfo.text,
-          style: {
-            fontFamily: "Arial",
-            fontSize: 13,
-            fill: 0x98a3de,
-            fontWeight: "bold",
-          },
-        });
-        label.x = labelInfo.x;
-        label.y = labelInfo.y;
-        label.zIndex = frame.zIndex + 2;
-        this.zoneContainer.addChild(label);
-        subzoneLabels.push(label);
-      }
+      });
+      collectionLabel.x = boardRects.sideboard.x + 8;
+      collectionLabel.y = boardRects.sideboard.y + 6;
+      collectionLabel.zIndex = frame.zIndex + 2;
+      this.zoneContainer.addChild(collectionLabel);
+      subzoneLabels.push(collectionLabel);
     }
 
     let avatarSprite: CardSprite | null = null;
@@ -3512,10 +5969,11 @@ export class PixiStage {
       },
     });
     title.x = titleX;
+    let titleBottomY = title.y + title.height;
     if (zone.type === "deck" && zone.deckAuthor) {
       title.y = deckHeaderTopY ?? zone.bounds.y + 8;
       const author = new Text({
-        text: zone.deckAuthor,
+        text: this.formatDeckAuthorLabel(zone.deckAuthor),
         style: {
           fontFamily: "Arial",
           fontSize: 12,
@@ -3528,12 +5986,116 @@ export class PixiStage {
       author.zIndex = frame.zIndex + 2;
       this.zoneContainer.addChild(author);
       subzoneLabels.push(author);
+      titleBottomY = author.y + author.height;
     } else if (zone.type === "deck" && deckHeaderTopY !== null) {
       title.y = deckHeaderTopY;
     } else {
       title.y = zone.bounds.y + Math.max(4, (headerHeight - title.height) / 2);
     }
+    if (!(zone.type === "deck" && zone.deckAuthor)) {
+      titleBottomY = title.y + title.height;
+    }
     title.zIndex = frame.zIndex + 2;
+
+    if (zone.type === "deck") {
+      const variants = this.ensureDeckZoneVariants(zone);
+      const activeVariant = this.getActiveDeckZoneVariant(zone);
+      const tabTop = zone.bounds.y + headerHeight - ZONE_DECK_TAB_HEIGHT;
+      let tabCursorX = Math.max(titleX, sortBounds.right + ZONE_DECK_TAB_GAP);
+      const maxTabRight = closeBounds.left - buttonMargin;
+      graphHoverRegions.push(
+        ...this.renderDeckHeaderStats(zone, subzoneLabels, {
+        left: Math.max(titleX, sortBounds.right + ZONE_DECK_TAB_GAP),
+        top: titleBottomY + 3,
+        graphTop: zone.bounds.y + 8,
+        right: maxTabRight,
+        bottom: tabTop - 2,
+        zIndex: frame.zIndex + 2,
+      }),
+      );
+
+      for (const variant of variants) {
+        const tabText = new Text({
+          text: variant.name,
+          style: {
+            fontFamily: "Arial",
+            fontSize: 12,
+            fill: activeVariant?.id === variant.id ? 0xf6f8ff : 0xbfc8f8,
+            fontWeight: activeVariant?.id === variant.id ? "bold" : "normal",
+          },
+        });
+        const tabWidth = Math.max(54, tabText.width + ZONE_DECK_TAB_PADDING_X * 2);
+        if (tabCursorX + tabWidth > maxTabRight) {
+          tabText.destroy();
+          break;
+        }
+
+        frame.roundRect(tabCursorX, tabTop, tabWidth, ZONE_DECK_TAB_HEIGHT, 6);
+        frame.fill({
+          color: activeVariant?.id === variant.id ? 0x3c4f99 : 0x2a3152,
+          alpha: activeVariant?.id === variant.id ? 0.96 : 0.9,
+        });
+        frame.stroke({
+          width: 1,
+          color: activeVariant?.id === variant.id ? 0xbecbff : 0x7f8ed0,
+          alpha: activeVariant?.id === variant.id ? 0.95 : 0.75,
+        });
+
+        tabText.x = tabCursorX + (tabWidth - tabText.width) / 2;
+        tabText.y = tabTop + (ZONE_DECK_TAB_HEIGHT - tabText.height) / 2;
+        tabText.zIndex = frame.zIndex + 2;
+        this.zoneContainer.addChild(tabText);
+        subzoneLabels.push(tabText);
+        variantTabBounds.push({
+          variantId: variant.id,
+          isAdd: false,
+          bounds: {
+            left: tabCursorX,
+            top: tabTop,
+            right: tabCursorX + tabWidth,
+            bottom: tabTop + ZONE_DECK_TAB_HEIGHT,
+          },
+        });
+        tabCursorX += tabWidth + ZONE_DECK_TAB_GAP;
+      }
+
+      if (tabCursorX + ZONE_DECK_ADD_TAB_WIDTH <= maxTabRight) {
+        frame.roundRect(
+          tabCursorX,
+          tabTop,
+          ZONE_DECK_ADD_TAB_WIDTH,
+          ZONE_DECK_TAB_HEIGHT,
+          6,
+        );
+        frame.fill({ color: 0x2a3152, alpha: 0.9 });
+        frame.stroke({ width: 1, color: 0x8d9adb, alpha: 0.8 });
+
+        const addText = new Text({
+          text: "+",
+          style: {
+            fontFamily: "Arial",
+            fontSize: 16,
+            fill: 0xeef2ff,
+            fontWeight: "bold",
+          },
+        });
+        addText.x = tabCursorX + (ZONE_DECK_ADD_TAB_WIDTH - addText.width) / 2;
+        addText.y = tabTop + (ZONE_DECK_TAB_HEIGHT - addText.height) / 2 - 1;
+        addText.zIndex = frame.zIndex + 2;
+        this.zoneContainer.addChild(addText);
+        subzoneLabels.push(addText);
+        variantTabBounds.push({
+          variantId: "",
+          isAdd: true,
+          bounds: {
+            left: tabCursorX,
+            top: tabTop,
+            right: tabCursorX + ZONE_DECK_ADD_TAB_WIDTH,
+            bottom: tabTop + ZONE_DECK_TAB_HEIGHT,
+          },
+        });
+      }
+    }
 
     this.zoneContainer.addChild(frame);
     this.zoneContainer.addChild(sortGlyph);
@@ -3547,6 +6109,8 @@ export class PixiStage {
       },
       closeBounds,
       sortBounds,
+      variantTabBounds,
+      graphHoverRegions,
     });
 
     return { frame, title, subzoneLabels, avatarSprite };
@@ -3560,6 +6124,10 @@ export class PixiStage {
     pinnedZones.forEach((zone, zoneIndex) => {
       const frameData = this.drawZoneFrame(zone, zoneIndex);
       this.zoneFrames.set(zone.id, frameData);
+      const activeDeckCardIds =
+        zone.type === "deck"
+          ? new Set(this.getActiveDeckZoneVariant(zone)?.activeCardIds ?? [])
+          : null;
 
       const stacks = new Map<string, ZoneCardInstance[]>();
       for (const instance of zone.cards) {
@@ -3568,7 +6136,11 @@ export class PixiStage {
         const centerX = instance.x + size.width / 2;
         const centerY = instance.y + size.height / 2;
         const grid = pixelsToSnapGrid(centerX, centerY, isLandscape);
-        const stackKey = `${instance.board ?? "zone"}:${
+        const boardKey =
+          zone.type === "deck"
+            ? this.normalizeDeckBoard(instance.board)
+            : instance.board ?? "zone";
+        const stackKey = `${boardKey}:${
           isLandscape ? "L" : "P"
         }:${grid.x},${grid.y}`;
         let stack = stacks.get(stackKey);
@@ -3581,6 +6153,15 @@ export class PixiStage {
 
       let instanceIndex = 0;
       for (const stack of stacks.values()) {
+        if (zone.type === "deck" && activeDeckCardIds) {
+          stack.sort((left, right) => {
+            const leftActive = activeDeckCardIds.has(left.id);
+            const rightActive = activeDeckCardIds.has(right.id);
+            if (leftActive === rightActive) return 0;
+            return leftActive ? 1 : -1;
+          });
+        }
+
         const stackSize = stack.length;
         const totalOffset = (stackSize - 1) * STACK_OFFSET;
         stack.forEach((instance, stackIndex) => {
@@ -3603,6 +6184,9 @@ export class PixiStage {
           sprite.zIndex = frameData.frame.zIndex + 10 + instanceIndex;
           sprite.loadInitialTexture();
           sprite.updateLOD(this.camera?.zoom ?? 0.1);
+          if (zone.type === "deck" && activeDeckCardIds && !activeDeckCardIds.has(instance.id)) {
+            sprite.alpha = 0.46;
+          }
 
           this.zoneContainer.addChild(sprite);
 
@@ -4157,9 +6741,19 @@ export class PixiStage {
   }
 
   private update(): void {
+    const nowMs = performance.now();
+    if (
+      this.quickTransferState.active &&
+      this.lastPointerScreenPos &&
+      nowMs - this.quickTransferLastTickMs >= 80
+    ) {
+      this.quickTransferLastTickMs = nowMs;
+      this.updateQuickTransferHover(this.lastPointerScreenPos, nowMs);
+    }
+
     // Reveal animation: smooth fade from 0.5 → 1.0 over 500ms
     if (this.revealFading) {
-      const elapsed = performance.now() - this.revealFadeStart;
+      const elapsed = nowMs - this.revealFadeStart;
       const t = Math.min(elapsed / 500, 1);
       const alpha = 0.5 + 0.5 * t;
 

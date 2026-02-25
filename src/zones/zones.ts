@@ -41,6 +41,12 @@ export interface ZoneCardInstance {
   board?: ActiveBoard | null;
 }
 
+export interface ZoneDeckVariant {
+  id: string;
+  name: string;
+  activeCardIds: string[];
+}
+
 export interface ZoneModel {
   id: string;
   name: string;
@@ -51,6 +57,8 @@ export interface ZoneModel {
   deckId?: string;
   avatarCardName?: string | null;
   deckAuthor?: string | null;
+  deckVariants?: ZoneDeckVariant[];
+  activeDeckVariantId?: string | null;
 }
 
 const QUADRANT_SIZE = 12000;
@@ -147,6 +155,13 @@ export function createZoneId(type: ZoneType): string {
  */
 export function createZoneCardId(): string {
   return randomId("zone-card");
+}
+
+/**
+ * Create a unique id for a deck variant persisted on a deck zone.
+ */
+export function createZoneDeckVariantId(): string {
+  return randomId("zone-variant");
 }
 
 /**
@@ -370,7 +385,7 @@ const DECK_BOARD_CARD_TOP = DRAWN_GRID.height;
 const DECK_BOARD_BOTTOM_PADDING = 10;
 const DECK_TYPE_GAP = Math.round(DRAWN_GRID.height * 0.5);
 
-type DeckBoardKey = Exclude<ActiveBoard, "avatar">;
+type DeckBoardKey = "mainboard" | "sideboard";
 type DeckGroupKey = "Minion" | "Magic" | "Aura" | "Artifact" | "Site" | "other";
 const DECK_LAYOUT_TYPE_SEQUENCE: DeckGroupKey[] = [
   "Minion",
@@ -384,7 +399,6 @@ const DECK_LAYOUT_TYPE_SEQUENCE: DeckGroupKey[] = [
 const DECK_EMPTY_BOARD_HEIGHT: Record<DeckBoardKey, number> = {
   mainboard: CARD_SIZE.PORTRAIT.height + 56,
   sideboard: CARD_SIZE.PORTRAIT.height + 44,
-  maybeboard: CARD_SIZE.PORTRAIT.height + 48,
 };
 
 function fitBoundsToCards(
@@ -476,16 +490,25 @@ export function createDeckZone(
   );
 
   const instances: ZoneCardInstance[] = [];
-  const cardsByBoard: Record<DeckBoardKey, DeckCard[]> = {
-    mainboard: deck.boards.mainboard,
-    sideboard: deck.boards.sideboard,
-    maybeboard: deck.boards.maybeboard,
+  const mainActiveCardIds: string[] = [];
+  const cardsByBoard: Record<
+    DeckBoardKey,
+    Array<DeckCard & { activeByDefault: boolean }>
+  > = {
+    mainboard: [
+      ...deck.boards.mainboard.map((card) => ({ ...card, activeByDefault: true })),
+      ...deck.boards.maybeboard.map((card) => ({ ...card, activeByDefault: false })),
+    ],
+    sideboard: deck.boards.sideboard.map((card) => ({
+      ...card,
+      activeByDefault: false,
+    })),
   };
   const bodyLeft = bounds.x + DECK_BOARD_LEFT_PADDING;
   const bodyWidth = bounds.width - DECK_BOARD_LEFT_PADDING * 2;
   let nextBoardTop = bounds.y + ZONE_DECK_HEADER_HEIGHT + DECK_BOARD_LEFT_PADDING;
 
-  (["mainboard", "sideboard", "maybeboard"] as const).forEach((board) => {
+  (["mainboard", "sideboard"] as const).forEach((board) => {
     const boardCards = [...cardsByBoard[board]].sort((left, right) => {
       const leftInfo = cardInfoByName.get(left.name);
       const rightInfo = cardInfoByName.get(right.name);
@@ -504,7 +527,7 @@ export function createDeckZone(
 
       return left.name.localeCompare(right.name);
     });
-    const cardsByType = new Map<DeckGroupKey, DeckCard[]>();
+    const cardsByType = new Map<DeckGroupKey, Array<DeckCard & { activeByDefault: boolean }>>();
     for (const card of boardCards) {
       const cardType = cardInfoByName.get(card.name)?.type;
       const key: DeckGroupKey =
@@ -562,13 +585,17 @@ export function createDeckZone(
 
         const quantity = Math.max(1, Math.floor(card.quantity));
         for (let copy = 0; copy < quantity; copy++) {
+          const instanceId = createZoneCardId();
           instances.push({
-            id: createZoneCardId(),
+            id: instanceId,
             cardName: card.name,
             x: snapped.x,
             y: snapped.y,
             board,
           });
+          if (board === "mainboard" && card.activeByDefault) {
+            mainActiveCardIds.push(instanceId);
+          }
         }
       });
 
@@ -582,6 +609,7 @@ export function createDeckZone(
   });
 
   const avatarCardName = deck.boards.avatar[0]?.name ?? null;
+  const mainVariantId = createZoneDeckVariantId();
 
   const contentFittedBounds = fitBoundsToCards(
     bounds,
@@ -608,6 +636,14 @@ export function createDeckZone(
     cards: instances,
     avatarCardName,
     deckAuthor: deck.author ?? null,
+    deckVariants: [
+      {
+        id: mainVariantId,
+        name: "Main",
+        activeCardIds: mainActiveCardIds,
+      },
+    ],
+    activeDeckVariantId: mainVariantId,
   };
 }
 
