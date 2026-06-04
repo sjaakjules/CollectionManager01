@@ -63,7 +63,6 @@ export interface EditorState {
 }
 
 export interface UIState {
-  sidePanelOpen: boolean;
   loginModalOpen: boolean;
   notifications: Notification[];
   selectedArchetype: string | null;
@@ -98,7 +97,6 @@ export const initialAppState: AppState = {
     activeBoard: 'mainboard',
   },
   ui: {
-    sidePanelOpen: true,
     loginModalOpen: false,
     notifications: [],
     selectedArchetype: null,
@@ -124,7 +122,6 @@ export type AppAction =
   | { type: 'DELETE_DECK'; deckId: string }
   | { type: 'RENAME_DECK'; deckId: string; name: string }
   | { type: 'SET_COLLECTION'; collection: CollectionItem[] }
-  | { type: 'TOGGLE_SIDE_PANEL' }
   | { type: 'TOGGLE_LOGIN_MODAL' }
   | { type: 'ADD_NOTIFICATION'; notification: Omit<Notification, 'id' | 'timestamp'> }
   | { type: 'DISMISS_NOTIFICATION'; id: string }
@@ -283,12 +280,6 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case 'TOGGLE_SIDE_PANEL':
-      return {
-        ...state,
-        ui: { ...state.ui, sidePanelOpen: !state.ui.sidePanelOpen },
-      };
-
     case 'TOGGLE_LOGIN_MODAL':
       return {
         ...state,
@@ -393,10 +384,14 @@ function parseString(value: unknown, fallback = ''): string {
 }
 
 function parseZoneType(value: unknown): ZoneType {
-  if (value === 'custom' || value === 'stack' || value === 'deck') {
-    return value;
+  if (value === 'deck') {
+    return 'deck';
   }
-  return 'custom';
+  // Legacy "custom" zones are now treated as stacks.
+  if (value === 'custom' || value === 'stack') {
+    return 'stack';
+  }
+  return 'stack';
 }
 
 function defaultZoneSize(type: ZoneType): { width: number; height: number } {
@@ -474,6 +469,8 @@ function normalizeZones(value: unknown): ZoneModel[] {
         };
       })
       .filter((entry): entry is ZoneDeckVariant => entry !== null);
+    const cardFilters =
+      type === 'deck' ? ensureCardFilterState(zoneRecord.cardFilters) : undefined;
 
     zones.push({
       id: parseString(zoneRecord.id, createFallbackId('zone')),
@@ -498,6 +495,7 @@ function normalizeZones(value: unknown): ZoneModel[] {
           : null,
       deckVariants,
       activeDeckVariantId: parseString(zoneRecord.activeDeckVariantId).trim() || null,
+      cardFilters,
     });
   }
 

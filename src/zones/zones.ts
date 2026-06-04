@@ -4,7 +4,7 @@
  * Responsibilities:
  * - Define zone/card instance contracts used by reducer + renderer.
  * - Place zones into fixed world quadrants with overlap avoidance.
- * - Build zone payloads for imported decks and stack/named zones.
+ * - Build zone payloads for imported decks and stack zones.
  *
  * Related files:
  * - `src/app/App.tsx` (zone creation/pinning workflows)
@@ -15,6 +15,10 @@
 
 import type { Card, Deck, DeckCard, ActiveBoard, CardType } from "@/data/dataModels";
 import {
+  createDefaultCardFilters,
+  type CardFilterState,
+} from "@/data/cardFilters";
+import {
   CARD_CELL_SPACING,
   CARD_SIZE,
   DRAWN_GRID,
@@ -22,9 +26,9 @@ import {
   snapCardCenter,
 } from "@/rendering/Grid";
 
-export type ZoneType = "custom" | "stack" | "deck";
+export type ZoneType = "stack" | "deck";
 
-export type ZoneQuadrant = "main" | "decks" | "stacks" | "named";
+export type ZoneQuadrant = "main" | "decks" | "stacks";
 
 export interface ZoneBounds {
   x: number;
@@ -59,6 +63,7 @@ export interface ZoneModel {
   deckAuthor?: string | null;
   deckVariants?: ZoneDeckVariant[];
   activeDeckVariantId?: string | null;
+  cardFilters?: CardFilterState;
 }
 
 const QUADRANT_SIZE = 12000;
@@ -92,18 +97,11 @@ export const ZONE_HEADER_HEIGHT = Math.round(HEADER_HEIGHT * 0.75);
 export const ZONE_DECK_HEADER_HEIGHT =
   CARD_SIZE.PORTRAIT.height + 16 + DRAWN_GRID.height;
 export const ZONE_DEFAULT_SIZE = {
-  custom: { width: 980, height: 780 },
   stack: { width: 980, height: 780 },
   deck: { width: 1400, height: 1200 },
 } as const;
 
 export const QUADRANT_BOUNDS: Record<ZoneQuadrant, ZoneBounds> = {
-  named: {
-    x: -QUADRANT_SIZE,
-    y: -QUADRANT_SIZE,
-    width: QUADRANT_SIZE,
-    height: QUADRANT_SIZE,
-  },
   main: {
     x: 0,
     y: -QUADRANT_SIZE,
@@ -117,8 +115,8 @@ export const QUADRANT_BOUNDS: Record<ZoneQuadrant, ZoneBounds> = {
     height: QUADRANT_SIZE,
   },
   decks: {
-    x: 0,
-    y: 0,
+    x: -QUADRANT_SIZE,
+    y: -QUADRANT_SIZE,
     width: QUADRANT_SIZE,
     height: QUADRANT_SIZE,
   },
@@ -135,7 +133,7 @@ function randomId(prefix: string): string {
  * Create a unique zone id using the zone type as prefix.
  *
  * Inputs:
- * - `type`: Zone type (`custom`, `stack`, `deck`).
+ * - `type`: Zone type (`stack`, `deck`; legacy `custom` may still appear in older data).
  *
  * Outputs:
  * - Returns a unique id string.
@@ -175,8 +173,7 @@ export function createZoneDeckVariantId(): string {
  */
 export function getZoneQuadrant(type: ZoneType): ZoneQuadrant {
   if (type === "deck") return "decks";
-  if (type === "stack") return "stacks";
-  return "named";
+  return "stacks";
 }
 
 /**
@@ -243,14 +240,11 @@ export function createZoneBoundsForQuadrant(
   if (quadrant === "main") {
     x = QUADRANT_PADDING + spread;
     y = -size.height - QUADRANT_PADDING - spread;
-  } else if (quadrant === "named") {
+  } else if (quadrant === "decks") {
     x = -size.width - QUADRANT_PADDING - spread;
     y = -size.height - QUADRANT_PADDING - spread;
-  } else if (quadrant === "stacks") {
-    x = -size.width - QUADRANT_PADDING - spread;
-    y = QUADRANT_PADDING + spread;
   } else {
-    x = QUADRANT_PADDING + spread;
+    x = -size.width - QUADRANT_PADDING - spread;
     y = QUADRANT_PADDING + spread;
   }
 
@@ -326,7 +320,7 @@ export function createZoneBoundsForQuadrant(
  * Create an empty pinned zone with quadrant-aware default bounds.
  *
  * Inputs:
- * - `type`: Zone type (`custom`/`stack`/`deck`).
+ * - `type`: Zone type (`stack`/`deck`).
  * - `name`: Display name for the zone.
  * - `existingSameTypeCount`: Count hint for spread offset.
  * - `existingZones`: Existing zones used to avoid overlap.
@@ -357,6 +351,75 @@ export function createEmptyZone(
     id: createZoneId(type),
     name,
     type,
+    pinned: true,
+    bounds,
+    cards: [],
+  };
+}
+
+/**
+ * Create a new stack zone centered on a world-space point.
+ *
+ * Inputs:
+ * - `name`: Display name for the stack.
+ * - `center`: Desired world-space center point (typically viewport center).
+ * - `existingZones`: Existing zones used to avoid immediate overlaps.
+ *
+ * Outputs:
+ * - Returns a pinned stack `ZoneModel`.
+ */
+export function createStackZoneAtWorldPoint(
+  name: string,
+  center: { x: number; y: number },
+  existingZones: ZoneModel[] = [],
+): ZoneModel {
+  const size = ZONE_DEFAULT_SIZE.stack;
+  const baseX =
+    Math.round((center.x - size.width / 2) / DRAWN_GRID.width) * DRAWN_GRID.width;
+  const baseY =
+    Math.round((center.y - size.height / 2) / DRAWN_GRID.height) * DRAWN_GRID.height;
+
+  const occupiedBounds = existingZones
+    .filter((zone) => zone.pinned)
+    .map((zone) => zone.bounds);
+  const overlapsAny = (candidate: ZoneBounds): boolean =>
+    occupiedBounds.some((occupied) => boundsOverlap(candidate, occupied));
+
+  let bounds: ZoneBounds = {
+    x: baseX,
+    y: baseY,
+    width: size.width,
+    height: size.height,
+  };
+
+  if (overlapsAny(bounds)) {
+    const stepX = DRAWN_GRID.width * 2;
+    const stepY = DRAWN_GRID.height * 2;
+    const maxRadius = 18;
+
+    outer: for (let radius = 1; radius <= maxRadius; radius++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+          const candidate: ZoneBounds = {
+            x: baseX + dx * stepX,
+            y: baseY + dy * stepY,
+            width: size.width,
+            height: size.height,
+          };
+          if (!overlapsAny(candidate)) {
+            bounds = candidate;
+            break outer;
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    id: createZoneId("stack"),
+    name,
+    type: "stack",
     pinned: true,
     bounds,
     cards: [],
@@ -644,6 +707,7 @@ export function createDeckZone(
       },
     ],
     activeDeckVariantId: mainVariantId,
+    cardFilters: createDefaultCardFilters(),
   };
 }
 

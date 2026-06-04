@@ -46,7 +46,6 @@ import {
 import {
   lodManager,
   LOD_LEVELS,
-  LOD_ZOOM_THRESHOLDS,
   cardNameToSlug,
 } from "./LODManager";
 import type {
@@ -64,7 +63,17 @@ import {
   flushPendingScoreUpdates,
   type ArchetypeScores,
 } from "@/data/archetypeScores";
+import {
+  applyCardFilters,
+  cloneCardFilterState,
+  createDefaultCardFilters,
+  ensureCardFilterState,
+  isCardFilterActive,
+  isCardFilterCriteriaEmpty,
+  type CardFilterState,
+} from "@/data/cardFilters";
 import { DECK_LIMITS, getThresholdGroup } from "@/data/dataModels";
+import { describeFilterButton } from "@/ui/cardFilterUi";
 import {
   QUADRANT_BOUNDS,
   ZONE_DECK_HEADER_HEIGHT,
@@ -93,6 +102,12 @@ export interface PixiStageConfig {
   onHoveredCardChange?: (cardName: string | null) => void;
   onZonesChange?: (zones: ZoneModel[]) => void;
   onStackZoneHeaderClick?: (zoneId: string) => void;
+  onViewportCenterChange?: (center: { x: number; y: number }) => void;
+  onDeckFilterRequest?: (request: {
+    zoneId: string;
+    editingFilterIndex: number | null;
+    anchorClientRect: { left: number; top: number; right: number; bottom: number };
+  }) => void;
   onCardDragDrop?: (payload: CardDragDropPayload) => void;
 }
 
@@ -168,6 +183,12 @@ interface ZoneHeaderData {
   bounds: { left: number; top: number; right: number; bottom: number };
   closeBounds: { left: number; top: number; right: number; bottom: number };
   sortBounds: { left: number; top: number; right: number; bottom: number };
+  filterBounds: { left: number; top: number; right: number; bottom: number } | null;
+  filterChipBounds: Array<{
+    clauseIndex: number;
+    bounds: { left: number; top: number; right: number; bottom: number };
+    removeBounds: { left: number; top: number; right: number; bottom: number } | null;
+  }>;
   variantTabBounds: Array<{
     variantId: string;
     isAdd: boolean;
@@ -321,6 +342,12 @@ const ZONE_DECK_TAB_PADDING_X = 12;
 const ZONE_DECK_ADD_TAB_WIDTH = 24;
 const ZONE_SORT_BUTTON_WIDTH = 48;
 const ZONE_SORT_BUTTON_HEIGHT = 20;
+const ZONE_FILTER_BUTTON_WIDTH = 52;
+const ZONE_FILTER_BUTTON_HEIGHT = 20;
+const ZONE_FILTER_CHIP_HEIGHT = 18;
+const ZONE_FILTER_CHIP_PADDING_X = 7;
+const ZONE_FILTER_CHIP_REMOVE_SIZE = 12;
+const ZONE_FILTER_CHIP_GAP = 4;
 const ZONE_DECK_AVATAR_CENTER_GRID_X = 1;
 const ZONE_DECK_AVATAR_CENTER_GRID_Y = 2;
 const ZONE_DECK_AVATAR_TITLE_GAP = 20;
@@ -487,6 +514,9 @@ export class PixiStage {
   private deckVariantDialogKeydownHandler: ((event: KeyboardEvent) => void) | null = null;
   private deckVariantDialogOpen = false;
   private hoveredZoneCardKey: string | null = null;
+  private hoveredDeckFilterChip:
+    | { zoneId: string; clauseIndex: number; removeHovered: boolean }
+    | null = null;
   private zones: ZoneModel[] = [];
   private labelSprites: Map<string, LabelSpriteData> = new Map();
   private canvasLabels: CanvasLabel[] = [];
@@ -600,6 +630,8 @@ export class PixiStage {
   private initialRevealCompleted = false;
   private highDetailPreloadRunning = false;
   private highDetailPreloadQueued = false;
+  private catalogHighDetailPreloadRunId = 0;
+  private catalogHighDetailPreloadStarted = false;
 
   // Callbacks
   private onAddToDeck: (cardName: string) => void;
@@ -612,6 +644,12 @@ export class PixiStage {
   private onHoveredCardChange?: (cardName: string | null) => void;
   private onZonesChange?: (zones: ZoneModel[]) => void;
   private onStackZoneHeaderClick?: (zoneId: string) => void;
+  private onViewportCenterChange?: (center: { x: number; y: number }) => void;
+  private onDeckFilterRequest?: (request: {
+    zoneId: string;
+    editingFilterIndex: number | null;
+    anchorClientRect: { left: number; top: number; right: number; bottom: number };
+  }) => void;
   private onCardDragDrop?: (payload: CardDragDropPayload) => void;
   private hoveredCardName: string | null = null;
   private lastPointerScreenPos: { x: number; y: number } | null = null;
@@ -628,6 +666,8 @@ export class PixiStage {
     this.onHoveredCardChange = config.onHoveredCardChange;
     this.onZonesChange = config.onZonesChange;
     this.onStackZoneHeaderClick = config.onStackZoneHeaderClick;
+    this.onViewportCenterChange = config.onViewportCenterChange;
+    this.onDeckFilterRequest = config.onDeckFilterRequest;
     this.onCardDragDrop = config.onCardDragDrop;
 
     this.app = new Application();
@@ -701,6 +741,7 @@ export class PixiStage {
     this.app.ticker.add(this.update.bind(this));
 
     this.isInitialized = true;
+    this.onViewportCenterChange?.(this.camera.getScreenCenter());
 
     if (this.pendingCardSet) {
       this.cards = this.pendingCardSet.cards;
@@ -808,7 +849,20 @@ export class PixiStage {
   private setHoveredCard(cardName: string | null): void {
     if (this.hoveredCardName === cardName) return;
     this.hoveredCardName = cardName;
+    if (cardName) {
+      this.prioritizeHoveredCardHighDetail(cardName);
+    }
     this.onHoveredCardChange?.(cardName);
+  }
+
+  private prioritizeHoveredCardHighDetail(cardName: string): void {
+    void lodManager
+      .preloadTextures([cardName], {
+        lod: LOD_LEVELS.FULL,
+        concurrentLoads: 1,
+        batchSize: 1,
+      })
+      .catch(() => null);
   }
 
   private getRenderResolution(): number {
@@ -816,7 +870,13 @@ export class PixiStage {
       typeof window !== "undefined" && Number.isFinite(window.devicePixelRatio)
         ? window.devicePixelRatio
         : 1;
-    return Math.max(2, dpr || 1);
+    return Math.max(3, (dpr || 1) * 1.5);
+  }
+
+  private configureTextQuality<T extends Text>(text: T): T {
+    text.resolution = this.getRenderResolution();
+    text.roundPixels = true;
+    return text;
   }
 
   private getOpenStacksPanelElement(): HTMLElement | null {
@@ -916,7 +976,7 @@ export class PixiStage {
         stroke: { color: 0x000000, width: options.strokeWidth ?? 2 },
       },
     });
-    label.resolution = this.getRenderResolution();
+    this.configureTextQuality(label);
     label.alpha = 1;
     label.zIndex = 10_000_001;
     label.eventMode = "none";
@@ -1341,6 +1401,11 @@ export class PixiStage {
         activeCardIds: [...variant.activeCardIds],
       })),
       activeDeckVariantId: zone.activeDeckVariantId ?? null,
+      cardFilters: zone.cardFilters
+        ? cloneCardFilterState(zone.cardFilters)
+        : zone.type === "deck"
+          ? createDefaultCardFilters()
+          : undefined,
     }));
   }
 
@@ -1723,7 +1788,7 @@ export class PixiStage {
         stroke: ZONE_DECK_STATS_TEXT_STROKE,
       },
     });
-    text.resolution = this.getRenderResolution();
+    this.configureTextQuality(text);
     text.x = Math.round(options.x);
     text.y = Math.round(options.y);
     text.zIndex = options.zIndex;
@@ -2939,6 +3004,130 @@ export class PixiStage {
     return null;
   }
 
+  private getZoneFilterTargetAtPosition(
+    worldPos: { x: number; y: number },
+  ): ZoneModel | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone || zone.type !== "deck") continue;
+      const filterBounds = this.zoneHeaderBounds.get(zone.id)?.filterBounds;
+      if (!filterBounds) continue;
+      if (this.pointInBounds(worldPos, filterBounds)) {
+        return zone;
+      }
+    }
+    return null;
+  }
+
+  private getDeckFilterChipTargetAtPosition(
+    worldPos: { x: number; y: number },
+  ): { zone: ZoneModel; clauseIndex: number; removeHovered: boolean } | null {
+    const pinnedZones = this.zones.filter((zone) => zone.pinned && zone.type === "deck");
+    for (let i = pinnedZones.length - 1; i >= 0; i--) {
+      const zone = pinnedZones[i];
+      if (!zone) continue;
+      const chipBounds = this.zoneHeaderBounds.get(zone.id)?.filterChipBounds ?? [];
+      for (const chip of chipBounds) {
+        const removeHovered =
+          chip.removeBounds != null && this.pointInBounds(worldPos, chip.removeBounds);
+        if (removeHovered || this.pointInBounds(worldPos, chip.bounds)) {
+          return { zone, clauseIndex: chip.clauseIndex, removeHovered };
+        }
+      }
+    }
+    return null;
+  }
+
+  private updateDeckFilterChipHover(worldPos: { x: number; y: number }): void {
+    const target = this.getDeckFilterChipTargetAtPosition(worldPos);
+    const next = target
+      ? {
+          zoneId: target.zone.id,
+          clauseIndex: target.clauseIndex,
+          removeHovered: target.removeHovered,
+        }
+      : null;
+    const previous = this.hoveredDeckFilterChip;
+    const unchanged =
+      previous?.zoneId === next?.zoneId &&
+      previous?.clauseIndex === next?.clauseIndex &&
+      previous?.removeHovered === next?.removeHovered;
+    if (unchanged) return;
+
+    this.hoveredDeckFilterChip = next;
+    this.rebuildZoneVisuals();
+  }
+
+  private getDeckFilterAnchorClientRect(
+    zoneId: string,
+  ): { left: number; top: number; right: number; bottom: number } | null {
+    if (!this.camera) return null;
+    const filterBounds = this.zoneHeaderBounds.get(zoneId)?.filterBounds;
+    if (!filterBounds) return null;
+
+    const topLeft = this.camera.viewport.toScreen(filterBounds.left, filterBounds.top);
+    const bottomRight = this.camera.viewport.toScreen(filterBounds.right, filterBounds.bottom);
+    const canvasRect = this.app.canvas.getBoundingClientRect();
+    return {
+      left: canvasRect.left + topLeft.x,
+      top: canvasRect.top + topLeft.y,
+      right: canvasRect.left + bottomRight.x,
+      bottom: canvasRect.top + bottomRight.y,
+    };
+  }
+
+  private openDeckFilterRequest(zoneId: string, editingFilterIndex: number | null): void {
+    const anchorClientRect = this.getDeckFilterAnchorClientRect(zoneId);
+    if (!anchorClientRect) return;
+    this.onDeckFilterRequest?.({
+      zoneId,
+      editingFilterIndex,
+      anchorClientRect,
+    });
+  }
+
+  private updateDeckZoneFilters(zoneId: string, filters: CardFilterState): boolean {
+    const zone = this.zones.find((entry) => entry.id === zoneId && entry.type === "deck");
+    if (!zone) return false;
+    zone.cardFilters = ensureCardFilterState(filters);
+    return true;
+  }
+
+  private removeDeckFilterClause(zoneId: string, clauseIndex: number): boolean {
+    const zone = this.zones.find((entry) => entry.id === zoneId && entry.type === "deck");
+    if (!zone) return false;
+
+    const filters = ensureCardFilterState(zone.cardFilters);
+    if (clauseIndex < 0 || clauseIndex >= filters.clauses.length) return false;
+    const nextClauses = filters.clauses.filter((_, index) => index !== clauseIndex);
+    return this.updateDeckZoneFilters(zoneId, {
+      ...filters,
+      clauses: nextClauses,
+    });
+  }
+
+  private getVisibleDeckZoneCards(
+    zone: ZoneModel,
+    filteredCardNameCache: Map<string, Set<string>>,
+  ): ZoneCardInstance[] {
+    const filters = ensureCardFilterState(zone.cardFilters);
+    if (!isCardFilterActive(filters)) {
+      return zone.cards;
+    }
+
+    const cacheKey = JSON.stringify(filters.clauses);
+    let visibleCardNames = filteredCardNameCache.get(cacheKey);
+    if (!visibleCardNames) {
+      visibleCardNames = new Set(
+        applyCardFilters(this.cards, filters).map((card) => card.name),
+      );
+      filteredCardNameCache.set(cacheKey, visibleCardNames);
+    }
+
+    return zone.cards.filter((instance) => visibleCardNames.has(instance.cardName));
+  }
+
   private getZoneVariantTabTargetAtPosition(
     worldPos: { x: number; y: number },
   ): { zone: ZoneModel; variantId: string | null; isAdd: boolean } | null {
@@ -3181,7 +3370,7 @@ export class PixiStage {
 
   private canDuplicateZoneCard(data: ZoneCardSpriteData): boolean {
     const zone = this.zones.find((entry) => entry.id === data.zoneId);
-    return zone?.type === "deck" || zone?.type === "custom";
+    return zone?.type === "deck";
   }
 
   private drawZoneDeleteOverlay(): void {
@@ -3241,7 +3430,7 @@ export class PixiStage {
           stroke: ZONE_DECK_STATS_TEXT_STROKE,
         },
       });
-      text.resolution = this.getRenderResolution();
+      this.configureTextQuality(text);
       text.zIndex = 9_999_999;
       text.visible = false;
       this.zoneContainer.addChild(box);
@@ -3397,6 +3586,7 @@ export class PixiStage {
   }
 
   private updateHoveredFromWorldPos(worldPos: { x: number; y: number }): void {
+    this.updateDeckFilterChipHover(worldPos);
     const zoneCard = this.getZoneCardAtPosition(worldPos);
     const zoneUnderPointer = this.getZoneAtPosition(worldPos);
 
@@ -3467,6 +3657,36 @@ export class PixiStage {
     if (!isRightClick && clickedZoneSort) {
       this.cancelSelectionBox();
       this.sortZoneCards(clickedZoneSort.id);
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    const clickedZoneFilterChip = this.getDeckFilterChipTargetAtPosition(worldPos);
+    if (!isRightClick && clickedZoneFilterChip) {
+      this.cancelSelectionBox();
+      if (clickedZoneFilterChip.removeHovered) {
+        const changed = this.removeDeckFilterClause(
+          clickedZoneFilterChip.zone.id,
+          clickedZoneFilterChip.clauseIndex,
+        );
+        if (changed) {
+          this.rebuildZoneVisuals();
+          this.emitZonesChange();
+        }
+      } else {
+        this.openDeckFilterRequest(
+          clickedZoneFilterChip.zone.id,
+          clickedZoneFilterChip.clauseIndex,
+        );
+      }
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    const clickedZoneFilter = this.getZoneFilterTargetAtPosition(worldPos);
+    if (!isRightClick && clickedZoneFilter) {
+      this.cancelSelectionBox();
+      this.openDeckFilterRequest(clickedZoneFilter.id, null);
       this.updateHoveredFromWorldPos(worldPos);
       return;
     }
@@ -5367,14 +5587,19 @@ export class PixiStage {
 
     this.cards = cards;
     this.collectionFilteredMode = filteredMode;
+    this.catalogHighDetailPreloadRunId += 1;
+    this.catalogHighDetailPreloadStarted = false;
+    this.onBackgroundTextureProgress?.(0, 0);
     this.rebuildCardSprites();
   }
 
   setZones(zones: ZoneModel[]): void {
     this.zones = this.cloneZones(zones);
+    this.hoveredDeckFilterChip = null;
     for (const zone of this.zones) {
       if (zone.type === "deck") {
         this.ensureDeckZoneVariants(zone);
+        zone.cardFilters = ensureCardFilterState(zone.cardFilters);
       }
     }
     this.clearZoneDropPreview();
@@ -5565,6 +5790,7 @@ export class PixiStage {
         this.revealFading = true;
         this.revealFadeStart = performance.now();
         this.queueVisibleHighDetailPreload();
+        this.queueCatalogHighDetailPreload();
       }
     };
 
@@ -5641,6 +5867,8 @@ export class PixiStage {
     this.isDestroyed = true;
     this.setHoveredCard(null);
     this.highDetailPreloadQueued = false;
+    this.catalogHighDetailPreloadRunId += 1;
+    this.catalogHighDetailPreloadStarted = false;
     this.onBackgroundTextureProgress?.(0, 0);
     this.onSelectionChange?.([]);
 
@@ -5822,6 +6050,7 @@ export class PixiStage {
     const closeButtonSize = Math.max(20, Math.min(32, headerHeight - 16));
     const buttonMargin = 6;
     const buttonTop = zone.bounds.y + buttonMargin;
+    const headerBottom = zone.bounds.y + headerHeight;
     const closeButtonRight = zone.bounds.x + zone.bounds.width - buttonMargin;
     frame.zIndex = 2000 + zoneIndex * 1000;
     frame.rect(zone.bounds.x, zone.bounds.y, zone.bounds.width, zone.bounds.height);
@@ -5841,13 +6070,9 @@ export class PixiStage {
     const sortLeft = zone.bounds.x + buttonMargin;
     const sortBounds = {
       right: sortLeft + ZONE_SORT_BUTTON_WIDTH,
-      bottom: zone.bounds.y + headerHeight - buttonMargin,
+      bottom: headerBottom,
       left: sortLeft,
-      top:
-        zone.bounds.y +
-        headerHeight -
-        buttonMargin -
-        ZONE_SORT_BUTTON_HEIGHT,
+      top: headerBottom - ZONE_SORT_BUTTON_HEIGHT,
     };
     frame.roundRect(
       sortBounds.left,
@@ -5859,7 +6084,7 @@ export class PixiStage {
     frame.fill({ color: 0x2a3152, alpha: 0.94 });
     frame.stroke({ width: 1, color: 0x98a4e8, alpha: 0.85 });
 
-    const sortGlyph = new Text({
+    const sortGlyph = this.configureTextQuality(new Text({
       text: "sort",
       style: {
         fontFamily: "Arial",
@@ -5867,12 +6092,156 @@ export class PixiStage {
         fill: 0xeef2ff,
         fontWeight: "bold",
       },
-    });
+    }));
     sortGlyph.x =
       sortBounds.left + (ZONE_SORT_BUTTON_WIDTH - sortGlyph.width) / 2;
     sortGlyph.y =
       sortBounds.top + (ZONE_SORT_BUTTON_HEIGHT - sortGlyph.height) / 2 - 1;
     sortGlyph.zIndex = frame.zIndex + 2;
+    const subzoneLabels: Container[] = [sortGlyph];
+
+    let filterBounds: ZoneHeaderData["filterBounds"] = null;
+    const filterChipBounds: ZoneHeaderData["filterChipBounds"] = [];
+    let filterGlyph: Text | null = null;
+    if (zone.type === "deck") {
+      const filterLeft = sortBounds.right + 4;
+      filterBounds = {
+        left: filterLeft,
+        top: headerBottom - ZONE_FILTER_BUTTON_HEIGHT,
+        right: filterLeft + ZONE_FILTER_BUTTON_WIDTH,
+        bottom: headerBottom,
+      };
+
+      frame.roundRect(
+        filterBounds.left,
+        filterBounds.top,
+        ZONE_FILTER_BUTTON_WIDTH,
+        ZONE_FILTER_BUTTON_HEIGHT,
+        6,
+      );
+      frame.fill({ color: 0x2a3152, alpha: 0.94 });
+      frame.stroke({ width: 1, color: 0x98a4e8, alpha: 0.85 });
+
+      filterGlyph = this.configureTextQuality(new Text({
+        text: "filter",
+        style: {
+          fontFamily: "Arial",
+          fontSize: 10,
+          fill: 0xeef2ff,
+          fontWeight: "bold",
+        },
+      }));
+      filterGlyph.x =
+        filterBounds.left + (ZONE_FILTER_BUTTON_WIDTH - filterGlyph.width) / 2;
+      filterGlyph.y =
+        filterBounds.top + (ZONE_FILTER_BUTTON_HEIGHT - filterGlyph.height) / 2 - 1;
+      filterGlyph.zIndex = frame.zIndex + 2;
+
+      const deckFilters = ensureCardFilterState(zone.cardFilters);
+      const filterChips = deckFilters.clauses
+        .map((clause, index) => ({ clause, index }))
+        .filter(
+          ({ clause }) =>
+            clause.enabled && !isCardFilterCriteriaEmpty(clause.criteria),
+        );
+      const maxChipRight = closeBounds.left - buttonMargin;
+      let chipLeft = filterBounds.right + ZONE_FILTER_CHIP_GAP;
+      for (const { clause, index } of filterChips) {
+        if (chipLeft >= maxChipRight) break;
+        const chipLabel = describeFilterButton(clause.criteria);
+        const removeHovered =
+          this.hoveredDeckFilterChip?.zoneId === zone.id &&
+          this.hoveredDeckFilterChip.clauseIndex === index &&
+          this.hoveredDeckFilterChip.removeHovered;
+        const chipHovered =
+          removeHovered ||
+          (this.hoveredDeckFilterChip?.zoneId === zone.id &&
+            this.hoveredDeckFilterChip.clauseIndex === index);
+        const labelText = this.configureTextQuality(new Text({
+          text: chipLabel,
+          style: {
+            fontFamily: "Arial",
+            fontSize: 10,
+            fill: 0xeef2ff,
+            fontWeight: "bold",
+          },
+        }));
+        const removePad = chipHovered ? ZONE_FILTER_CHIP_REMOVE_SIZE + 4 : 0;
+        const chipWidth = Math.min(
+          150,
+          labelText.width + ZONE_FILTER_CHIP_PADDING_X * 2 + removePad,
+        );
+        if (chipLeft + chipWidth > maxChipRight) {
+          labelText.destroy();
+          break;
+        }
+
+        const chipTop = headerBottom - ZONE_FILTER_CHIP_HEIGHT;
+        frame.roundRect(chipLeft, chipTop, chipWidth, ZONE_FILTER_CHIP_HEIGHT, 5);
+        frame.fill({
+          color: chipHovered ? 0x4257a6 : 0x2a3152,
+          alpha: clause.enabled ? 0.94 : 0.65,
+        });
+        frame.stroke({
+          width: 1,
+          color: chipHovered ? 0xc6d0ff : 0x95a4e6,
+          alpha: 0.85,
+        });
+
+        labelText.x = chipLeft + ZONE_FILTER_CHIP_PADDING_X;
+        labelText.y = chipTop + (ZONE_FILTER_CHIP_HEIGHT - labelText.height) / 2 - 0.5;
+        labelText.zIndex = frame.zIndex + 2;
+        this.zoneContainer.addChild(labelText);
+
+        const chipBounds = {
+          left: chipLeft,
+          top: chipTop,
+          right: chipLeft + chipWidth,
+          bottom: chipTop + ZONE_FILTER_CHIP_HEIGHT,
+        };
+        let removeBounds: {
+          left: number;
+          top: number;
+          right: number;
+          bottom: number;
+        } | null = null;
+
+        if (chipHovered) {
+          const removeSize = ZONE_FILTER_CHIP_REMOVE_SIZE;
+          const removeX = chipBounds.right - removeSize - 3;
+          const removeY = chipTop + (ZONE_FILTER_CHIP_HEIGHT - removeSize) / 2;
+          frame.roundRect(removeX, removeY, removeSize, removeSize, 4);
+          frame.fill({
+            color: removeHovered ? 0x6b3038 : 0x4b4f78,
+            alpha: 0.95,
+          });
+          frame.stroke({
+            width: 1,
+            color: removeHovered ? 0xffb4bf : 0xc0caf7,
+            alpha: 0.92,
+          });
+          frame.moveTo(removeX + 3, removeY + 3);
+          frame.lineTo(removeX + removeSize - 3, removeY + removeSize - 3);
+          frame.moveTo(removeX + removeSize - 3, removeY + 3);
+          frame.lineTo(removeX + 3, removeY + removeSize - 3);
+          frame.stroke({ width: 1.2, color: 0xf8fbff, alpha: 0.92 });
+          removeBounds = {
+            left: removeX,
+            top: removeY,
+            right: removeX + removeSize,
+            bottom: removeY + removeSize,
+          };
+        }
+
+        filterChipBounds.push({
+          clauseIndex: index,
+          bounds: chipBounds,
+          removeBounds,
+        });
+        subzoneLabels.push(labelText);
+        chipLeft += chipWidth + ZONE_FILTER_CHIP_GAP;
+      }
+    }
 
     frame.roundRect(
       closeBounds.left,
@@ -5891,7 +6260,9 @@ export class PixiStage {
 
     const variantTabBounds: ZoneHeaderData["variantTabBounds"] = [];
     const graphHoverRegions: ZoneHeaderData["graphHoverRegions"] = [];
-    const subzoneLabels: Container[] = [sortGlyph];
+    if (filterGlyph) {
+      subzoneLabels.push(filterGlyph);
+    }
     if (zone.type === "deck") {
       const boardRects = this.getDeckBoardRects(zone.bounds, zone);
 
@@ -5910,7 +6281,7 @@ export class PixiStage {
       );
       frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
 
-      const collectionLabel = new Text({
+      const collectionLabel = this.configureTextQuality(new Text({
         text: "Collection",
         style: {
           fontFamily: "Arial",
@@ -5918,7 +6289,7 @@ export class PixiStage {
           fill: 0x98a3de,
           fontWeight: "bold",
         },
-      });
+      }));
       collectionLabel.x = boardRects.sideboard.x + 8;
       collectionLabel.y = boardRects.sideboard.y + 6;
       collectionLabel.zIndex = frame.zIndex + 2;
@@ -5959,7 +6330,7 @@ export class PixiStage {
     }
 
     const titleText = this.getZoneDisplayName(zone);
-    const title = new Text({
+    const title = this.configureTextQuality(new Text({
       text: titleText,
       style: {
         fontFamily: "Arial",
@@ -5967,12 +6338,12 @@ export class PixiStage {
         fill: zone.type === "deck" ? 0xa8b5ff : zone.type === "stack" ? 0x9de5ff : 0xf1d6a0,
         fontWeight: "bold",
       },
-    });
+    }));
     title.x = titleX;
     let titleBottomY = title.y + title.height;
     if (zone.type === "deck" && zone.deckAuthor) {
       title.y = deckHeaderTopY ?? zone.bounds.y + 8;
-      const author = new Text({
+      const author = this.configureTextQuality(new Text({
         text: this.formatDeckAuthorLabel(zone.deckAuthor),
         style: {
           fontFamily: "Arial",
@@ -5980,7 +6351,7 @@ export class PixiStage {
           fill: 0x9aa6de,
           fontWeight: "normal",
         },
-      });
+      }));
       author.x = titleX;
       author.y = title.y + title.height + 2;
       author.zIndex = frame.zIndex + 2;
@@ -6001,11 +6372,17 @@ export class PixiStage {
       const variants = this.ensureDeckZoneVariants(zone);
       const activeVariant = this.getActiveDeckZoneVariant(zone);
       const tabTop = zone.bounds.y + headerHeight - ZONE_DECK_TAB_HEIGHT;
-      let tabCursorX = Math.max(titleX, sortBounds.right + ZONE_DECK_TAB_GAP);
+      const headerToolRight = filterBounds ? filterBounds.right : sortBounds.right;
+      const filterChipRight =
+        filterChipBounds.length > 0
+          ? filterChipBounds[filterChipBounds.length - 1]!.bounds.right
+          : 0;
+      const tabStartX = Math.max(headerToolRight, filterChipRight);
+      let tabCursorX = Math.max(titleX, tabStartX + ZONE_DECK_TAB_GAP);
       const maxTabRight = closeBounds.left - buttonMargin;
       graphHoverRegions.push(
         ...this.renderDeckHeaderStats(zone, subzoneLabels, {
-        left: Math.max(titleX, sortBounds.right + ZONE_DECK_TAB_GAP),
+        left: Math.max(titleX, headerToolRight + ZONE_DECK_TAB_GAP),
         top: titleBottomY + 3,
         graphTop: zone.bounds.y + 8,
         right: maxTabRight,
@@ -6014,8 +6391,19 @@ export class PixiStage {
       }),
       );
 
+      const fitTabLabel = (text: Text, maxWidth: number): void => {
+        if (maxWidth <= 0) {
+          text.text = "";
+          return;
+        }
+        while (text.width > maxWidth && text.text.length > 4) {
+          text.text = `${text.text.slice(0, -4).trimEnd()}...`;
+        }
+      };
+
+      let renderedVariantCount = 0;
       for (const variant of variants) {
-        const tabText = new Text({
+        const tabText = this.configureTextQuality(new Text({
           text: variant.name,
           style: {
             fontFamily: "Arial",
@@ -6023,12 +6411,21 @@ export class PixiStage {
             fill: activeVariant?.id === variant.id ? 0xf6f8ff : 0xbfc8f8,
             fontWeight: activeVariant?.id === variant.id ? "bold" : "normal",
           },
-        });
-        const tabWidth = Math.max(54, tabText.width + ZONE_DECK_TAB_PADDING_X * 2);
-        if (tabCursorX + tabWidth > maxTabRight) {
+        }));
+        const remainingWidth = maxTabRight - tabCursorX;
+        if (remainingWidth < 42) {
           tabText.destroy();
           break;
         }
+        const targetWidth = Math.max(
+          54,
+          Math.min(remainingWidth, tabText.width + ZONE_DECK_TAB_PADDING_X * 2),
+        );
+        fitTabLabel(tabText, targetWidth - ZONE_DECK_TAB_PADDING_X * 2);
+        const tabWidth = Math.max(
+          42,
+          Math.min(remainingWidth, tabText.width + ZONE_DECK_TAB_PADDING_X * 2),
+        );
 
         frame.roundRect(tabCursorX, tabTop, tabWidth, ZONE_DECK_TAB_HEIGHT, 6);
         frame.fill({
@@ -6056,7 +6453,46 @@ export class PixiStage {
             bottom: tabTop + ZONE_DECK_TAB_HEIGHT,
           },
         });
+        renderedVariantCount += 1;
         tabCursorX += tabWidth + ZONE_DECK_TAB_GAP;
+      }
+
+      if (renderedVariantCount === 0 && activeVariant) {
+        const availableWidth = maxTabRight - tabCursorX;
+        if (availableWidth >= 42) {
+          const tabWidth = Math.min(88, availableWidth);
+          const fallbackText = this.configureTextQuality(new Text({
+            text: activeVariant.name,
+            style: {
+              fontFamily: "Arial",
+              fontSize: 12,
+              fill: 0xf6f8ff,
+              fontWeight: "bold",
+            },
+          }));
+          fitTabLabel(fallbackText, tabWidth - ZONE_DECK_TAB_PADDING_X * 2);
+
+          frame.roundRect(tabCursorX, tabTop, tabWidth, ZONE_DECK_TAB_HEIGHT, 6);
+          frame.fill({ color: 0x3c4f99, alpha: 0.96 });
+          frame.stroke({ width: 1, color: 0xbecbff, alpha: 0.95 });
+
+          fallbackText.x = tabCursorX + (tabWidth - fallbackText.width) / 2;
+          fallbackText.y = tabTop + (ZONE_DECK_TAB_HEIGHT - fallbackText.height) / 2;
+          fallbackText.zIndex = frame.zIndex + 2;
+          this.zoneContainer.addChild(fallbackText);
+          subzoneLabels.push(fallbackText);
+          variantTabBounds.push({
+            variantId: activeVariant.id,
+            isAdd: false,
+            bounds: {
+              left: tabCursorX,
+              top: tabTop,
+              right: tabCursorX + tabWidth,
+              bottom: tabTop + ZONE_DECK_TAB_HEIGHT,
+            },
+          });
+          tabCursorX += tabWidth + ZONE_DECK_TAB_GAP;
+        }
       }
 
       if (tabCursorX + ZONE_DECK_ADD_TAB_WIDTH <= maxTabRight) {
@@ -6070,7 +6506,7 @@ export class PixiStage {
         frame.fill({ color: 0x2a3152, alpha: 0.9 });
         frame.stroke({ width: 1, color: 0x8d9adb, alpha: 0.8 });
 
-        const addText = new Text({
+        const addText = this.configureTextQuality(new Text({
           text: "+",
           style: {
             fontFamily: "Arial",
@@ -6078,7 +6514,7 @@ export class PixiStage {
             fill: 0xeef2ff,
             fontWeight: "bold",
           },
-        });
+        }));
         addText.x = tabCursorX + (ZONE_DECK_ADD_TAB_WIDTH - addText.width) / 2;
         addText.y = tabTop + (ZONE_DECK_TAB_HEIGHT - addText.height) / 2 - 1;
         addText.zIndex = frame.zIndex + 2;
@@ -6099,6 +6535,9 @@ export class PixiStage {
 
     this.zoneContainer.addChild(frame);
     this.zoneContainer.addChild(sortGlyph);
+    if (filterGlyph) {
+      this.zoneContainer.addChild(filterGlyph);
+    }
     this.zoneContainer.addChild(title);
     this.zoneHeaderBounds.set(zone.id, {
       bounds: {
@@ -6109,6 +6548,8 @@ export class PixiStage {
       },
       closeBounds,
       sortBounds,
+      filterBounds,
+      filterChipBounds,
       variantTabBounds,
       graphHoverRegions,
     });
@@ -6120,6 +6561,7 @@ export class PixiStage {
     this.clearZoneVisuals();
     if (!this.camera) return;
 
+    const filteredDeckCardNameCache = new Map<string, Set<string>>();
     const pinnedZones = this.zones.filter((zone) => zone.pinned);
     pinnedZones.forEach((zone, zoneIndex) => {
       const frameData = this.drawZoneFrame(zone, zoneIndex);
@@ -6128,9 +6570,13 @@ export class PixiStage {
         zone.type === "deck"
           ? new Set(this.getActiveDeckZoneVariant(zone)?.activeCardIds ?? [])
           : null;
+      const visibleZoneCards =
+        zone.type === "deck"
+          ? this.getVisibleDeckZoneCards(zone, filteredDeckCardNameCache)
+          : zone.cards;
 
       const stacks = new Map<string, ZoneCardInstance[]>();
-      for (const instance of zone.cards) {
+      for (const instance of visibleZoneCards) {
         const isLandscape = this.isLandscapeCard(instance.cardName);
         const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
         const centerX = instance.x + size.width / 2;
@@ -6567,6 +7013,9 @@ export class PixiStage {
   private handleViewportChange(): void {
     this.scheduleCulling();
     this.drawGrid();
+    if (this.camera) {
+      this.onViewportCenterChange?.(this.camera.getScreenCenter());
+    }
   }
 
   private scheduleCulling(): void {
@@ -6667,9 +7116,8 @@ export class PixiStage {
   }
 
   private shouldLoadHighDetail(): boolean {
-    if (!this.camera) return false;
     if (this.isRevealInProgress || !this.initialRevealCompleted) return false;
-    return this.camera.zoom >= LOD_ZOOM_THRESHOLDS.MEDIUM_MAX;
+    return true;
   }
 
   private getVisibleCardNamesForHighDetail(): string[] {
@@ -6700,6 +7148,19 @@ export class PixiStage {
     void this.runVisibleHighDetailPreload();
   }
 
+  private queueCatalogHighDetailPreload(): void {
+    if (this.isDestroyed) return;
+    if (!this.shouldLoadHighDetail()) return;
+    if (this.catalogHighDetailPreloadStarted) return;
+
+    const allNames = this.cards.map((card) => card.name);
+    if (allNames.length === 0) return;
+
+    this.catalogHighDetailPreloadStarted = true;
+    const runId = this.catalogHighDetailPreloadRunId;
+    void this.runCatalogHighDetailPreload(allNames, runId);
+  }
+
   private async runVisibleHighDetailPreload(): Promise<void> {
     if (!this.shouldLoadHighDetail()) {
       this.onBackgroundTextureProgress?.(0, 0);
@@ -6724,6 +7185,25 @@ export class PixiStage {
       if (this.highDetailPreloadQueued) {
         this.highDetailPreloadQueued = false;
         this.queueVisibleHighDetailPreload();
+      }
+    }
+  }
+
+  private async runCatalogHighDetailPreload(
+    cardNames: string[],
+    runId: number,
+  ): Promise<void> {
+    try {
+      await lodManager.preloadFullTextures(cardNames, (loaded, total) => {
+        if (this.isDestroyed) return;
+        if (runId !== this.catalogHighDetailPreloadRunId) return;
+        this.onBackgroundTextureProgress?.(loaded, total);
+      });
+    } catch {
+      // Keep UI responsive even if individual texture loads fail.
+    } finally {
+      if (runId === this.catalogHighDetailPreloadRunId) {
+        this.onBackgroundTextureProgress?.(0, 0);
       }
     }
   }

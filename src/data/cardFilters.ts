@@ -43,6 +43,27 @@ export interface CardFilterState {
   clauses: CardFilterClause[];
 }
 
+export function cloneCardFilterCriteria(criteria: CardFilterCriteria): CardFilterCriteria {
+  return {
+    ...criteria,
+    sets: [...criteria.sets],
+    types: [...criteria.types],
+    rarities: [...criteria.rarities],
+    thresholds: [...criteria.thresholds],
+  };
+}
+
+export function cloneCardFilterState(filters: CardFilterState): CardFilterState {
+  const safeFilters = ensureCardFilterState(filters);
+  return {
+    draft: cloneCardFilterCriteria(safeFilters.draft),
+    clauses: safeFilters.clauses.map((clause) => ({
+      enabled: clause.enabled,
+      criteria: cloneCardFilterCriteria(clause.criteria),
+    })),
+  };
+}
+
 /**
  * Build a blank filter criteria object with neutral defaults.
  *
@@ -276,7 +297,8 @@ export function isCardFilterCriteriaEmpty(criteria: CardFilterCriteria): boolean
  * - Returns `true` when at least one enabled, non-empty clause exists.
  */
 export function isCardFilterActive(filters: CardFilterState): boolean {
-  return ensureCardFilterState(filters).clauses.some(
+  const safeFilters = ensureCardFilterState(filters);
+  return safeFilters.clauses.some(
     (clause) => clause.enabled && !isCardFilterCriteriaEmpty(clause.criteria),
   );
 }

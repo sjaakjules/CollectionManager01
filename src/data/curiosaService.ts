@@ -12,7 +12,7 @@
  * Respects rate limits via x-ratelimit-* response headers.
  *
  * Related files:
- * - `src/ui/BottomPanel.tsx` and `src/ui/ZonesPanel.tsx` (deck URL import flows)
+ * - `src/ui/BottomPanel.tsx` (deck URL import flow)
  * - `src/data/importExport.ts` (text-based import/export support)
  * - `vite.config.ts` and `public/_redirects` (proxy routing)
  */

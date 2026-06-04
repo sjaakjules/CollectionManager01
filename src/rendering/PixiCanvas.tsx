@@ -39,6 +39,12 @@ interface PixiCanvasProps {
   onCardDragDrop?: (payload: CardDragDropPayload) => void;
   onZonesChange?: (zones: ZoneModel[]) => void;
   onStackZoneHeaderClick?: (zoneId: string) => void;
+  onViewportCenterChange?: (center: { x: number; y: number }) => void;
+  onDeckFilterRequest?: (request: {
+    zoneId: string;
+    editingFilterIndex: number | null;
+    anchorClientRect: { left: number; top: number; right: number; bottom: number };
+  }) => void;
   focusZoneRequest?: { zoneId: string; nonce: number } | null;
 }
 
@@ -62,6 +68,8 @@ export function PixiCanvas({
   onCardDragDrop,
   onZonesChange,
   onStackZoneHeaderClick,
+  onViewportCenterChange,
+  onDeckFilterRequest,
   focusZoneRequest,
 }: PixiCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +92,7 @@ export function PixiCanvas({
     total: number;
   } | null>(null);
   const [hoveredCardName, setHoveredCardName] = useState<string | null>(null);
-  const [isPointerOverStacksPanel, setIsPointerOverStacksPanel] = useState(false);
+  const [isPointerOverOverlayUi, setIsPointerOverOverlayUi] = useState(false);
 
   const filteredCards = useMemo(
     () => applyCardFilters(state.cards, cardFilters),
@@ -153,6 +161,10 @@ export function PixiCanvas({
   zonesChangeRef.current = onZonesChange;
   const stackZoneHeaderClickRef = useRef(onStackZoneHeaderClick);
   stackZoneHeaderClickRef.current = onStackZoneHeaderClick;
+  const viewportCenterRef = useRef(onViewportCenterChange);
+  viewportCenterRef.current = onViewportCenterChange;
+  const deckFilterRequestRef = useRef(onDeckFilterRequest);
+  deckFilterRequestRef.current = onDeckFilterRequest;
 
   // Initialize PixiJS stage
   useEffect(() => {
@@ -212,6 +224,12 @@ export function PixiCanvas({
       },
       onStackZoneHeaderClick: (zoneId) => {
         stackZoneHeaderClickRef.current?.(zoneId);
+      },
+      onViewportCenterChange: (center) => {
+        viewportCenterRef.current?.(center);
+      },
+      onDeckFilterRequest: (request) => {
+        deckFilterRequestRef.current?.(request);
       },
     });
 
@@ -280,12 +298,14 @@ export function PixiCanvas({
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
-      const overStacksPanel =
+      const overOverlayUi =
         event.target instanceof Element &&
-        !!event.target.closest(".stacks-panel, .zones-slide-panel, .zones-tabs");
+        !!event.target.closest(
+          ".stacks-panel, .stacks-tabs, .bottom-folder-shell, .bottom-folder-tabs, .top-login-button",
+        );
 
-      setIsPointerOverStacksPanel((prev) =>
-        prev === overStacksPanel ? prev : overStacksPanel,
+      setIsPointerOverOverlayUi((prev) =>
+        prev === overOverlayUi ? prev : overOverlayUi,
       );
     };
 
@@ -337,7 +357,7 @@ export function PixiCanvas({
           total={backgroundLoadProgress.total}
         />
       )}
-      {hoveredCardPreviewSrc && !isPointerOverStacksPanel && (
+      {hoveredCardPreviewSrc && !isPointerOverOverlayUi && (
         <div
           className={`card-hover-preview ${hoveredCardIsLandscape ? "landscape" : ""}`}
           aria-hidden="true"

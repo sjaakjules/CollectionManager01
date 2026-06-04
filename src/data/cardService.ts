@@ -14,7 +14,7 @@
  */
 
 import type { Card } from "./dataModels";
-import { get, set, del } from "idb-keyval";
+import { get, set } from "idb-keyval";
 
 // Always fetch via same-origin to avoid CORS.
 // - DEV: Vite should proxy this path (see vite.config.ts).
@@ -73,68 +73,87 @@ export async function fetchCards(): Promise<Card[]> {
   }
 }
 
-/**
- * Clear cache and force a fresh network fetch.
- *
- * Inputs:
- * - None.
- *
- * Outputs:
- * - Resolves to a fresh `Card[]` payload.
- */
-export async function refreshCards(): Promise<Card[]> {
-  await clearCardCache();
-  return fetchCards();
+export interface CardFilterOptions {
+  sets: string[];
+  types: string[];
+  rarities: string[];
+  artists: string[];
+  subTypes: string[];
+}
+
+const CARD_TYPE_ORDER = ['Avatar', 'Minion', 'Magic', 'Aura', 'Artifact', 'Site'];
+const CARD_RARITY_ORDER = ['Ordinary', 'Exceptional', 'Elite', 'Unique'];
+
+function parseSubTypeTokens(raw: string): string[] {
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+  return trimmed
+    .split(/[,/|]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
 }
 
 /**
- * Lookup a card by name (case-insensitive).
- *
- * Inputs:
- * - `cards`: Card catalog to search.
- * - `name`: Card name to match.
- *
- * Outputs:
- * - Returns the matching `Card` when found, otherwise `undefined`.
- */
-export function findCardByName(cards: Card[], name: string): Card | undefined {
-  return cards.find((c) => c.name.toLowerCase() === name.toLowerCase());
-}
-
-/**
- * Build sorted list of unique guardian types.
+ * Build sorted filter option lists from card metadata in one pass.
  *
  * Inputs:
  * - `cards`: Card catalog to summarize.
  *
  * Outputs:
- * - Returns sorted unique type names.
+ * - Returns unique/sorted options for sets, types, rarities, artists, and sub-types.
  */
-export function getCardTypes(cards: Card[]): string[] {
+export function buildCardFilterOptions(cards: Card[]): CardFilterOptions {
+  const sets = new Set<string>();
   const types = new Set<string>();
-  for (const card of cards) {
-    types.add(card.guardian.type);
-  }
-  return Array.from(types).sort();
-}
+  const rarities = new Set<string>();
+  const artists = new Set<string>();
+  const subTypes = new Set<string>();
 
-/**
- * Build sorted list of unique card element strings.
- *
- * Inputs:
- * - `cards`: Card catalog to summarize.
- *
- * Outputs:
- * - Returns sorted unique element names.
- */
-export function getElements(cards: Card[]): string[] {
-  const elements = new Set<string>();
   for (const card of cards) {
-    if (card.elements) {
-      elements.add(card.elements);
+    if (typeof card.guardian.type === 'string' && card.guardian.type.trim()) {
+      types.add(card.guardian.type.trim());
+    }
+    if (typeof card.guardian.rarity === 'string' && card.guardian.rarity.trim()) {
+      rarities.add(card.guardian.rarity.trim());
+    }
+
+    for (const setEntry of card.sets) {
+      if (typeof setEntry.name === 'string' && setEntry.name.trim()) {
+        sets.add(setEntry.name.trim());
+      }
+      for (const variant of setEntry.variants) {
+        if (variant.artist.trim()) {
+          artists.add(variant.artist.trim());
+        }
+      }
+    }
+
+    for (const token of parseSubTypeTokens(card.subTypes)) {
+      subTypes.add(token);
     }
   }
-  return Array.from(elements).sort();
+
+  return {
+    sets: [...sets].sort((a, b) => a.localeCompare(b)),
+    types: [...types].sort((a, b) => {
+      const aIndex = CARD_TYPE_ORDER.indexOf(a);
+      const bIndex = CARD_TYPE_ORDER.indexOf(b);
+      const safeA = aIndex === -1 ? CARD_TYPE_ORDER.length : aIndex;
+      const safeB = bIndex === -1 ? CARD_TYPE_ORDER.length : bIndex;
+      if (safeA !== safeB) return safeA - safeB;
+      return a.localeCompare(b);
+    }),
+    rarities: [...rarities].sort((a, b) => {
+      const aIndex = CARD_RARITY_ORDER.indexOf(a);
+      const bIndex = CARD_RARITY_ORDER.indexOf(b);
+      const safeA = aIndex === -1 ? CARD_RARITY_ORDER.length : aIndex;
+      const safeB = bIndex === -1 ? CARD_RARITY_ORDER.length : bIndex;
+      if (safeA !== safeB) return safeA - safeB;
+      return a.localeCompare(b);
+    }),
+    artists: [...artists].sort((a, b) => a.localeCompare(b)),
+    subTypes: [...subTypes].sort((a, b) => a.localeCompare(b)),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -209,14 +228,6 @@ async function cacheCards(cards: Card[]): Promise<void> {
     });
   } catch (error) {
     console.warn("Failed to cache cards:", error);
-  }
-}
-
-async function clearCardCache(): Promise<void> {
-  try {
-    await del(CACHE_KEY);
-  } catch (error) {
-    console.warn("Failed to clear card cache:", error);
   }
 }
 

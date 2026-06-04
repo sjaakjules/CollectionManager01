@@ -19,7 +19,7 @@
  * - `src/zones/zones.ts` (zone creation and placement utilities)
  */
 
-import { useReducer, useEffect, useState, useCallback, useMemo } from 'react';
+import { useReducer, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   AppContext,
   appReducer,
@@ -27,18 +27,19 @@ import {
 } from './AppState';
 import { initializeApp } from './Startup';
 import { PixiCanvas } from '@/rendering/PixiCanvas';
-// SidePanel kept for future use
-// import { SidePanel } from '@/ui/SidePanel';
 import { LoginModal } from '@/ui/LoginModal';
 import { Notifications } from '@/ui/Notifications';
 import { BottomPanel } from '@/ui/BottomPanel';
+import { DeckFilterPopover } from '@/ui/DeckFilterPopover';
 import { StacksPanel } from '@/ui/StacksPanel';
 import { saveUserData } from '@/data/userStorage';
 import { queueSync, flushSync } from '@/data/userSync';
 import type { Deck } from '@/data/dataModels';
+import type { CardFilterState } from '@/data/cardFilters';
 import {
   createDeckZone,
   createEmptyZone,
+  createStackZoneAtWorldPoint,
   cardNameToOrientationMap,
   moveZoneIntoQuadrantPreservingCards,
   sanitizeDeckZoneName,
@@ -71,7 +72,14 @@ export function App() {
     stackId: string;
     nonce: number;
   } | null>(null);
-  const zones = state.userData?.zones ?? [];
+  const [deckFilterRequest, setDeckFilterRequest] = useState<{
+    zoneId: string;
+    editingFilterIndex: number | null;
+    anchorClientRect: { left: number; top: number; right: number; bottom: number };
+    nonce: number;
+  } | null>(null);
+  const viewportCenterRef = useRef<{ x: number; y: number } | null>(null);
+  const zones = useMemo(() => state.userData?.zones ?? [], [state.userData?.zones]);
   const cardOrientationMap = useMemo(
     () => cardNameToOrientationMap(state.cards),
     [state.cards],
@@ -84,34 +92,19 @@ export function App() {
     [dispatch],
   );
 
-  const createNamedZone = useCallback((name: string): string | null => {
-    const trimmed = name.trim();
-    if (!trimmed) return null;
-
-    const created = createEmptyZone(
-      'custom',
-      trimmed,
-      zones.filter((zone) => zone.type === 'custom').length,
-      zones,
-    );
-    const next = [...zones, created];
-    dispatch({ type: 'SET_ZONES', zones: next });
-    if (created) {
-      setFocusZoneRequest({ zoneId: created.id, nonce: Date.now() });
-    }
-    return created.id;
-  }, [dispatch, zones]);
-
   const createStackZone = useCallback((name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return null;
 
-    const zone = createEmptyZone(
-      'stack',
-      trimmed,
-      zones.filter((entry) => entry.type === 'stack').length,
-      zones,
-    );
+    const center = viewportCenterRef.current;
+    const zone = center
+      ? createStackZoneAtWorldPoint(trimmed, center, zones)
+      : createEmptyZone(
+          'stack',
+          trimmed,
+          zones.filter((entry) => entry.type === 'stack').length,
+          zones,
+        );
     const createdId = zone.id;
     dispatch({ type: 'SET_ZONES', zones: [...zones, zone] });
 
@@ -177,6 +170,9 @@ export function App() {
       if (zone.id !== zoneId) return zone;
       if (zone.pinned === pinned) return zone;
       if (!pinned) return { ...zone, pinned: false };
+      if (zone.type === 'stack') {
+        return { ...zone, pinned: true };
+      }
 
       return moveZoneIntoQuadrantPreservingCards(
         { ...zone, pinned: true },
@@ -196,6 +192,9 @@ export function App() {
     const nextZones = zones.map((zone) => {
       if (zone.id !== zoneId) return zone;
       if (zone.pinned) return zone;
+      if (zone.type === 'stack') {
+        return { ...zone, pinned: true };
+      }
       return moveZoneIntoQuadrantPreservingCards(
         { ...zone, pinned: true },
         zones.filter((entry) => entry.type === zone.type && entry.pinned).length,
@@ -215,6 +214,32 @@ export function App() {
     });
     dispatch({ type: 'SET_ZONES', zones: nextZones });
   }, [dispatch, zones]);
+
+  const setDeckZoneFilters = useCallback(
+    (zoneId: string, filters: CardFilterState) => {
+      const nextZones = zones.map((zone) => {
+        if (zone.id !== zoneId || zone.type !== 'deck') return zone;
+        return { ...zone, cardFilters: filters };
+      });
+      dispatch({ type: 'SET_ZONES', zones: nextZones });
+    },
+    [dispatch, zones],
+  );
+
+  const activeDeckFilterZone = useMemo(() => {
+    if (!deckFilterRequest) return null;
+    return (
+      zones.find(
+        (zone) => zone.id === deckFilterRequest.zoneId && zone.type === 'deck',
+      ) ?? null
+    );
+  }, [deckFilterRequest, zones]);
+
+  useEffect(() => {
+    if (!deckFilterRequest) return;
+    if (activeDeckFilterZone) return;
+    setDeckFilterRequest(null);
+  }, [activeDeckFilterZone, deckFilterRequest]);
 
   useEffect(() => {
     let cancelled = false;
@@ -340,6 +365,12 @@ export function App() {
           onStackZoneHeaderClick={(zoneId) =>
             setOpenStackRequest({ stackId: zoneId, nonce: Date.now() })
           }
+          onViewportCenterChange={(center) => {
+            viewportCenterRef.current = center;
+          }}
+          onDeckFilterRequest={(request) =>
+            setDeckFilterRequest({ ...request, nonce: Date.now() })
+          }
           focusZoneRequest={focusZoneRequest}
         />
         <StacksPanel
@@ -352,10 +383,18 @@ export function App() {
         />
         <BottomPanel
           zones={zones}
-          onCreateNamedZone={createNamedZone}
           onCreateDeckZone={createDeckZoneFromDeck}
           onDeleteZone={deleteZone}
           onFocusZone={focusZone}
+        />
+        <DeckFilterPopover
+          zone={activeDeckFilterZone}
+          cards={state.cards}
+          anchorRect={deckFilterRequest?.anchorClientRect ?? null}
+          requestNonce={deckFilterRequest?.nonce ?? 0}
+          requestedEditingFilterIndex={deckFilterRequest?.editingFilterIndex ?? null}
+          onUpdateZoneFilters={setDeckZoneFilters}
+          onClose={() => setDeckFilterRequest(null)}
         />
         <LoginModal />
         <Notifications />

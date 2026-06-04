@@ -315,11 +315,8 @@ export class CardSprite extends Container {
   // ============================================================================
 
   private onPointerOver(): void {
-    // Keep hover snappy when already in full-LOD mode, but avoid triggering
-    // full-resolution downloads while zoomed out.
-    if (this.currentLOD === LOD_LEVELS.FULL) {
-      this.loadTexture(LOD_LEVELS.FULL);
-    }
+    // Hovered cards are prioritized so detail snaps in quickly regardless of zoom.
+    this.loadTexture(LOD_LEVELS.FULL);
   }
 
   private onPointerOut(): void {
