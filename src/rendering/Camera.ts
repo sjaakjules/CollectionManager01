@@ -51,6 +51,7 @@ export class Camera {
   private onZoomChange?: (zoom: number) => void;
   private onViewportChange?: () => void;
   private currentZoom: number = CAMERA_DEFAULTS.INITIAL_ZOOM;
+  private readonly handleResizeBound = this.handleResize.bind(this);
 
   constructor(config: CameraConfig) {
     this.onZoomChange = config.onZoomChange;
@@ -89,7 +90,7 @@ export class Camera {
     this.viewport.on('moved', this.handleViewportMove.bind(this));
 
     // Handle window resize
-    window.addEventListener('resize', this.handleResize.bind(this));
+    window.addEventListener('resize', this.handleResizeBound);
   }
 
   // ============================================================================
@@ -202,7 +203,7 @@ export class Camera {
   }
 
   destroy(): void {
-    window.removeEventListener('resize', this.handleResize.bind(this));
+    window.removeEventListener('resize', this.handleResizeBound);
     this.viewport.destroy();
   }
 

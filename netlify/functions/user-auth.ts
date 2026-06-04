@@ -35,6 +35,11 @@ interface CanvasLabelPayload {
   y: number;
 }
 
+type CanvasAreaPayload = Record<string, unknown> & {
+  id?: string;
+  type?: "stack" | "deck";
+};
+
 interface UserDataPayload {
   name?: string;
   id?: string;
@@ -45,6 +50,7 @@ interface UserDataPayload {
     __meta?: { categories: string[] };
   };
   canvasLabels?: CanvasLabelPayload[];
+  canvasAreas?: CanvasAreaPayload[];
 }
 
 function headers(): Record<string, string> {
@@ -103,10 +109,24 @@ function createEmptyUserData(userId: string, username: string): UserDataPayload 
     collection: [],
     selectedArchetype: null,
     canvasLabels: [],
+    canvasAreas: [],
   };
 }
 
-function sanitizeUserData(
+function sanitizeCanvasAreas(value: unknown): CanvasAreaPayload[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((area): area is CanvasAreaPayload => {
+    if (!area || typeof area !== "object" || Array.isArray(area)) return false;
+    const obj = area as Record<string, unknown>;
+    return (
+      typeof obj.id === "string" &&
+      typeof obj.name === "string" &&
+      (obj.type === "stack" || obj.type === "deck")
+    );
+  });
+}
+
+export function sanitizeUserData(
   payload: UserDataPayload,
   userId: string,
   username: string
@@ -124,7 +144,9 @@ function sanitizeUserData(
           typeof label?.id === "string" &&
           typeof label?.text === "string" &&
           typeof label?.x === "number" &&
-          typeof label?.y === "number"
+          Number.isFinite(label.x) &&
+          typeof label?.y === "number" &&
+          Number.isFinite(label.y)
         );
       })
     : [];
@@ -134,6 +156,7 @@ function sanitizeUserData(
     !Array.isArray(payload.archetypeScores)
       ? payload.archetypeScores
       : undefined;
+  const canvasAreas = sanitizeCanvasAreas(payload.canvasAreas);
 
   return {
     name: username,
@@ -143,6 +166,7 @@ function sanitizeUserData(
     selectedArchetype,
     canvasLabels,
     archetypeScores,
+    canvasAreas,
   };
 }
 

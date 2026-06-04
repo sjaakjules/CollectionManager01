@@ -1,15 +1,15 @@
 /**
- * Left-side stacks panel for creating, browsing, and filtering stack zones.
+ * Left-side stacks panel for creating, browsing, and filtering stacks.
  *
  * Responsibilities:
- * - List stack zones and open a stack detail drawer.
+ * - List stacks and open a stack detail drawer.
  * - Trigger stack creation and canvas focus actions.
  * - Filter visible stack cards by threshold group and card orientation metadata.
  *
  * Related files:
- * - `src/zones/zones.ts` (stack zone model)
- * - `src/rendering/PixiStage.ts` (stack zone interactions on canvas)
- * - `src/app/App.tsx` (panel callbacks and zone state updates)
+ * - `src/canvas/canvasAreas.ts` (stack canvas model)
+ * - `src/rendering/PixiStage.ts` (stack interactions on canvas)
+ * - `src/app/App.tsx` (panel callbacks and canvas state updates)
  */
 
 import { useEffect, useMemo, useState, useCallback, type CSSProperties } from "react";
@@ -20,14 +20,14 @@ import {
 } from "@/data/dataModels";
 import { cardNameToSlug } from "@/rendering/LODManager";
 import { useAppState } from "@/app/AppState";
-import type { ZoneModel } from "@/zones/zones";
+import type { CanvasArea } from "@/canvas/canvasAreas";
 
 interface StacksPanelProps {
-  zones: ZoneModel[];
+  canvasAreas: CanvasArea[];
   onCreateStack: (name: string) => string | null;
-  onSetZonePinned: (zoneId: string, pinned: boolean) => void;
-  onFocusZone: (zoneId: string) => void;
-  onRemoveCardFromStack: (zoneId: string, cardName: string) => void;
+  onSetCanvasAreaPinned: (canvasAreaId: string, pinned: boolean) => void;
+  onFocusCanvasArea: (canvasAreaId: string) => void;
+  onRemoveCardFromStack: (stackId: string, cardName: string) => void;
   openStackRequest?: { stackId: string; nonce: number } | null;
 }
 
@@ -50,13 +50,13 @@ const STACK_ELEMENT_FILTERS: Array<{
 ];
 
 /**
- * Render the stack-zone tabs and stack-card drawer UI.
+ * Render stack tabs and stack-card drawer UI.
  *
  * Inputs:
- * - `zones`: Full zone list; stack zones are filtered from this array.
- * - `onCreateStack`: Callback to create a new stack zone.
- * - `onSetZonePinned`: Callback to pin/unpin a stack on canvas.
- * - `onFocusZone`: Callback to center camera on a zone.
+ * - `canvasAreas`: Full canvas list; stacks are filtered from this array.
+ * - `onCreateStack`: Callback to create a new stack.
+ * - `onSetCanvasAreaPinned`: Callback to pin/unpin a stack on canvas.
+ * - `onFocusCanvasArea`: Callback to center camera on a canvas area.
  * - `onRemoveCardFromStack`: Callback to remove a card from the active stack.
  * - `openStackRequest`: Optional external request to open a specific stack.
  *
@@ -64,10 +64,10 @@ const STACK_ELEMENT_FILTERS: Array<{
  * - Returns React markup for tabs + panel; user actions call callbacks.
  */
 export function StacksPanel({
-  zones,
+  canvasAreas,
   onCreateStack,
-  onSetZonePinned,
-  onFocusZone,
+  onSetCanvasAreaPinned,
+  onFocusCanvasArea,
   onRemoveCardFromStack,
   openStackRequest,
 }: StacksPanelProps) {
@@ -82,8 +82,8 @@ export function StacksPanel({
   >([]);
 
   const stacks = useMemo(
-    () => zones.filter((zone) => zone.type === "stack"),
-    [zones],
+    () => canvasAreas.filter((area) => area.type === "stack"),
+    [canvasAreas],
   );
 
   const cardMetadata = useMemo(() => {
@@ -234,9 +234,9 @@ export function StacksPanel({
 
   const centerStackOnCanvas = useCallback(() => {
     if (!activeStack) return;
-    onSetZonePinned(activeStack.id, true);
-    onFocusZone(activeStack.id);
-  }, [activeStack, onFocusZone, onSetZonePinned]);
+    onSetCanvasAreaPinned(activeStack.id, true);
+    onFocusCanvasArea(activeStack.id);
+  }, [activeStack, onFocusCanvasArea, onSetCanvasAreaPinned]);
 
   return (
     <div className={`stacks-shell ${tabsExpanded ? "tabs-expanded" : ""}`}>
@@ -260,11 +260,11 @@ export function StacksPanel({
             key={stack.id}
             type="button"
             className={`stack-tab ${activeStackId === stack.id ? "active" : ""}`}
-            data-stack-zone-id={stack.id}
+            data-stack-area-id={stack.id}
             onClick={() => setActiveStackId(stack.id)}
             onDoubleClick={() => {
               setActiveStackId(stack.id);
-              onFocusZone(stack.id);
+              onFocusCanvasArea(stack.id);
             }}
             title={stack.name}
           >
@@ -275,7 +275,7 @@ export function StacksPanel({
 
       <div
         className={`stacks-panel ${activeStack ? "open" : ""}`}
-        data-stack-zone-id={activeStack?.id ?? ""}
+        data-stack-area-id={activeStack?.id ?? ""}
         onMouseEnter={() => setHoveringPanel(true)}
         onMouseLeave={() => setHoveringPanel(false)}
       >

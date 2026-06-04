@@ -4,27 +4,27 @@ Tracks changes that are still unimplemented or only partially implemented.
 
 ## Critical Correctness
 
-- [ ] Ensure backend/dev auth handlers accept the final stack/deck workspace payload shape used by the client (`netlify/functions/user-auth.ts`, `vite.config.ts`).
+- [x] Ensure backend/dev auth handlers accept the final stack/deck workspace payload shape used by the client (`netlify/functions/user-auth.ts`, `vite.config.ts`).
 - [ ] Fix `Camera` listener teardown bug caused by `bind` mismatch (`src/rendering/Camera.ts:92` and `src/rendering/Camera.ts:205`).
 - [ ] Clear current lint blockers: remove forbidden non-null assertions (`src/data/dataModels.ts:293`, `src/data/importExport.ts:168`, `src/data/importExport.ts:177`, `src/data/importExport.ts:178`, `src/data/importExport.ts:194`, `src/data/importExport.ts:268`) and switch `avatarCount` to `const` (`src/rules/deckRules.ts:59`).
-- [x] After Zones -> Stacks + Decks migration lands, rerun lint and resolve remaining `react-hooks/exhaustive-deps` warnings in the refactored `App` flow (replaces current `zones` callback warning at `src/app/App.tsx:74`).
+- [x] After stack/deck canvas migration lands, rerun lint and resolve remaining `react-hooks/exhaustive-deps` warnings in the refactored `App` flow.
 
-## Zones -> Stacks + Decks Migration
+## Stack/Deck Canvas Migration
 
-This section is the ordering gate for workspace-related TODOs below. Execute this migration before stack/deck UI cleanup and follow-on behavior tuning.
+This section tracks cleanup for the stack/deck canvas model.
 
 ### 1. Scope and Data Model
 
-- [x] Lock product direction: remove generic standalone zones; keep stacks as the primary workspace container.
-- [ ] Define target model for persisted workspace data; in-house testing can use destructive reset (no backward compatibility required).
-- [ ] Add a one-time reset path for local/dev persisted workspace data when switching to the new model.
-- [ ] Keep backend/dev persistence aligned with the migrated model (`netlify/functions/user-auth.ts`, `vite.config.ts` auth dev API).
+- [x] Lock product direction: remove generic standalone areas; keep stacks and decks as the product concepts.
+- [x] Define target model for persisted workspace data as `canvasAreas`; in-house testing can use destructive reset (no backward compatibility required).
+- [x] Remove legacy persisted workspace data paths instead of adding a migration.
+- [x] Keep backend/dev persistence aligned with the migrated model (`netlify/functions/user-auth.ts`, `vite.config.ts` auth dev API).
 
 ### 2. UI Surface Changes
 
 - [x] Keep left Stacks sidebar UX as-is (`src/ui/StacksPanel.tsx`) for create/open/filter/remove flows.
-- [x] Remove standalone Zones management UI from user-facing flows (`src/ui/ZonesPanel.tsx`, related tabs/actions in `src/ui/BottomPanel.tsx`).
-- [x] Keep Decks management as its own flow (load/focus/delete deck workspaces) but separate from removed generic zone actions.
+- [x] Remove standalone area management UI from user-facing flows (related tabs/actions in `src/ui/BottomPanel.tsx`).
+- [x] Keep Decks management as its own flow (load/focus/delete deck workspaces) but separate from removed generic area actions.
 
 ### 3. Canvas Placement Rules (Requested Behavior)
 
@@ -35,14 +35,14 @@ This section is the ordering gate for workspace-related TODOs below. Execute thi
 
 ### 4. Rendering + State Refactor
 
-- [x] Refactor quadrant-driven placement utilities in `src/zones/zones.ts` to support center-spawn stacks and left-of-collection deck placement.
-- [x] Remove named/custom zone creation paths from `App` + reducer wiring once migration is complete (`src/app/App.tsx`, `src/app/AppState.ts`).
-- [ ] Update `PixiStage` zone/deck interaction assumptions that rely on old quadrant/category behavior.
-- [ ] Reconcile terminology in code (`zone` naming) so stack/deck intent is clear after migration.
+- [x] Refactor quadrant-driven placement utilities in `src/canvas/canvasAreas.ts` to support center-spawn stacks and left-of-collection deck placement.
+- [x] Remove named/generic area creation paths from `App` + reducer wiring once migration is complete (`src/app/App.tsx`, `src/app/AppState.ts`).
+- [ ] Update `PixiStage` stack/deck interaction assumptions that rely on old quadrant/category behavior.
+- [ ] Reconcile remaining private renderer terminology so stack/deck intent is clear after migration.
 
 ### 5. Cleanup and Verification
 
-- [x] Delete or archive superseded components/code paths after migration (`src/ui/ZonesPanel.tsx`, zone-specific hub wiring, obsolete helpers).
+- [x] Delete or archive superseded components/code paths after migration (obsolete hub wiring and helpers).
 - [ ] Add regression checks for: creating stack in screen center, deck placement left of collection, persisted layout reload, and drag/drop behavior parity.
 - [ ] Update docs to reflect the new workspace model and controls.
 

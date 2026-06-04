@@ -12,7 +12,7 @@
  *
  * Related files:
  * - `src/rendering/PixiStage.ts` (imperative Pixi scene implementation)
- * - `src/app/App.tsx` (prop wiring and zone events)
+ * - `src/app/App.tsx` (prop wiring and canvas area events)
  * - `src/data/cardFilters.ts` and `src/data/archetypeScores.ts` (render inputs)
  */
 
@@ -31,21 +31,21 @@ import {
   ensureCardFilterState,
   isCardFilterActive,
 } from "@/data/cardFilters";
-import type { ZoneModel } from "@/zones/zones";
+import type { CanvasArea } from "@/canvas/canvasAreas";
 
 interface PixiCanvasProps {
   splashDone: boolean;
-  zones: ZoneModel[];
+  canvasAreas: CanvasArea[];
   onCardDragDrop?: (payload: CardDragDropPayload) => void;
-  onZonesChange?: (zones: ZoneModel[]) => void;
-  onStackZoneHeaderClick?: (zoneId: string) => void;
+  onCanvasAreasChange?: (canvasAreas: CanvasArea[]) => void;
+  onStackHeaderClick?: (stackId: string) => void;
   onViewportCenterChange?: (center: { x: number; y: number }) => void;
   onDeckFilterRequest?: (request: {
-    zoneId: string;
+    canvasAreaId: string;
     editingFilterIndex: number | null;
     anchorClientRect: { left: number; top: number; right: number; bottom: number };
   }) => void;
-  focusZoneRequest?: { zoneId: string; nonce: number } | null;
+  focusCanvasAreaRequest?: { canvasAreaId: string; nonce: number } | null;
 }
 
 /**
@@ -53,24 +53,24 @@ interface PixiCanvasProps {
  *
  * Inputs:
  * - `splashDone`: Whether splash transition is complete.
- * - `zones`: Current zone models to render.
+ * - `canvasAreas`: Current stack/deck canvas models to render.
  * - `onCardDragDrop`: Optional callback for drag/drop outcomes.
- * - `onZonesChange`: Optional callback when Pixi mutates zones.
- * - `onStackZoneHeaderClick`: Optional callback when stack zone header is clicked.
- * - `focusZoneRequest`: Optional one-shot zone focus request.
+ * - `onCanvasAreasChange`: Optional callback when Pixi mutates canvas areas.
+ * - `onStackHeaderClick`: Optional callback when a stack header is clicked.
+ * - `focusCanvasAreaRequest`: Optional one-shot canvas focus request.
  *
  * Outputs:
  * - Returns React markup containing the Pixi mount container and loading overlays.
  */
 export function PixiCanvas({
   splashDone,
-  zones,
+  canvasAreas,
   onCardDragDrop,
-  onZonesChange,
-  onStackZoneHeaderClick,
+  onCanvasAreasChange,
+  onStackHeaderClick,
   onViewportCenterChange,
   onDeckFilterRequest,
-  focusZoneRequest,
+  focusCanvasAreaRequest,
 }: PixiCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<PixiStage | null>(null);
@@ -157,10 +157,10 @@ export function PixiCanvas({
   backgroundProgressRef.current = setBackgroundLoadProgress;
   const cardDragDropRef = useRef(onCardDragDrop);
   cardDragDropRef.current = onCardDragDrop;
-  const zonesChangeRef = useRef(onZonesChange);
-  zonesChangeRef.current = onZonesChange;
-  const stackZoneHeaderClickRef = useRef(onStackZoneHeaderClick);
-  stackZoneHeaderClickRef.current = onStackZoneHeaderClick;
+  const canvasAreasChangeRef = useRef(onCanvasAreasChange);
+  canvasAreasChangeRef.current = onCanvasAreasChange;
+  const stackHeaderClickRef = useRef(onStackHeaderClick);
+  stackHeaderClickRef.current = onStackHeaderClick;
   const viewportCenterRef = useRef(onViewportCenterChange);
   viewportCenterRef.current = onViewportCenterChange;
   const deckFilterRequestRef = useRef(onDeckFilterRequest);
@@ -219,17 +219,21 @@ export function PixiCanvas({
       onCardDragDrop: (payload) => {
         cardDragDropRef.current?.(payload);
       },
-      onZonesChange: (nextZones) => {
-        zonesChangeRef.current?.(nextZones);
+      onCanvasAreasChange: (nextCanvasAreas) => {
+        canvasAreasChangeRef.current?.(nextCanvasAreas);
       },
-      onStackZoneHeaderClick: (zoneId) => {
-        stackZoneHeaderClickRef.current?.(zoneId);
+      onStackZoneHeaderClick: (stackId) => {
+        stackHeaderClickRef.current?.(stackId);
       },
       onViewportCenterChange: (center) => {
         viewportCenterRef.current?.(center);
       },
       onDeckFilterRequest: (request) => {
-        deckFilterRequestRef.current?.(request);
+        deckFilterRequestRef.current?.({
+          canvasAreaId: request.zoneId,
+          editingFilterIndex: request.editingFilterIndex,
+          anchorClientRect: request.anchorClientRect,
+        });
       },
     });
 
@@ -252,8 +256,8 @@ export function PixiCanvas({
 
   useEffect(() => {
     if (!stageRef.current) return;
-    stageRef.current.setZones(zones);
-  }, [zones]);
+    stageRef.current.setCanvasAreas(canvasAreas);
+  }, [canvasAreas]);
 
   // Replay reveal/progress only when the source card dataset changes.
   useEffect(() => {
@@ -264,7 +268,7 @@ export function PixiCanvas({
     stageRef.current.startTextureReveal();
   }, [state.cards, state.cardsLoaded]);
 
-  // Update overlays when user data changes. Deck rendering is zone-driven.
+  // Update overlays when user data changes. Deck rendering is canvas-driven.
   useEffect(() => {
     if (!stageRef.current || !state.userData) return;
 
@@ -277,9 +281,9 @@ export function PixiCanvas({
   }, [state.userData, state.editor.activeDeckId, state.editor.activeBoard]);
 
   useEffect(() => {
-    if (!stageRef.current || !focusZoneRequest) return;
-    stageRef.current.focusZone(focusZoneRequest.zoneId);
-  }, [focusZoneRequest]);
+    if (!stageRef.current || !focusCanvasAreaRequest) return;
+    stageRef.current.focusZone(focusCanvasAreaRequest.canvasAreaId);
+  }, [focusCanvasAreaRequest]);
 
   // Keep label placement mode in sync with UI toggle.
   useEffect(() => {

@@ -9,15 +9,15 @@ import { buildCardFilterOptions } from '@/data/cardService';
 import { CardFilterChipTabs } from '@/ui/CardFilterChipTabs';
 import { CardFilterDrawer } from '@/ui/CardFilterDrawer';
 import { useCardFilterEditor } from '@/ui/useCardFilterEditor';
-import type { ZoneModel } from '@/zones/zones';
+import type { CanvasArea } from '@/canvas/canvasAreas';
 
 interface DeckFilterPopoverProps {
-  zone: ZoneModel | null;
+  canvasArea: CanvasArea | null;
   cards: Card[];
   anchorRect: { left: number; top: number; right: number; bottom: number } | null;
   requestNonce: number;
   requestedEditingFilterIndex: number | null;
-  onUpdateZoneFilters: (zoneId: string, filters: CardFilterState) => void;
+  onUpdateDeckCanvasFilters: (canvasAreaId: string, filters: CardFilterState) => void;
   onClose: () => void;
 }
 
@@ -25,19 +25,19 @@ const POPOVER_WIDTH = 660;
 const VIEWPORT_PADDING = 10;
 
 export function DeckFilterPopover({
-  zone,
+  canvasArea,
   cards,
   anchorRect,
   requestNonce,
   requestedEditingFilterIndex,
-  onUpdateZoneFilters,
+  onUpdateDeckCanvasFilters,
   onClose,
 }: DeckFilterPopoverProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const zoneFilters = useMemo(
-    () => ensureCardFilterState(zone?.cardFilters),
-    [zone?.cardFilters],
+  const deckCanvasFilters = useMemo(
+    () => ensureCardFilterState(canvasArea?.cardFilters),
+    [canvasArea?.cardFilters],
   );
 
   const {
@@ -55,10 +55,10 @@ export function DeckFilterPopover({
     toggleCurrentFilterToken,
     updateCurrentFilter,
   } = useCardFilterEditor({
-    filters: zoneFilters,
+    filters: deckCanvasFilters,
     onFiltersChange: (next) => {
-      if (!zone) return;
-      onUpdateZoneFilters(zone.id, next);
+      if (!canvasArea) return;
+      onUpdateDeckCanvasFilters(canvasArea.id, next);
     },
   });
 
@@ -68,10 +68,10 @@ export function DeckFilterPopover({
   );
 
   const filteredCardCount = useMemo(() => {
-    if (!zone) return 0;
+    if (!canvasArea) return 0;
     const visibleNames = new Set(filteredCards.map((card) => card.name));
-    return zone.cards.filter((entry) => visibleNames.has(entry.cardName)).length;
-  }, [zone, filteredCards]);
+    return canvasArea.cards.filter((entry) => visibleNames.has(entry.cardName)).length;
+  }, [canvasArea, filteredCards]);
 
   const availableFilterOptions = useMemo(
     () => buildCardFilterOptions(cards),
@@ -88,22 +88,32 @@ export function DeckFilterPopover({
   }, [anchorRect]);
 
   useEffect(() => {
-    if (!zone) return;
+    if (!canvasArea) return;
     if (requestedEditingFilterIndex === null || requestedEditingFilterIndex < 0) {
       setEditingFilterIndex(null);
       return;
     }
 
-    if (requestedEditingFilterIndex >= zoneFilters.clauses.length) {
-      setEditingFilterIndex(zoneFilters.clauses.length > 0 ? zoneFilters.clauses.length - 1 : null);
+    if (requestedEditingFilterIndex >= deckCanvasFilters.clauses.length) {
+      setEditingFilterIndex(
+        deckCanvasFilters.clauses.length > 0
+          ? deckCanvasFilters.clauses.length - 1
+          : null,
+      );
       return;
     }
 
     setEditingFilterIndex(requestedEditingFilterIndex);
-  }, [requestNonce, requestedEditingFilterIndex, setEditingFilterIndex, zone, zoneFilters.clauses.length]);
+  }, [
+    canvasArea,
+    deckCanvasFilters.clauses.length,
+    requestNonce,
+    requestedEditingFilterIndex,
+    setEditingFilterIndex,
+  ]);
 
   useEffect(() => {
-    if (!zone || !anchorRect) return;
+    if (!canvasArea || !anchorRect) return;
     const handlePointerDown = (event: PointerEvent) => {
       if (!(event.target instanceof Node)) return;
       if (rootRef.current?.contains(event.target)) return;
@@ -122,9 +132,9 @@ export function DeckFilterPopover({
       document.removeEventListener('pointerdown', handlePointerDown, true);
       window.removeEventListener('keydown', handleEscape);
     };
-  }, [anchorRect, onClose, zone]);
+  }, [anchorRect, canvasArea, onClose]);
 
-  if (!zone || !anchorRect || !position) return null;
+  if (!canvasArea || !anchorRect || !position) return null;
 
   return (
     <div
@@ -134,9 +144,9 @@ export function DeckFilterPopover({
     >
       <div className="deck-filter-popover-header">
         <div>
-          <p className="deck-filter-popover-title">{zone.name} filters</p>
+          <p className="deck-filter-popover-title">{canvasArea.name} filters</p>
           <p className="deck-filter-popover-subtitle">
-            Filters only affect visibility for this deck zone.
+            Filters only affect visibility for this deck on the canvas.
           </p>
         </div>
         <button
@@ -173,7 +183,7 @@ export function DeckFilterPopover({
         editingFilterIndex={editingFilterIndex}
         editingFilterEnabled={editingFilterClause?.enabled ?? false}
         filteredCardCount={filteredCardCount}
-        totalCardCount={zone.cards.length}
+        totalCardCount={canvasArea.cards.length}
         activeFilterCount={activeFilterCount}
         clauseCount={filters.clauses.length}
         availableOptions={availableFilterOptions}

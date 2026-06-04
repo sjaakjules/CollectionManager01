@@ -165,7 +165,9 @@ export function importDeckFromText(
       const altMatch = line.match(/^(.+)\s+x\s*(\d+)$/i);
       if (altMatch) {
         const [, name, qty] = altMatch;
-        processCard(name!.trim(), parseInt(qty!, 10));
+        if (name && qty) {
+          processCard(name.trim(), parseInt(qty, 10));
+        }
       } else {
         // Assume it's just a card name with quantity 1
         processCard(line, 1);
@@ -174,8 +176,9 @@ export function importDeckFromText(
     }
 
     const [, qtyStr, name] = match;
-    const quantity = parseInt(qtyStr!, 10);
-    processCard(name!.trim(), quantity);
+    if (!qtyStr || !name) continue;
+    const quantity = parseInt(qtyStr, 10);
+    processCard(name.trim(), quantity);
   }
 
   function processCard(name: string, quantity: number) {
@@ -191,7 +194,11 @@ export function importDeckFromText(
       return;
     }
 
-    const card = cardLookup.get(normalizedName)!;
+    const card = cardLookup.get(normalizedName);
+    if (!card) {
+      unknownCards.push(name);
+      return;
+    }
 
     // Determine board based on card type if not specified
     let targetBoard = currentBoard;
@@ -265,7 +272,11 @@ export function importFromCuriosaDeck(
         continue;
       }
 
-      const dbCard = cardLookup.get(normalizedName)!;
+      const dbCard = cardLookup.get(normalizedName);
+      if (!dbCard) {
+        unknownCards.push(card.name);
+        continue;
+      }
       deck.boards[board].push({
         name: dbCard.name,
         quantity: card.quantity,

@@ -25,7 +25,7 @@ import { buildCardFilterOptions } from '@/data/cardService';
 import { CardFilterDrawer } from '@/ui/CardFilterDrawer';
 import { CardFilterChipTabs } from '@/ui/CardFilterChipTabs';
 import { useCardFilterEditor } from '@/ui/useCardFilterEditor';
-import type { ZoneModel } from '@/zones/zones';
+import type { CanvasArea } from '@/canvas/canvasAreas';
 
 type ToolTab = 'filter' | 'highlight' | null;
 type ActionPanel = 'label' | null;
@@ -34,17 +34,17 @@ type BottomHubTab = 'cards' | 'decks' | null;
 const BOTTOM_EDGE_TRIGGER_PX = 92;
 
 interface BottomPanelProps {
-  zones: ZoneModel[];
+  canvasAreas: CanvasArea[];
   onCreateDeckZone: (deck: Deck) => string | null;
-  onDeleteZone: (zoneId: string) => void;
-  onFocusZone: (zoneId: string) => void;
+  onDeleteCanvasArea: (canvasAreaId: string) => void;
+  onFocusCanvasArea: (canvasAreaId: string) => void;
 }
 
 export function BottomPanel({
-  zones,
+  canvasAreas,
   onCreateDeckZone,
-  onDeleteZone,
-  onFocusZone,
+  onDeleteCanvasArea,
+  onFocusCanvasArea,
 }: BottomPanelProps) {
   const { state, dispatch } = useAppState();
   const [archetypes, setArchetypes] = useState<string[]>([]);
@@ -67,9 +67,9 @@ export function BottomPanel({
   const [removingCategory, setRemovingCategory] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
 
-  const deckZones = useMemo(
-    () => zones.filter((zone) => zone.type === 'deck'),
-    [zones],
+  const deckCanvasAreas = useMemo(
+    () => canvasAreas.filter((area) => area.type === 'deck'),
+    [canvasAreas],
   );
   const tabsExpanded = edgeNear || activeHubTab !== null;
 
@@ -314,11 +314,11 @@ export function BottomPanel({
     if (!trimmed) return;
 
     setIsLoadingDeck(true);
-    setDeckError(null);
+      setDeckError(null);
     try {
       const deck = await fetchCuriosaDeck(trimmed);
-      const zoneId = onCreateDeckZone(deck);
-      if (!zoneId) return;
+      const canvasAreaId = onCreateDeckZone(deck);
+      if (!canvasAreaId) return;
       setActiveHubTab('decks');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load deck';
@@ -335,7 +335,7 @@ export function BottomPanel({
         className="top-login-button"
         onClick={handleOpenAccount}
       >
-        {state.session.isGuest ? 'Log In' : (state.session.username ?? 'Account')}
+        {state.session.isGuest ? 'Guest' : (state.session.username ?? 'Account')}
       </button>
 
       <div
@@ -594,29 +594,29 @@ export function BottomPanel({
               >
                 {isLoadingDeck ? '...' : '+'}
               </button>
-              {deckZones.map((zone) => (
-                <div key={zone.id} className="folder-chip">
+              {deckCanvasAreas.map((area) => (
+                <div key={area.id} className="folder-chip">
                   <button
                     type="button"
                     className="bottom-tool-tab folder-chip-main"
-                    onClick={() => onFocusZone(zone.id)}
-                    title={zone.name}
+                    onClick={() => onFocusCanvasArea(area.id)}
+                    title={area.name}
                   >
-                    {zone.name}
+                    {area.name}
                   </button>
                   <button
                     type="button"
                     className="folder-chip-delete"
-                    onClick={() => onDeleteZone(zone.id)}
-                    aria-label={`Delete ${zone.name}`}
-                    title={`Delete ${zone.name}`}
+                    onClick={() => onDeleteCanvasArea(area.id)}
+                    aria-label={`Delete ${area.name}`}
+                    title={`Delete ${area.name}`}
                   >
                     X
                   </button>
                 </div>
               ))}
             </div>
-            {deckZones.length === 0 && (
+            {deckCanvasAreas.length === 0 && (
               <p className="bottom-tools-note">No decks loaded yet.</p>
             )}
             {deckError && <p className="bottom-tools-note">{deckError}</p>}

@@ -1,15 +1,15 @@
 /**
- * Zone model utilities for canvas organization and deck/stack placement.
+ * Canvas area utilities for stack/deck placement.
  *
  * Responsibilities:
- * - Define zone/card instance contracts used by reducer + renderer.
- * - Place zones into fixed world quadrants with overlap avoidance.
- * - Build zone payloads for imported decks and stack zones.
+ * - Define canvas/card instance contracts used by reducer + renderer.
+ * - Place stack and deck areas into fixed world quadrants with overlap avoidance.
+ * - Build canvas payloads for imported decks and stacks.
  *
  * Related files:
- * - `src/app/App.tsx` (zone creation/pinning workflows)
- * - `src/app/AppState.ts` (zone persistence in reducer state)
- * - `src/rendering/PixiStage.ts` (zone rendering and interactions)
+ * - `src/app/App.tsx` (canvas creation/pinning workflows)
+ * - `src/app/AppState.ts` (canvas persistence in reducer state)
+ * - `src/rendering/PixiStage.ts` (canvas rendering and interactions)
  * - `src/rendering/Grid.ts` (snap-to-grid and card geometry constants)
  */
 
@@ -26,18 +26,18 @@ import {
   snapCardCenter,
 } from "@/rendering/Grid";
 
-export type ZoneType = "stack" | "deck";
+export type CanvasAreaKind = "stack" | "deck";
 
 export type ZoneQuadrant = "main" | "decks" | "stacks";
 
-export interface ZoneBounds {
+export interface CanvasAreaBounds {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
-export interface ZoneCardInstance {
+export interface CanvasCardInstance {
   id: string;
   cardName: string;
   x: number;
@@ -45,23 +45,23 @@ export interface ZoneCardInstance {
   board?: ActiveBoard | null;
 }
 
-export interface ZoneDeckVariant {
+export interface CanvasDeckVariant {
   id: string;
   name: string;
   activeCardIds: string[];
 }
 
-export interface ZoneModel {
+export interface CanvasArea {
   id: string;
   name: string;
-  type: ZoneType;
+  type: CanvasAreaKind;
   pinned: boolean;
-  bounds: ZoneBounds;
-  cards: ZoneCardInstance[];
+  bounds: CanvasAreaBounds;
+  cards: CanvasCardInstance[];
   deckId?: string;
   avatarCardName?: string | null;
   deckAuthor?: string | null;
-  deckVariants?: ZoneDeckVariant[];
+  deckVariants?: CanvasDeckVariant[];
   activeDeckVariantId?: string | null;
   cardFilters?: CardFilterState;
 }
@@ -71,7 +71,7 @@ const QUADRANT_PADDING = 220;
 const ZONE_SPREAD_STEP = 110;
 
 /**
- * Clean imported deck names for display in deck-zone headers.
+ * Clean imported deck names for display in deck canvas headers.
  *
  * Inputs:
  * - `name`: Raw deck title from import source.
@@ -101,7 +101,7 @@ export const ZONE_DEFAULT_SIZE = {
   deck: { width: 1400, height: 1200 },
 } as const;
 
-export const QUADRANT_BOUNDS: Record<ZoneQuadrant, ZoneBounds> = {
+export const QUADRANT_BOUNDS: Record<ZoneQuadrant, CanvasAreaBounds> = {
   main: {
     x: 0,
     y: -QUADRANT_SIZE,
@@ -130,66 +130,66 @@ function randomId(prefix: string): string {
 }
 
 /**
- * Create a unique zone id using the zone type as prefix.
+ * Create a unique canvas area id using the area type as prefix.
  *
  * Inputs:
- * - `type`: Zone type (`stack`, `deck`; legacy `custom` may still appear in older data).
+ * - `type`: Canvas area type (`stack` or `deck`).
  *
  * Outputs:
  * - Returns a unique id string.
  */
-export function createZoneId(type: ZoneType): string {
+export function createZoneId(type: CanvasAreaKind): string {
   return randomId(type);
 }
 
 /**
- * Create a unique id for a card instance inside a zone.
+ * Create a unique id for a card instance inside a canvas area.
  *
  * Inputs:
  * - None.
  *
  * Outputs:
- * - Returns a unique zone-card id string.
+ * - Returns a unique canvas-card id string.
  */
 export function createZoneCardId(): string {
-  return randomId("zone-card");
+  return randomId("canvas-card");
 }
 
 /**
- * Create a unique id for a deck variant persisted on a deck zone.
+ * Create a unique id for a deck variant persisted on a deck canvas area.
  */
-export function createZoneDeckVariantId(): string {
-  return randomId("zone-variant");
+export function createCanvasDeckVariantId(): string {
+  return randomId("canvas-variant");
 }
 
 /**
- * Map a zone type to its fixed world quadrant.
+ * Map a canvas area type to its fixed world quadrant.
  *
  * Inputs:
- * - `type`: Zone type value.
+ * - `type`: Canvas area type value.
  *
  * Outputs:
  * - Returns destination quadrant key.
  */
-export function getZoneQuadrant(type: ZoneType): ZoneQuadrant {
+export function getZoneQuadrant(type: CanvasAreaKind): ZoneQuadrant {
   if (type === "deck") return "decks";
   return "stacks";
 }
 
 /**
- * Resolve quadrant for an existing zone model.
+ * Resolve quadrant for an existing canvas area model.
  *
  * Inputs:
- * - `zone`: Zone model.
+ * - `zone`: Canvas area model.
  *
  * Outputs:
- * - Returns quadrant that should contain the zone.
+ * - Returns quadrant that should contain the canvas area.
  */
-export function getQuadrantByZoneId(zone: ZoneModel): ZoneQuadrant {
+export function getQuadrantByZoneId(zone: CanvasArea): ZoneQuadrant {
   return getZoneQuadrant(zone.type);
 }
 
-function boundsOverlap(left: ZoneBounds, right: ZoneBounds): boolean {
+function boundsOverlap(left: CanvasAreaBounds, right: CanvasAreaBounds): boolean {
   return (
     left.x < right.x + right.width &&
     left.x + left.width > right.x &&
@@ -199,11 +199,11 @@ function boundsOverlap(left: ZoneBounds, right: ZoneBounds): boolean {
 }
 
 function clampBoundsToQuadrant(
-  area: ZoneBounds,
+  area: CanvasAreaBounds,
   size: { width: number; height: number },
   x: number,
   y: number,
-): ZoneBounds {
+): CanvasAreaBounds {
   const minX = area.x + QUADRANT_PADDING;
   const maxX = area.x + area.width - size.width - QUADRANT_PADDING;
   const minY = area.y + QUADRANT_PADDING;
@@ -214,23 +214,23 @@ function clampBoundsToQuadrant(
 }
 
 /**
- * Compute pinned zone bounds inside a quadrant while avoiding overlaps.
+ * Compute pinned canvas area bounds inside a quadrant while avoiding overlaps.
  *
  * Inputs:
  * - `quadrant`: Target world quadrant.
- * - `size`: Requested zone size.
+ * - `size`: Requested canvas area size.
  * - `existingCount`: Count hint used to spread default placement.
- * - `occupiedBounds`: Existing pinned zone bounds in the same quadrant.
+ * - `occupiedBounds`: Existing pinned canvas area bounds in the same quadrant.
  *
  * Outputs:
- * - Returns clamped, collision-aware bounds for the new/moved zone.
+ * - Returns clamped, collision-aware bounds for the new/moved canvas area.
  */
-export function createZoneBoundsForQuadrant(
+export function createCanvasAreaBoundsForQuadrant(
   quadrant: ZoneQuadrant,
   size: { width: number; height: number },
   existingCount = 0,
-  occupiedBounds: ZoneBounds[] = [],
-): ZoneBounds {
+  occupiedBounds: CanvasAreaBounds[] = [],
+): CanvasAreaBounds {
   const area = QUADRANT_BOUNDS[quadrant];
   const spreadIndex = Math.max(0, existingCount);
   const spread = spreadIndex * ZONE_SPREAD_STEP;
@@ -253,7 +253,7 @@ export function createZoneBoundsForQuadrant(
     return baseBounds;
   }
 
-  const intersectsAny = (candidate: ZoneBounds): boolean =>
+  const intersectsAny = (candidate: CanvasAreaBounds): boolean =>
     occupiedBounds.some((occupied) => boundsOverlap(candidate, occupied));
   if (!intersectsAny(baseBounds)) {
     return baseBounds;
@@ -265,7 +265,7 @@ export function createZoneBoundsForQuadrant(
   const stepY = size.height + ZONE_SPREAD_STEP;
   const maxDepth = Math.max(16, occupiedBounds.length * 3 + 8);
   const seen = new Set<string>();
-  const tryCandidate = (candidateX: number, candidateY: number): ZoneBounds | null => {
+  const tryCandidate = (candidateX: number, candidateY: number): CanvasAreaBounds | null => {
     const candidate = clampBoundsToQuadrant(area, size, candidateX, candidateY);
     const key = `${candidate.x},${candidate.y}`;
     if (seen.has(key)) {
@@ -317,30 +317,30 @@ export function createZoneBoundsForQuadrant(
 }
 
 /**
- * Create an empty pinned zone with quadrant-aware default bounds.
+ * Create an empty pinned canvas area with quadrant-aware default bounds.
  *
  * Inputs:
- * - `type`: Zone type (`stack`/`deck`).
- * - `name`: Display name for the zone.
+ * - `type`: Canvas area type (`stack`/`deck`).
+ * - `name`: Display name for the canvas area.
  * - `existingSameTypeCount`: Count hint for spread offset.
- * - `existingZones`: Existing zones used to avoid overlap.
+ * - `existingZones`: Existing canvas areas used to avoid overlap.
  *
  * Outputs:
- * - Returns a new `ZoneModel` with no cards.
+ * - Returns a new `CanvasArea` with no cards.
  */
 export function createEmptyZone(
-  type: ZoneType,
+  type: CanvasAreaKind,
   name: string,
   existingSameTypeCount: number,
-  existingZones: ZoneModel[] = [],
-): ZoneModel {
+  existingZones: CanvasArea[] = [],
+): CanvasArea {
   const quadrant = getZoneQuadrant(type);
   const occupiedBounds = existingZones
     .filter(
       (zone) => zone.pinned && getQuadrantByZoneId(zone) === quadrant,
     )
     .map((zone) => zone.bounds);
-  const bounds = createZoneBoundsForQuadrant(
+  const bounds = createCanvasAreaBoundsForQuadrant(
     quadrant,
     ZONE_DEFAULT_SIZE[type],
     existingSameTypeCount,
@@ -358,21 +358,21 @@ export function createEmptyZone(
 }
 
 /**
- * Create a new stack zone centered on a world-space point.
+ * Create a new stack centered on a world-space point.
  *
  * Inputs:
  * - `name`: Display name for the stack.
  * - `center`: Desired world-space center point (typically viewport center).
- * - `existingZones`: Existing zones used to avoid immediate overlaps.
+ * - `existingZones`: Existing canvas areas used to avoid immediate overlaps.
  *
  * Outputs:
- * - Returns a pinned stack `ZoneModel`.
+ * - Returns a pinned stack `CanvasArea`.
  */
 export function createStackZoneAtWorldPoint(
   name: string,
   center: { x: number; y: number },
-  existingZones: ZoneModel[] = [],
-): ZoneModel {
+  existingZones: CanvasArea[] = [],
+): CanvasArea {
   const size = ZONE_DEFAULT_SIZE.stack;
   const baseX =
     Math.round((center.x - size.width / 2) / DRAWN_GRID.width) * DRAWN_GRID.width;
@@ -382,10 +382,10 @@ export function createStackZoneAtWorldPoint(
   const occupiedBounds = existingZones
     .filter((zone) => zone.pinned)
     .map((zone) => zone.bounds);
-  const overlapsAny = (candidate: ZoneBounds): boolean =>
+  const overlapsAny = (candidate: CanvasAreaBounds): boolean =>
     occupiedBounds.some((occupied) => boundsOverlap(candidate, occupied));
 
-  let bounds: ZoneBounds = {
+  let bounds: CanvasAreaBounds = {
     x: baseX,
     y: baseY,
     width: size.width,
@@ -401,7 +401,7 @@ export function createStackZoneAtWorldPoint(
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
           if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
-          const candidate: ZoneBounds = {
+          const candidate: CanvasAreaBounds = {
             x: baseX + dx * stepX,
             y: baseY + dy * stepY,
             width: size.width,
@@ -465,11 +465,11 @@ const DECK_EMPTY_BOARD_HEIGHT: Record<DeckBoardKey, number> = {
 };
 
 function fitBoundsToCards(
-  fallback: ZoneBounds,
-  cards: ZoneCardInstance[],
+  fallback: CanvasAreaBounds,
+  cards: CanvasCardInstance[],
   cardInfoByName: Map<string, CardOrientationInfo>,
   headerHeight = ZONE_HEADER_HEIGHT,
-): ZoneBounds {
+): CanvasAreaBounds {
   if (cards.length === 0) {
     return fallback;
   }
@@ -525,34 +525,34 @@ function snapPointForCard(
 }
 
 /**
- * Build a deck zone populated with card instances laid out by board/type.
+ * Build a deck canvas area populated with card instances laid out by board/type.
  *
  * Inputs:
- * - `deck`: Deck data to project into a zone.
+ * - `deck`: Deck data to project into a canvas area.
  * - `cardInfoByName`: Card orientation/type metadata map.
  * - `existingDeckCount`: Count hint for initial quadrant spread.
- * - `existingZones`: Existing zones used for overlap-aware placement.
+ * - `existingZones`: Existing canvas areas used for overlap-aware placement.
  *
  * Outputs:
- * - Returns a pinned `ZoneModel` with deck metadata and positioned cards.
+ * - Returns a pinned `CanvasArea` with deck metadata and positioned cards.
  */
 export function createDeckZone(
   deck: Deck,
   cardInfoByName: Map<string, CardOrientationInfo>,
   existingDeckCount: number,
-  existingZones: ZoneModel[] = [],
-): ZoneModel {
+  existingZones: CanvasArea[] = [],
+): CanvasArea {
   const occupiedBounds = existingZones
     .filter((zone) => zone.pinned && getQuadrantByZoneId(zone) === "decks")
     .map((zone) => zone.bounds);
-  const bounds = createZoneBoundsForQuadrant(
+  const bounds = createCanvasAreaBoundsForQuadrant(
     "decks",
     ZONE_DEFAULT_SIZE.deck,
     existingDeckCount,
     occupiedBounds,
   );
 
-  const instances: ZoneCardInstance[] = [];
+  const instances: CanvasCardInstance[] = [];
   const mainActiveCardIds: string[] = [];
   const cardsByBoard: Record<
     DeckBoardKey,
@@ -672,7 +672,7 @@ export function createDeckZone(
   });
 
   const avatarCardName = deck.boards.avatar[0]?.name ?? null;
-  const mainVariantId = createZoneDeckVariantId();
+  const mainVariantId = createCanvasDeckVariantId();
 
   const contentFittedBounds = fitBoundsToCards(
     bounds,
@@ -712,21 +712,21 @@ export function createDeckZone(
 }
 
 /**
- * Re-pin a zone into its quadrant using collision-aware bounds.
+ * Re-pin a canvas area into its quadrant using collision-aware bounds.
  *
  * Inputs:
- * - `zone`: Zone to place.
+ * - `zone`: Canvas area to place.
  * - `existingCount`: Count hint for spread offset.
- * - `existingZones`: Existing zones for overlap avoidance.
+ * - `existingZones`: Existing canvas areas for overlap avoidance.
  *
  * Outputs:
- * - Returns the moved zone with updated bounds and `pinned: true`.
+ * - Returns the moved canvas area with updated bounds and `pinned: true`.
  */
 export function moveZoneIntoQuadrant(
-  zone: ZoneModel,
+  zone: CanvasArea,
   existingCount: number,
-  existingZones: ZoneModel[] = [],
-): ZoneModel {
+  existingZones: CanvasArea[] = [],
+): CanvasArea {
   const quadrant = getQuadrantByZoneId(zone);
   const occupiedBounds = existingZones
     .filter(
@@ -736,7 +736,7 @@ export function moveZoneIntoQuadrant(
         getQuadrantByZoneId(entry) === quadrant,
     )
     .map((entry) => entry.bounds);
-  const bounds = createZoneBoundsForQuadrant(
+  const bounds = createCanvasAreaBoundsForQuadrant(
     quadrant,
     { width: zone.bounds.width, height: zone.bounds.height },
     existingCount,
@@ -746,21 +746,21 @@ export function moveZoneIntoQuadrant(
 }
 
 /**
- * Move a zone to quadrant placement and translate contained cards by the same delta.
+ * Move a canvas area to quadrant placement and translate contained cards by the same delta.
  *
  * Inputs:
- * - `zone`: Zone to reposition.
+ * - `zone`: Canvas area to reposition.
  * - `existingCount`: Count hint for spread offset.
- * - `existingZones`: Existing zones for overlap avoidance.
+ * - `existingZones`: Existing canvas areas for overlap avoidance.
  *
  * Outputs:
- * - Returns moved zone where card instance coordinates remain relative to zone origin.
+ * - Returns moved canvas area where card instance coordinates remain relative to area origin.
  */
 export function moveZoneIntoQuadrantPreservingCards(
-  zone: ZoneModel,
+  zone: CanvasArea,
   existingCount: number,
-  existingZones: ZoneModel[] = [],
-): ZoneModel {
+  existingZones: CanvasArea[] = [],
+): CanvasArea {
   const moved = moveZoneIntoQuadrant(zone, existingCount, existingZones);
   const dx = moved.bounds.x - zone.bounds.x;
   const dy = moved.bounds.y - zone.bounds.y;
@@ -785,7 +785,7 @@ export function moveZoneIntoQuadrantPreservingCards(
  * - `cards`: Full card catalog.
  *
  * Outputs:
- * - Returns map keyed by card name, used for zone layout decisions.
+ * - Returns map keyed by card name, used for canvas layout decisions.
  */
 export function cardNameToOrientationMap(
   cards: Card[],

@@ -82,7 +82,7 @@ export function LoginModal() {
         collection: [],
         selectedArchetype: null,
         canvasLabels: [],
-        zones: [],
+        canvasAreas: [],
       };
     },
     []
@@ -214,7 +214,7 @@ export function LoginModal() {
           {state.session.isGuest ? (
             <>
               <p className="modal-info">
-                Create an account or log in to sync your decks, archetypes, and canvas labels.
+                Create an account or log in to sync your decks, stacks, archetypes, and canvas labels.
               </p>
 
               <div className="auth-mode-row">
@@ -224,7 +224,7 @@ export function LoginModal() {
                   onClick={() => switchMode('login')}
                   disabled={loading}
                 >
-                  Login
+                  Log In
                 </button>
                 <button
                   type="button"
@@ -283,7 +283,7 @@ export function LoginModal() {
               <div className="modal-actions">
                 <button onClick={handleClose} disabled={loading}>Close</button>
                 <button onClick={handleLogout} className="danger" disabled={loading}>
-                  {loading ? 'Logging out...' : 'Logout'}
+                  {loading ? 'Switching...' : 'Switch to Guest'}
                 </button>
               </div>
             </>

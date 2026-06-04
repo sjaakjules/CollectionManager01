@@ -8,7 +8,7 @@
  * - `src/app/App.tsx` (provider + dispatch wiring)
  * - `src/app/Startup.ts` (initial state hydration)
  * - `src/data/dataModels.ts` (persisted domain types)
- * - `src/zones/zones.ts` (zone model normalization)
+ * - `src/canvas/canvasAreas.ts` (canvas area normalization)
  */
 
 import { createContext, useContext } from 'react';
@@ -21,7 +21,7 @@ import type {
   CanvasLabel,
   ArchetypeScoresData,
 } from '@/data/dataModels';
-import type { ZoneDeckVariant, ZoneModel, ZoneType } from '@/zones/zones';
+import type { CanvasDeckVariant, CanvasArea, CanvasAreaKind } from '@/canvas/canvasAreas';
 import {
   createDefaultCardFilters,
   ensureCardFilterState,
@@ -132,7 +132,7 @@ export type AppAction =
   | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
   | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
   | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData }
-  | { type: 'SET_ZONES'; zones: ZoneModel[] };
+  | { type: 'SET_CANVAS_AREAS'; canvasAreas: CanvasArea[] };
 
 // ============================================================================
 // Reducer
@@ -363,11 +363,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         userData: { ...state.userData, archetypeScores: action.scores },
       };
 
-    case 'SET_ZONES':
+    case 'SET_CANVAS_AREAS':
       if (!state.userData) return state;
       return {
         ...state,
-        userData: { ...state.userData, zones: normalizeZones(action.zones) },
+        userData: {
+          ...state.userData,
+          canvasAreas: normalizeCanvasAreas(action.canvasAreas),
+        },
       };
 
     default:
@@ -383,18 +386,17 @@ function parseString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
-function parseZoneType(value: unknown): ZoneType {
+function parseCanvasAreaKind(value: unknown): CanvasAreaKind | null {
   if (value === 'deck') {
     return 'deck';
   }
-  // Legacy "custom" zones are now treated as stacks.
-  if (value === 'custom' || value === 'stack') {
+  if (value === 'stack') {
     return 'stack';
   }
-  return 'stack';
+  return null;
 }
 
-function defaultZoneSize(type: ZoneType): { width: number; height: number } {
+function defaultCanvasAreaSize(type: CanvasAreaKind): { width: number; height: number } {
   if (type === 'deck') return { width: 1400, height: 1200 };
   return { width: 980, height: 780 };
 }
@@ -406,21 +408,22 @@ function createFallbackId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function normalizeZones(value: unknown): ZoneModel[] {
+function normalizeCanvasAreas(value: unknown): CanvasArea[] {
   if (!Array.isArray(value)) return [];
 
-  const zones: ZoneModel[] = [];
-  for (const rawZone of value) {
-    if (!rawZone || typeof rawZone !== 'object') continue;
-    const zoneRecord = rawZone as Record<string, unknown>;
-    const type = parseZoneType(zoneRecord.type);
-    const defaults = defaultZoneSize(type);
+  const canvasAreas: CanvasArea[] = [];
+  for (const rawArea of value) {
+    if (!rawArea || typeof rawArea !== 'object') continue;
+    const areaRecord = rawArea as Record<string, unknown>;
+    const type = parseCanvasAreaKind(areaRecord.type);
+    if (!type) continue;
+    const defaults = defaultCanvasAreaSize(type);
     const boundsRecord =
-      zoneRecord.bounds && typeof zoneRecord.bounds === 'object'
-        ? (zoneRecord.bounds as Record<string, unknown>)
+      areaRecord.bounds && typeof areaRecord.bounds === 'object'
+        ? (areaRecord.bounds as Record<string, unknown>)
         : null;
 
-    const cardsRaw = Array.isArray(zoneRecord.cards) ? zoneRecord.cards : [];
+    const cardsRaw = Array.isArray(areaRecord.cards) ? areaRecord.cards : [];
     const cards = cardsRaw
       .map((rawCard) => {
         if (!rawCard || typeof rawCard !== 'object') return null;
@@ -438,7 +441,7 @@ function normalizeZones(value: unknown): ZoneModel[] {
           normalizedBoard = board;
         }
         return {
-          id: parseString(cardRecord.id, createFallbackId('zone-card')),
+          id: parseString(cardRecord.id, createFallbackId('canvas-card')),
           cardName,
           x: parseFiniteNumber(cardRecord.x, 0),
           y: parseFiniteNumber(cardRecord.y, 0),
@@ -447,10 +450,10 @@ function normalizeZones(value: unknown): ZoneModel[] {
       })
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
-    const deckVariantsRaw = Array.isArray(zoneRecord.deckVariants)
-      ? zoneRecord.deckVariants
+    const deckVariantsRaw = Array.isArray(areaRecord.deckVariants)
+      ? areaRecord.deckVariants
       : [];
-    const deckVariants: ZoneDeckVariant[] = deckVariantsRaw
+    const deckVariants: CanvasDeckVariant[] = deckVariantsRaw
       .map((rawVariant, index) => {
         if (!rawVariant || typeof rawVariant !== 'object') return null;
         const variantRecord = rawVariant as Record<string, unknown>;
@@ -463,20 +466,20 @@ function normalizeZones(value: unknown): ZoneModel[] {
           .filter(Boolean);
         const fallbackName = index === 0 ? 'Main' : `Variant ${index + 1}`;
         return {
-          id: parseString(variantRecord.id, createFallbackId('zone-variant')),
+          id: parseString(variantRecord.id, createFallbackId('canvas-variant')),
           name: parseString(variantRecord.name, fallbackName).trim() || fallbackName,
           activeCardIds,
         };
       })
-      .filter((entry): entry is ZoneDeckVariant => entry !== null);
+      .filter((entry): entry is CanvasDeckVariant => entry !== null);
     const cardFilters =
-      type === 'deck' ? ensureCardFilterState(zoneRecord.cardFilters) : undefined;
+      type === 'deck' ? ensureCardFilterState(areaRecord.cardFilters) : undefined;
 
-    zones.push({
-      id: parseString(zoneRecord.id, createFallbackId('zone')),
-      name: parseString(zoneRecord.name, 'Zone'),
+    canvasAreas.push({
+      id: parseString(areaRecord.id, createFallbackId('canvas-area')),
+      name: parseString(areaRecord.name, type === 'deck' ? 'Deck' : 'Stack'),
       type,
-      pinned: zoneRecord.pinned !== false,
+      pinned: areaRecord.pinned !== false,
       bounds: {
         x: parseFiniteNumber(boundsRecord?.x, 0),
         y: parseFiniteNumber(boundsRecord?.y, 0),
@@ -484,30 +487,33 @@ function normalizeZones(value: unknown): ZoneModel[] {
         height: parseFiniteNumber(boundsRecord?.height, defaults.height),
       },
       cards,
-      deckId: parseString(zoneRecord.deckId).trim() || undefined,
+      deckId: parseString(areaRecord.deckId).trim() || undefined,
       avatarCardName:
-        typeof zoneRecord.avatarCardName === 'string'
-          ? zoneRecord.avatarCardName
+        typeof areaRecord.avatarCardName === 'string'
+          ? areaRecord.avatarCardName
           : null,
       deckAuthor:
-        typeof zoneRecord.deckAuthor === 'string'
-          ? zoneRecord.deckAuthor
+        typeof areaRecord.deckAuthor === 'string'
+          ? areaRecord.deckAuthor
           : null,
       deckVariants,
-      activeDeckVariantId: parseString(zoneRecord.activeDeckVariantId).trim() || null,
+      activeDeckVariantId: parseString(areaRecord.activeDeckVariantId).trim() || null,
       cardFilters,
     });
   }
 
-  return zones;
+  return canvasAreas;
 }
 
 function normalizeUserData(userData: UserData): UserData {
+  const cleanUserData: UserData & { zones?: unknown } = { ...userData };
+  delete cleanUserData.zones;
+
   return {
-    ...userData,
+    ...cleanUserData,
     selectedArchetype: userData.selectedArchetype ?? null,
     canvasLabels: userData.canvasLabels ?? [],
-    zones: normalizeZones(userData.zones),
+    canvasAreas: normalizeCanvasAreas(userData.canvasAreas),
   };
 }
 

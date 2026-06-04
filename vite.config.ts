@@ -268,7 +268,20 @@ function authUserDevApi(): Plugin {
             typeof obj.id === 'string' &&
             typeof obj.text === 'string' &&
             typeof obj.x === 'number' &&
-            typeof obj.y === 'number'
+            Number.isFinite(obj.x) &&
+            typeof obj.y === 'number' &&
+            Number.isFinite(obj.y)
+          );
+        })
+      : [];
+    const canvasAreas = Array.isArray(payload.canvasAreas)
+      ? payload.canvasAreas.filter((area) => {
+          if (!area || typeof area !== 'object' || Array.isArray(area)) return false;
+          const obj = area as Record<string, unknown>;
+          return (
+            typeof obj.id === 'string' &&
+            typeof obj.name === 'string' &&
+            (obj.type === 'stack' || obj.type === 'deck')
           );
         })
       : [];
@@ -281,6 +294,7 @@ function authUserDevApi(): Plugin {
       selectedArchetype,
       archetypeScores,
       canvasLabels,
+      canvasAreas,
     };
   }
 
@@ -342,6 +356,7 @@ function authUserDevApi(): Plugin {
           collection: [],
           selectedArchetype: null,
           canvasLabels: [],
+          canvasAreas: [],
         };
 
         const token = randomBytes(32).toString('base64url');

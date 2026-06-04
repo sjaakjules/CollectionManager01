@@ -130,7 +130,7 @@ async function loadOrCreateUserData(
           collection: [],
           selectedArchetype: null,
           canvasLabels: [],
-          zones: [],
+          canvasAreas: [],
         };
       }
     } else {

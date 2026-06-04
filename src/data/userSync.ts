@@ -103,17 +103,20 @@ async function performSync(userData: UserData, token: string): Promise<void> {
 }
 
 /**
- * Merge local guest data with server user data
- * Server data takes precedence for conflicts
+ * Merge local guest data with server user data.
+ * Server data takes precedence for deck conflicts; additive data is preserved.
  *
  * Inputs:
  * - `local`: Local/offline user snapshot.
  * - `server`: Server-authoritative user snapshot.
  *
  * Outputs:
- * - Returns merged `UserData` preserving server precedence.
+ * - Returns merged `UserData` preserving server precedence where conflicts exist.
  */
 export function mergeUserData(local: UserData, server: UserData): UserData {
+  const cleanServer: UserData & { zones?: unknown } = { ...server };
+  delete cleanServer.zones;
+
   // Simple merge strategy: keep all decks, dedupe by ID
   const deckMap = new Map<string, UserData['decks'][0]>();
 
@@ -134,7 +137,9 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
   for (const item of server.collection) {
     collectionMap.set(item.name, item.quantity);
   }
-  // Note: We don't merge local collection, server is authoritative
+  for (const item of local.collection) {
+    collectionMap.set(item.name, (collectionMap.get(item.name) ?? 0) + item.quantity);
+  }
 
   const labelsById = new Map<string, CanvasLabel>();
   for (const label of server.canvasLabels ?? []) {
@@ -146,8 +151,21 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
     }
   }
 
+  const canvasAreasById = new Map<
+    string,
+    NonNullable<UserData['canvasAreas']>[number]
+  >();
+  for (const area of server.canvasAreas ?? []) {
+    canvasAreasById.set(area.id, area);
+  }
+  for (const area of local.canvasAreas ?? []) {
+    if (!canvasAreasById.has(area.id)) {
+      canvasAreasById.set(area.id, area);
+    }
+  }
+
   return {
-    ...server,
+    ...cleanServer,
     decks: Array.from(deckMap.values()),
     collection: Array.from(collectionMap.entries()).map(([name, quantity]) => ({
       name,
@@ -157,6 +175,6 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
       server.selectedArchetype ?? local.selectedArchetype ?? null,
     archetypeScores: server.archetypeScores ?? local.archetypeScores,
     canvasLabels: Array.from(labelsById.values()),
-    zones: server.zones ?? local.zones ?? [],
+    canvasAreas: Array.from(canvasAreasById.values()),
   };
 }

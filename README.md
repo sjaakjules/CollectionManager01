@@ -125,13 +125,13 @@ Key runtime modules and how they connect:
 | File | What it does | Related modules |
 | --- | --- | --- |
 | `src/main.tsx` | Bootstraps React into `#root` | `src/app/App.tsx` |
-| `src/app/App.tsx` | App shell, startup flow, zone + persistence wiring | `src/app/Startup.ts`, `src/app/AppState.ts`, `src/rendering/PixiCanvas.tsx` |
-| `src/app/AppState.ts` | Global reducer, context, selectors | `src/data/dataModels.ts`, `src/data/cardFilters.ts`, `src/zones/zones.ts` |
+| `src/app/App.tsx` | App shell, startup flow, canvas + persistence wiring | `src/app/Startup.ts`, `src/app/AppState.ts`, `src/rendering/PixiCanvas.tsx` |
+| `src/app/AppState.ts` | Global reducer, context, selectors | `src/data/dataModels.ts`, `src/data/cardFilters.ts`, `src/canvas/canvasAreas.ts` |
 | `src/app/Startup.ts` | Session/card/user bootstrapping | `src/auth/session.ts`, `src/data/cardService.ts`, `src/data/userStorage.ts` |
 | `src/rendering/PixiCanvas.tsx` | React <-> Pixi bridge and loading overlays | `src/rendering/PixiStage.ts`, `src/data/cardFilters.ts` |
-| `src/zones/zones.ts` | Zone model + quadrant placement/layout helpers | `src/rendering/Grid.ts`, `src/app/App.tsx` |
+| `src/canvas/canvasAreas.ts` | Stack/deck canvas model + placement/layout helpers | `src/rendering/Grid.ts`, `src/app/App.tsx` |
 | `src/data/cardFilters.ts` | Filter state + card matching engine | `src/ui/BottomPanel.tsx`, `src/rendering/PixiCanvas.tsx` |
-| `src/data/curiosaService.ts` | Curiosa URL import and deck payload parsing | `src/ui/ZonesPanel.tsx`, `src/ui/BottomPanel.tsx` |
+| `src/data/curiosaService.ts` | Curiosa URL import and deck payload parsing | `src/ui/BottomPanel.tsx` |
 | `src/data/importExport.ts` | Deck text import/export helpers | `src/ui/BottomPanel.tsx` |
 | `src/data/userSync.ts` | Debounced server sync + merge strategy | `src/auth/api.ts`, `src/app/App.tsx` |
 

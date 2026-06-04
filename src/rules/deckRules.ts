@@ -56,7 +56,7 @@ export function validateDeck(deck: Deck, cardDatabase: Card[]): ValidationResult
   // Count cards by type
   let spellCount = 0;
   let siteCount = 0;
-  let avatarCount = deck.boards.avatar.reduce((sum, c) => sum + c.quantity, 0);
+  const avatarCount = deck.boards.avatar.reduce((sum, c) => sum + c.quantity, 0);
 
   // Track quantities per card for rarity limits
   const cardQuantities = new Map<string, number>();

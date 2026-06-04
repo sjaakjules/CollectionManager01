@@ -141,7 +141,7 @@ export interface UserData {
   selectedArchetype?: string | null;
   archetypeScores?: ArchetypeScoresData;
   canvasLabels?: CanvasLabel[];
-  zones?: import('@/zones/zones').ZoneModel[];
+  canvasAreas?: import('@/canvas/canvasAreas').CanvasArea[];
 }
 
 // ============================================================================
@@ -219,7 +219,7 @@ export function createGuestUserData(id: string): UserData {
     collection: [],
     selectedArchetype: null,
     canvasLabels: [],
-    zones: [],
+    canvasAreas: [],
   };
 }
 
@@ -290,5 +290,7 @@ export function getThresholdGroup(thresholds: Thresholds): ThresholdGroup {
   if (active.length === 0) return 'none';
   if (active.length > 1) return 'multiple';
 
-  return active[0]!.toLowerCase() as ThresholdGroup;
+  const [onlyElement] = active;
+  if (!onlyElement) return 'none';
+  return onlyElement.toLowerCase() as ThresholdGroup;
 }

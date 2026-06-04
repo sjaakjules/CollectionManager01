@@ -79,12 +79,12 @@ import {
   ZONE_DECK_HEADER_HEIGHT,
   ZONE_DEFAULT_SIZE,
   ZONE_HEADER_HEIGHT,
-  createZoneDeckVariantId,
+  createCanvasDeckVariantId,
   sanitizeDeckZoneName,
-  type ZoneDeckVariant,
-  type ZoneModel,
-  type ZoneCardInstance,
-} from "@/zones/zones";
+  type CanvasDeckVariant,
+  type CanvasArea,
+  type CanvasCardInstance,
+} from "@/canvas/canvasAreas";
 
 // ============================================================================
 // Types
@@ -100,7 +100,7 @@ export interface PixiStageConfig {
   onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   onLabelPlacementConsumed?: () => void;
   onHoveredCardChange?: (cardName: string | null) => void;
-  onZonesChange?: (zones: ZoneModel[]) => void;
+  onCanvasAreasChange?: (zones: CanvasArea[]) => void;
   onStackZoneHeaderClick?: (zoneId: string) => void;
   onViewportCenterChange?: (center: { x: number; y: number }) => void;
   onDeckFilterRequest?: (request: {
@@ -220,7 +220,7 @@ interface QuickTransferCategoryBounds {
   bounds: { left: number; top: number; right: number; bottom: number };
 }
 
-interface QuickTransferZoneBounds {
+interface QuickTransferCanvasAreaBounds {
   zoneId: string;
   bounds: { left: number; top: number; right: number; bottom: number };
 }
@@ -233,7 +233,7 @@ interface QuickTransferState {
   expandedCategory: QuickTransferCategory | null;
   zoneHoverId: string | null;
   categoryBounds: QuickTransferCategoryBounds[];
-  zoneBounds: QuickTransferZoneBounds[];
+  zoneBounds: QuickTransferCanvasAreaBounds[];
 }
 
 interface DraggedCardPlacement {
@@ -517,7 +517,7 @@ export class PixiStage {
   private hoveredDeckFilterChip:
     | { zoneId: string; clauseIndex: number; removeHovered: boolean }
     | null = null;
-  private zones: ZoneModel[] = [];
+  private canvasAreas: CanvasArea[] = [];
   private labelSprites: Map<string, LabelSpriteData> = new Map();
   private canvasLabels: CanvasLabel[] = [];
   private cards: Card[] = [];
@@ -642,7 +642,7 @@ export class PixiStage {
   private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   private onLabelPlacementConsumed?: () => void;
   private onHoveredCardChange?: (cardName: string | null) => void;
-  private onZonesChange?: (zones: ZoneModel[]) => void;
+  private onCanvasAreasChange?: (zones: CanvasArea[]) => void;
   private onStackZoneHeaderClick?: (zoneId: string) => void;
   private onViewportCenterChange?: (center: { x: number; y: number }) => void;
   private onDeckFilterRequest?: (request: {
@@ -664,7 +664,7 @@ export class PixiStage {
     this.onCanvasLabelsChange = config.onCanvasLabelsChange;
     this.onLabelPlacementConsumed = config.onLabelPlacementConsumed;
     this.onHoveredCardChange = config.onHoveredCardChange;
-    this.onZonesChange = config.onZonesChange;
+    this.onCanvasAreasChange = config.onCanvasAreasChange;
     this.onStackZoneHeaderClick = config.onStackZoneHeaderClick;
     this.onViewportCenterChange = config.onViewportCenterChange;
     this.onDeckFilterRequest = config.onDeckFilterRequest;
@@ -717,7 +717,7 @@ export class PixiStage {
 
     // Add card container
     this.camera.container.addChild(this.cardContainer);
-    // Zones always render above source cards.
+    // Canvas areas always render above source cards.
     this.camera.container.addChild(this.zoneContainer);
     // Drop preview draws above zone visuals.
     this.camera.container.addChild(this.zoneDropPreviewContainer);
@@ -904,13 +904,13 @@ export class PixiStage {
     const dropTarget = this.getStacksDropTargetAtPoint(clientX, clientY);
     if (!(dropTarget instanceof HTMLElement)) return null;
 
-    const stackTarget = dropTarget.closest("[data-stack-zone-id]");
+    const stackTarget = dropTarget.closest("[data-stack-area-id]");
     if (!(stackTarget instanceof HTMLElement)) return null;
 
-    const zoneId = stackTarget.dataset.stackZoneId;
+    const zoneId = stackTarget.dataset.stackAreaId;
     if (!zoneId) return null;
 
-    const matching = this.zones.find(
+    const matching = this.canvasAreas.find(
       (zone) => zone.id === zoneId && zone.type === "stack",
     );
     return matching ? matching.id : null;
@@ -990,9 +990,9 @@ export class PixiStage {
     return label;
   }
 
-  private getQuickTransferTargets(category: QuickTransferCategory): ZoneModel[] {
+  private getQuickTransferTargets(category: QuickTransferCategory): CanvasArea[] {
     const zoneType = category === "deck" ? "deck" : "stack";
-    return this.zones
+    return this.canvasAreas
       .filter((zone) => zone.type === zoneType)
       .sort((left, right) => left.name.localeCompare(right.name));
   }
@@ -1341,7 +1341,7 @@ export class PixiStage {
     screenPos: { x: number; y: number },
   ): boolean {
     if (!this.cardSprites.has(cardKey)) return false;
-    const hasTargets = this.zones.some(
+    const hasTargets = this.canvasAreas.some(
       (zone) => zone.type === "deck" || zone.type === "stack",
     );
     if (!hasTargets) return false;
@@ -1391,7 +1391,7 @@ export class PixiStage {
     this.deactivateQuickTransfer();
   }
 
-  private cloneZones(zones: ZoneModel[]): ZoneModel[] {
+  private cloneCanvasAreas(zones: CanvasArea[]): CanvasArea[] {
     return zones.map((zone) => ({
       ...zone,
       bounds: { ...zone.bounds },
@@ -1409,8 +1409,8 @@ export class PixiStage {
     }));
   }
 
-  private emitZonesChange(): void {
-    this.onZonesChange?.(this.cloneZones(this.zones));
+  private emitCanvasAreasChange(): void {
+    this.onCanvasAreasChange?.(this.cloneCanvasAreas(this.canvasAreas));
   }
 
   private closeDeckCardDeletePrompt(): void {
@@ -1432,7 +1432,7 @@ export class PixiStage {
     zoneId: string,
     instanceId: string,
   ): Array<{ id: string; name: string; isActiveVariant: boolean }> {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || zone.type !== "deck") return [];
 
     const variants = this.ensureDeckZoneVariants(zone);
@@ -1458,7 +1458,7 @@ export class PixiStage {
     instanceId: string,
     variantId: string,
   ): boolean {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || zone.type !== "deck") return false;
     const variants = this.ensureDeckZoneVariants(zone);
     const variant = variants.find((entry) => entry.id === variantId);
@@ -1482,8 +1482,8 @@ export class PixiStage {
     const activeVariants = this.getDeckCardActiveVariants(zoneId, instanceId);
     if (activeVariants.length === 0) {
       this.closeDeckCardDeletePrompt();
-      this.removeZoneCardInstance(zoneId, instanceId);
-      this.emitZonesChange();
+      this.removeCanvasCardInstance(zoneId, instanceId);
+      this.emitCanvasAreasChange();
       this.hoveredZoneCardKey = null;
       this.drawZoneDeleteOverlay();
       return;
@@ -1574,13 +1574,13 @@ export class PixiStage {
         if (!changed) return;
 
         this.rebuildZoneVisuals();
-        this.emitZonesChange();
+        this.emitCanvasAreasChange();
 
         const remaining = this.getDeckCardActiveVariants(zoneId, instanceId);
         if (remaining.length === 0) {
           this.closeDeckCardDeletePrompt();
-          this.removeZoneCardInstance(zoneId, instanceId);
-          this.emitZonesChange();
+          this.removeCanvasCardInstance(zoneId, instanceId);
+          this.emitCanvasAreasChange();
           this.hoveredZoneCardKey = null;
           this.drawZoneDeleteOverlay();
           return;
@@ -1639,11 +1639,11 @@ export class PixiStage {
     clientX: number,
     clientY: number,
   ): void {
-    const zone = this.zones.find((entry) => entry.id === zoneCard.zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneCard.zoneId);
     if (!zone || zone.type !== "deck") {
       this.closeDeckCardDeletePrompt();
-      this.removeZoneCardInstance(zoneCard.zoneId, zoneCard.instanceId);
-      this.emitZonesChange();
+      this.removeCanvasCardInstance(zoneCard.zoneId, zoneCard.instanceId);
+      this.emitCanvasAreasChange();
       this.hoveredZoneCardKey = null;
       this.drawZoneDeleteOverlay();
       return;
@@ -1652,8 +1652,8 @@ export class PixiStage {
     const activeVariants = this.getDeckCardActiveVariants(zone.id, zoneCard.instanceId);
     if (activeVariants.length === 0) {
       this.closeDeckCardDeletePrompt();
-      this.removeZoneCardInstance(zone.id, zoneCard.instanceId);
-      this.emitZonesChange();
+      this.removeCanvasCardInstance(zone.id, zoneCard.instanceId);
+      this.emitCanvasAreasChange();
       this.hoveredZoneCardKey = null;
       this.drawZoneDeleteOverlay();
       return;
@@ -1694,7 +1694,7 @@ export class PixiStage {
     return "other";
   }
 
-  private getZoneDisplayName(zone: ZoneModel): string {
+  private getZoneDisplayName(zone: CanvasArea): string {
     if (zone.type !== "deck") {
       return zone.name;
     }
@@ -1705,7 +1705,7 @@ export class PixiStage {
     return this.getCardType(cardName) === "Site";
   }
 
-  private getZoneHeaderHeight(zone: ZoneModel): number {
+  private getZoneHeaderHeight(zone: CanvasArea): number {
     return zone.type === "deck" ? ZONE_DECK_HEADER_HEIGHT : ZONE_HEADER_HEIGHT;
   }
 
@@ -2025,7 +2025,7 @@ export class PixiStage {
   }
 
   private renderDeckHeaderStats(
-    zone: ZoneModel,
+    zone: CanvasArea,
     elements: Container[],
     options: {
       left: number;
@@ -2200,7 +2200,7 @@ export class PixiStage {
     return hoverRegions;
   }
 
-  private computeDeckHeaderStats(zone: ZoneModel): DeckHeaderStats | null {
+  private computeDeckHeaderStats(zone: CanvasArea): DeckHeaderStats | null {
     if (zone.type !== "deck") return null;
 
     const cardLookup = new Map(this.cards.map((card) => [card.name, card]));
@@ -2467,7 +2467,7 @@ export class PixiStage {
     };
   }
 
-  private getDeckZoneMainCardIds(zone: ZoneModel): Set<string> {
+  private getDeckZoneMainCardIds(zone: CanvasArea): Set<string> {
     const ids = new Set<string>();
     if (zone.type !== "deck") return ids;
     for (const card of zone.cards) {
@@ -2478,7 +2478,7 @@ export class PixiStage {
     return ids;
   }
 
-  private ensureDeckZoneVariants(zone: ZoneModel): ZoneDeckVariant[] {
+  private ensureDeckZoneVariants(zone: CanvasArea): CanvasDeckVariant[] {
     if (zone.type !== "deck") {
       zone.deckVariants = [];
       zone.activeDeckVariantId = null;
@@ -2498,9 +2498,9 @@ export class PixiStage {
       let id =
         typeof variant.id === "string" && variant.id.trim()
           ? variant.id.trim()
-          : createZoneDeckVariantId();
+          : createCanvasDeckVariantId();
       while (usedIds.has(id)) {
-        id = createZoneDeckVariantId();
+        id = createCanvasDeckVariantId();
       }
       usedIds.add(id);
 
@@ -2520,7 +2520,7 @@ export class PixiStage {
     });
 
     if (variants.length === 0) {
-      const id = createZoneDeckVariantId();
+      const id = createCanvasDeckVariantId();
       variants.push({
         id,
         name: "Main",
@@ -2540,7 +2540,7 @@ export class PixiStage {
     return variants;
   }
 
-  private getActiveDeckZoneVariant(zone: ZoneModel): ZoneDeckVariant | null {
+  private getActiveDeckZoneVariant(zone: CanvasArea): CanvasDeckVariant | null {
     if (zone.type !== "deck") return null;
     const variants = this.ensureDeckZoneVariants(zone);
     if (variants.length === 0) return null;
@@ -2552,7 +2552,7 @@ export class PixiStage {
   }
 
   private setActiveDeckZoneVariant(zoneId: string, variantId: string): boolean {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || zone.type !== "deck") return false;
     const variants = this.ensureDeckZoneVariants(zone);
     if (!variants.some((variant) => variant.id === variantId)) return false;
@@ -2573,7 +2573,7 @@ export class PixiStage {
     this.deckVariantDialogOpen = false;
   }
 
-  private showDeckVariantDialog(zone: ZoneModel): Promise<DeckVariantDialogResult | null> {
+  private showDeckVariantDialog(zone: CanvasArea): Promise<DeckVariantDialogResult | null> {
     if (this.deckVariantDialogOpen || this.isDestroyed) {
       return Promise.resolve(null);
     }
@@ -2776,7 +2776,7 @@ export class PixiStage {
   }
 
   private async createDeckZoneVariant(zoneId: string): Promise<boolean> {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || zone.type !== "deck") return false;
 
     const variants = this.ensureDeckZoneVariants(zone);
@@ -2792,8 +2792,8 @@ export class PixiStage {
       mainCardIds.has(cardId),
     );
 
-    const created: ZoneDeckVariant = {
-      id: createZoneDeckVariantId(),
+    const created: CanvasDeckVariant = {
+      id: createCanvasDeckVariantId(),
       name: dialogResult.name,
       activeCardIds: [...new Set(activeCardIds)],
     };
@@ -2803,7 +2803,7 @@ export class PixiStage {
     return true;
   }
 
-  private getZoneCardStackKey(zone: ZoneModel, instance: ZoneCardInstance): string {
+  private getZoneCardStackKey(zone: CanvasArea, instance: CanvasCardInstance): string {
     const isLandscape = this.isLandscapeCard(instance.cardName);
     const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
     const centerX = instance.x + size.width / 2;
@@ -2816,7 +2816,7 @@ export class PixiStage {
     return `${boardKey}:${isLandscape ? "L" : "P"}:${grid.x},${grid.y}`;
   }
 
-  private moveDeckZoneCardToStackBack(zone: ZoneModel, instanceId: string): void {
+  private moveDeckZoneCardToStackBack(zone: CanvasArea, instanceId: string): void {
     if (zone.type !== "deck") return;
     const targetIndex = zone.cards.findIndex((entry) => entry.id === instanceId);
     if (targetIndex < 0) return;
@@ -2842,7 +2842,7 @@ export class PixiStage {
   }
 
   private toggleDeckZoneCardActive(zoneId: string, instanceId: string): boolean {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || zone.type !== "deck") return false;
     const instance = zone.cards.find((entry) => entry.id === instanceId);
     if (!instance) return false;
@@ -2863,7 +2863,7 @@ export class PixiStage {
   }
 
   private removeDeckVariantCardReferences(
-    zone: ZoneModel,
+    zone: CanvasArea,
     removedCardIds: Iterable<string>,
   ): void {
     if (zone.type !== "deck") return;
@@ -2876,7 +2876,7 @@ export class PixiStage {
   }
 
   private syncDeckVariantForBoardChange(
-    zone: ZoneModel,
+    zone: CanvasArea,
     instanceId: string,
     board: DeckZoneBoard,
   ): void {
@@ -2897,8 +2897,8 @@ export class PixiStage {
   }
 
   private registerDeckVariantAdditions(
-    zone: ZoneModel,
-    additions: ZoneCardInstance[],
+    zone: CanvasArea,
+    additions: CanvasCardInstance[],
   ): void {
     if (zone.type !== "deck" || additions.length === 0) return;
     const activeVariant = this.getActiveDeckZoneVariant(zone);
@@ -2936,8 +2936,8 @@ export class PixiStage {
     return top;
   }
 
-  private getZoneAtPosition(worldPos: { x: number; y: number }): ZoneModel | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+  private getZoneAtPosition(worldPos: { x: number; y: number }): CanvasArea | null {
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone) continue;
@@ -2953,8 +2953,8 @@ export class PixiStage {
     return null;
   }
 
-  private getZoneHeaderAtPosition(worldPos: { x: number; y: number }): ZoneModel | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+  private getZoneHeaderAtPosition(worldPos: { x: number; y: number }): CanvasArea | null {
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone) continue;
@@ -2974,8 +2974,8 @@ export class PixiStage {
 
   private getZoneCloseTargetAtPosition(
     worldPos: { x: number; y: number },
-  ): ZoneModel | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+  ): CanvasArea | null {
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone) continue;
@@ -2990,8 +2990,8 @@ export class PixiStage {
 
   private getZoneSortTargetAtPosition(
     worldPos: { x: number; y: number },
-  ): ZoneModel | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+  ): CanvasArea | null {
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone) continue;
@@ -3006,8 +3006,8 @@ export class PixiStage {
 
   private getZoneFilterTargetAtPosition(
     worldPos: { x: number; y: number },
-  ): ZoneModel | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+  ): CanvasArea | null {
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone || zone.type !== "deck") continue;
@@ -3022,8 +3022,8 @@ export class PixiStage {
 
   private getDeckFilterChipTargetAtPosition(
     worldPos: { x: number; y: number },
-  ): { zone: ZoneModel; clauseIndex: number; removeHovered: boolean } | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned && zone.type === "deck");
+  ): { zone: CanvasArea; clauseIndex: number; removeHovered: boolean } | null {
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned && zone.type === "deck");
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone) continue;
@@ -3088,14 +3088,14 @@ export class PixiStage {
   }
 
   private updateDeckZoneFilters(zoneId: string, filters: CardFilterState): boolean {
-    const zone = this.zones.find((entry) => entry.id === zoneId && entry.type === "deck");
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId && entry.type === "deck");
     if (!zone) return false;
     zone.cardFilters = ensureCardFilterState(filters);
     return true;
   }
 
   private removeDeckFilterClause(zoneId: string, clauseIndex: number): boolean {
-    const zone = this.zones.find((entry) => entry.id === zoneId && entry.type === "deck");
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId && entry.type === "deck");
     if (!zone) return false;
 
     const filters = ensureCardFilterState(zone.cardFilters);
@@ -3108,9 +3108,9 @@ export class PixiStage {
   }
 
   private getVisibleDeckZoneCards(
-    zone: ZoneModel,
+    zone: CanvasArea,
     filteredCardNameCache: Map<string, Set<string>>,
-  ): ZoneCardInstance[] {
+  ): CanvasCardInstance[] {
     const filters = ensureCardFilterState(zone.cardFilters);
     if (!isCardFilterActive(filters)) {
       return zone.cards;
@@ -3130,8 +3130,8 @@ export class PixiStage {
 
   private getZoneVariantTabTargetAtPosition(
     worldPos: { x: number; y: number },
-  ): { zone: ZoneModel; variantId: string | null; isAdd: boolean } | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+  ): { zone: CanvasArea; variantId: string | null; isAdd: boolean } | null {
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone || zone.type !== "deck") continue;
@@ -3150,7 +3150,7 @@ export class PixiStage {
   }
 
   private layoutZoneBoardCards(
-    cards: ZoneCardInstance[],
+    cards: CanvasCardInstance[],
     options: {
       left: number;
       top: number;
@@ -3169,7 +3169,7 @@ export class PixiStage {
         cardName: string;
         type: CardType | null;
         cost: number;
-        instances: ZoneCardInstance[];
+        instances: CanvasCardInstance[];
       }
     >();
     for (const card of cards) {
@@ -3276,7 +3276,7 @@ export class PixiStage {
     zoneId: string,
     options?: { emitChange?: boolean },
   ): void {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || zone.cards.length === 0) return;
 
     const nextCards = zone.cards.map((card) => ({ ...card }));
@@ -3324,19 +3324,19 @@ export class PixiStage {
     }
 
     zone.cards = nextCards;
-    this.reconcileZoneBounds(zone.id, { preserveTopLeft: true });
+    this.reconcileCanvasAreaBounds(zone.id, { preserveTopLeft: true });
     this.rebuildZoneVisuals();
     if (options?.emitChange ?? true) {
-      this.emitZonesChange();
+      this.emitCanvasAreasChange();
     }
   }
 
   private hideZoneFromCanvas(zoneId: string): void {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || !zone.pinned) return;
     zone.pinned = false;
     this.rebuildZoneVisuals();
-    this.emitZonesChange();
+    this.emitCanvasAreasChange();
   }
 
   private getDeleteButtonBounds(data: ZoneCardSpriteData): {
@@ -3369,7 +3369,7 @@ export class PixiStage {
   }
 
   private canDuplicateZoneCard(data: ZoneCardSpriteData): boolean {
-    const zone = this.zones.find((entry) => entry.id === data.zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === data.zoneId);
     return zone?.type === "deck";
   }
 
@@ -3517,7 +3517,7 @@ export class PixiStage {
   private getDeckGraphHoverRegionAtPosition(
     worldPos: { x: number; y: number },
   ): DeckGraphHoverRegion | null {
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     for (let i = pinnedZones.length - 1; i >= 0; i--) {
       const zone = pinnedZones[i];
       if (!zone || zone.type !== "deck") continue;
@@ -3635,7 +3635,7 @@ export class PixiStage {
         void this.createDeckZoneVariant(clickedZoneVariantTab.zone.id).then((changed) => {
           if (!changed || this.isDestroyed) return;
           this.rebuildZoneVisuals();
-          this.emitZonesChange();
+          this.emitCanvasAreasChange();
         });
       } else {
         const changed = clickedZoneVariantTab.variantId
@@ -3646,7 +3646,7 @@ export class PixiStage {
           : false;
         if (changed) {
           this.rebuildZoneVisuals();
-          this.emitZonesChange();
+          this.emitCanvasAreasChange();
         }
       }
       this.updateHoveredFromWorldPos(worldPos);
@@ -3671,7 +3671,7 @@ export class PixiStage {
         );
         if (changed) {
           this.rebuildZoneVisuals();
-          this.emitZonesChange();
+          this.emitCanvasAreasChange();
         }
       } else {
         this.openDeckFilterRequest(
@@ -3710,12 +3710,12 @@ export class PixiStage {
       if (this.canDuplicateZoneCard(clickedZoneCard)) {
         const duplicateBounds = this.getDuplicateButtonBounds(clickedZoneCard);
         if (this.pointInBounds(worldPos, duplicateBounds)) {
-          this.duplicateZoneCardInstance(
+          this.duplicateCanvasCardInstance(
             clickedZoneCard.zoneId,
             clickedZoneCard.instanceId,
           );
           this.rebuildZoneVisuals();
-          this.emitZonesChange();
+          this.emitCanvasAreasChange();
           this.updateHoveredFromWorldPos(worldPos);
           return;
         }
@@ -3804,7 +3804,7 @@ export class PixiStage {
       this.lastClickedZoneCardKey = clickedZoneCard.key;
 
       if (isDoubleClick) {
-        const zone = this.zones.find((entry) => entry.id === clickedZoneCard.zoneId);
+        const zone = this.canvasAreas.find((entry) => entry.id === clickedZoneCard.zoneId);
         if (zone?.type === "deck") {
           const changed = this.toggleDeckZoneCardActive(
             clickedZoneCard.zoneId,
@@ -3812,15 +3812,15 @@ export class PixiStage {
           );
           if (changed) {
             this.rebuildZoneVisuals();
-            this.emitZonesChange();
+            this.emitCanvasAreasChange();
           }
         } else {
-          this.duplicateZoneCardInstance(
+          this.duplicateCanvasCardInstance(
             clickedZoneCard.zoneId,
             clickedZoneCard.instanceId,
           );
           this.rebuildZoneVisuals();
-          this.emitZonesChange();
+          this.emitCanvasAreasChange();
         }
         this.updateHoveredFromWorldPos(worldPos);
         return;
@@ -4680,7 +4680,7 @@ export class PixiStage {
       y: zoneCard.sprite.y,
     };
 
-    const zone = this.zones.find((entry) => entry.id === zoneCard.zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneCard.zoneId);
     if (zone) {
       const instanceIndex = zone.cards.findIndex(
         (entry) => entry.id === zoneCard.instanceId,
@@ -4731,7 +4731,7 @@ export class PixiStage {
       return;
     }
 
-    const zone = this.zones.find((entry) => entry.id === drag.zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === drag.zoneId);
     const zoneCard = this.zoneCardSprites.get(drag.key);
     if (!zone || !zoneCard) {
       this.zoneCardDragState = {
@@ -4788,7 +4788,7 @@ export class PixiStage {
     if (zone.type === "deck" && resolvedBoard && hasMeaningfulMove) {
       this.syncDeckVariantForBoardChange(zone, drag.instanceId, resolvedBoard);
     }
-    this.reconcileZoneBounds(zone.id, { anchorBoard: resolvedBoard });
+    this.reconcileCanvasAreaBounds(zone.id, { anchorBoard: resolvedBoard });
     this.zoneCardDragState = {
       isDragging: false,
       key: null,
@@ -4798,11 +4798,11 @@ export class PixiStage {
       startCardPos: { x: 0, y: 0 },
     };
     this.rebuildZoneVisuals();
-    this.emitZonesChange();
+    this.emitCanvasAreasChange();
   }
 
   private startZoneDrag(zoneId: string, worldPos: { x: number; y: number }): void {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone) return;
 
     this.zoneDragState = {
@@ -4818,7 +4818,7 @@ export class PixiStage {
     if (!this.zoneDragState.isDragging || !this.zoneDragState.zoneId) return;
     if (!this.zoneDragState.startBounds) return;
 
-    const zone = this.zones.find((entry) => entry.id === this.zoneDragState.zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === this.zoneDragState.zoneId);
     if (!zone) {
       this.zoneDragState = {
         isDragging: false,
@@ -4859,7 +4859,7 @@ export class PixiStage {
       return;
     }
 
-    const zone = this.zones.find((entry) => entry.id === this.zoneDragState.zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === this.zoneDragState.zoneId);
     if (!zone) return;
 
     const startBounds = this.zoneDragState.startBounds;
@@ -4887,21 +4887,21 @@ export class PixiStage {
       startBounds: null,
     };
     this.rebuildZoneVisuals();
-    this.emitZonesChange();
+    this.emitCanvasAreasChange();
   }
 
-  private removeZoneCardInstance(zoneId: string, instanceId: string): void {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+  private removeCanvasCardInstance(zoneId: string, instanceId: string): void {
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone) return;
 
     zone.cards = zone.cards.filter((entry) => entry.id !== instanceId);
     this.removeDeckVariantCardReferences(zone, [instanceId]);
-    this.reconcileZoneBounds(zone.id);
+    this.reconcileCanvasAreaBounds(zone.id);
     this.rebuildZoneVisuals();
   }
 
-  private duplicateZoneCardInstance(zoneId: string, instanceId: string): void {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+  private duplicateCanvasCardInstance(zoneId: string, instanceId: string): void {
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone) return;
     if (zone.type === "stack") return;
 
@@ -4911,7 +4911,7 @@ export class PixiStage {
     const sourceBoard: DeckZoneBoard | null =
       zone.type === "deck" ? this.normalizeDeckBoard(source.board) : null;
 
-    const duplicate: ZoneCardInstance = {
+    const duplicate: CanvasCardInstance = {
       id:
         typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
           ? crypto.randomUUID()
@@ -4926,11 +4926,11 @@ export class PixiStage {
     if (zone.type === "deck" && sourceBoard) {
       this.syncDeckVariantForBoardChange(zone, duplicate.id, sourceBoard);
     }
-    this.reconcileZoneBounds(zone.id, { anchorBoard: sourceBoard });
+    this.reconcileCanvasAreaBounds(zone.id, { anchorBoard: sourceBoard });
   }
 
   private getDeckBoardForPosition(
-    zone: ZoneModel,
+    zone: CanvasArea,
     worldPos: { x: number; y: number },
   ): DeckZoneBoard | null {
     if (zone.type !== "deck") return null;
@@ -4956,7 +4956,7 @@ export class PixiStage {
   }
 
   private planZoneCardAdditions(
-    zone: ZoneModel,
+    zone: CanvasArea,
     cardNames: string[],
     worldPos: { x: number; y: number },
     options?: {
@@ -4965,7 +4965,7 @@ export class PixiStage {
       previewIds?: boolean;
     },
   ): {
-    additions: ZoneCardInstance[];
+    additions: CanvasCardInstance[];
     anchorBoard: DeckZoneBoard | null;
   } {
     const enforceUnique = zone.type === "stack";
@@ -5030,7 +5030,7 @@ export class PixiStage {
         ? this.getDeckBoardForPosition(zone, worldPos) ?? "mainboard"
         : null;
     let anchorBoard: DeckZoneBoard | null = fallbackDeckBoard;
-    const additions: ZoneCardInstance[] = [];
+    const additions: CanvasCardInstance[] = [];
 
     entries.forEach((entry, index) => {
       if (
@@ -5076,9 +5076,9 @@ export class PixiStage {
     return { additions, anchorBoard };
   }
 
-  private computeZoneBoundsFromCards(
-    zone: ZoneModel,
-    cards: ZoneCardInstance[],
+  private computeCanvasAreaBoundsFromCards(
+    zone: CanvasArea,
+    cards: CanvasCardInstance[],
   ): { x: number; y: number; width: number; height: number } {
     const usesDefaultMin = !(zone.type === "deck" && cards.length > 0);
     const minSize = usesDefaultMin
@@ -5125,7 +5125,7 @@ export class PixiStage {
   }
 
   private updateZoneDropPreview(
-    zone: ZoneModel | null,
+    zone: CanvasArea | null,
     worldPos: { x: number; y: number },
     placements: DraggedCardPlacement[],
   ): void {
@@ -5144,7 +5144,7 @@ export class PixiStage {
       return;
     }
 
-    const previewBounds = this.computeZoneBoundsFromCards(zone, [
+    const previewBounds = this.computeCanvasAreaBoundsFromCards(zone, [
       ...zone.cards,
       ...additions,
     ]);
@@ -5235,7 +5235,7 @@ export class PixiStage {
     worldPos: { x: number; y: number },
     options?: { useZonePlacement?: boolean; placements?: DraggedCardPlacement[] },
   ): void {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone) return;
     const { additions, anchorBoard } = this.planZoneCardAdditions(
       zone,
@@ -5255,25 +5255,25 @@ export class PixiStage {
     this.registerDeckVariantAdditions(zone, additions);
 
     if (zone.type === "stack") {
-      this.reconcileZoneBounds(zone.id);
+      this.reconcileCanvasAreaBounds(zone.id);
       this.rebuildZoneVisuals();
-      this.emitZonesChange();
+      this.emitCanvasAreasChange();
       return;
     }
 
-    this.reconcileZoneBounds(zone.id, { anchorBoard });
+    this.reconcileCanvasAreaBounds(zone.id, { anchorBoard });
     this.rebuildZoneVisuals();
-    this.emitZonesChange();
+    this.emitCanvasAreasChange();
   }
 
-  private reconcileZoneBounds(
+  private reconcileCanvasAreaBounds(
     zoneId: string,
     options?: {
       anchorBoard?: DeckZoneBoard | null;
       preserveTopLeft?: boolean;
     },
   ): void {
-    const zone = this.zones.find((entry) => entry.id === zoneId);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone) return;
 
     const usesDefaultMin = !(zone.type === "deck" && zone.cards.length > 0);
@@ -5593,10 +5593,10 @@ export class PixiStage {
     this.rebuildCardSprites();
   }
 
-  setZones(zones: ZoneModel[]): void {
-    this.zones = this.cloneZones(zones);
+  setCanvasAreas(zones: CanvasArea[]): void {
+    this.canvasAreas = this.cloneCanvasAreas(zones);
     this.hoveredDeckFilterChip = null;
-    for (const zone of this.zones) {
+    for (const zone of this.canvasAreas) {
       if (zone.type === "deck") {
         this.ensureDeckZoneVariants(zone);
         zone.cardFilters = ensureCardFilterState(zone.cardFilters);
@@ -5610,7 +5610,7 @@ export class PixiStage {
 
   focusZone(zoneId: string): void {
     if (!this.camera) return;
-    const zone = this.zones.find((entry) => entry.id === zoneId && entry.pinned);
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId && entry.pinned);
     if (!zone) return;
 
     const safeWidth = Math.max(zone.bounds.width, DRAWN_GRID.width);
@@ -5984,7 +5984,7 @@ export class PixiStage {
       width: number;
       height: number;
     },
-    zone: ZoneModel,
+    zone: CanvasArea,
   ): {
     mainboard: { x: number; y: number; width: number; height: number };
     sideboard: { x: number; y: number; width: number; height: number };
@@ -6037,7 +6037,7 @@ export class PixiStage {
   }
 
   private drawZoneFrame(
-    zone: ZoneModel,
+    zone: CanvasArea,
     zoneIndex: number,
   ): {
     frame: Graphics;
@@ -6374,9 +6374,7 @@ export class PixiStage {
       const tabTop = zone.bounds.y + headerHeight - ZONE_DECK_TAB_HEIGHT;
       const headerToolRight = filterBounds ? filterBounds.right : sortBounds.right;
       const filterChipRight =
-        filterChipBounds.length > 0
-          ? filterChipBounds[filterChipBounds.length - 1]!.bounds.right
-          : 0;
+        filterChipBounds.at(-1)?.bounds.right ?? 0;
       const tabStartX = Math.max(headerToolRight, filterChipRight);
       let tabCursorX = Math.max(titleX, tabStartX + ZONE_DECK_TAB_GAP);
       const maxTabRight = closeBounds.left - buttonMargin;
@@ -6562,7 +6560,7 @@ export class PixiStage {
     if (!this.camera) return;
 
     const filteredDeckCardNameCache = new Map<string, Set<string>>();
-    const pinnedZones = this.zones.filter((zone) => zone.pinned);
+    const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     pinnedZones.forEach((zone, zoneIndex) => {
       const frameData = this.drawZoneFrame(zone, zoneIndex);
       this.zoneFrames.set(zone.id, frameData);
@@ -6575,7 +6573,7 @@ export class PixiStage {
           ? this.getVisibleDeckZoneCards(zone, filteredDeckCardNameCache)
           : zone.cards;
 
-      const stacks = new Map<string, ZoneCardInstance[]>();
+      const stacks = new Map<string, CanvasCardInstance[]>();
       for (const instance of visibleZoneCards) {
         const isLandscape = this.isLandscapeCard(instance.cardName);
         const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
