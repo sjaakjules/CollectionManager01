@@ -4,7 +4,13 @@ set -euo pipefail
 
 VENTRA_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENTRA_ROOT_DIR="$(cd "$VENTRA_LIB_DIR/../.." && pwd)"
-VENTRA_CONFIG_FILE="$VENTRA_ROOT_DIR/hosting/ventraip.deploy.json"
+if [[ -z "${VENTRA_CONFIG_FILE:-}" ]]; then
+  if [[ -f "$VENTRA_ROOT_DIR/hosting/ventraip.deploy.local.json" ]]; then
+    VENTRA_CONFIG_FILE="$VENTRA_ROOT_DIR/hosting/ventraip.deploy.local.json"
+  else
+    VENTRA_CONFIG_FILE="$VENTRA_ROOT_DIR/hosting/ventraip.deploy.json"
+  fi
+fi
 VENTRA_DEPLOY_ROOT="$VENTRA_ROOT_DIR/.deploy/sorcerystacks"
 
 ventra_config_value() {
@@ -73,6 +79,69 @@ EOF
   fi
 }
 
+ventra_validate_target() {
+  local target="$1"
+  local host="$2"
+  local port="$3"
+  local username="$4"
+  local remote_dir="$5"
+  local domain="$6"
+  local protocol
+
+  protocol="$(ventra_config_value "-" "protocol")"
+
+  case "$target" in
+    staging|production) ;;
+    *)
+      printf 'Invalid deploy target: %s\n' "$target" >&2
+      exit 64
+      ;;
+  esac
+
+  if [[ "$protocol" != "explicit-ftps" ]]; then
+    printf 'Refusing deploy: protocol must be explicit-ftps, got %s\n' "$protocol" >&2
+    exit 65
+  fi
+
+  if [[ "$host" != "ftp.julianrutten.com" || "$port" != "21" ]]; then
+    printf 'Refusing deploy to unexpected host/port: %s:%s\n' "$host" "$port" >&2
+    exit 65
+  fi
+
+  if [[ "$remote_dir" != "/" ]]; then
+    printf 'Refusing deploy to unexpected remoteDir: %s\n' "$remote_dir" >&2
+    printf 'This script expects cPanel FTPS accounts rooted to their target document roots.\n' >&2
+    exit 65
+  fi
+
+  case "$target" in
+    staging)
+      [[ "$username" == "sorcerydeploy@sorcerystacks.com" ]] || {
+        printf 'Refusing staging deploy with unexpected account: %s\n' "$username" >&2
+        exit 65
+      }
+      [[ "$domain" == "https://staging.sorcerystacks.com" ]] || {
+        printf 'Refusing staging deploy with unexpected domain: %s\n' "$domain" >&2
+        exit 65
+      }
+      ;;
+    production)
+      [[ "$username" == "Manager@sorcerystacks.com" ]] || {
+        printf 'Refusing production deploy with unexpected account: %s\n' "$username" >&2
+        exit 65
+      }
+      [[ "$domain" == "https://sorcerystacks.com" ]] || {
+        printf 'Refusing production deploy with unexpected domain: %s\n' "$domain" >&2
+        exit 65
+      }
+      [[ "${VENTRA_PRODUCTION_CONFIRMED:-}" == "1" ]] || {
+        printf 'Refusing production deploy without VENTRA_PRODUCTION_CONFIRMED=1.\n' >&2
+        exit 64
+      }
+      ;;
+  esac
+}
+
 ventra_keychain_password() {
   local host="$1"
   local username="$2"
@@ -116,6 +185,49 @@ EOF
     exit 66
   fi
 
+  if [[ ! -f "$artifact_dir/.deploy-ready.json" ]]; then
+    cat >&2 <<EOF
+Artifact is not marked deploy-ready: $artifact_dir
+
+Create a fresh artifact with:
+  pnpm build:ventraip
+EOF
+    exit 66
+  fi
+
+  [[ -f "$artifact_dir/index.html" ]] || {
+    printf 'Artifact looks incomplete: missing index.html in %s\n' "$artifact_dir" >&2
+    exit 66
+  }
+  [[ -f "$artifact_dir/.htaccess" ]] || {
+    printf 'Artifact looks incomplete: missing .htaccess in %s\n' "$artifact_dir" >&2
+    exit 66
+  }
+  [[ -f "$artifact_dir/api/auth.php" ]] || {
+    printf 'Artifact looks incomplete: missing api/auth.php in %s\n' "$artifact_dir" >&2
+    exit 66
+  }
+  [[ -f "$artifact_dir/api/shared/json.php" ]] || {
+    printf 'Artifact looks incomplete: missing api/shared/json.php in %s\n' "$artifact_dir" >&2
+    exit 66
+  }
+
+  node - "$artifact_dir/.deploy-ready.json" "$target" <<'NODE'
+const fs = require('node:fs');
+
+const [markerPath, expectedTarget] = process.argv.slice(2);
+const marker = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
+if (marker.target !== expectedTarget || !marker.builtAt || !marker.commit) {
+  console.error(`Deploy marker is invalid for ${expectedTarget}: ${markerPath}`);
+  process.exit(66);
+}
+NODE
+
+  if find "$artifact_dir" \( -name '.env*' -o -name '*.duck' -o -name '.DS_Store' \) -print -quit | grep -q .; then
+    printf 'Artifact contains ignored or secret-like files: %s\n' "$artifact_dir" >&2
+    exit 66
+  fi
+
   printf '%s' "$artifact_dir"
 }
 
@@ -123,20 +235,23 @@ ventra_run_lftp_mirror() {
   local target="$1"
   local artifact_dir="$2"
 
-  local host port username remote_dir password url command_file
+  local host port username remote_dir domain password url
   host="$(ventra_config_value "$target" "host")"
   port="$(ventra_config_value "$target" "port")"
   username="$(ventra_config_value "$target" "username")"
   remote_dir="$(ventra_config_value "$target" "remoteDir")"
+  domain="$(ventra_config_value "$target" "domain")"
+
+  ventra_validate_target "$target" "$host" "$port" "$username" "$remote_dir" "$domain"
 
   ventra_require_lftp
   password="$(ventra_keychain_password "$host" "$username")"
   url="ftp://$host:$port"
-  command_file="$(mktemp "${TMPDIR:-/tmp}/sorcery-lftp.XXXXXX")"
-  chmod 600 "$command_file"
 
-  {
+  local status=0
+  ventra_lftp_commands() {
     printf '%s\n' 'set cmd:fail-exit true'
+    printf '%s\n' 'set cmd:trace false'
     printf '%s\n' 'set ftp:passive-mode true'
     printf '%s\n' 'set ftp:ssl-auth TLS'
     printf '%s\n' 'set ftp:ssl-force true'
@@ -155,10 +270,8 @@ ventra_run_lftp_mirror() {
     done < <(ventra_all_excludes "$target")
     printf ' %s %s\n' "$(ventra_lftp_quote "$artifact_dir")" "$(ventra_lftp_quote "$remote_dir")"
     printf '%s\n' 'bye'
-  } > "$command_file"
+  }
 
-  local status=0
-  lftp -f "$command_file" || status=$?
-  rm -f "$command_file"
+  ventra_lftp_commands | lftp || status=$?
   return "$status"
 }

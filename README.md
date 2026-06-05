@@ -161,6 +161,7 @@ See [docs/CodePlan.md](docs/CodePlan.md) for architecture details and [docs/PDR.
 
 Production hosting uses Apache/PHP on Ventra with explicit FTPS uploads through `lftp`.
 No deploy passwords are stored in repo files.
+Deploys are built into `.deploy/sorcerystacks`, marked with `.deploy-ready.json`, and uploaded only after artifact and target safety checks pass.
 
 ```bash
 pnpm build:ventraip
@@ -178,6 +179,8 @@ bash scripts/add-ftps-keychain-password.sh production
 ```
 
 The helper prompts securely and saves Internet Password items for the configured deploy accounts.
+In Keychain Access, review the saved items and prefer prompting or limited access controls rather than broad automatic access.
+Do not run deploy scripts from unreviewed branches because they can read deploy credentials from Keychain.
 
 ## License
 

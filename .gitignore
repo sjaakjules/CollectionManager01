@@ -19,6 +19,7 @@ vite.config.ts.timestamp*
 !.env.example
 *.local
 *.duck
+hosting/ventraip.deploy.local.json
 hosting/*.local.json
 server/private/
 server/**/*.local.php

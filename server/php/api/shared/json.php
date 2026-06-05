@@ -1,10 +1,15 @@
 <?php
 declare(strict_types=1);
 
+const SORCERY_MAX_JSON_BYTES = 5242880;
+
 function sorcery_json($data, int $status = 200): void
 {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Referrer-Policy: no-referrer');
     header('X-Content-Type-Options: nosniff');
     echo json_encode($data, JSON_UNESCAPED_SLASHES);
     exit;
@@ -20,6 +25,9 @@ function sorcery_read_json_object(): array
     $raw = file_get_contents('php://input');
     if ($raw === false || trim($raw) === '') {
         return [];
+    }
+    if (strlen($raw) > SORCERY_MAX_JSON_BYTES) {
+        sorcery_error('Request body is too large', 413);
     }
 
     $decoded = json_decode($raw, true);

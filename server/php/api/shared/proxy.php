@@ -61,6 +61,10 @@ function sorcery_proxy_request(string $baseUrl, array $headers = []): void
         CURLOPT_HEADER => true,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS => 3,
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+        CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_TIMEOUT => 30,
         CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_CUSTOMREQUEST => $method,
@@ -86,9 +90,15 @@ function sorcery_proxy_request(string $baseUrl, array $headers = []): void
 
     $rawHeaders = substr((string)$response, 0, $headerSize);
     $responseBody = substr((string)$response, $headerSize);
+    $safeContentType = preg_replace('/[\r\n].*/', '', (string)$contentType);
+    if (!is_string($safeContentType) || trim($safeContentType) === '') {
+        $safeContentType = 'application/octet-stream';
+    }
 
     http_response_code((int)$status);
-    header('Content-Type: ' . $contentType);
+    header('Content-Type: ' . $safeContentType);
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Referrer-Policy: no-referrer');
     header('X-Content-Type-Options: nosniff');
 
     foreach (preg_split('/\r?\n/', $rawHeaders) as $line) {

@@ -21,5 +21,5 @@ if [[ "$typed" != "$confirmation" ]]; then
 fi
 
 printf 'Promoting production artifact to %s\n' "$domain"
-ventra_run_lftp_mirror production "$artifact_dir"
+VENTRA_PRODUCTION_CONFIRMED=1 ventra_run_lftp_mirror production "$artifact_dir"
 printf 'Production deploy complete: %s\n' "$domain"
