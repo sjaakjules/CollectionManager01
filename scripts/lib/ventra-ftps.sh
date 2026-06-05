@@ -103,7 +103,7 @@ ventra_validate_target() {
     exit 65
   fi
 
-  if [[ "$host" != "ftp.julianrutten.com" || "$port" != "21" ]]; then
+  if [[ "$host" != "s04dd.syd6.hostingplatform.net.au" || "$port" != "21" ]]; then
     printf 'Refusing deploy to unexpected host/port: %s:%s\n' "$host" "$port" >&2
     exit 65
   fi
@@ -154,7 +154,8 @@ Missing Keychain internet password.
 Add an Internet Password item in macOS Keychain Access with:
   Server: $host
   Account: $username
-  Protocol: ftp
+  Transport: explicit FTPS / FTP over TLS
+  Keychain protocol code: ftp with trailing space
   Port: 21
 
 Do not store this password in an .env file, shell script, .duck profile, or git.

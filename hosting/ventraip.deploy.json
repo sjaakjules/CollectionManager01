@@ -1,10 +1,10 @@
 {
   "protocol": "explicit-ftps",
-  "host": "ftp.julianrutten.com",
+  "host": "s04dd.syd6.hostingplatform.net.au",
   "port": 21,
   "targets": {
     "staging": {
-      "host": "ftp.julianrutten.com",
+      "host": "s04dd.syd6.hostingplatform.net.au",
       "port": 21,
       "username": "sorcerydeploy@sorcerystacks.com",
       "remoteDir": "/",
@@ -12,7 +12,7 @@
       "stageSubdir": "staging"
     },
     "production": {
-      "host": "ftp.julianrutten.com",
+      "host": "s04dd.syd6.hostingplatform.net.au",
       "port": 21,
       "username": "Manager@sorcerystacks.com",
       "remoteDir": "/",
