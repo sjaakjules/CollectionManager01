@@ -46,8 +46,17 @@ import {
 import {
   lodManager,
   LOD_LEVELS,
+  LOD_ZOOM_THRESHOLDS,
   cardNameToSlug,
 } from "./LODManager";
+import {
+  getHighDetailLoadOptions,
+  getInitialRevealConcurrentLoads,
+  getPixiCanvasResolution,
+  getPixiTextResolution,
+  isConstrainedTextureDevice,
+  shouldPreloadFullTextureCatalog,
+} from "./deviceProfile";
 import type {
   Card,
   Deck,
@@ -322,10 +331,7 @@ interface DeckKeywordSpec {
 const CULLING_MARGIN = 300;
 const CULLING_THROTTLE_MS = 50;
 const DOUBLE_CLICK_TIME_MS = 300;
-const INITIAL_REVEAL_CONCURRENT_LOADS = 24;
 const ATLAS_CARD_REVEAL_SPREAD_MS = 300;
-const ON_DEMAND_HIGH_DETAIL_CONCURRENT_LOADS = 6;
-const ON_DEMAND_HIGH_DETAIL_BATCH_SIZE = 24;
 const ZONE_BODY_PADDING = 14;
 const ZONE_AUTO_EXPAND_PADDING = 24;
 const ZONE_DELETE_SIZE = 18;
@@ -689,7 +695,7 @@ export class PixiStage {
       background: 0x1a1a2e,
       resizeTo: container,
       antialias: true,
-      resolution: window.devicePixelRatio || 1,
+      resolution: getPixiCanvasResolution(),
       autoDensity: true,
       powerPreference: "high-performance",
     });
@@ -866,11 +872,7 @@ export class PixiStage {
   }
 
   private getRenderResolution(): number {
-    const dpr =
-      typeof window !== "undefined" && Number.isFinite(window.devicePixelRatio)
-        ? window.devicePixelRatio
-        : 1;
-    return Math.max(3, (dpr || 1) * 1.5);
+    return getPixiTextResolution();
   }
 
   private configureTextQuality<T extends Text>(text: T): T {
@@ -5843,7 +5845,7 @@ export class PixiStage {
 
     // Start initial LOD loads in a controlled queue to avoid flooding requests.
     const queue = [...all];
-    const workerCount = Math.min(INITIAL_REVEAL_CONCURRENT_LOADS, queue.length);
+    const workerCount = Math.min(getInitialRevealConcurrentLoads(), queue.length);
 
     for (let worker = 0; worker < workerCount; worker++) {
       void (async () => {
@@ -7115,6 +7117,9 @@ export class PixiStage {
 
   private shouldLoadHighDetail(): boolean {
     if (this.isRevealInProgress || !this.initialRevealCompleted) return false;
+    if (isConstrainedTextureDevice()) {
+      return (this.camera?.zoom ?? 0) >= LOD_ZOOM_THRESHOLDS.MEDIUM_MAX;
+    }
     return true;
   }
 
@@ -7149,6 +7154,7 @@ export class PixiStage {
   private queueCatalogHighDetailPreload(): void {
     if (this.isDestroyed) return;
     if (!this.shouldLoadHighDetail()) return;
+    if (!shouldPreloadFullTextureCatalog()) return;
     if (this.catalogHighDetailPreloadStarted) return;
 
     const allNames = this.cards.map((card) => card.name);
@@ -7166,13 +7172,14 @@ export class PixiStage {
     }
 
     const names = this.getVisibleCardNamesForHighDetail();
+    const loadOptions = getHighDetailLoadOptions();
     this.highDetailPreloadRunning = true;
 
     try {
       await lodManager.preloadTextures(names, {
         lod: LOD_LEVELS.FULL,
-        concurrentLoads: ON_DEMAND_HIGH_DETAIL_CONCURRENT_LOADS,
-        batchSize: ON_DEMAND_HIGH_DETAIL_BATCH_SIZE,
+        concurrentLoads: loadOptions.concurrentLoads,
+        batchSize: loadOptions.batchSize,
         onProgress: (loaded, total) => {
           if (this.isDestroyed) return;
           this.onBackgroundTextureProgress?.(loaded, total);

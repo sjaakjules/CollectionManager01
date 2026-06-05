@@ -22,6 +22,7 @@
  */
 
 import { Assets, Rectangle, Texture, TextureSource } from 'pixi.js';
+import { isConstrainedTextureDevice } from './deviceProfile';
 
 // Enable mipmaps globally for better quality when downscaling large card images
 TextureSource.defaultOptions.autoGenerateMipmaps = true;
@@ -69,13 +70,15 @@ const THUMBNAIL_IMAGE_PATH =
   import.meta.env.VITE_CARD_THUMBNAIL_PATH ?? '/assets/CardsThumb';
 const MEDIUM_IMAGE_PATH =
   import.meta.env.VITE_CARD_MEDIUM_PATH ?? '/assets/CardsMedium';
-const MIN_LOD_ENV = (import.meta.env.VITE_CARD_MIN_LOD ?? LOD_LEVELS.MEDIUM)
+const MIN_LOD_ENV = (import.meta.env.VITE_CARD_MIN_LOD ?? '')
   .toString()
   .toLowerCase();
-const MIN_LOD_LEVEL: LODLevel =
+const CONFIGURED_MIN_LOD_LEVEL: LODLevel | null =
   MIN_LOD_ENV === LOD_LEVELS.MEDIUM
     ? LOD_LEVELS.MEDIUM
-    : LOD_LEVELS.THUMBNAIL;
+    : MIN_LOD_ENV === LOD_LEVELS.THUMBNAIL
+      ? LOD_LEVELS.THUMBNAIL
+      : null;
 
 const CONCURRENT_LOADS = 8;
 const PRELOAD_BATCH_SIZE = 20;
@@ -194,7 +197,8 @@ export class LODManager {
       lod = LOD_LEVELS.FULL;
     }
 
-    if (MIN_LOD_LEVEL === LOD_LEVELS.MEDIUM && lod === LOD_LEVELS.THUMBNAIL) {
+    const minLODLevel = this.getMinimumLOD();
+    if (minLODLevel === LOD_LEVELS.MEDIUM && lod === LOD_LEVELS.THUMBNAIL) {
       return LOD_LEVELS.MEDIUM;
     }
     return lod;
@@ -204,7 +208,7 @@ export class LODManager {
    * Startup/default LOD used for initial reveal and generic preloads.
    */
   getStartupLOD(): LODLevel {
-    return MIN_LOD_LEVEL;
+    return this.getMinimumLOD();
   }
 
   /**
@@ -391,6 +395,15 @@ export class LODManager {
 
   private getLoadKey(slug: string, lod: LODLevel): string {
     return `${slug}:${lod}`;
+  }
+
+  private getMinimumLOD(): LODLevel {
+    if (CONFIGURED_MIN_LOD_LEVEL) {
+      return CONFIGURED_MIN_LOD_LEVEL;
+    }
+    return isConstrainedTextureDevice()
+      ? LOD_LEVELS.THUMBNAIL
+      : LOD_LEVELS.MEDIUM;
   }
 
   private getAtlasStateForLOD(lod: LODLevel): AtlasRuntimeState | null {
