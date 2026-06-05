@@ -41,7 +41,7 @@ printf 'macOS security will prompt for the password next.\n'
   -U \
   -w >/dev/null
 
-if /usr/bin/security find-internet-password -s "$host" -a "$username" -w >/dev/null 2>&1; then
+if /usr/bin/security find-internet-password -s "$host" -a "$username" >/dev/null 2>&1; then
   printf 'Keychain item saved for %s.\n' "$username"
 else
   printf 'Keychain item could not be verified.\n' >&2
