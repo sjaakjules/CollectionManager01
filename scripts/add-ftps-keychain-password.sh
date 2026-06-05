@@ -22,11 +22,13 @@ fi
 host="$(ventra_config_value "$target" host)"
 port="$(ventra_config_value "$target" port)"
 username="$(ventra_config_value "$target" username)"
+keychain_protocol_code="ftp "
 
 printf 'Adding Keychain Internet Password for %s deploy:\n' "$target"
 printf '  Server: %s\n' "$host"
 printf '  Account: %s\n' "$username"
-printf '  Protocol: ftp\n'
+printf '  Transport: explicit FTPS / FTP over TLS\n'
+printf '  Keychain protocol code: ftp with trailing space\n'
 printf '  Port: %s\n' "$port"
 printf '\n'
 printf 'macOS security will prompt for the password next.\n'
@@ -34,7 +36,7 @@ printf 'macOS security will prompt for the password next.\n'
 /usr/bin/security add-internet-password \
   -s "$host" \
   -a "$username" \
-  -r ftp \
+  -r "$keychain_protocol_code" \
   -P "$port" \
   -U \
   -w >/dev/null
