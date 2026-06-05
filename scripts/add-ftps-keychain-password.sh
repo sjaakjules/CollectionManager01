@@ -29,30 +29,15 @@ printf '  Account: %s\n' "$username"
 printf '  Protocol: ftp\n'
 printf '  Port: %s\n' "$port"
 printf '\n'
-
-printf 'Password: '
-IFS= read -r -s password
-printf '\nConfirm password: '
-IFS= read -r -s password_confirm
-printf '\n'
-
-if [[ -z "$password" ]]; then
-  printf 'Password cannot be empty.\n' >&2
-  exit 65
-fi
-
-if [[ "$password" != "$password_confirm" ]]; then
-  printf 'Passwords did not match; nothing was saved.\n' >&2
-  exit 65
-fi
+printf 'macOS security will prompt for the password next.\n'
 
 /usr/bin/security add-internet-password \
   -s "$host" \
   -a "$username" \
   -r ftp \
   -P "$port" \
-  -w "$password" \
-  -U >/dev/null
+  -U \
+  -w >/dev/null
 
 if /usr/bin/security find-internet-password -s "$host" -a "$username" -w >/dev/null 2>&1; then
   printf 'Keychain item saved for %s.\n' "$username"
