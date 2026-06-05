@@ -12,6 +12,7 @@
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "pixi.js/unsafe-eval";
 import { App } from "./app/App";
 
 const container = document.getElementById("root");

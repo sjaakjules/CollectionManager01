@@ -61,6 +61,8 @@ copy_release "$STAGING_DIR" "$ROOT_DIR/hosting/sorcerystacks.staging.htaccess" "
 copy_release "$PRODUCTION_DIR" "$ROOT_DIR/hosting/sorcerystacks.production.htaccess" "production"
 
 find "$DEPLOY_ROOT" -name '.DS_Store' -type f -delete
+find "$DEPLOY_ROOT" -type d -exec chmod 755 {} +
+find "$DEPLOY_ROOT" -type f -exec chmod 644 {} +
 
 cat > "$DEPLOY_ROOT/release.json" <<EOF
 {
