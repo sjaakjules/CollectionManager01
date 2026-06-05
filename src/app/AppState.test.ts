@@ -16,23 +16,21 @@ function stackArea(overrides: Partial<CanvasArea> = {}): CanvasArea {
 }
 
 describe('appReducer canvas areas', () => {
-  it('normalizes user data to canvasAreas and strips legacy zones', () => {
-    const legacyUserData = {
+  it('normalizes user data to supported canvas area types', () => {
+    const userData = {
       ...createGuestUserData('guest-1'),
-      zones: [stackArea({ id: 'legacy-area' })],
       canvasAreas: [
         stackArea(),
-        { ...stackArea({ id: 'legacy-custom' }), type: 'custom' },
+        { ...stackArea({ id: 'unsupported-custom' }), type: 'custom' },
       ],
     } as unknown as UserData;
 
     const next = appReducer(initialAppState, {
       type: 'SET_USER_DATA',
-      userData: legacyUserData,
+      userData,
     });
 
     expect(next.userData?.canvasAreas?.map((area) => area.id)).toEqual(['stack-1']);
-    expect(next.userData).not.toHaveProperty('zones');
   });
 
   it('updates canvas areas through the dedicated reducer action', () => {
@@ -55,6 +53,5 @@ describe('appReducer canvas areas', () => {
 
     expect(next.userData?.canvasAreas).toHaveLength(1);
     expect(next.userData?.canvasAreas?.[0]?.id).toBe('deck-1');
-    expect(next.userData).not.toHaveProperty('zones');
   });
 });

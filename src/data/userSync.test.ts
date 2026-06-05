@@ -51,8 +51,7 @@ describe('mergeUserData', () => {
       ],
       canvasLabels: [{ id: 'label-server', text: 'Server', x: 1, y: 1 }],
       canvasAreas: [canvasArea('deck-server', 'deck')],
-      zones: [canvasArea('legacy-area', 'stack')],
-    } as UserData & { zones: CanvasArea[] };
+    };
 
     const merged = mergeUserData(local, server);
 
@@ -73,6 +72,5 @@ describe('mergeUserData', () => {
       'deck-server',
       'stack-local',
     ]);
-    expect(merged).not.toHaveProperty('zones');
   });
 });

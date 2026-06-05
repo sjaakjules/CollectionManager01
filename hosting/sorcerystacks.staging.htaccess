@@ -1,0 +1,103 @@
+# Sorcery Stacks staging Apache config
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Staging must remain independently testable.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP_HOST} ^staging\.sorcerystacks\.com$ [NC]
+  RewriteRule ^ https://staging.sorcerystacks.com%{REQUEST_URI} [R=301,L,NE]
+
+  # PHP API routes.
+  RewriteRule ^api/signup$ api/auth.php?action=signup [QSA,L]
+  RewriteRule ^api/login$ api/auth.php?action=login [QSA,L]
+  RewriteRule ^api/user/(.*)$ api/auth.php?action=user&path=$1 [QSA,L]
+  RewriteRule ^api/archetype-scores$ api/archetype-scores.php [QSA,L]
+  RewriteRule ^api/curiosa/(.*)$ api/proxy-curiosa.php?path=$1 [QSA,L]
+  RewriteRule ^api/sorcery/(.*)$ api/proxy-sorcery.php?path=$1 [QSA,L]
+
+  # Never serve private or operational folders.
+  RewriteRule ^api/shared/ - [F,L]
+  RewriteRule ^_private/ - [F,L]
+  RewriteRule ^server/ - [F,L]
+  RewriteRule ^logs?/ - [F,L]
+  RewriteRule ^backups?/ - [F,L]
+  RewriteRule ^uploads?/ - [F,L]
+  RewriteRule (^|/)\.env - [F,L]
+  RewriteRule \.duck$ - [F,L]
+
+  # React/Vite SPA fallback after API/private rules.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ /index.html [L]
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType application/wasm .wasm
+  AddType application/json .json
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript
+  AddOutputFilterByType DEFLATE application/javascript application/json application/manifest+json application/xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/javascript
+  AddOutputFilterByType BROTLI_COMPRESS application/javascript application/json application/manifest+json application/xml
+  AddOutputFilterByType BROTLI_COMPRESS image/svg+xml
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "^(service-worker|sw)\.js$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "\.(webmanifest|manifest\.json)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "\.(js|mjs|css|wasm)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.(webp|png|jpg|jpeg|gif|svg|ico|avif|woff|woff2|ttf|otf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  SetEnvIf Request_URI "^/api/" IS_API=1
+  Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0" env=IS_API
+  Header set Pragma "no-cache" env=IS_API
+  Header set Expires "0" env=IS_API
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/avif "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType application/wasm "access plus 1 year"
+  ExpiresByType font/woff "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>

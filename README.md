@@ -64,12 +64,7 @@ Default thumbnail settings are tuned for startup speed:
 - WebP quality: `58`
 - WebP effort: `4`
 
-Thumbnail LOD is enabled by default for:
-
-- Local debug (`.env.development`)
-- Production build/publish (`.env.production`)
-
-Atlas loading is enabled by default:
+Thumbnail, medium LOD, and atlas loading are enabled by default:
 
 - `VITE_CARD_THUMBNAIL_ATLAS=1`
 - `VITE_CARD_THUMBNAIL_ATLAS_MANIFEST=/assets/CardsThumbAtlas/manifest.json`
@@ -90,7 +85,7 @@ Example for local dev:
 pnpm dev
 ```
 
-To disable thumbnail LOD temporarily, set `VITE_CARD_LOD_ASSETS=0` in your shell or Netlify env.
+To disable thumbnail/medium LOD temporarily, set `VITE_CARD_LOD_ASSETS=0` in your shell.
 To disable atlas loading but keep per-file thumbnails, set `VITE_CARD_THUMBNAIL_ATLAS=0`.
 To disable medium atlas loading, set `VITE_CARD_MEDIUM_ATLAS=0`.
 To restore thumbnail-first startup, remove `VITE_CARD_MIN_LOD` or set `VITE_CARD_MIN_LOD=thumbnail`.
@@ -161,6 +156,19 @@ Unimplemented or partially implemented changes are tracked in [`ToDos.md`](ToDos
 ## Development
 
 See [docs/CodePlan.md](docs/CodePlan.md) for architecture details and [docs/PDR.md](docs/PDR.md) for product requirements.
+
+## Ventra Deployment
+
+Production hosting uses Apache/PHP on Ventra with explicit FTPS uploads through `lftp`.
+No deploy passwords are stored in repo files.
+
+```bash
+pnpm build:ventraip
+pnpm deploy:staging
+pnpm promote:production
+```
+
+Staging deploys to `https://staging.sorcerystacks.com`. Production promotion uploads the already-built artifact and requires typing `sorcerystacks.com`.
 
 ## License
 

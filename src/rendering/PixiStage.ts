@@ -100,7 +100,7 @@ export interface PixiStageConfig {
   onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   onLabelPlacementConsumed?: () => void;
   onHoveredCardChange?: (cardName: string | null) => void;
-  onCanvasAreasChange?: (zones: CanvasArea[]) => void;
+  onCanvasAreasChange?: (areas: CanvasArea[]) => void;
   onStackZoneHeaderClick?: (zoneId: string) => void;
   onViewportCenterChange?: (center: { x: number; y: number }) => void;
   onDeckFilterRequest?: (request: {
@@ -642,7 +642,7 @@ export class PixiStage {
   private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   private onLabelPlacementConsumed?: () => void;
   private onHoveredCardChange?: (cardName: string | null) => void;
-  private onCanvasAreasChange?: (zones: CanvasArea[]) => void;
+  private onCanvasAreasChange?: (areas: CanvasArea[]) => void;
   private onStackZoneHeaderClick?: (zoneId: string) => void;
   private onViewportCenterChange?: (center: { x: number; y: number }) => void;
   private onDeckFilterRequest?: (request: {
@@ -1391,19 +1391,19 @@ export class PixiStage {
     this.deactivateQuickTransfer();
   }
 
-  private cloneCanvasAreas(zones: CanvasArea[]): CanvasArea[] {
-    return zones.map((zone) => ({
-      ...zone,
-      bounds: { ...zone.bounds },
-      cards: zone.cards.map((card) => ({ ...card })),
-      deckVariants: zone.deckVariants?.map((variant) => ({
+  private cloneCanvasAreas(areas: CanvasArea[]): CanvasArea[] {
+    return areas.map((area) => ({
+      ...area,
+      bounds: { ...area.bounds },
+      cards: area.cards.map((card) => ({ ...card })),
+      deckVariants: area.deckVariants?.map((variant) => ({
         ...variant,
         activeCardIds: [...variant.activeCardIds],
       })),
-      activeDeckVariantId: zone.activeDeckVariantId ?? null,
-      cardFilters: zone.cardFilters
-        ? cloneCardFilterState(zone.cardFilters)
-        : zone.type === "deck"
+      activeDeckVariantId: area.activeDeckVariantId ?? null,
+      cardFilters: area.cardFilters
+        ? cloneCardFilterState(area.cardFilters)
+        : area.type === "deck"
           ? createDefaultCardFilters()
           : undefined,
     }));
@@ -5593,8 +5593,8 @@ export class PixiStage {
     this.rebuildCardSprites();
   }
 
-  setCanvasAreas(zones: CanvasArea[]): void {
-    this.canvasAreas = this.cloneCanvasAreas(zones);
+  setCanvasAreas(areas: CanvasArea[]): void {
+    this.canvasAreas = this.cloneCanvasAreas(areas);
     this.hoveredDeckFilterChip = null;
     for (const zone of this.canvasAreas) {
       if (zone.type === "deck") {

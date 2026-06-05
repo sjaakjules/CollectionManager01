@@ -506,12 +506,13 @@ function normalizeCanvasAreas(value: unknown): CanvasArea[] {
 }
 
 function normalizeUserData(userData: UserData): UserData {
-  const cleanUserData: UserData & { zones?: unknown } = { ...userData };
-  delete cleanUserData.zones;
-
   return {
-    ...cleanUserData,
+    name: userData.name,
+    id: userData.id,
+    decks: userData.decks,
+    collection: userData.collection,
     selectedArchetype: userData.selectedArchetype ?? null,
+    archetypeScores: userData.archetypeScores,
     canvasLabels: userData.canvasLabels ?? [],
     canvasAreas: normalizeCanvasAreas(userData.canvasAreas),
   };

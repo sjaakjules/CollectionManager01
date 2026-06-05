@@ -5,6 +5,7 @@ node_modules/
 # Build output
 dist/
 build/
+.deploy/
 
 # Vite
 .vite/
@@ -12,9 +13,17 @@ vite.config.ts.timestamp*
 
 # Environment files
 .env
+.env.*
 .env.local
 .env.*.local
+!.env.example
 *.local
+*.duck
+hosting/*.local.json
+server/private/
+server/**/*.local.php
+*.sql.gz
+*.sql.zip
 
 # IDE
 .idea/
@@ -61,6 +70,3 @@ guest.json
 # Editor directories
 *.sublime-workspace
 *.sublime-project
-
-# Local Netlify folder
-.netlify

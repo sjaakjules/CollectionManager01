@@ -17,12 +17,20 @@ describe('userStorage', () => {
     localStorage.clear();
   });
 
-  it('creates guest data with canvasAreas and no legacy zones field', () => {
+  it('creates guest data with the clean guest schema', () => {
     const guest = createGuestUserData('guest-1');
 
     expect(guest.name).toBe('Guest');
     expect(guest.canvasAreas).toEqual([]);
-    expect(guest).not.toHaveProperty('zones');
+    expect(Object.keys(guest).sort()).toEqual([
+      'canvasAreas',
+      'canvasLabels',
+      'collection',
+      'decks',
+      'id',
+      'name',
+      'selectedArchetype',
+    ]);
   });
 
   it('saves and loads guest and account data under separate local keys', async () => {

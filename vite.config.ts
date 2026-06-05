@@ -8,7 +8,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 /**
- * Dev-only plugin: emulates the Netlify Function for archetype scores.
+ * Dev-only plugin: emulates the deployed PHP API for archetype scores.
  * Handles GET and POST on /api/archetype-scores and the legacy /api/save-archetype-scores.
  */
 function archetypeScoresDevApi(): Plugin {
@@ -42,7 +42,7 @@ function archetypeScoresDevApi(): Plugin {
   return {
     name: 'archetype-scores-dev-api',
     configureServer(server) {
-      // Main API endpoint (mirrors the Netlify Function)
+      // Main API endpoint (mirrors the deployed PHP route)
       server.middlewares.use('/api/archetype-scores', async (req, res) => {
         const url = new URL(req.url ?? '/', 'http://localhost');
         const action = url.searchParams.get('action');
@@ -137,7 +137,7 @@ function archetypeScoresDevApi(): Plugin {
         res.end('Method not allowed');
       });
 
-      // Legacy endpoint (redirected to save-full on Netlify)
+      // Compatibility endpoint for older local tooling.
       server.middlewares.use('/api/save-archetype-scores', async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;

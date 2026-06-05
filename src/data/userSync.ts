@@ -114,9 +114,6 @@ async function performSync(userData: UserData, token: string): Promise<void> {
  * - Returns merged `UserData` preserving server precedence where conflicts exist.
  */
 export function mergeUserData(local: UserData, server: UserData): UserData {
-  const cleanServer: UserData & { zones?: unknown } = { ...server };
-  delete cleanServer.zones;
-
   // Simple merge strategy: keep all decks, dedupe by ID
   const deckMap = new Map<string, UserData['decks'][0]>();
 
@@ -165,7 +162,8 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
   }
 
   return {
-    ...cleanServer,
+    name: server.name,
+    id: server.id,
     decks: Array.from(deckMap.values()),
     collection: Array.from(collectionMap.entries()).map(([name, quantity]) => ({
       name,

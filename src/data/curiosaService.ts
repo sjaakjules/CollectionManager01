@@ -7,20 +7,20 @@
  *
  * Both requests go through same-origin proxy paths to avoid CORS:
  * - DEV: Vite proxies `/api/curiosa/*` → `https://curiosa.io/*` (see vite.config.ts)
- * - PROD: Netlify proxies via `public/_redirects`
+ * - PROD: Apache routes `/api/curiosa/*` through the same-origin PHP proxy
  *
  * Respects rate limits via x-ratelimit-* response headers.
  *
  * Related files:
  * - `src/ui/BottomPanel.tsx` (deck URL import flow)
  * - `src/data/importExport.ts` (text-based import/export support)
- * - `vite.config.ts` and `public/_redirects` (proxy routing)
+ * - `vite.config.ts` and deployed Apache/PHP routes (proxy routing)
  */
 
 import type { Deck, DeckCard } from "./dataModels";
 import { generateUUID } from "@/utils/uuid";
 
-// Proxy prefix — stripped by both Vite (dev) and Netlify _redirects (prod)
+// Proxy prefix stripped by Vite dev proxy and the deployed PHP proxy route.
 const PROXY_PREFIX = "/api/curiosa";
 
 // ============================================================================

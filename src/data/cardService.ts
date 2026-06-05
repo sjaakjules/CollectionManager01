@@ -10,7 +10,7 @@
  * Related files:
  * - `src/app/Startup.ts` (initial load)
  * - `src/data/dataModels.ts` (typed card contracts)
- * - `vite.config.ts` and `public/_redirects` (proxy routing)
+ * - `vite.config.ts` and deployed Apache/PHP routes (proxy routing)
  */
 
 import type { Card } from "./dataModels";
@@ -18,7 +18,7 @@ import { get, set } from "idb-keyval";
 
 // Always fetch via same-origin to avoid CORS.
 // - DEV: Vite should proxy this path (see vite.config.ts).
-// - PROD (Netlify drag-and-drop): Netlify will proxy this via `public/_redirects`.
+// - PROD: Apache routes this through the same-origin PHP proxy.
 const API_URL = "/api/sorcery/cards";
 
 const FETCH_TIMEOUT_MS = 20_000;

@@ -4,7 +4,7 @@ Tracks changes that are still unimplemented or only partially implemented.
 
 ## Critical Correctness
 
-- [x] Ensure backend/dev auth handlers accept the final stack/deck workspace payload shape used by the client (`netlify/functions/user-auth.ts`, `vite.config.ts`).
+- [x] Ensure backend/dev auth handlers accept the final stack/deck workspace payload shape used by the client (`server/php/api/auth.php`, `vite.config.ts`).
 - [ ] Fix `Camera` listener teardown bug caused by `bind` mismatch (`src/rendering/Camera.ts:92` and `src/rendering/Camera.ts:205`).
 - [ ] Clear current lint blockers: remove forbidden non-null assertions (`src/data/dataModels.ts:293`, `src/data/importExport.ts:168`, `src/data/importExport.ts:177`, `src/data/importExport.ts:178`, `src/data/importExport.ts:194`, `src/data/importExport.ts:268`) and switch `avatarCount` to `const` (`src/rules/deckRules.ts:59`).
 - [x] After stack/deck canvas migration lands, rerun lint and resolve remaining `react-hooks/exhaustive-deps` warnings in the refactored `App` flow.
@@ -18,7 +18,7 @@ This section tracks cleanup for the stack/deck canvas model.
 - [x] Lock product direction: remove generic standalone areas; keep stacks and decks as the product concepts.
 - [x] Define target model for persisted workspace data as `canvasAreas`; in-house testing can use destructive reset (no backward compatibility required).
 - [x] Remove legacy persisted workspace data paths instead of adding a migration.
-- [x] Keep backend/dev persistence aligned with the migrated model (`netlify/functions/user-auth.ts`, `vite.config.ts` auth dev API).
+- [x] Keep backend/dev persistence aligned with the migrated model (`server/php/api/auth.php`, `vite.config.ts` auth dev API).
 
 ### 2. UI Surface Changes
 
@@ -55,7 +55,7 @@ This section tracks cleanup for the stack/deck canvas model.
 - [ ] Add codex keyword links inside displayed rules text.
 - [ ] Add a codex search/results panel driven by selected keywords.
 - [ ] Validate `src/auth/api.ts` endpoints against deployed backend behavior and tighten error handling where needed.
-- [ ] Decide whether to keep or remove `netlify/functions/archetype-scores.ts` now that archetype edits persist through user data sync.
+- [x] Replace the old serverless archetype score endpoint with the PHP route now that deployment is Ventra-based.
 
 ## Unused or Stale Code
 
@@ -80,7 +80,7 @@ This section tracks cleanup for the stack/deck canvas model.
 
 ## Security Hardening
 
-- [ ] Replace direct SHA-256 password hashing with a slow password KDF (scrypt/argon2/PBKDF2) in `netlify/functions/user-auth.ts` and the mirrored dev auth flow in `vite.config.ts`.
+- [x] Use PHP `password_hash`/`password_verify` in production auth; the local Vite dev auth remains a lightweight test helper only.
 
 ## Documentation
 

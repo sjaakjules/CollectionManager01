@@ -1,0 +1,47 @@
+{
+  "protocol": "explicit-ftps",
+  "host": "ftp.julianrutten.com",
+  "port": 21,
+  "targets": {
+    "staging": {
+      "host": "ftp.julianrutten.com",
+      "port": 21,
+      "username": "sorcerydeploy@sorcerystacks.com",
+      "remoteDir": "/",
+      "domain": "https://staging.sorcerystacks.com",
+      "stageSubdir": "staging"
+    },
+    "production": {
+      "host": "ftp.julianrutten.com",
+      "port": 21,
+      "username": "Manager@sorcerystacks.com",
+      "remoteDir": "/",
+      "domain": "https://sorcerystacks.com",
+      "stageSubdir": "production",
+      "confirmation": "sorcerystacks.com"
+    }
+  },
+  "excludes": {
+    "common": [
+      ".DS_Store",
+      "**/.DS_Store",
+      ".env*",
+      "*.duck",
+      "_private/**",
+      "_private/",
+      "server/**",
+      "server/",
+      "logs/**",
+      "logs/",
+      "*.log",
+      "backups/**",
+      "backups/",
+      "uploads/**",
+      "uploads/"
+    ],
+    "production": [
+      "_staging/**",
+      "_staging/"
+    ]
+  }
+}

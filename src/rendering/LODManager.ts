@@ -6,9 +6,9 @@
  * - Medium: Used at normal zoom levels
  * - Full: Used when hovering or zoomed in (highest quality)
  *
- * By default, all LOD levels fall back to /assets/Cards/*.webp.
- * Optional separate LOD assets can be enabled with:
- * - VITE_CARD_LOD_ASSETS=1
+ * By default, thumbnail/medium/full LOD assets are enabled.
+ * Optional separate LOD assets can be disabled with:
+ * - VITE_CARD_LOD_ASSETS=0
  * - VITE_CARD_THUMBNAIL_PATH=/assets/CardsThumb   (optional)
  * - VITE_CARD_MEDIUM_PATH=/assets/CardsMedium     (optional)
  * Optional thumbnail atlas loading:
@@ -45,6 +45,7 @@ export const LOD_ZOOM_THRESHOLDS = {
 } as const;
 
 const USE_SEPARATE_LOD_ASSETS =
+  import.meta.env.VITE_CARD_LOD_ASSETS === undefined ||
   import.meta.env.VITE_CARD_LOD_ASSETS === '1' ||
   import.meta.env.VITE_CARD_LOD_ASSETS === 'true';
 const THUMBNAIL_ATLAS_FLAG = import.meta.env.VITE_CARD_THUMBNAIL_ATLAS;
@@ -68,7 +69,7 @@ const THUMBNAIL_IMAGE_PATH =
   import.meta.env.VITE_CARD_THUMBNAIL_PATH ?? '/assets/CardsThumb';
 const MEDIUM_IMAGE_PATH =
   import.meta.env.VITE_CARD_MEDIUM_PATH ?? '/assets/CardsMedium';
-const MIN_LOD_ENV = (import.meta.env.VITE_CARD_MIN_LOD ?? '')
+const MIN_LOD_ENV = (import.meta.env.VITE_CARD_MIN_LOD ?? LOD_LEVELS.MEDIUM)
   .toString()
   .toLowerCase();
 const MIN_LOD_LEVEL: LODLevel =
