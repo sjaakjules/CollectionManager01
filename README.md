@@ -170,6 +170,15 @@ pnpm promote:production
 
 Staging deploys to `https://staging.sorcerystacks.com`. Production promotion uploads the already-built artifact and requires typing `sorcerystacks.com`.
 
+Store FTPS passwords in macOS Keychain before deploying:
+
+```bash
+bash scripts/add-ftps-keychain-password.sh staging
+bash scripts/add-ftps-keychain-password.sh production
+```
+
+The helper prompts securely and saves Internet Password items for the configured deploy accounts.
+
 ## License
 
 Private - All rights reserved
