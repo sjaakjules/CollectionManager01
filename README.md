@@ -38,7 +38,7 @@ Generate deterministic thumbnail atlases (`92x128` cards, `1024x1024` page cap):
 pnpm cards:atlas
 ```
 
-Generate deterministic medium atlases (`275x384` cards, `2048x2048` page cap):
+Generate deterministic medium atlases (`275x384` cards, `1024x1024` page cap):
 
 ```bash
 pnpm cards:atlas:medium

@@ -26,7 +26,7 @@ Generated LOD tiers:
 | Tier | Per-card target | Atlas cap | Output | Purpose |
 | --- | ---: | ---: | --- | --- |
 | Thumbnail | `92x128` | `1024x1024` | `public/assets/CardsThumbAtlas` | First reveal and zoomed-out browsing |
-| Medium | `275x384` | `2048x2048` | `public/assets/CardsMediumAtlas` | Normal desktop zoom before full detail is useful |
+| Medium | `275x384` | `1024x1024` | `public/assets/CardsMediumAtlas` | Normal zoom before full detail is useful |
 | Full | source file | none | `public/assets/Cards` | Hover and large on-screen cards |
 
 The standalone thumbnail fallback in `public/assets/CardsThumb` is generated at
@@ -42,11 +42,14 @@ After the optimized rebuild:
 | --- | ---: | ---: | ---: | ---: |
 | `CardsThumb` | 1,104 files | 4.4 MB on disk | per-file fallback | n/a |
 | `CardsThumbAtlas` | 16 pages | 2.90 MiB | 52.1 MiB | `944x912` |
-| `CardsMediumAtlas` | 32 pages | 19.80 MiB | 452.5 MiB | `1943x1932` |
+| `CardsMediumAtlas` | 184 pages | 19.91 MiB | 453.6 MiB | `835x774` |
 
-Previous medium atlases were 18 pages, 35.4 MiB wire, and about 980 MiB decoded
-RGBA total. The new medium tier uses more pages, but each page is smaller and
-the app no longer warms the full medium/full catalog during initial reveal.
+The previous optimized medium tier used 32 pages capped at `2048x2048`, with
+about 19.80 MiB wire, 452.5 MiB decoded RGBA total, and a largest page around
+`1943x1932`. The `1024x1024` medium tier keeps the same `275x384` per-card
+quality, but splits it across many more pages so each page upload/decoded spike
+is roughly 2.47 MiB. Before optimization, the legacy medium atlases were 18
+pages, 35.4 MiB wire, and about 980 MiB decoded RGBA total.
 
 ## Runtime Policy
 
@@ -125,7 +128,7 @@ pnpm cards:atlas:medium --dry-run
 Expected dry-run shape:
 
 - Thumbnail atlas: 16 pages, 1,104 images, max page under `1024x1024`.
-- Medium atlas: 32 pages, 1,104 images, max page under `2048x2048`.
+- Medium atlas: 184 pages, 1,104 images, max page under `1024x1024`.
 
 ## Retuning Notes
 
