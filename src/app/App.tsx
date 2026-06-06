@@ -26,6 +26,7 @@ import {
   initialAppState,
 } from './AppState';
 import { initializeApp } from './Startup';
+import { isStartupGateEnabled } from './startupGate';
 import { PixiCanvas } from '@/rendering/PixiCanvas';
 import { LoginModal } from '@/ui/LoginModal';
 import { Notifications } from '@/ui/Notifications';
@@ -46,6 +47,7 @@ import {
 } from '@/canvas/canvasAreas';
 import '@/styles/ui.css';
 
+type StartupState = 'waiting' | 'loading' | 'ready' | 'error';
 type SplashPhase = 'full' | 'transparent' | 'fading' | 'done';
 
 /**
@@ -59,8 +61,14 @@ type SplashPhase = 'full' | 'transparent' | 'fading' | 'done';
  */
 export function App() {
   const [state, dispatch] = useReducer(appReducer, initialAppState);
-  const [startupState, setStartupState] = useState<'loading' | 'ready' | 'error'>(
-    'loading'
+  const debugStartupGate = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      isStartupGateEnabled(window.location.search),
+    [],
+  );
+  const [startupState, setStartupState] = useState<StartupState>(
+    debugStartupGate ? 'waiting' : 'loading',
   );
   const [startupError, setStartupError] = useState<string | null>(null);
   const [splashPhase, setSplashPhase] = useState<SplashPhase>('full');
@@ -79,6 +87,8 @@ export function App() {
     nonce: number;
   } | null>(null);
   const viewportCenterRef = useRef<{ x: number; y: number } | null>(null);
+  const splashTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const startupRunIdRef = useRef(0);
   const canvasAreas = useMemo(
     () => state.userData?.canvasAreas ?? [],
     [state.userData?.canvasAreas],
@@ -247,43 +257,24 @@ export function App() {
     setDeckFilterRequest(null);
   }, [activeDeckFilterArea, deckFilterRequest]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function startup() {
-      const result = await initializeApp(dispatch);
-      if (cancelled) return;
-
-      if (!result.success) {
-        setStartupState('error');
-        setStartupError(result.error ?? 'Unknown error');
-        setSplashPhase('done');
-        return;
-      }
-
-      setStartupState('ready');
-
-      // 0.5s: splash becomes translucent so cards show through
-      setTimeout(() => { if (!cancelled) setSplashPhase('transparent'); }, 500);
-      // 1.5s: splash starts fading out
-      setTimeout(() => { if (!cancelled) setSplashPhase('fading'); }, 1500);
-      // 2.0s: splash removed
-      setTimeout(() => { if (!cancelled) setSplashPhase('done'); }, 2000);
+  const clearSplashTimers = useCallback(() => {
+    for (const timerId of splashTimersRef.current) {
+      clearTimeout(timerId);
     }
-
-    startup();
-
-    return () => {
-      cancelled = true;
-    };
+    splashTimersRef.current = [];
   }, []);
 
-  const handleRetry = useCallback(() => {
+  const startApp = useCallback(() => {
+    const runId = startupRunIdRef.current + 1;
+    startupRunIdRef.current = runId;
+    clearSplashTimers();
     setStartupState('loading');
     setStartupError(null);
     setSplashPhase('full');
 
-    initializeApp(dispatch).then((result) => {
+    void initializeApp(dispatch).then((result) => {
+      if (startupRunIdRef.current !== runId) return;
+
       if (!result.success) {
         setStartupState('error');
         setStartupError(result.error ?? 'Unknown error');
@@ -292,11 +283,38 @@ export function App() {
       }
 
       setStartupState('ready');
-      setTimeout(() => setSplashPhase('transparent'), 500);
-      setTimeout(() => setSplashPhase('fading'), 1500);
-      setTimeout(() => setSplashPhase('done'), 2000);
+
+      splashTimersRef.current = [
+        // 0.5s: splash becomes translucent so cards show through
+        setTimeout(() => {
+          if (startupRunIdRef.current === runId) setSplashPhase('transparent');
+        }, 500),
+        // 1.5s: splash starts fading out
+        setTimeout(() => {
+          if (startupRunIdRef.current === runId) setSplashPhase('fading');
+        }, 1500),
+        // 2.0s: splash removed
+        setTimeout(() => {
+          if (startupRunIdRef.current === runId) setSplashPhase('done');
+        }, 2000),
+      ];
     });
-  }, []);
+  }, [clearSplashTimers, dispatch]);
+
+  useEffect(() => {
+    if (!debugStartupGate) {
+      startApp();
+    }
+
+    return () => {
+      startupRunIdRef.current += 1;
+      clearSplashTimers();
+    };
+  }, [clearSplashTimers, debugStartupGate, startApp]);
+
+  const handleRetry = useCallback(() => {
+    startApp();
+  }, [startApp]);
 
   useEffect(() => {
     if (!state.userData) return;
@@ -357,6 +375,10 @@ export function App() {
     return <ErrorScreen error={startupError} onRetry={handleRetry} />;
   }
 
+  if (startupState === 'waiting') {
+    return <SplashScreen className="splash-start-gate" onStart={startApp} />;
+  }
+
   const splashClass =
     splashPhase === 'transparent' ? 'splash-transparent' :
     splashPhase === 'fading' ? 'splash-fade-out' : '';
@@ -410,7 +432,15 @@ export function App() {
   );
 }
 
-function SplashScreen({ className }: { className: string }) {
+function SplashScreen({
+  className,
+  onStart,
+}: {
+  className: string;
+  onStart?: () => void;
+}) {
+  const isStartGate = typeof onStart === 'function';
+
   return (
     <div className={`splash-screen ${className}`}>
       <div className="splash-content">
@@ -418,9 +448,19 @@ function SplashScreen({ className }: { className: string }) {
           <span className="splash-title-sorcery">Sorcery</span>
           <span className="splash-title-stacks">Stacks</span>
         </div>
-        <div className="splash-bar">
-          <div className="splash-bar-fill" />
-        </div>
+        {isStartGate ? (
+          <button
+            type="button"
+            className="splash-start-button"
+            onClick={onStart}
+          >
+            Tap to start
+          </button>
+        ) : (
+          <div className="splash-bar">
+            <div className="splash-bar-fill" />
+          </div>
+        )}
       </div>
     </div>
   );

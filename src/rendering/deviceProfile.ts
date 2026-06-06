@@ -3,9 +3,11 @@
  */
 
 const MOBILE_VIEWPORT_SHORT_SIDE_MAX = 820;
-const MOBILE_RENDER_RESOLUTION_CAP = 1.5;
+const MOBILE_RENDER_RESOLUTION_CAP = 3;
+const LOW_DETAIL_RENDER_RESOLUTION_CAP = 1.5;
 const DESKTOP_RENDER_RESOLUTION_CAP = 2;
 const DESKTOP_TEXT_RESOLUTION_MAX = 3;
+const LOW_DEVICE_MEMORY_GB_MAX = 4;
 
 interface NavigatorWithResourceHints extends Navigator {
   connection?: {
@@ -56,7 +58,8 @@ export function isConstrainedTextureDevice(): boolean {
     getShortViewportSide() <= MOBILE_VIEWPORT_SHORT_SIDE_MAX &&
     (matchesMedia("(pointer: coarse)") || matchesMedia("(hover: none)"));
   const lowDeviceMemory =
-    typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4;
+    typeof nav.deviceMemory === "number" &&
+    nav.deviceMemory <= LOW_DEVICE_MEMORY_GB_MAX;
   const saveData = nav.connection?.saveData === true;
 
   return (
@@ -68,10 +71,25 @@ export function isConstrainedTextureDevice(): boolean {
   );
 }
 
+export function isLowDetailTextureDevice(): boolean {
+  const nav = getNavigator();
+  if (!nav) return false;
+
+  const lowDeviceMemory =
+    typeof nav.deviceMemory === "number" &&
+    nav.deviceMemory <= LOW_DEVICE_MEMORY_GB_MAX;
+  const saveData = nav.connection?.saveData === true;
+
+  return lowDeviceMemory || saveData;
+}
+
 export function getPixiCanvasResolution(): number {
-  const cap = isConstrainedTextureDevice()
-    ? MOBILE_RENDER_RESOLUTION_CAP
-    : DESKTOP_RENDER_RESOLUTION_CAP;
+  let cap = DESKTOP_RENDER_RESOLUTION_CAP;
+  if (isConstrainedTextureDevice()) {
+    cap = isLowDetailTextureDevice()
+      ? LOW_DETAIL_RENDER_RESOLUTION_CAP
+      : MOBILE_RENDER_RESOLUTION_CAP;
+  }
   return clamp(getDevicePixelRatio(), 1, cap);
 }
 
@@ -96,5 +114,5 @@ export function getHighDetailLoadOptions(): {
 }
 
 export function shouldPreloadFullTextureCatalog(): boolean {
-  return !isConstrainedTextureDevice();
+  return false;
 }

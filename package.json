@@ -15,9 +15,9 @@
     "promote:production": "bash scripts/promote-production.sh",
     "cards:thumbs": "node scripts/generate-card-thumbs.mjs",
     "cards:thumbs:force": "node scripts/generate-card-thumbs.mjs --force",
-    "cards:atlas": "node scripts/generate-card-thumb-atlases.mjs",
-    "cards:atlas:medium": "node scripts/generate-card-thumb-atlases.mjs --input public/assets/Cards --output public/assets/CardsMediumAtlas --card-width 380 --card-height 531 --atlas-min 16 --atlas-max 24 --quality 68 --effort 4",
-    "cards:thumbs+atlas": "pnpm cards:thumbs && pnpm cards:atlas",
+    "cards:atlas": "node scripts/generate-card-thumb-atlases.mjs --input public/assets/Cards --output public/assets/CardsThumbAtlas --card-width 92 --card-height 128 --atlas-width 1024 --atlas-height 1024 --quality 58 --effort 4",
+    "cards:atlas:medium": "node scripts/generate-card-thumb-atlases.mjs --input public/assets/Cards --output public/assets/CardsMediumAtlas --card-width 275 --card-height 384 --atlas-width 2048 --atlas-height 2048 --quality 64 --effort 4",
+    "cards:thumbs+atlas": "pnpm cards:thumbs && pnpm cards:atlas:all",
     "cards:atlas:all": "pnpm cards:atlas && pnpm cards:atlas:medium"
   },
   "dependencies": {
@@ -36,6 +36,7 @@
     "eslint": "^9.18.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "jsdom": "^29.1.1",
+    "sharp": "^0.34.5",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.20.0",
     "vite": "^6.0.7",

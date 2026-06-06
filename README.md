@@ -32,13 +32,13 @@ Generate a thumbnail set from `public/assets/Cards`:
 pnpm cards:thumbs
 ```
 
-Generate randomized thumbnail atlases (6-10 pages by default):
+Generate deterministic thumbnail atlases (`92x128` cards, `1024x1024` page cap):
 
 ```bash
 pnpm cards:atlas
 ```
 
-Generate randomized medium atlases (380x531 cards, 16-24 pages by default):
+Generate deterministic medium atlases (`275x384` cards, `2048x2048` page cap):
 
 ```bash
 pnpm cards:atlas:medium
@@ -60,8 +60,8 @@ Re-run atlas commands whenever source card images change so atlas pages stay in 
 
 Default thumbnail settings are tuned for startup speed:
 
-- Max size: `256x256` (preserves aspect ratio, no upscaling)
-- WebP quality: `58`
+- Max size: `128x128` (preserves aspect ratio, no upscaling)
+- WebP quality: `56`
 - WebP effort: `4`
 
 Thumbnail, medium LOD, and atlas loading are enabled by default:
@@ -70,7 +70,6 @@ Thumbnail, medium LOD, and atlas loading are enabled by default:
 - `VITE_CARD_THUMBNAIL_ATLAS_MANIFEST=/assets/CardsThumbAtlas/manifest.json`
 - `VITE_CARD_MEDIUM_ATLAS=1`
 - `VITE_CARD_MEDIUM_ATLAS_MANIFEST=/assets/CardsMediumAtlas/manifest.json`
-- `VITE_CARD_MIN_LOD=medium` (startup/default loads use medium; thumbnail is skipped)
 
 Optional custom paths:
 
@@ -88,7 +87,9 @@ pnpm dev
 To disable thumbnail/medium LOD temporarily, set `VITE_CARD_LOD_ASSETS=0` in your shell.
 To disable atlas loading but keep per-file thumbnails, set `VITE_CARD_THUMBNAIL_ATLAS=0`.
 To disable medium atlas loading, set `VITE_CARD_MEDIUM_ATLAS=0`.
-To restore thumbnail-first startup, remove `VITE_CARD_MIN_LOD` or set `VITE_CARD_MIN_LOD=thumbnail`.
+
+See [docs/lod-atlas-optimization.md](docs/lod-atlas-optimization.md) for the
+LOD thresholds, atlas budgets, and validation workflow.
 
 ## Tech Stack
 

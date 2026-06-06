@@ -66,6 +66,7 @@ export class CardSprite extends Container {
   private displayWidth: number;
   private displayHeight: number;
   private currentLOD: LODLevel = lodManager.getStartupLOD();
+  private displayedLOD: LODLevel | null = null;
   private _isSelected = false;
   private _textureLoaded = false;
   private _initialLoadStarted = false;
@@ -189,6 +190,10 @@ export class CardSprite extends Container {
     return this._textureLoaded;
   }
 
+  public get currentTextureLOD(): LODLevel | null {
+    return this.displayedLOD;
+  }
+
   get isSelected(): boolean {
     return this._isSelected;
   }
@@ -276,7 +281,7 @@ export class CardSprite extends Container {
   }
 
   updateLOD(zoom: number): void {
-    const newLOD = lodManager.getLODForZoom(zoom);
+    const newLOD = lodManager.getLODForCardDisplay(zoom, this.displayHeight);
     if (newLOD !== this.currentLOD) {
       this.currentLOD = newLOD;
       this.loadTexture(newLOD);
@@ -324,16 +329,21 @@ export class CardSprite extends Container {
   }
 
   private async loadTexture(lod: LODLevel): Promise<void> {
+    const effectiveLOD = lodManager.resolveLOD(lod);
+    if (this.shouldKeepDisplayedFullTexture(effectiveLOD)) {
+      return;
+    }
+
     try {
       // Try sync first for instant display
       const hasExactTexture = lodManager.hasExactTexture(this.imageSlug, lod);
-      const syncTexture = lodManager.getTextureSync(this.imageSlug, lod);
+      const syncTexture = lodManager.getTextureMatchSync(this.imageSlug, lod);
       if (syncTexture) {
-        this.applyTexture(syncTexture);
+        this.applyTexture(syncTexture.texture, syncTexture.lod);
         this.markTextureLoaded();
         // For higher LOD requests, keep downloading the exact texture if we only
         // had a fallback (e.g., thumbnail) in cache.
-        if (hasExactTexture || lod === LOD_LEVELS.THUMBNAIL) {
+        if (hasExactTexture || effectiveLOD === LOD_LEVELS.THUMBNAIL) {
           return;
         }
       }
@@ -341,13 +351,21 @@ export class CardSprite extends Container {
       // Load async
       const texture = await lodManager.getTexture(this.imageSlug, lod);
       if (texture && texture !== Texture.WHITE) {
-        this.applyTexture(texture);
+        this.applyTexture(texture, effectiveLOD);
       }
       this.markTextureLoaded();
     } catch {
       // Texture load failed - still mark as "loaded" so animation can proceed with placeholder
       this.markTextureLoaded();
     }
+  }
+
+  private shouldKeepDisplayedFullTexture(nextLOD: LODLevel): boolean {
+    return (
+      this.displayedLOD === LOD_LEVELS.FULL &&
+      nextLOD !== LOD_LEVELS.THUMBNAIL &&
+      lodManager.hasExactTexture(this.imageSlug, LOD_LEVELS.FULL)
+    );
   }
 
   private markTextureLoaded(): void {
@@ -359,11 +377,12 @@ export class CardSprite extends Container {
     }
   }
 
-  private applyTexture(texture: Texture): void {
+  private applyTexture(texture: Texture, lod: LODLevel): void {
     const targetWidth = this.displayWidth;
     const targetHeight = this.displayHeight;
 
     this.sprite.texture = texture;
+    this.displayedLOD = lod;
 
     if (this.isLandscape) {
       // For landscape, swap dimensions due to rotation

@@ -11,8 +11,8 @@ const IMAGE_EXTENSIONS = new Set(['.webp', '.png', '.jpg', '.jpeg']);
 const DEFAULTS = {
   inputDir: 'public/assets/Cards',
   outputDir: 'public/assets/CardsThumb',
-  size: 256,
-  quality: 58,
+  size: 128,
+  quality: 56,
   effort: 4,
   concurrency: Math.max(1, Math.min(os.cpus().length, 8)),
   force: false,

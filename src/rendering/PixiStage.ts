@@ -47,6 +47,7 @@ import {
   lodManager,
   LOD_LEVELS,
   cardNameToSlug,
+  type LODLevel,
 } from "./LODManager";
 import {
   getHighDetailLoadOptions,
@@ -54,7 +55,7 @@ import {
   getPixiCanvasResolution,
   getPixiTextResolution,
   isConstrainedTextureDevice,
-  shouldPreloadFullTextureCatalog,
+  isLowDetailTextureDevice,
 } from "./deviceProfile";
 import {
   isSyntheticMouseAfterTouch,
@@ -676,8 +677,6 @@ export class PixiStage {
   private initialRevealCompleted = false;
   private highDetailPreloadRunning = false;
   private highDetailPreloadQueued = false;
-  private catalogHighDetailPreloadRunId = 0;
-  private catalogHighDetailPreloadStarted = false;
 
   // Callbacks
   private onAddToDeck: (cardName: string) => void;
@@ -1556,7 +1555,10 @@ export class PixiStage {
         concurrentLoads: 1,
         batchSize: 1,
       })
-      .catch(() => null);
+      .catch(() => null)
+      .finally(() => {
+        this.pruneFullTextureCache();
+      });
   }
 
   private getRenderResolution(): number {
@@ -6487,8 +6489,6 @@ export class PixiStage {
 
     this.cards = cards;
     this.collectionFilteredMode = filteredMode;
-    this.catalogHighDetailPreloadRunId += 1;
-    this.catalogHighDetailPreloadStarted = false;
     this.onBackgroundTextureProgress?.(0, 0);
     this.rebuildCardSprites();
   }
@@ -6690,7 +6690,6 @@ export class PixiStage {
         this.revealFading = true;
         this.revealFadeStart = performance.now();
         this.queueVisibleHighDetailPreload();
-        this.queueCatalogHighDetailPreload();
       }
     };
 
@@ -6767,8 +6766,6 @@ export class PixiStage {
     this.isDestroyed = true;
     this.setHoveredCard(null);
     this.highDetailPreloadQueued = false;
-    this.catalogHighDetailPreloadRunId += 1;
-    this.catalogHighDetailPreloadStarted = false;
     this.onBackgroundTextureProgress?.(0, 0);
     this.onSelectionChange?.([]);
 
@@ -8013,14 +8010,25 @@ export class PixiStage {
     }
 
     this.queueVisibleHighDetailPreload();
+    if (this.initialRevealCompleted && !this.isRevealInProgress) {
+      this.pruneFullTextureCache();
+    }
   }
 
   private shouldLoadHighDetail(): boolean {
     if (this.isRevealInProgress || !this.initialRevealCompleted) return false;
-    if (isConstrainedTextureDevice()) {
+    if (isConstrainedTextureDevice() && isLowDetailTextureDevice()) {
       return false;
     }
-    return true;
+    return this.getVisibleDetailLOD() !== LOD_LEVELS.THUMBNAIL;
+  }
+
+  private getVisibleDetailLOD(): LODLevel {
+    if (!this.camera) return LOD_LEVELS.THUMBNAIL;
+    return lodManager.getLODForCardDisplay(
+      this.camera.zoom,
+      CARD_SIZE.PORTRAIT.height,
+    );
   }
 
   private getVisibleCardNamesForHighDetail(): string[] {
@@ -8034,6 +8042,34 @@ export class PixiStage {
       }
     }
     return [...names];
+  }
+
+  private getFullTextureCacheKeepNames(): string[] {
+    const names = new Set(this.getVisibleCardNamesForHighDetail());
+    if (this.hoveredCardName) {
+      names.add(this.hoveredCardName);
+    }
+
+    for (const key of this.selectedCards) {
+      const data = this.getSpriteData(key);
+      if (data) {
+        names.add(data.layout.name);
+      }
+    }
+
+    for (const key of this.selectedZoneCardKeys) {
+      const data = this.zoneCardSprites.get(key);
+      if (data) {
+        names.add(data.cardName);
+      }
+    }
+
+    return [...names];
+  }
+
+  private pruneFullTextureCache(): void {
+    if (this.isDestroyed) return;
+    lodManager.pruneFullTextureCache(this.getFullTextureCacheKeepNames());
   }
 
   private queueVisibleHighDetailPreload(): void {
@@ -8051,20 +8087,6 @@ export class PixiStage {
     void this.runVisibleHighDetailPreload();
   }
 
-  private queueCatalogHighDetailPreload(): void {
-    if (this.isDestroyed) return;
-    if (!this.shouldLoadHighDetail()) return;
-    if (!shouldPreloadFullTextureCatalog()) return;
-    if (this.catalogHighDetailPreloadStarted) return;
-
-    const allNames = this.cards.map((card) => card.name);
-    if (allNames.length === 0) return;
-
-    this.catalogHighDetailPreloadStarted = true;
-    const runId = this.catalogHighDetailPreloadRunId;
-    void this.runCatalogHighDetailPreload(allNames, runId);
-  }
-
   private async runVisibleHighDetailPreload(): Promise<void> {
     if (!this.shouldLoadHighDetail()) {
       this.onBackgroundTextureProgress?.(0, 0);
@@ -8072,12 +8094,13 @@ export class PixiStage {
     }
 
     const names = this.getVisibleCardNamesForHighDetail();
+    const lod = this.getVisibleDetailLOD();
     const loadOptions = getHighDetailLoadOptions();
     this.highDetailPreloadRunning = true;
 
     try {
       await lodManager.preloadTextures(names, {
-        lod: LOD_LEVELS.FULL,
+        lod,
         concurrentLoads: loadOptions.concurrentLoads,
         batchSize: loadOptions.batchSize,
         onProgress: (loaded, total) => {
@@ -8087,28 +8110,10 @@ export class PixiStage {
       });
     } finally {
       this.highDetailPreloadRunning = false;
+      this.pruneFullTextureCache();
       if (this.highDetailPreloadQueued) {
         this.highDetailPreloadQueued = false;
         this.queueVisibleHighDetailPreload();
-      }
-    }
-  }
-
-  private async runCatalogHighDetailPreload(
-    cardNames: string[],
-    runId: number,
-  ): Promise<void> {
-    try {
-      await lodManager.preloadFullTextures(cardNames, (loaded, total) => {
-        if (this.isDestroyed) return;
-        if (runId !== this.catalogHighDetailPreloadRunId) return;
-        this.onBackgroundTextureProgress?.(loaded, total);
-      });
-    } catch {
-      // Keep UI responsive even if individual texture loads fail.
-    } finally {
-      if (runId === this.catalogHighDetailPreloadRunId) {
-        this.onBackgroundTextureProgress?.(0, 0);
       }
     }
   }

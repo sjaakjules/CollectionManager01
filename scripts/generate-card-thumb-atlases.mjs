@@ -8,25 +8,26 @@ import sharp from 'sharp';
 const IMAGE_EXTENSIONS = new Set(['.webp', '.png', '.jpg', '.jpeg']);
 
 const DEFAULTS = {
-  inputDir: 'public/assets/CardsThumb',
+  inputDir: 'public/assets/Cards',
   outputDir: 'public/assets/CardsThumbAtlas',
-  atlasWidth: 4096,
-  atlasHeight: 4096,
+  atlasWidth: 1024,
+  atlasHeight: 1024,
   atlasMin: 6,
   atlasMax: 10,
   atlasCount: 0,
-  quality: 62,
+  quality: 58,
   effort: 4,
   padding: 2,
-  cardWidth: 0,
-  cardHeight: 0,
+  cardWidth: 92,
+  cardHeight: 128,
   resizeFit: 'contain',
-  seed: Date.now() >>> 0,
+  order: 'canvas',
+  metadataPath: 'docs/Sorcery_CardInfo.json',
   dryRun: false,
 };
 
 function printHelp() {
-  console.log(`Generate random thumbnail atlas pages + manifest.
+  console.log(`Generate deterministic card atlas pages + manifest.
 
 Usage:
   node scripts/generate-card-thumb-atlases.mjs [options]
@@ -36,14 +37,15 @@ Options:
   -o, --output <dir>         Output directory (default: ${DEFAULTS.outputDir})
       --atlas-width <px>     Atlas page width (default: ${DEFAULTS.atlasWidth})
       --atlas-height <px>    Atlas page max height (default: ${DEFAULTS.atlasHeight})
-      --atlas-count <num>    Fixed number of atlases (overrides min/max)
-      --atlas-min <num>      Minimum atlas count (default: ${DEFAULTS.atlasMin})
-      --atlas-max <num>      Maximum atlas count (default: ${DEFAULTS.atlasMax})
+      --atlas-count <num>    Fixed number of atlases using contiguous layout chunks
+      --atlas-min <num>      Deprecated compatibility flag
+      --atlas-max <num>      Deprecated compatibility flag
       --padding <px>         Pixel spacing between sprites (default: ${DEFAULTS.padding})
-      --card-width <px>      Force packed card width
-      --card-height <px>     Force packed card height
+      --card-width <px>      Force packed card width (default: ${DEFAULTS.cardWidth})
+      --card-height <px>     Force packed card height (default: ${DEFAULTS.cardHeight})
       --resize-fit <mode>    contain | cover | fill | inside (default: ${DEFAULTS.resizeFit})
-      --seed <num>           RNG seed (default: current timestamp)
+      --order <mode>         canvas | name | file (default: ${DEFAULTS.order})
+      --metadata <file>      Card metadata for canvas order (default: ${DEFAULTS.metadataPath})
   -q, --quality <1-100>      Atlas WebP quality (default: ${DEFAULTS.quality})
   -e, --effort <0-6>         Atlas WebP effort (default: ${DEFAULTS.effort})
       --dry-run              Compute layout only (no file writes)
@@ -147,7 +149,20 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (arg === '--order') {
+      options.order = next;
+      i++;
+      continue;
+    }
+
+    if (arg === '--metadata') {
+      options.metadataPath = next;
+      i++;
+      continue;
+    }
+
     if (arg === '--seed') {
+      // Deprecated compatibility flag. Atlas generation is deterministic now.
       options.seed = parsePositiveInt(next, arg);
       i++;
       continue;
@@ -206,34 +221,15 @@ function parseArgs(argv) {
   ) {
     throw new Error('--resize-fit must be one of: contain, cover, fill, inside');
   }
+  if (
+    options.order !== 'canvas' &&
+    options.order !== 'name' &&
+    options.order !== 'file'
+  ) {
+    throw new Error('--order must be one of: canvas, name, file');
+  }
 
   return options;
-}
-
-function createRng(seed) {
-  let t = seed >>> 0;
-  return () => {
-    t += 0x6d2b79f5;
-    let n = Math.imul(t ^ (t >>> 15), 1 | t);
-    n ^= n + Math.imul(n ^ (n >>> 7), 61 | n);
-    return ((n ^ (n >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function randomIntInclusive(rng, min, max) {
-  return min + Math.floor(rng() * (max - min + 1));
-}
-
-function shuffleInPlace(arr, rng) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    const a = arr[i];
-    const b = arr[j];
-    if (a !== undefined && b !== undefined) {
-      arr[i] = b;
-      arr[j] = a;
-    }
-  }
 }
 
 async function pathExists(filePath) {
@@ -262,6 +258,139 @@ async function walkFiles(dir) {
   }
 
   return files;
+}
+
+function normalizeToAscii(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function cardNameToSlug(cardName) {
+  return normalizeToAscii(cardName)
+    .toLowerCase()
+    .replace(/['']/g, '')
+    .replace(/[-\s]+/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+    .trim();
+}
+
+function getThresholdGroup(thresholds) {
+  const active = [];
+  if ((thresholds?.air ?? 0) > 0) active.push('air');
+  if ((thresholds?.earth ?? 0) > 0) active.push('earth');
+  if ((thresholds?.fire ?? 0) > 0) active.push('fire');
+  if ((thresholds?.water ?? 0) > 0) active.push('water');
+  if (active.length === 0) return 'none';
+  if (active.length > 1) return 'multiple';
+  return active[0] ?? 'none';
+}
+
+const THRESHOLD_GROUP_ORDER = [
+  'air',
+  'earth',
+  'fire',
+  'water',
+  'none',
+  'multiple',
+];
+const TYPE_ORDER = ['Minion', 'Magic', 'Aura', 'Artifact', 'Site'];
+const AVATAR_SET_ORDER = [
+  'Alpha',
+  'Beta',
+  'Arthurian Legends',
+  'Dragonlord',
+  'Gothic',
+  'Promotional',
+];
+const RARITY_ORDER = {
+  None: 0,
+  Ordinary: 1,
+  Exceptional: 2,
+  Elite: 3,
+  Unique: 4,
+};
+
+function getAvatarSetIndex(setName) {
+  const index = AVATAR_SET_ORDER.indexOf(setName);
+  return index >= 0 ? index : AVATAR_SET_ORDER.length;
+}
+
+function compareByCostThenName(a, b) {
+  const costDiff = a.cost - b.cost;
+  if (costDiff !== 0) return costDiff;
+  return a.name.localeCompare(b.name);
+}
+
+async function loadCanvasSlugOrder(metadataPath) {
+  const absolutePath = path.resolve(metadataPath);
+  const raw = await fs.readFile(absolutePath, 'utf8');
+  const cards = JSON.parse(raw);
+  if (!Array.isArray(cards)) {
+    throw new Error(`Metadata file must contain an array: ${absolutePath}`);
+  }
+
+  const normalized = cards.map((card) => ({
+    name: card.name,
+    slug: cardNameToSlug(card.name),
+    type: card.guardian?.type ?? 'Minion',
+    rarity: card.guardian?.rarity ?? 'None',
+    cost: card.guardian?.cost ?? 0,
+    thresholdGroup: getThresholdGroup(card.guardian?.thresholds),
+    primarySet: card.sets?.[0]?.name,
+  }));
+
+  const ordered = [];
+  const avatars = normalized
+    .filter((card) => card.type === 'Avatar')
+    .sort((a, b) => {
+      const setDiff = getAvatarSetIndex(a.primarySet) - getAvatarSetIndex(b.primarySet);
+      if (setDiff !== 0) return setDiff;
+      const rarityDiff =
+        (RARITY_ORDER[a.rarity] ?? RARITY_ORDER.None) -
+        (RARITY_ORDER[b.rarity] ?? RARITY_ORDER.None);
+      if (rarityDiff !== 0) return rarityDiff;
+      return a.name.localeCompare(b.name);
+    });
+  ordered.push(...avatars);
+
+  const nonAvatars = normalized.filter((card) => card.type !== 'Avatar');
+  for (const thresholdGroup of THRESHOLD_GROUP_ORDER) {
+    for (const type of TYPE_ORDER) {
+      ordered.push(
+        ...nonAvatars
+          .filter(
+            (card) =>
+              card.thresholdGroup === thresholdGroup && card.type === type,
+          )
+          .sort(compareByCostThenName),
+      );
+    }
+  }
+
+  return ordered.map((card) => card.slug);
+}
+
+async function orderEntries(entries, options) {
+  if (options.order === 'file') {
+    return entries;
+  }
+  if (options.order === 'name') {
+    return [...entries].sort((a, b) => a.slug.localeCompare(b.slug));
+  }
+
+  const slugOrder = await loadCanvasSlugOrder(options.metadataPath);
+  const orderIndex = new Map(slugOrder.map((slug, index) => [slug, index]));
+  return [...entries].sort((a, b) => {
+    const aIndex = orderIndex.get(a.slug);
+    const bIndex = orderIndex.get(b.slug);
+    if (aIndex !== undefined && bIndex !== undefined) {
+      return aIndex - bIndex;
+    }
+    if (aIndex !== undefined) return -1;
+    if (bIndex !== undefined) return 1;
+    return a.slug.localeCompare(b.slug);
+  });
 }
 
 function runPool(items, workerCount, workerFn) {
@@ -357,14 +486,12 @@ function packAtlasGroup(entries, atlasWidth, atlasHeight, padding) {
   };
 }
 
-function buildLayout(allEntries, atlasCount, atlasWidth, atlasHeight, padding) {
-  const groups = Array.from({ length: atlasCount }, () => []);
-  for (let i = 0; i < allEntries.length; i++) {
-    const entry = allEntries[i];
-    if (!entry) continue;
-    groups[i % atlasCount]?.push(entry);
+function buildFixedCountLayout(allEntries, atlasCount, atlasWidth, atlasHeight, padding) {
+  const groupSize = Math.ceil(allEntries.length / atlasCount);
+  const groups = [];
+  for (let i = 0; i < atlasCount; i++) {
+    groups.push(allEntries.slice(i * groupSize, (i + 1) * groupSize));
   }
-
   const atlases = [];
   for (let i = 0; i < groups.length; i++) {
     const group = groups[i];
@@ -380,6 +507,72 @@ function buildLayout(allEntries, atlasCount, atlasWidth, atlasHeight, padding) {
   }
 
   return atlases;
+}
+
+function buildSequentialLayout(allEntries, atlasWidth, atlasHeight, padding) {
+  const atlases = [];
+  let currentEntries = [];
+  let currentPacked = null;
+
+  const pushCurrent = () => {
+    if (!currentPacked) return;
+    atlases.push({
+      id: `atlas-${atlases.length}`,
+      ...currentPacked,
+    });
+  };
+
+  for (const entry of allEntries) {
+    const candidateEntries = [...currentEntries, entry];
+    const candidatePacked = packAtlasGroup(
+      candidateEntries,
+      atlasWidth,
+      atlasHeight,
+      padding,
+    );
+
+    if (candidatePacked) {
+      currentEntries = candidateEntries;
+      currentPacked = candidatePacked;
+      continue;
+    }
+
+    pushCurrent();
+    currentEntries = [entry];
+    currentPacked = packAtlasGroup(
+      currentEntries,
+      atlasWidth,
+      atlasHeight,
+      padding,
+    );
+    if (!currentPacked) {
+      throw new Error(
+        `Unable to pack ${entry.slug} into ${atlasWidth}x${atlasHeight}.`,
+      );
+    }
+  }
+
+  pushCurrent();
+  return atlases;
+}
+
+function buildLayout(allEntries, options) {
+  if (options.atlasCount > 0) {
+    return buildFixedCountLayout(
+      allEntries,
+      options.atlasCount,
+      options.atlasWidth,
+      options.atlasHeight,
+      options.padding,
+    );
+  }
+
+  return buildSequentialLayout(
+    allEntries,
+    options.atlasWidth,
+    options.atlasHeight,
+    options.padding,
+  );
 }
 
 function toPublicUrl(absoluteFilePath) {
@@ -467,42 +660,22 @@ async function main() {
     throw new Error(`No images found in ${inputDir}`);
   }
 
-  const rng = createRng(options.seed);
   const forcedSize =
     options.cardWidth > 0 && options.cardHeight > 0
       ? { width: options.cardWidth, height: options.cardHeight }
       : null;
-  const entries = await getImageEntries(imageFiles, forcedSize);
-  shuffleInPlace(entries, rng);
-
-  const startAtlasCount = randomIntInclusive(rng, options.atlasMin, options.atlasMax);
-
-  let selectedAtlases = null;
-  let selectedCount = 0;
-
-  for (let count = startAtlasCount; count <= options.atlasMax; count++) {
-    const layout = buildLayout(
-      entries,
-      count,
-      options.atlasWidth,
-      options.atlasHeight,
-      options.padding,
-    );
-    if (layout) {
-      selectedAtlases = layout;
-      selectedCount = count;
-      break;
-    }
-  }
+  const rawEntries = await getImageEntries(imageFiles, forcedSize);
+  const entries = await orderEntries(rawEntries, options);
+  const selectedAtlases = buildLayout(entries, options);
 
   if (!selectedAtlases) {
     throw new Error(
-      `Unable to pack ${entries.length} images into ${options.atlasMin}-${options.atlasMax} atlases at ${options.atlasWidth}x${options.atlasHeight}.`,
+      `Unable to pack ${entries.length} images at ${options.atlasWidth}x${options.atlasHeight}.`,
     );
   }
 
   console.log(
-    `Atlas seed=${options.seed} selectedCount=${selectedCount} startCount=${startAtlasCount} images=${entries.length}`,
+    `Atlas order=${options.order} pages=${selectedAtlases.length} images=${entries.length}`,
   );
   if (forcedSize) {
     console.log(
@@ -564,9 +737,10 @@ async function main() {
   }
 
   const manifest = {
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
-    seed: options.seed,
+    order: options.order,
+    metadataPath: options.order === 'canvas' ? options.metadataPath : null,
     atlasCount: manifestAtlases.length,
     atlasWidth: options.atlasWidth,
     atlasHeight: options.atlasHeight,

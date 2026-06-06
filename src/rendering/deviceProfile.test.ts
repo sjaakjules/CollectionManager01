@@ -3,6 +3,7 @@ import {
   getInitialRevealConcurrentLoads,
   getPixiCanvasResolution,
   isConstrainedTextureDevice,
+  isLowDetailTextureDevice,
   shouldPreloadFullTextureCatalog,
 } from "./deviceProfile";
 
@@ -13,6 +14,8 @@ interface TestDevice {
   userAgent: string;
   maxTouchPoints: number;
   media?: Record<string, boolean>;
+  connection?: { saveData?: boolean };
+  deviceMemory?: number;
 }
 
 function createMatchMedia(matchesByQuery: Record<string, boolean>): typeof window.matchMedia {
@@ -42,6 +45,8 @@ function useDevice(device: TestDevice): void {
   vi.stubGlobal("navigator", {
     userAgent: device.userAgent,
     maxTouchPoints: device.maxTouchPoints,
+    connection: device.connection,
+    deviceMemory: device.deviceMemory,
   });
 }
 
@@ -62,10 +67,10 @@ describe("deviceProfile", () => {
     expect(isConstrainedTextureDevice()).toBe(false);
     expect(getPixiCanvasResolution()).toBe(2);
     expect(getInitialRevealConcurrentLoads()).toBe(24);
-    expect(shouldPreloadFullTextureCatalog()).toBe(true);
+    expect(shouldPreloadFullTextureCatalog()).toBe(false);
   });
 
-  it("uses a safer texture budget for phone-sized touch devices", () => {
+  it("allows modern phone-sized touch devices to use richer visible-card detail", () => {
     useDevice({
       width: 390,
       height: 844,
@@ -80,6 +85,29 @@ describe("deviceProfile", () => {
     });
 
     expect(isConstrainedTextureDevice()).toBe(true);
+    expect(isLowDetailTextureDevice()).toBe(false);
+    expect(getPixiCanvasResolution()).toBe(3);
+    expect(getInitialRevealConcurrentLoads()).toBe(4);
+    expect(shouldPreloadFullTextureCatalog()).toBe(false);
+  });
+
+  it("keeps save-data phone-sized touch devices on the safest texture path", () => {
+    useDevice({
+      width: 390,
+      height: 844,
+      dpr: 3,
+      userAgent:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
+      maxTouchPoints: 5,
+      connection: { saveData: true },
+      media: {
+        "(pointer: coarse)": true,
+        "(hover: none)": true,
+      },
+    });
+
+    expect(isConstrainedTextureDevice()).toBe(true);
+    expect(isLowDetailTextureDevice()).toBe(true);
     expect(getPixiCanvasResolution()).toBe(1.5);
     expect(getInitialRevealConcurrentLoads()).toBe(4);
     expect(shouldPreloadFullTextureCatalog()).toBe(false);
@@ -101,6 +129,6 @@ describe("deviceProfile", () => {
 
     expect(isConstrainedTextureDevice()).toBe(false);
     expect(getPixiCanvasResolution()).toBe(2);
-    expect(shouldPreloadFullTextureCatalog()).toBe(true);
+    expect(shouldPreloadFullTextureCatalog()).toBe(false);
   });
 });

@@ -10,19 +10,22 @@
  * Optional separate LOD assets can be disabled with:
  * - VITE_CARD_LOD_ASSETS=0
  * - VITE_CARD_THUMBNAIL_PATH=/assets/CardsThumb   (optional)
- * - VITE_CARD_MEDIUM_PATH=/assets/CardsMedium     (optional)
+ * - VITE_CARD_MEDIUM_PATH=/assets/CardsMedium     (optional standalone fallback)
  * Optional thumbnail atlas loading:
  * - VITE_CARD_THUMBNAIL_ATLAS=1
  * - VITE_CARD_THUMBNAIL_ATLAS_MANIFEST=/assets/CardsThumbAtlas/manifest.json
  * Optional medium atlas loading:
  * - VITE_CARD_MEDIUM_ATLAS=1
  * - VITE_CARD_MEDIUM_ATLAS_MANIFEST=/assets/CardsMediumAtlas/manifest.json
- * Optional minimum LOD clamp:
- * - VITE_CARD_MIN_LOD=medium  (skips thumbnail requests)
+ * Optional minimum LOD clamp after startup:
+ * - VITE_CARD_MIN_LOD=medium  (skips thumbnail requests after reveal)
  */
 
 import { Assets, Rectangle, Texture, TextureSource } from 'pixi.js';
-import { isConstrainedTextureDevice } from './deviceProfile';
+import {
+  isConstrainedTextureDevice,
+  isLowDetailTextureDevice,
+} from './deviceProfile';
 
 // Mipmaps improve desktop downscaling but add roughly a third more GPU memory.
 TextureSource.defaultOptions.autoGenerateMipmaps = !isConstrainedTextureDevice();
@@ -39,11 +42,23 @@ export const LOD_LEVELS = {
 
 export type LODLevel = (typeof LOD_LEVELS)[keyof typeof LOD_LEVELS];
 
-// Zoom thresholds for LOD switching
+// Legacy zoom thresholds retained for callers that do not know card size.
 export const LOD_ZOOM_THRESHOLDS = {
   THUMBNAIL_MAX: 0.1,
   MEDIUM_MAX: 0.4,
 } as const;
+
+// LOD switching is based on estimated on-screen card height in CSS pixels.
+export const LOD_SCREEN_HEIGHT_THRESHOLDS = {
+  THUMBNAIL_MAX: 96,
+  FULL_MIN: 275,
+} as const;
+
+export const MOBILE_LOD_SCREEN_HEIGHT_THRESHOLDS = {
+  THUMBNAIL_MAX: 110,
+} as const;
+
+const DEFAULT_CARD_WORLD_HEIGHT = 140;
 
 const USE_SEPARATE_LOD_ASSETS =
   import.meta.env.VITE_CARD_LOD_ASSETS === undefined ||
@@ -68,8 +83,9 @@ const MEDIUM_ATLAS_MANIFEST_URL =
 const FULL_IMAGE_PATH = '/assets/Cards';
 const THUMBNAIL_IMAGE_PATH =
   import.meta.env.VITE_CARD_THUMBNAIL_PATH ?? '/assets/CardsThumb';
-const MEDIUM_IMAGE_PATH =
-  import.meta.env.VITE_CARD_MEDIUM_PATH ?? '/assets/CardsMedium';
+const MEDIUM_IMAGE_PATH = import.meta.env.VITE_CARD_MEDIUM_PATH
+  ?.toString()
+  .trim();
 const MIN_LOD_ENV = (import.meta.env.VITE_CARD_MIN_LOD ?? '')
   .toString()
   .toLowerCase();
@@ -88,6 +104,10 @@ const CONSTRAINED_CONCURRENT_LOADS = 2;
 const CONSTRAINED_BATCH_SIZE = 8;
 const CONSTRAINED_CACHE_MAX_TEXTURES = 90;
 const CONSTRAINED_CACHE_TARGET_TEXTURES = 64;
+const MOBILE_FULL_CACHE_MAX_TEXTURES = 24;
+const MOBILE_FULL_CACHE_TARGET_TEXTURES = 16;
+const DESKTOP_FULL_CACHE_MAX_TEXTURES = 96;
+const DESKTOP_FULL_CACHE_TARGET_TEXTURES = 72;
 
 // ============================================================================
 // Types
@@ -195,17 +215,44 @@ export class LODManager {
    * Get the appropriate LOD level for a given zoom
    */
   getLODForZoom(zoom: number): LODLevel {
+    return this.getLODForCardDisplay(zoom, DEFAULT_CARD_WORLD_HEIGHT);
+  }
+
+  /**
+   * Get the appropriate LOD level for a card at a given zoom.
+   *
+   * `cardWorldHeight` is the Pixi world-space display height for the card,
+   * letting portrait, landscape, deck avatar, and zone cards switch based on
+   * the actual on-screen footprint rather than a raw zoom number.
+   */
+  getLODForCardDisplay(zoom: number, cardWorldHeight: number): LODLevel {
+    const screenHeight = Math.max(0, zoom * cardWorldHeight);
+    let lod: LODLevel;
+
     if (isConstrainedTextureDevice()) {
-      return LOD_LEVELS.THUMBNAIL;
+      if (isLowDetailTextureDevice()) {
+        return LOD_LEVELS.THUMBNAIL;
+      }
+
+      if (screenHeight <= MOBILE_LOD_SCREEN_HEIGHT_THRESHOLDS.THUMBNAIL_MAX) {
+        lod = LOD_LEVELS.THUMBNAIL;
+      } else {
+        lod = LOD_LEVELS.MEDIUM;
+      }
+
+      const minLODLevel = this.getMinimumLOD();
+      if (minLODLevel === LOD_LEVELS.MEDIUM && lod === LOD_LEVELS.THUMBNAIL) {
+        return LOD_LEVELS.MEDIUM;
+      }
+      return lod;
     }
 
-    let lod: LODLevel;
-    if (zoom <= LOD_ZOOM_THRESHOLDS.THUMBNAIL_MAX) {
+    if (screenHeight <= LOD_SCREEN_HEIGHT_THRESHOLDS.THUMBNAIL_MAX) {
       lod = LOD_LEVELS.THUMBNAIL;
-    } else if (zoom < LOD_ZOOM_THRESHOLDS.MEDIUM_MAX) {
-      lod = LOD_LEVELS.MEDIUM;
-    } else {
+    } else if (screenHeight >= LOD_SCREEN_HEIGHT_THRESHOLDS.FULL_MIN) {
       lod = LOD_LEVELS.FULL;
+    } else {
+      lod = LOD_LEVELS.MEDIUM;
     }
 
     const minLODLevel = this.getMinimumLOD();
@@ -219,7 +266,14 @@ export class LODManager {
    * Startup/default LOD used for initial reveal and generic preloads.
    */
   getStartupLOD(): LODLevel {
-    return this.getMinimumLOD();
+    return LOD_LEVELS.THUMBNAIL;
+  }
+
+  /**
+   * Resolve the actual tier this device is allowed to load for a requested LOD.
+   */
+  resolveLOD(lod: LODLevel): LODLevel {
+    return this.getEffectiveLOD(lod);
   }
 
   /**
@@ -297,6 +351,16 @@ export class LODManager {
    * Get texture synchronously if cached, otherwise return null
    */
   getTextureSync(cardNameOrSlug: string, lod: LODLevel): Texture | null {
+    return this.getTextureMatchSync(cardNameOrSlug, lod)?.texture ?? null;
+  }
+
+  /**
+   * Get the best cached texture and the LOD it actually represents.
+   */
+  getTextureMatchSync(
+    cardNameOrSlug: string,
+    lod: LODLevel,
+  ): { lod: LODLevel; texture: Texture } | null {
     const effectiveLOD = this.getEffectiveLOD(lod);
     const slug = cardNameOrSlug.includes('_')
       ? cardNameOrSlug
@@ -304,7 +368,7 @@ export class LODManager {
     const match = this.getBestAvailableTextureWithLOD(slug, effectiveLOD);
     if (match) {
       this.touchCachedTexture(slug, match.lod);
-      return match.texture;
+      return match;
     }
     return null;
   }
@@ -449,6 +513,22 @@ export class LODManager {
     }
   }
 
+  pruneFullTextureCache(keepNamesOrSlugs: string[]): void {
+    const maxTextures = isConstrainedTextureDevice()
+      ? MOBILE_FULL_CACHE_MAX_TEXTURES
+      : DESKTOP_FULL_CACHE_MAX_TEXTURES;
+    const targetTextures = isConstrainedTextureDevice()
+      ? MOBILE_FULL_CACHE_TARGET_TEXTURES
+      : DESKTOP_FULL_CACHE_TARGET_TEXTURES;
+
+    this.pruneLODTextureCache(
+      LOD_LEVELS.FULL,
+      keepNamesOrSlugs,
+      maxTextures,
+      targetTextures,
+    );
+  }
+
   private getLoadKey(slug: string, lod: LODLevel): string {
     return `${slug}:${lod}`;
   }
@@ -461,21 +541,28 @@ export class LODManager {
   }
 
   private getEffectiveLOD(lod: LODLevel): LODLevel {
-    return isConstrainedTextureDevice() ? LOD_LEVELS.THUMBNAIL : lod;
+    if (!isConstrainedTextureDevice()) {
+      return lod;
+    }
+    if (isLowDetailTextureDevice()) {
+      return LOD_LEVELS.THUMBNAIL;
+    }
+    if (lod === LOD_LEVELS.FULL) {
+      return LOD_LEVELS.MEDIUM;
+    }
+    return lod;
   }
 
   private getMinimumLOD(): LODLevel {
     if (CONFIGURED_MIN_LOD_LEVEL) {
       return CONFIGURED_MIN_LOD_LEVEL;
     }
-    return isConstrainedTextureDevice()
-      ? LOD_LEVELS.THUMBNAIL
-      : LOD_LEVELS.MEDIUM;
+    return LOD_LEVELS.THUMBNAIL;
   }
 
   private getAtlasStateForLOD(lod: LODLevel): AtlasRuntimeState | null {
-    if (isConstrainedTextureDevice()) {
-      return null;
+    if (isConstrainedTextureDevice() && isLowDetailTextureDevice()) {
+      return lod === LOD_LEVELS.THUMBNAIL ? this.thumbnailAtlas : null;
     }
 
     if (lod === LOD_LEVELS.THUMBNAIL) {
@@ -519,13 +606,27 @@ export class LODManager {
   private getImageUrls(slug: string, lod: LODLevel): string[] {
     const fullUrl = `${FULL_IMAGE_PATH}/${slug}.webp`;
     const thumbUrl = `${THUMBNAIL_IMAGE_PATH}/${slug}.webp`;
-    const mediumUrl = `${MEDIUM_IMAGE_PATH}/${slug}.webp`;
-    if (isConstrainedTextureDevice()) {
+    const constrained = isConstrainedTextureDevice();
+    const mediumUrl = MEDIUM_IMAGE_PATH
+      ? `${MEDIUM_IMAGE_PATH}/${slug}.webp`
+      : null;
+
+    if (constrained && isLowDetailTextureDevice()) {
       return [thumbUrl];
     }
 
     if (!USE_SEPARATE_LOD_ASSETS) {
-      return [fullUrl];
+      return constrained ? [thumbUrl] : [fullUrl];
+    }
+
+    if (constrained) {
+      if (lod === LOD_LEVELS.MEDIUM) {
+        return mediumUrl ? [mediumUrl, thumbUrl] : [thumbUrl];
+      }
+      if (lod === LOD_LEVELS.FULL) {
+        return [fullUrl];
+      }
+      return [thumbUrl];
     }
 
     let urls: string[];
@@ -533,8 +634,9 @@ export class LODManager {
       urls = [thumbUrl, fullUrl];
     } else if (lod === LOD_LEVELS.MEDIUM) {
       // Fall back to thumbnail before full-res so missing medium assets do not
-      // immediately trigger heavyweight downloads.
-      urls = [mediumUrl, thumbUrl, fullUrl];
+      // immediately trigger heavyweight downloads. The standalone medium path
+      // is opt-in because this repo ships only the medium atlas by default.
+      urls = mediumUrl ? [mediumUrl, thumbUrl, fullUrl] : [thumbUrl, fullUrl];
     } else {
       urls = [fullUrl];
     }
@@ -543,12 +645,12 @@ export class LODManager {
   }
 
   private async loadTexture(slug: string, lod: LODLevel): Promise<Texture> {
-    if (!isConstrainedTextureDevice() && lod === LOD_LEVELS.THUMBNAIL) {
+    if (lod === LOD_LEVELS.THUMBNAIL) {
       const atlasTexture = await this.loadFromAtlas(this.thumbnailAtlas, slug);
       if (atlasTexture) {
         return atlasTexture;
       }
-    } else if (!isConstrainedTextureDevice() && lod === LOD_LEVELS.MEDIUM) {
+    } else if (lod === LOD_LEVELS.MEDIUM) {
       const atlasTexture = await this.loadFromAtlas(this.mediumAtlas, slug);
       if (atlasTexture) {
         return atlasTexture;
@@ -737,10 +839,41 @@ export class LODManager {
     this.cacheAccessOrder.set(this.getLoadKey(slug, lod), ++this.cacheAccessCounter);
   }
 
+  private pruneLODTextureCache(
+    lod: LODLevel,
+    keepNamesOrSlugs: string[],
+    maxTextures: number,
+    targetTextures: number,
+  ): void {
+    const loadKeys = [...this.textureAssetUrls.keys()].filter((loadKey) => {
+      return this.parseLoadKey(loadKey).lod === lod;
+    });
+
+    if (loadKeys.length <= maxTextures) return;
+
+    const keepSlugs = new Set(keepNamesOrSlugs.map((name) => cardNameToSlug(name)));
+    const candidates = loadKeys
+      .filter((loadKey) => {
+        const { slug } = this.parseLoadKey(loadKey);
+        return !keepSlugs.has(slug);
+      })
+      .sort(
+        (a, b) =>
+          (this.cacheAccessOrder.get(a) ?? 0) -
+          (this.cacheAccessOrder.get(b) ?? 0),
+      );
+
+    let remaining = loadKeys.length;
+    for (const loadKey of candidates) {
+      if (remaining <= targetTextures) return;
+      this.evictCachedTexture(loadKey);
+      remaining--;
+    }
+  }
+
   private evictCachedTexture(loadKey: string): void {
     const { slug, lod } = this.parseLoadKey(loadKey);
     const cached = this.cache.get(slug);
-    const texture = cached?.[lod];
     const url = this.textureAssetUrls.get(loadKey);
 
     if (cached) {
@@ -759,10 +892,8 @@ export class LODManager {
     this.textureAssetUrls.delete(loadKey);
     this.cacheAccessOrder.delete(loadKey);
 
-    if (url) {
-      void Assets.unload(url).catch(() => undefined);
-    } else if (texture && texture !== Texture.WHITE) {
-      texture.destroy(true);
+    if (url && Assets.cache.has(url)) {
+      Assets.cache.remove(url);
     }
   }
 }

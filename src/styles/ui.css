@@ -155,9 +155,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
   background: #1a1a2e;
+  overflow: hidden;
   opacity: 1;
   transition: background 0.8s ease, opacity 0.5s ease-out;
+}
+
+@supports (width: 100dvw) {
+  .splash-screen {
+    width: 100dvw;
+    height: 100dvh;
+  }
 }
 
 .splash-screen.splash-transparent {
@@ -170,12 +181,19 @@ body {
   pointer-events: none;
 }
 
+.splash-screen.splash-start-gate {
+  z-index: 10000;
+}
+
 .splash-content {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2.5rem;
+  width: min(560px, 100%);
+  max-width: calc(100vw - 48px);
+  min-width: 0;
 }
 
 .splash-title {
@@ -183,10 +201,14 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0;
+  width: 100%;
+  min-width: 0;
   line-height: 1;
 }
 
 .splash-title-sorcery {
+  display: block;
+  max-width: 100%;
   font-size: 3.5rem;
   font-weight: 200;
   letter-spacing: 0.4em;
@@ -196,6 +218,8 @@ body {
 }
 
 .splash-title-stacks {
+  display: block;
+  max-width: 100%;
   font-size: 1.5rem;
   font-weight: 400;
   letter-spacing: 0.8em;
@@ -206,7 +230,7 @@ body {
 }
 
 .splash-bar {
-  width: 200px;
+  width: min(200px, 100%);
   height: 1px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 1px;
@@ -219,6 +243,62 @@ body {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 1px;
   animation: splash-progress 1.8s ease-in-out infinite;
+}
+
+.splash-start-button {
+  min-width: 168px;
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.splash-start-button:active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 480px) {
+  .splash-screen {
+    padding: 18px;
+  }
+
+  .splash-content {
+    gap: 2rem;
+    max-width: calc(100vw - 36px);
+  }
+
+  .splash-title-sorcery {
+    font-size: 2.85rem;
+    letter-spacing: 0.24em;
+    padding-right: 0.24em;
+  }
+
+  .splash-title-stacks {
+    font-size: 1.35rem;
+    letter-spacing: 0.48em;
+    padding-right: 0.48em;
+  }
+}
+
+@media (max-width: 360px) {
+  .splash-title-sorcery {
+    font-size: 2.45rem;
+    letter-spacing: 0.16em;
+    padding-right: 0.16em;
+  }
+
+  .splash-title-stacks {
+    font-size: 1.1rem;
+    letter-spacing: 0.34em;
+    padding-right: 0.34em;
+  }
 }
 
 @keyframes splash-progress {
