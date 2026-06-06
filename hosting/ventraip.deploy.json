@@ -27,6 +27,7 @@
       "**/.DS_Store",
       ".deploy-ready.json",
       ".ftpquota",
+      "**/.ftpquota",
       "./.ftpquota",
       ".well-known/**",
       ".well-known/",
@@ -55,6 +56,10 @@
       "uploads/"
     ],
     "production": [
+      "Manager/**",
+      "Manager/",
+      "./Manager/**",
+      "./Manager/",
       "_staging/**",
       "_staging/"
     ]
