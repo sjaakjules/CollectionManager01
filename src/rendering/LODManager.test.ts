@@ -1,15 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  getInitialRevealConcurrentLoads,
-  getPixiCanvasResolution,
-  isConstrainedTextureDevice,
-  shouldPreloadFullTextureCatalog,
-} from "./deviceProfile";
+import { LOD_LEVELS, LODManager } from "./LODManager";
 
 interface TestDevice {
   width: number;
   height: number;
-  dpr: number;
   userAgent: string;
   maxTouchPoints: number;
   media?: Record<string, boolean>;
@@ -32,7 +26,7 @@ function useDevice(device: TestDevice): void {
   vi.stubGlobal("window", {
     innerWidth: device.width,
     innerHeight: device.height,
-    devicePixelRatio: device.dpr,
+    devicePixelRatio: 2,
     screen: {
       width: device.width,
       height: device.height,
@@ -49,27 +43,26 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("deviceProfile", () => {
-  it("keeps desktop rendering on the richer texture path", () => {
+describe("LODManager", () => {
+  it("uses richer zoom LODs on desktop", () => {
     useDevice({
       width: 1440,
       height: 900,
-      dpr: 3,
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
       maxTouchPoints: 0,
     });
 
-    expect(isConstrainedTextureDevice()).toBe(false);
-    expect(getPixiCanvasResolution()).toBe(2);
-    expect(getInitialRevealConcurrentLoads()).toBe(24);
-    expect(shouldPreloadFullTextureCatalog()).toBe(true);
+    const manager = new LODManager();
+
+    expect(manager.getLODForZoom(0.05)).toBe(LOD_LEVELS.MEDIUM);
+    expect(manager.getLODForZoom(0.2)).toBe(LOD_LEVELS.MEDIUM);
+    expect(manager.getLODForZoom(0.8)).toBe(LOD_LEVELS.FULL);
   });
 
-  it("uses a safer texture budget for phone-sized touch devices", () => {
+  it("keeps automatic zoom LOD at thumbnails on phone-sized touch devices", () => {
     useDevice({
       width: 390,
       height: 844,
-      dpr: 3,
       userAgent:
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
       maxTouchPoints: 5,
@@ -79,28 +72,10 @@ describe("deviceProfile", () => {
       },
     });
 
-    expect(isConstrainedTextureDevice()).toBe(true);
-    expect(getPixiCanvasResolution()).toBe(1.5);
-    expect(getInitialRevealConcurrentLoads()).toBe(4);
-    expect(shouldPreloadFullTextureCatalog()).toBe(false);
-  });
+    const manager = new LODManager();
 
-  it("keeps large hybrid pointer devices on the desktop texture path", () => {
-    useDevice({
-      width: 1440,
-      height: 900,
-      dpr: 2,
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36",
-      maxTouchPoints: 10,
-      media: {
-        "(pointer: coarse)": false,
-        "(hover: none)": false,
-      },
-    });
-
-    expect(isConstrainedTextureDevice()).toBe(false);
-    expect(getPixiCanvasResolution()).toBe(2);
-    expect(shouldPreloadFullTextureCatalog()).toBe(true);
+    expect(manager.getLODForZoom(0.05)).toBe(LOD_LEVELS.THUMBNAIL);
+    expect(manager.getLODForZoom(0.2)).toBe(LOD_LEVELS.THUMBNAIL);
+    expect(manager.getLODForZoom(0.8)).toBe(LOD_LEVELS.THUMBNAIL);
   });
 });

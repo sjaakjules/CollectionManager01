@@ -46,7 +46,6 @@ import {
 import {
   lodManager,
   LOD_LEVELS,
-  LOD_ZOOM_THRESHOLDS,
   cardNameToSlug,
 } from "./LODManager";
 import {
@@ -57,6 +56,15 @@ import {
   isConstrainedTextureDevice,
   shouldPreloadFullTextureCatalog,
 } from "./deviceProfile";
+import {
+  isSyntheticMouseAfterTouch,
+  isTouchLikePointerEvent,
+  SYNTHETIC_MOUSE_AFTER_TOUCH_MS,
+  TouchGestureTracker,
+  type TouchGesturePoint,
+  type TouchGestureSnapshot,
+  type TouchGestureTarget,
+} from "./touchGestures";
 import type {
   Card,
   Deck,
@@ -221,6 +229,35 @@ interface ZoneDragState {
   startWorldPos: { x: number; y: number };
   startBounds: { x: number; y: number } | null;
 }
+
+type TouchCanvasTarget =
+  | ({ kind: "empty" } & TouchGestureTarget)
+  | ({ kind: "card"; cardKey: string; cardName: string } & TouchGestureTarget)
+  | ({
+      kind: "zone-card";
+      zoneCardKey: string;
+      zoneId: string;
+      instanceId: string;
+      cardName: string;
+    } & TouchGestureTarget)
+  | ({ kind: "zone-header"; zoneId: string } & TouchGestureTarget)
+  | ({ kind: "zone"; zoneId: string } & TouchGestureTarget)
+  | ({ kind: "label"; labelId: string } & TouchGestureTarget)
+  | ({ kind: "zone-sort"; zoneId: string } & TouchGestureTarget)
+  | ({ kind: "zone-filter"; zoneId: string } & TouchGestureTarget)
+  | ({ kind: "zone-close"; zoneId: string } & TouchGestureTarget)
+  | ({
+      kind: "deck-filter-chip";
+      zoneId: string;
+      clauseIndex: number;
+      removeHovered: boolean;
+    } & TouchGestureTarget)
+  | ({
+      kind: "zone-variant-tab";
+      zoneId: string;
+      variantId: string | null;
+      isAdd: boolean;
+    } & TouchGestureTarget);
 
 type QuickTransferCategory = "deck" | "stack";
 
@@ -516,6 +553,9 @@ export class PixiStage {
   private deckCardDeletePromptRoot: HTMLElement | null = null;
   private deckCardDeletePromptPointerHandler: ((event: PointerEvent) => void) | null = null;
   private deckCardDeletePromptKeyHandler: ((event: KeyboardEvent) => void) | null = null;
+  private touchActionSheetRoot: HTMLElement | null = null;
+  private touchActionSheetPointerHandler: ((event: PointerEvent) => void) | null = null;
+  private touchActionSheetKeyHandler: ((event: KeyboardEvent) => void) | null = null;
   private deckVariantDialogRoot: HTMLElement | null = null;
   private deckVariantDialogKeydownHandler: ((event: KeyboardEvent) => void) | null = null;
   private deckVariantDialogOpen = false;
@@ -660,6 +700,9 @@ export class PixiStage {
   private hoveredCardName: string | null = null;
   private lastPointerScreenPos: { x: number; y: number } | null = null;
   private quickTransferLastTickMs = 0;
+  private readonly touchGestures = new TouchGestureTracker<TouchCanvasTarget>();
+  private activeTouchDragTarget: TouchCanvasTarget | null = null;
+  private lastTouchPointerEventMs = 0;
 
   constructor(config: PixiStageConfig) {
     this.onAddToDeck = config.onAddToDeck;
@@ -828,6 +871,7 @@ export class PixiStage {
     viewport.on("pointerup", this.onPointerUp.bind(this));
     // cspell:disable-next-line
     viewport.on("pointerupoutside", this.onPointerUp.bind(this));
+    viewport.on("pointercancel", this.onPointerCancel.bind(this));
     viewport.on("pointerleave", () => {
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
@@ -850,6 +894,650 @@ export class PixiStage {
       this.hoveredZoneCardKey = null;
       this.drawZoneDeleteOverlay();
     });
+  }
+
+  private isTouchPointer(event: FederatedPointerEvent): boolean {
+    return isTouchLikePointerEvent(event);
+  }
+
+  private markTouchPointerEvent(): void {
+    this.lastTouchPointerEventMs = Date.now();
+  }
+
+  private shouldIgnorePostTouchMouseEvent(event: FederatedPointerEvent): boolean {
+    return isSyntheticMouseAfterTouch(
+      event,
+      this.lastTouchPointerEventMs,
+      Date.now(),
+      SYNTHETIC_MOUSE_AFTER_TOUCH_MS,
+    );
+  }
+
+  private toTouchPoint(event: FederatedPointerEvent): TouchGesturePoint {
+    return {
+      pointerId: event.pointerId,
+      x: event.globalX,
+      y: event.globalY,
+      timeMs: Date.now(),
+    };
+  }
+
+  private getClientPosition(event: FederatedPointerEvent): { x: number; y: number } {
+    const rect = this.app.canvas.getBoundingClientRect();
+    return {
+      x: rect.left + event.globalX,
+      y: rect.top + event.globalY,
+    };
+  }
+
+  private captureTouchPointer(event: FederatedPointerEvent): void {
+    try {
+      this.app.canvas.setPointerCapture(event.pointerId);
+    } catch {
+      // Some browsers already apply implicit capture for touch pointers.
+    }
+  }
+
+  private releaseTouchPointer(event: FederatedPointerEvent): void {
+    try {
+      if (this.app.canvas.hasPointerCapture(event.pointerId)) {
+        this.app.canvas.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      // Ignore capture release races after pointercancel/pointerup.
+    }
+  }
+
+  private getTouchTarget(worldPos: { x: number; y: number }): TouchCanvasTarget {
+    const variantTab = this.getZoneVariantTabTargetAtPosition(worldPos);
+    if (variantTab) {
+      return {
+        kind: "zone-variant-tab",
+        key: `zone-variant-tab:${variantTab.zone.id}:${variantTab.isAdd ? "add" : variantTab.variantId}`,
+        zoneId: variantTab.zone.id,
+        variantId: variantTab.variantId,
+        isAdd: variantTab.isAdd,
+      };
+    }
+
+    const sortTarget = this.getZoneSortTargetAtPosition(worldPos);
+    if (sortTarget) {
+      return {
+        kind: "zone-sort",
+        key: `zone-sort:${sortTarget.id}`,
+        zoneId: sortTarget.id,
+      };
+    }
+
+    const filterChip = this.getDeckFilterChipTargetAtPosition(worldPos);
+    if (filterChip) {
+      return {
+        kind: "deck-filter-chip",
+        key: `deck-filter-chip:${filterChip.zone.id}:${filterChip.clauseIndex}:${filterChip.removeHovered}`,
+        zoneId: filterChip.zone.id,
+        clauseIndex: filterChip.clauseIndex,
+        removeHovered: filterChip.removeHovered,
+      };
+    }
+
+    const filterTarget = this.getZoneFilterTargetAtPosition(worldPos);
+    if (filterTarget) {
+      return {
+        kind: "zone-filter",
+        key: `zone-filter:${filterTarget.id}`,
+        zoneId: filterTarget.id,
+      };
+    }
+
+    const closeTarget = this.getZoneCloseTargetAtPosition(worldPos);
+    if (closeTarget) {
+      return {
+        kind: "zone-close",
+        key: `zone-close:${closeTarget.id}`,
+        zoneId: closeTarget.id,
+      };
+    }
+
+    const zoneCard = this.getZoneCardAtPosition(worldPos);
+    if (zoneCard) {
+      return {
+        kind: "zone-card",
+        key: `zone-card:${zoneCard.key}`,
+        zoneCardKey: zoneCard.key,
+        zoneId: zoneCard.zoneId,
+        instanceId: zoneCard.instanceId,
+        cardName: zoneCard.cardName,
+      };
+    }
+
+    const labelId = this.getLabelAtPosition(worldPos);
+    if (labelId) {
+      return {
+        kind: "label",
+        key: `label:${labelId}`,
+        labelId,
+      };
+    }
+
+    const zoneHeader = this.getZoneHeaderAtPosition(worldPos);
+    if (zoneHeader) {
+      return {
+        kind: "zone-header",
+        key: `zone-header:${zoneHeader.id}`,
+        zoneId: zoneHeader.id,
+      };
+    }
+
+    const cardKey = this.getCardAtPosition(worldPos);
+    if (cardKey) {
+      const data = this.getSpriteData(cardKey);
+      return {
+        kind: "card",
+        key: `card:${cardKey}`,
+        cardKey,
+        cardName: data?.layout.name ?? cardKey,
+      };
+    }
+
+    const zone = this.getZoneAtPosition(worldPos);
+    if (zone) {
+      return {
+        kind: "zone",
+        key: `zone:${zone.id}`,
+        zoneId: zone.id,
+      };
+    }
+
+    return { kind: "empty", key: "empty" };
+  }
+
+  private onTouchPointerDown(event: FederatedPointerEvent): void {
+    if (!this.camera) return;
+
+    this.markTouchPointerEvent();
+    this.cancelSelectionBox();
+    this.pointerDownOnSelectedCard = false;
+    this.closeTouchActionSheet();
+    this.closeDeckCardDeletePrompt();
+    this.captureTouchPointer(event);
+
+    const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
+    this.clearZoneDropPreview();
+    this.setStacksDropVisual(false);
+
+    const target = this.getTouchTarget(worldPos);
+    const wasLongPressed = this.touchGestures.isLongPressed();
+    this.touchGestures.start(this.toTouchPoint(event), target, (gesture) => {
+      this.onTouchLongPressStart(gesture);
+    });
+    if (wasLongPressed && !this.touchGestures.isLongPressed()) {
+      this.cancelActiveTouchDrag();
+      this.camera.resumeDrag();
+    }
+  }
+
+  private onTouchPointerMove(event: FederatedPointerEvent): void {
+    if (!this.camera || !this.touchGestures.isTrackingPointer(event.pointerId)) return;
+
+    this.markTouchPointerEvent();
+    this.cancelSelectionBox();
+    const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
+    const move = this.touchGestures.move(this.toTouchPoint(event));
+
+    if (move.type === "pan-start") {
+      this.setHoveredCard(null);
+      this.hoveredZoneCardKey = null;
+      this.drawZoneDeleteOverlay();
+      return;
+    }
+
+    if (move.type === "drag-start") {
+      this.startTouchDrag(move.gesture);
+      this.updateActiveTouchDrag(worldPos, { x: event.globalX, y: event.globalY });
+      return;
+    }
+
+    if (move.type === "drag-move") {
+      this.updateActiveTouchDrag(worldPos, { x: event.globalX, y: event.globalY });
+    }
+  }
+
+  private onTouchPointerUp(event: FederatedPointerEvent): void {
+    if (!this.camera || !this.touchGestures.isTrackingPointer(event.pointerId)) {
+      this.markTouchPointerEvent();
+      this.cancelSelectionBox();
+      this.releaseTouchPointer(event);
+      return;
+    }
+
+    this.markTouchPointerEvent();
+    this.cancelSelectionBox();
+    const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
+    const screenPos = { x: event.globalX, y: event.globalY };
+    const clientPos = this.getClientPosition(event);
+    this.lastPointerScreenPos = screenPos;
+    this.clearZoneDropPreview();
+
+    const release = this.touchGestures.release(this.toTouchPoint(event));
+    this.releaseTouchPointer(event);
+
+    if (release.type === "tap") {
+      this.handleTouchTap(release.target, worldPos, screenPos, release.isDoubleTap);
+    } else if (release.type === "action") {
+      this.cancelActiveTouchDrag();
+      this.showTouchActionSheet(release.target, clientPos.x, clientPos.y);
+    } else if (release.type === "drag-end") {
+      this.finishActiveTouchDrag(worldPos, screenPos);
+    }
+
+    this.camera.resumeDrag();
+    this.activeTouchDragTarget = null;
+    this.pointerDownOnSelectedCard = false;
+    this.setStacksDropVisual(false);
+    this.updateHoveredFromWorldPos(worldPos);
+  }
+
+  private onPointerCancel(event: FederatedPointerEvent): void {
+    if (this.isTouchPointer(event)) {
+      this.markTouchPointerEvent();
+      this.touchGestures.cancel();
+      this.cancelActiveTouchDrag();
+      this.cancelSelectionBox();
+      this.releaseTouchPointer(event);
+      this.camera?.resumeDrag();
+      this.activeTouchDragTarget = null;
+      this.pointerDownOnSelectedCard = false;
+      this.setStacksDropVisual(false);
+      this.clearZoneDropPreview();
+      this.deactivateQuickTransfer();
+      return;
+    }
+
+    this.setStacksDropVisual(false);
+    this.clearZoneDropPreview();
+    this.deactivateQuickTransfer();
+  }
+
+  private onTouchLongPressStart(
+    gesture: TouchGestureSnapshot<TouchCanvasTarget>,
+  ): void {
+    if (!this.camera) return;
+    if (gesture.target.kind === "empty") return;
+    this.camera.pauseDrag();
+    this.activeTouchDragTarget = gesture.target;
+    this.updateTouchSelectionPreview(gesture.target);
+  }
+
+  private handleTouchTap(
+    target: TouchCanvasTarget,
+    worldPos: { x: number; y: number },
+    screenPos: { x: number; y: number },
+    isDoubleTap: boolean,
+  ): void {
+    this.cancelSelectionBox();
+
+    if (this.handleTouchControlTap(target, worldPos)) {
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    if (this.labelPlacementMode) {
+      this.addLabelAtPosition(worldPos);
+      this.consumeLabelPlacementMode();
+      return;
+    }
+
+    if (target.kind === "label") {
+      if (isDoubleTap) {
+        this.editLabel(target.labelId);
+      }
+      return;
+    }
+
+    if (target.kind === "zone-card") {
+      this.clearMainSelection(true);
+      if (this.selectedZoneId !== target.zoneId) {
+        this.clearZoneSelection();
+      }
+      if (!this.selectedZoneCardKeys.has(target.zoneCardKey)) {
+        this.clearZoneSelection();
+        this.selectZoneCard(target.zoneCardKey);
+      }
+      this.emitSelectionChange();
+
+      if (isDoubleTap) {
+        const zone = this.canvasAreas.find((entry) => entry.id === target.zoneId);
+        if (zone?.type === "deck") {
+          const changed = this.toggleDeckZoneCardActive(target.zoneId, target.instanceId);
+          if (changed) {
+            this.rebuildZoneVisuals();
+            this.emitCanvasAreasChange();
+          }
+        } else {
+          this.duplicateCanvasCardInstance(target.zoneId, target.instanceId);
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        }
+      }
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    if (target.kind === "zone-header") {
+      this.clearSelection();
+      const zone = this.canvasAreas.find((entry) => entry.id === target.zoneId);
+      if (zone?.type === "stack") {
+        this.onStackZoneHeaderClick?.(zone.id);
+      }
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    if (target.kind === "zone") {
+      this.clearSelection();
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    if (target.kind === "card") {
+      this.clearZoneSelection();
+      if (isDoubleTap) {
+        if (this.selectedArchetype && this.archetypeScores) {
+          this.modifyArchetypeScore(target.cardName, +1);
+        } else {
+          this.onAddToDeck(target.cardName);
+        }
+        this.updateHoveredFromWorldPos(worldPos);
+        return;
+      }
+
+      this.clearSelection(true);
+      this.selectCard(target.cardKey, true);
+      this.emitSelectionChange();
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
+    this.clearSelection();
+    this.setHoveredCard(null);
+    this.hoveredZoneCardKey = null;
+    this.drawZoneDeleteOverlay();
+    this.lastPointerScreenPos = screenPos;
+  }
+
+  private handleTouchControlTap(
+    target: TouchCanvasTarget,
+    worldPos: { x: number; y: number },
+  ): boolean {
+    if (target.kind === "zone-variant-tab") {
+      if (target.isAdd) {
+        void this.createDeckZoneVariant(target.zoneId).then((changed) => {
+          if (!changed || this.isDestroyed) return;
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        });
+      } else if (target.variantId) {
+        const changed = this.setActiveDeckZoneVariant(target.zoneId, target.variantId);
+        if (changed) {
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        }
+      }
+      return true;
+    }
+
+    if (target.kind === "zone-sort") {
+      this.sortZoneCards(target.zoneId);
+      return true;
+    }
+
+    if (target.kind === "deck-filter-chip") {
+      if (target.removeHovered) {
+        const changed = this.removeDeckFilterClause(target.zoneId, target.clauseIndex);
+        if (changed) {
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        }
+      } else {
+        this.openDeckFilterRequest(target.zoneId, target.clauseIndex);
+      }
+      return true;
+    }
+
+    if (target.kind === "zone-filter") {
+      this.openDeckFilterRequest(target.zoneId, null);
+      return true;
+    }
+
+    if (target.kind === "zone-close") {
+      this.hideZoneFromCanvas(target.zoneId);
+      return true;
+    }
+
+    if (target.kind === "zone-card") {
+      const zoneCard = this.zoneCardSprites.get(target.zoneCardKey);
+      if (
+        zoneCard &&
+        this.hoveredZoneCardKey === zoneCard.key &&
+        this.pointInBounds(worldPos, this.getDeleteButtonBounds(zoneCard))
+      ) {
+        const screen = this.lastPointerScreenPos ?? { x: worldPos.x, y: worldPos.y };
+        const rect = this.app.canvas.getBoundingClientRect();
+        this.handleZoneCardDelete(zoneCard, rect.left + screen.x, rect.top + screen.y);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private updateTouchSelectionPreview(target: TouchCanvasTarget): void {
+    if (target.kind === "card") {
+      this.clearZoneSelection();
+      if (!this.selectedCards.has(target.cardKey)) {
+        this.clearSelection(true);
+        this.selectCard(target.cardKey, true);
+        this.emitSelectionChange();
+      }
+      this.setHoveredCard(target.cardName);
+      return;
+    }
+
+    if (target.kind === "zone-card") {
+      this.clearMainSelection(true);
+      if (
+        this.selectedZoneId !== target.zoneId ||
+        !this.selectedZoneCardKeys.has(target.zoneCardKey)
+      ) {
+        this.clearZoneSelection();
+        this.selectZoneCard(target.zoneCardKey);
+        this.emitSelectionChange();
+      }
+      this.setHoveredCard(target.cardName);
+    }
+  }
+
+  private startTouchDrag(gesture: TouchGestureSnapshot<TouchCanvasTarget>): void {
+    if (!this.camera) return;
+
+    const target = gesture.target;
+    const startWorldPos = this.camera.screenToWorld(gesture.start.x, gesture.start.y);
+    this.activeTouchDragTarget = target;
+    this.camera.pauseDrag();
+
+    if (target.kind === "card") {
+      this.clearZoneSelection();
+      if (!this.selectedCards.has(target.cardKey)) {
+        this.clearSelection(true);
+        this.selectCard(target.cardKey, true);
+        this.emitSelectionChange();
+      }
+      this.pointerDownOnSelectedCard = true;
+      this.startCardDrag(startWorldPos);
+      return;
+    }
+
+    if (target.kind === "zone-card") {
+      const zoneCard = this.zoneCardSprites.get(target.zoneCardKey);
+      if (!zoneCard) return;
+      this.clearMainSelection(true);
+      if (
+        this.selectedZoneId !== target.zoneId ||
+        !this.selectedZoneCardKeys.has(target.zoneCardKey)
+      ) {
+        this.clearZoneSelection();
+        this.selectZoneCard(target.zoneCardKey);
+        this.emitSelectionChange();
+      }
+      this.startZoneCardDrag(zoneCard, startWorldPos);
+      return;
+    }
+
+    if (target.kind === "zone-header") {
+      this.startZoneDrag(target.zoneId, startWorldPos);
+      return;
+    }
+
+    if (target.kind === "label") {
+      this.startLabelDrag(target.labelId, startWorldPos);
+    }
+  }
+
+  private updateActiveTouchDrag(
+    worldPos: { x: number; y: number },
+    screenPos: { x: number; y: number },
+  ): void {
+    if (!this.activeTouchDragTarget) return;
+
+    if (this.labelDragState.isDragging) {
+      this.clearZoneDropPreview();
+      this.updateLabelDrag(worldPos);
+      return;
+    }
+
+    if (this.zoneDragState.isDragging) {
+      this.clearZoneDropPreview();
+      this.updateZoneDrag(worldPos);
+      return;
+    }
+
+    if (this.zoneCardDragState.isDragging) {
+      this.clearZoneDropPreview();
+      this.updateZoneCardDrag(worldPos);
+      return;
+    }
+
+    if (!this.dragState.isDragging || !this.pointerDownOnSelectedCard) return;
+
+    const rect = this.app.canvas.getBoundingClientRect();
+    const clientX = rect.left + screenPos.x;
+    const clientY = rect.top + screenPos.y;
+    const overStacksPanel = this.isPointInsideOpenStacksPanel(clientX, clientY);
+
+    this.setStacksDropVisual(overStacksPanel);
+    if (overStacksPanel) {
+      this.clearZoneDropPreview();
+      return;
+    }
+
+    this.updateCardDrag(worldPos);
+    const hoveredZone = this.getZoneAtPosition(worldPos);
+    this.updateZoneDropPreview(
+      hoveredZone,
+      worldPos,
+      this.getDraggedCardPlacements(),
+    );
+  }
+
+  private finishActiveTouchDrag(
+    worldPos: { x: number; y: number },
+    screenPos: { x: number; y: number },
+  ): void {
+    if (this.labelDragState.isDragging) {
+      this.endLabelDrag();
+      return;
+    }
+
+    if (this.zoneCardDragState.isDragging) {
+      this.endZoneCardDrag(worldPos);
+      return;
+    }
+
+    if (this.zoneDragState.isDragging) {
+      this.endZoneDrag(worldPos);
+      return;
+    }
+
+    if (!this.dragState.isDragging) return;
+
+    const rect = this.app.canvas.getBoundingClientRect();
+    const clientX = rect.left + screenPos.x;
+    const clientY = rect.top + screenPos.y;
+    const draggedPlacements = this.getDraggedCardPlacements();
+    const droppedInStacksTarget = this.isPointInsideStacksDropTarget(clientX, clientY);
+    const droppedStackZoneId = droppedInStacksTarget
+      ? this.getStackZoneIdFromDropTarget(clientX, clientY)
+      : null;
+    const draggedCardNames = this.getDraggedCardNames();
+    const droppedZone = this.getZoneAtPosition(worldPos);
+    const shouldDropToStackTarget = !!droppedStackZoneId && draggedCardNames.length > 0;
+    const shouldDropToCanvasZone =
+      !droppedInStacksTarget && !!droppedZone && draggedCardNames.length > 0;
+
+    if (shouldDropToCanvasZone && droppedZone) {
+      this.copyCardsIntoZone(droppedZone.id, draggedCardNames, worldPos, {
+        placements: draggedPlacements,
+      });
+    }
+
+    this.endCardDrag(true);
+
+    if (shouldDropToStackTarget && droppedStackZoneId) {
+      this.copyCardsIntoZone(droppedStackZoneId, draggedCardNames, worldPos, {
+        useZonePlacement: true,
+        placements: draggedPlacements,
+      });
+    } else if (
+      droppedInStacksTarget &&
+      !shouldDropToCanvasZone &&
+      draggedCardNames.length > 0 &&
+      this.onCardDragDrop
+    ) {
+      this.onCardDragDrop({
+        cardNames: draggedCardNames,
+        clientX,
+        clientY,
+      });
+    }
+  }
+
+  private cancelActiveTouchDrag(): void {
+    if (this.labelDragState.isDragging) {
+      this.endLabelDrag();
+    }
+
+    const fallbackWorldPos = this.lastPointerScreenPos && this.camera
+      ? this.camera.screenToWorld(this.lastPointerScreenPos.x, this.lastPointerScreenPos.y)
+      : { x: 0, y: 0 };
+
+    if (this.zoneCardDragState.isDragging) {
+      this.endZoneCardDrag(fallbackWorldPos);
+    }
+
+    if (this.zoneDragState.isDragging) {
+      this.endZoneDrag(fallbackWorldPos);
+    }
+
+    if (this.dragState.isDragging) {
+      this.endCardDrag(true);
+    }
+
+    this.activeTouchDragTarget = null;
+    this.pointerDownOnSelectedCard = false;
+    this.clearZoneDropPreview();
+    this.setStacksDropVisual(false);
   }
 
   private setHoveredCard(cardName: string | null): void {
@@ -1428,6 +2116,188 @@ export class PixiStage {
       this.deckCardDeletePromptRoot.parentNode.removeChild(this.deckCardDeletePromptRoot);
     }
     this.deckCardDeletePromptRoot = null;
+  }
+
+  private closeTouchActionSheet(): void {
+    if (this.touchActionSheetPointerHandler) {
+      window.removeEventListener("pointerdown", this.touchActionSheetPointerHandler, true);
+      this.touchActionSheetPointerHandler = null;
+    }
+    if (this.touchActionSheetKeyHandler) {
+      window.removeEventListener("keydown", this.touchActionSheetKeyHandler, true);
+      this.touchActionSheetKeyHandler = null;
+    }
+    if (this.touchActionSheetRoot?.parentNode) {
+      this.touchActionSheetRoot.parentNode.removeChild(this.touchActionSheetRoot);
+    }
+    this.touchActionSheetRoot = null;
+  }
+
+  private addTouchActionButton(
+    panel: HTMLElement,
+    label: string,
+    action: () => void,
+    danger = false,
+  ): void {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `touch-action-sheet-button${danger ? " danger" : ""}`;
+    button.textContent = label;
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.closeTouchActionSheet();
+      action();
+    });
+    panel.appendChild(button);
+  }
+
+  private showTouchActionSheet(
+    target: TouchCanvasTarget,
+    clientX: number,
+    clientY: number,
+  ): void {
+    if (target.kind === "empty") return;
+
+    this.closeTouchActionSheet();
+    this.closeDeckCardDeletePrompt();
+
+    const panel = document.createElement("div");
+    panel.className = "touch-action-sheet";
+
+    const title = document.createElement("div");
+    title.className = "touch-action-sheet-title";
+    title.textContent = this.getTouchActionTitle(target);
+    panel.appendChild(title);
+
+    this.populateTouchActions(panel, target, clientX, clientY);
+
+    if (panel.querySelectorAll("button").length === 0) return;
+
+    const panelWidth = 240;
+    const estimatedHeight = Math.min(320, 54 + panel.querySelectorAll("button").length * 46);
+    const left = Math.max(8, Math.min(clientX + 10, window.innerWidth - panelWidth - 8));
+    const top = Math.max(8, Math.min(clientY + 10, window.innerHeight - estimatedHeight - 8));
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
+
+    document.body.appendChild(panel);
+    this.touchActionSheetRoot = panel;
+
+    this.touchActionSheetPointerHandler = (event: PointerEvent) => {
+      const eventTarget = event.target;
+      if (!(eventTarget instanceof Node) || !this.touchActionSheetRoot?.contains(eventTarget)) {
+        this.closeTouchActionSheet();
+      }
+    };
+    this.touchActionSheetKeyHandler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        this.closeTouchActionSheet();
+      }
+    };
+    window.addEventListener("pointerdown", this.touchActionSheetPointerHandler, true);
+    window.addEventListener("keydown", this.touchActionSheetKeyHandler, true);
+  }
+
+  private getTouchActionTitle(target: TouchCanvasTarget): string {
+    if (target.kind === "card" || target.kind === "zone-card") return target.cardName;
+    if (target.kind === "label") return "Label";
+    if (target.kind === "zone-header" || target.kind === "zone") {
+      const zone = this.canvasAreas.find((entry) => entry.id === target.zoneId);
+      return zone?.name ?? "Canvas area";
+    }
+    return "Canvas";
+  }
+
+  private populateTouchActions(
+    panel: HTMLElement,
+    target: TouchCanvasTarget,
+    clientX: number,
+    clientY: number,
+  ): void {
+    if (target.kind === "card") {
+      if (this.selectedArchetype && this.archetypeScores) {
+        this.addTouchActionButton(panel, "Increase score", () =>
+          this.modifyArchetypeScore(target.cardName, +1),
+        );
+        this.addTouchActionButton(panel, "Decrease score", () =>
+          this.modifyArchetypeScore(target.cardName, -1),
+        );
+        return;
+      }
+
+      this.addTouchActionButton(panel, "Add to active deck", () =>
+        this.onAddToDeck(target.cardName),
+      );
+      this.addTouchActionButton(panel, "Remove from active deck", () =>
+        this.onRemoveFromDeck(target.cardName),
+      );
+      return;
+    }
+
+    if (target.kind === "zone-card") {
+      const zone = this.canvasAreas.find((entry) => entry.id === target.zoneId);
+      if (zone?.type === "deck") {
+        this.addTouchActionButton(panel, "Toggle active", () => {
+          const changed = this.toggleDeckZoneCardActive(target.zoneId, target.instanceId);
+          if (!changed) return;
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        });
+        this.addTouchActionButton(panel, "Duplicate", () => {
+          this.duplicateCanvasCardInstance(target.zoneId, target.instanceId);
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        });
+      }
+
+      this.addTouchActionButton(
+        panel,
+        zone?.type === "deck" ? "Remove from deck canvas" : "Remove from stack",
+        () => {
+          const zoneCard = this.zoneCardSprites.get(target.zoneCardKey);
+          if (!zoneCard) return;
+          this.handleZoneCardDelete(zoneCard, clientX, clientY);
+        },
+        true,
+      );
+      return;
+    }
+
+    if (target.kind === "label") {
+      this.addTouchActionButton(panel, "Edit label", () => this.editLabel(target.labelId));
+      this.addTouchActionButton(
+        panel,
+        "Delete label",
+        () => this.deleteLabel(target.labelId),
+        true,
+      );
+      return;
+    }
+
+    if (target.kind === "zone-header" || target.kind === "zone") {
+      const zone = this.canvasAreas.find((entry) => entry.id === target.zoneId);
+      if (!zone) return;
+
+      if (zone.type === "stack") {
+        this.addTouchActionButton(panel, "Open stack panel", () =>
+          this.onStackZoneHeaderClick?.(zone.id),
+        );
+      }
+      this.addTouchActionButton(panel, "Sort cards", () => this.sortZoneCards(zone.id));
+      if (zone.type === "deck") {
+        this.addTouchActionButton(panel, "Filter deck", () =>
+          this.openDeckFilterRequest(zone.id, null),
+        );
+      }
+      this.addTouchActionButton(
+        panel,
+        "Hide from canvas",
+        () => this.hideZoneFromCanvas(zone.id),
+        true,
+      );
+    }
   }
 
   private getDeckCardActiveVariants(
@@ -3622,6 +4492,15 @@ export class PixiStage {
   private onPointerDown(event: FederatedPointerEvent): void {
     if (!this.camera) return;
 
+    if (this.isTouchPointer(event)) {
+      this.onTouchPointerDown(event);
+      return;
+    }
+    if (this.shouldIgnorePostTouchMouseEvent(event)) {
+      this.cancelSelectionBox();
+      return;
+    }
+
     const isRightClick = event.button === 2;
     const isCtrlHeld = event.ctrlKey || event.metaKey;
     const isShiftHeld = event.shiftKey;
@@ -3921,6 +4800,15 @@ export class PixiStage {
   private onPointerMove(event: FederatedPointerEvent): void {
     if (!this.camera) return;
 
+    if (this.isTouchPointer(event)) {
+      this.onTouchPointerMove(event);
+      return;
+    }
+    if (this.shouldIgnorePostTouchMouseEvent(event)) {
+      this.cancelSelectionBox();
+      return;
+    }
+
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
     this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
 
@@ -3994,6 +4882,16 @@ export class PixiStage {
 
   private onPointerUp(event: FederatedPointerEvent): void {
     if (!this.camera) return;
+
+    if (this.isTouchPointer(event)) {
+      this.onTouchPointerUp(event);
+      return;
+    }
+    if (this.shouldIgnorePostTouchMouseEvent(event)) {
+      this.cancelSelectionBox();
+      this.pointerDownOnSelectedCard = false;
+      return;
+    }
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
     this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
@@ -5882,6 +6780,7 @@ export class PixiStage {
     this.isRevealInProgress = false;
     this.closeDeckVariantDialog();
     this.closeDeckCardDeletePrompt();
+    this.closeTouchActionSheet();
     this.deactivateQuickTransfer();
 
     for (const data of this.labelSprites.values()) {
@@ -5959,6 +6858,7 @@ export class PixiStage {
     this.destroyDeckGraphHoverTooltip();
     this.deactivateQuickTransfer();
     this.closeDeckCardDeletePrompt();
+    this.closeTouchActionSheet();
     for (const data of this.zoneCardSprites.values()) {
       data.sprite.destroy();
     }
@@ -7118,7 +8018,7 @@ export class PixiStage {
   private shouldLoadHighDetail(): boolean {
     if (this.isRevealInProgress || !this.initialRevealCompleted) return false;
     if (isConstrainedTextureDevice()) {
-      return (this.camera?.zoom ?? 0) >= LOD_ZOOM_THRESHOLDS.MEDIUM_MAX;
+      return false;
     }
     return true;
   }

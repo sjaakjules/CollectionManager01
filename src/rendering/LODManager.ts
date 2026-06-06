@@ -24,8 +24,8 @@
 import { Assets, Rectangle, Texture, TextureSource } from 'pixi.js';
 import { isConstrainedTextureDevice } from './deviceProfile';
 
-// Enable mipmaps globally for better quality when downscaling large card images
-TextureSource.defaultOptions.autoGenerateMipmaps = true;
+// Mipmaps improve desktop downscaling but add roughly a third more GPU memory.
+TextureSource.defaultOptions.autoGenerateMipmaps = !isConstrainedTextureDevice();
 
 // ============================================================================
 // Constants
@@ -84,6 +84,10 @@ const CONCURRENT_LOADS = 8;
 const PRELOAD_BATCH_SIZE = 20;
 const BACKGROUND_CONCURRENT_LOADS = 2;
 const BACKGROUND_BATCH_SIZE = 12;
+const CONSTRAINED_CONCURRENT_LOADS = 2;
+const CONSTRAINED_BATCH_SIZE = 8;
+const CONSTRAINED_CACHE_MAX_TEXTURES = 90;
+const CONSTRAINED_CACHE_TARGET_TEXTURES = 64;
 
 // ============================================================================
 // Types
@@ -175,6 +179,9 @@ export class LODManager {
   private cache: Map<string, TextureCache> = new Map();
   private loadingPromises: Map<string, Promise<Texture>> = new Map();
   private failedLoads: Set<string> = new Set();
+  private textureAssetUrls: Map<string, string> = new Map();
+  private cacheAccessOrder: Map<string, number> = new Map();
+  private cacheAccessCounter = 0;
   private thumbnailAtlas = this.createAtlasState(
     USE_THUMBNAIL_ATLAS,
     THUMBNAIL_ATLAS_MANIFEST_URL,
@@ -188,6 +195,10 @@ export class LODManager {
    * Get the appropriate LOD level for a given zoom
    */
   getLODForZoom(zoom: number): LODLevel {
+    if (isConstrainedTextureDevice()) {
+      return LOD_LEVELS.THUMBNAIL;
+    }
+
     let lod: LODLevel;
     if (zoom <= LOD_ZOOM_THRESHOLDS.THUMBNAIL_MAX) {
       lod = LOD_LEVELS.THUMBNAIL;
@@ -246,17 +257,19 @@ export class LODManager {
    * Returns cached texture or loads it if not available
    */
   async getTexture(cardNameOrSlug: string, lod: LODLevel): Promise<Texture> {
+    const effectiveLOD = this.getEffectiveLOD(lod);
     const slug = cardNameOrSlug.includes('_')
       ? cardNameOrSlug
       : cardNameToSlug(cardNameOrSlug);
-    const loadKey = this.getLoadKey(slug, lod);
+    const loadKey = this.getLoadKey(slug, effectiveLOD);
 
     if (this.failedLoads.has(loadKey)) {
       return Texture.WHITE;
     }
 
-    const exactCached = this.getExactCachedTexture(slug, lod);
+    const exactCached = this.getExactCachedTexture(slug, effectiveLOD);
     if (exactCached) {
+      this.touchCachedTexture(slug, effectiveLOD);
       return exactCached;
     }
 
@@ -265,12 +278,12 @@ export class LODManager {
       return loadingPromise;
     }
 
-    const promise = this.loadTexture(slug, lod);
+    const promise = this.loadTexture(slug, effectiveLOD);
     this.loadingPromises.set(loadKey, promise);
 
     try {
       const texture = await promise;
-      this.cacheTexture(slug, lod, texture);
+      this.cacheTexture(slug, effectiveLOD, texture);
       return texture;
     } catch {
       this.failedLoads.add(loadKey);
@@ -284,20 +297,27 @@ export class LODManager {
    * Get texture synchronously if cached, otherwise return null
    */
   getTextureSync(cardNameOrSlug: string, lod: LODLevel): Texture | null {
+    const effectiveLOD = this.getEffectiveLOD(lod);
     const slug = cardNameOrSlug.includes('_')
       ? cardNameOrSlug
       : cardNameToSlug(cardNameOrSlug);
-    return this.getBestAvailableTexture(slug, lod);
+    const match = this.getBestAvailableTextureWithLOD(slug, effectiveLOD);
+    if (match) {
+      this.touchCachedTexture(slug, match.lod);
+      return match.texture;
+    }
+    return null;
   }
 
   /**
    * Check whether the requested LOD exists in cache (no fallback).
    */
   hasExactTexture(cardNameOrSlug: string, lod: LODLevel): boolean {
+    const effectiveLOD = this.getEffectiveLOD(lod);
     const slug = cardNameOrSlug.includes('_')
       ? cardNameOrSlug
       : cardNameToSlug(cardNameOrSlug);
-    return this.getExactCachedTexture(slug, lod) !== null;
+    return this.getExactCachedTexture(slug, effectiveLOD) !== null;
   }
 
   /**
@@ -307,9 +327,16 @@ export class LODManager {
     cardNames: string[],
     options: PreloadOptions = {},
   ): Promise<void> {
-    const lod = options.lod ?? this.getStartupLOD();
-    const concurrentLoads = options.concurrentLoads ?? CONCURRENT_LOADS;
-    const batchSize = options.batchSize ?? PRELOAD_BATCH_SIZE;
+    const constrained = isConstrainedTextureDevice();
+    const lod = this.getEffectiveLOD(options.lod ?? this.getStartupLOD());
+    const requestedConcurrentLoads = options.concurrentLoads ?? CONCURRENT_LOADS;
+    const requestedBatchSize = options.batchSize ?? PRELOAD_BATCH_SIZE;
+    const concurrentLoads = constrained
+      ? Math.min(requestedConcurrentLoads, CONSTRAINED_CONCURRENT_LOADS)
+      : requestedConcurrentLoads;
+    const batchSize = constrained
+      ? Math.min(requestedBatchSize, CONSTRAINED_BATCH_SIZE)
+      : requestedBatchSize;
 
     const uniqueNames = Array.from(new Set(cardNames));
     const toLoad = uniqueNames.filter((name) => {
@@ -358,6 +385,11 @@ export class LODManager {
     cardNames: string[],
     onProgress?: (loaded: number, total: number) => void,
   ): Promise<void> {
+    if (isConstrainedTextureDevice()) {
+      onProgress?.(0, 0);
+      return;
+    }
+
     await this.preloadTextures(cardNames, {
       lod: LOD_LEVELS.FULL,
       concurrentLoads: BACKGROUND_CONCURRENT_LOADS,
@@ -384,6 +416,8 @@ export class LODManager {
     this.cache.clear();
     this.failedLoads.clear();
     this.loadingPromises.clear();
+    this.textureAssetUrls.clear();
+    this.cacheAccessOrder.clear();
   }
 
   /**
@@ -393,8 +427,41 @@ export class LODManager {
     return this.cache.size;
   }
 
+  pruneCache(keepNamesOrSlugs: string[]): void {
+    if (!isConstrainedTextureDevice()) return;
+    if (this.textureAssetUrls.size <= CONSTRAINED_CACHE_MAX_TEXTURES) return;
+
+    const keepSlugs = new Set(keepNamesOrSlugs.map((name) => cardNameToSlug(name)));
+    const candidates = [...this.textureAssetUrls.keys()]
+      .filter((loadKey) => {
+        const { slug } = this.parseLoadKey(loadKey);
+        return !keepSlugs.has(slug);
+      })
+      .sort(
+        (a, b) =>
+          (this.cacheAccessOrder.get(a) ?? 0) -
+          (this.cacheAccessOrder.get(b) ?? 0),
+      );
+
+    for (const loadKey of candidates) {
+      if (this.textureAssetUrls.size <= CONSTRAINED_CACHE_TARGET_TEXTURES) return;
+      this.evictCachedTexture(loadKey);
+    }
+  }
+
   private getLoadKey(slug: string, lod: LODLevel): string {
     return `${slug}:${lod}`;
+  }
+
+  private parseLoadKey(loadKey: string): { slug: string; lod: LODLevel } {
+    const separator = loadKey.lastIndexOf(':');
+    const slug = separator >= 0 ? loadKey.slice(0, separator) : loadKey;
+    const lod = (separator >= 0 ? loadKey.slice(separator + 1) : LOD_LEVELS.THUMBNAIL) as LODLevel;
+    return { slug, lod };
+  }
+
+  private getEffectiveLOD(lod: LODLevel): LODLevel {
+    return isConstrainedTextureDevice() ? LOD_LEVELS.THUMBNAIL : lod;
   }
 
   private getMinimumLOD(): LODLevel {
@@ -407,6 +474,10 @@ export class LODManager {
   }
 
   private getAtlasStateForLOD(lod: LODLevel): AtlasRuntimeState | null {
+    if (isConstrainedTextureDevice()) {
+      return null;
+    }
+
     if (lod === LOD_LEVELS.THUMBNAIL) {
       return this.thumbnailAtlas;
     }
@@ -421,23 +492,38 @@ export class LODManager {
     return cached?.[lod] ?? null;
   }
 
-  private getBestAvailableTexture(slug: string, lod: LODLevel): Texture | null {
+  private getBestAvailableTextureWithLOD(
+    slug: string,
+    lod: LODLevel,
+  ): { lod: LODLevel; texture: Texture } | null {
     const cached = this.cache.get(slug);
     if (!cached) return null;
 
-    if (lod === LOD_LEVELS.THUMBNAIL) {
-      return cached.thumbnail ?? cached.medium ?? cached.full ?? null;
+    const orderedLODs =
+      lod === LOD_LEVELS.THUMBNAIL
+        ? [LOD_LEVELS.THUMBNAIL, LOD_LEVELS.MEDIUM, LOD_LEVELS.FULL]
+        : lod === LOD_LEVELS.MEDIUM
+          ? [LOD_LEVELS.MEDIUM, LOD_LEVELS.FULL, LOD_LEVELS.THUMBNAIL]
+          : [LOD_LEVELS.FULL, LOD_LEVELS.MEDIUM, LOD_LEVELS.THUMBNAIL];
+
+    for (const candidateLOD of orderedLODs) {
+      const texture = cached[candidateLOD];
+      if (texture) {
+        return { lod: candidateLOD, texture };
+      }
     }
-    if (lod === LOD_LEVELS.MEDIUM) {
-      return cached.medium ?? cached.full ?? cached.thumbnail ?? null;
-    }
-    return cached.full ?? cached.medium ?? cached.thumbnail ?? null;
+
+    return null;
   }
 
   private getImageUrls(slug: string, lod: LODLevel): string[] {
     const fullUrl = `${FULL_IMAGE_PATH}/${slug}.webp`;
     const thumbUrl = `${THUMBNAIL_IMAGE_PATH}/${slug}.webp`;
     const mediumUrl = `${MEDIUM_IMAGE_PATH}/${slug}.webp`;
+    if (isConstrainedTextureDevice()) {
+      return [thumbUrl];
+    }
+
     if (!USE_SEPARATE_LOD_ASSETS) {
       return [fullUrl];
     }
@@ -457,12 +543,12 @@ export class LODManager {
   }
 
   private async loadTexture(slug: string, lod: LODLevel): Promise<Texture> {
-    if (lod === LOD_LEVELS.THUMBNAIL) {
+    if (!isConstrainedTextureDevice() && lod === LOD_LEVELS.THUMBNAIL) {
       const atlasTexture = await this.loadFromAtlas(this.thumbnailAtlas, slug);
       if (atlasTexture) {
         return atlasTexture;
       }
-    } else if (lod === LOD_LEVELS.MEDIUM) {
+    } else if (!isConstrainedTextureDevice() && lod === LOD_LEVELS.MEDIUM) {
       const atlasTexture = await this.loadFromAtlas(this.mediumAtlas, slug);
       if (atlasTexture) {
         return atlasTexture;
@@ -474,7 +560,9 @@ export class LODManager {
 
     for (const url of urls) {
       try {
-        return await Assets.load<Texture>(url);
+        const texture = await Assets.load<Texture>(url);
+        this.textureAssetUrls.set(this.getLoadKey(slug, lod), url);
+        return texture;
       } catch (error) {
         lastError = error;
       }
@@ -642,6 +730,40 @@ export class LODManager {
     const cached = this.cache.get(slug) ?? {};
     cached[lod] = texture;
     this.cache.set(slug, cached);
+    this.touchCachedTexture(slug, lod);
+  }
+
+  private touchCachedTexture(slug: string, lod: LODLevel): void {
+    this.cacheAccessOrder.set(this.getLoadKey(slug, lod), ++this.cacheAccessCounter);
+  }
+
+  private evictCachedTexture(loadKey: string): void {
+    const { slug, lod } = this.parseLoadKey(loadKey);
+    const cached = this.cache.get(slug);
+    const texture = cached?.[lod];
+    const url = this.textureAssetUrls.get(loadKey);
+
+    if (cached) {
+      if (lod === LOD_LEVELS.THUMBNAIL) {
+        cached.thumbnail = undefined;
+      } else if (lod === LOD_LEVELS.MEDIUM) {
+        cached.medium = undefined;
+      } else {
+        cached.full = undefined;
+      }
+      if (!cached.thumbnail && !cached.medium && !cached.full) {
+        this.cache.delete(slug);
+      }
+    }
+
+    this.textureAssetUrls.delete(loadKey);
+    this.cacheAccessOrder.delete(loadKey);
+
+    if (url) {
+      void Assets.unload(url).catch(() => undefined);
+    } else if (texture && texture !== Texture.WHITE) {
+      texture.destroy(true);
+    }
   }
 }
 

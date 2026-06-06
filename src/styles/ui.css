@@ -53,6 +53,11 @@ body {
 
 .pixi-canvas-container canvas {
   display: block;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .card-hover-preview {
@@ -72,6 +77,54 @@ body {
 .card-hover-preview.landscape {
   width: clamp(280px, 40vw, 559px);
   aspect-ratio: 559 / 400;
+}
+
+.touch-action-sheet {
+  position: fixed;
+  z-index: 10002;
+  width: min(240px, calc(100vw - 16px));
+  max-height: min(60vh, 320px);
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #555a8a;
+  border-radius: 10px;
+  background: rgba(20, 20, 34, 0.98);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+  color: #eceeff;
+}
+
+.touch-action-sheet-title {
+  padding: 2px 4px 4px;
+  color: #dfe3ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.touch-action-sheet-button {
+  min-height: 44px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #4d5283;
+  border-radius: 8px;
+  background: #262943;
+  color: #f1f3ff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.touch-action-sheet-button:active {
+  background: #3b4070;
+}
+
+.touch-action-sheet-button.danger {
+  border-color: #774552;
+  background: #3a2330;
+  color: #ffe8ee;
 }
 
 .card-hover-preview img {
@@ -1912,6 +1965,127 @@ body {
 
 .stack-card-remove:hover {
   background: rgba(184, 80, 104, 0.92);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .card-hover-preview {
+    display: none;
+  }
+
+  .top-login-button {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+  }
+
+  .bottom-folder-shell {
+    left: 8px;
+    right: 8px;
+  }
+
+  .bottom-folder-tabs {
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    gap: 6px;
+    transform: translateY(0);
+    padding-bottom: 2px;
+  }
+
+  .bottom-folder-shell:not(.tabs-expanded) .bottom-folder-tab {
+    color: #b8b8cc;
+  }
+
+  .bottom-folder-tab {
+    min-width: 96px;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+  }
+
+  .bottom-folder-panel {
+    width: calc(100vw - 16px);
+    max-height: min(64vh, 560px);
+  }
+
+  .stacks-shell {
+    top: 64px;
+    bottom: 64px;
+  }
+
+  .stacks-tabs {
+    top: 4px;
+    max-height: calc(100vh - 144px);
+    overflow-y: auto;
+    gap: 6px;
+    padding-right: 4px;
+  }
+
+  .stack-tab,
+  .stack-tabs-label,
+  .stacks-shell.tabs-expanded .stack-tab,
+  .stack-tab.active,
+  .stacks-shell.tabs-expanded .stack-tabs-label {
+    transform: translateX(0);
+  }
+
+  .stack-tab {
+    min-height: 44px;
+    max-width: 180px;
+    padding: 10px 14px 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .stack-tabs-label {
+    min-height: 34px;
+    padding: 8px 14px 8px 12px;
+  }
+
+  .stack-tab-add {
+    width: 52px;
+    padding: 8px 0 10px;
+  }
+
+  .stacks-panel {
+    width: min(88vw, 380px);
+    max-width: calc(100vw - 48px);
+  }
+
+  .stacks-panel-hide,
+  .stacks-card-zoom-button,
+  .stacks-card-focus-button,
+  .stacks-element-filter {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .stacks-element-filter img {
+    width: 26px;
+    height: 26px;
+  }
+
+  .stacks-panel-resize-handle {
+    width: 14px;
+  }
+
+  .stack-card-remove {
+    opacity: 1;
+    transform: translateY(0);
+    width: 44px;
+    height: 44px;
+    font-size: 0.92rem;
+  }
+
+  .folder-chip-delete {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
+
+  .folder-chip-main {
+    min-height: 44px;
+    padding-right: 40px;
+  }
 }
 
 /* ============================================================================
