@@ -790,7 +790,7 @@ body {
 }
 
 .bottom-folder-panel.open {
-  padding: 12px;
+  padding: 16px 12px 12px;
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
@@ -799,23 +799,23 @@ body {
 .bottom-folder-tabs {
   position: relative;
   z-index: 2;
-  margin-bottom: 0;
+  margin-bottom: -1px;
   display: flex;
   gap: 8px;
   pointer-events: auto;
-  transform: translateY(calc(100% - 4px));
+  transform: translateY(calc(100% - 18px));
   transition: transform 0.2s ease;
 }
 
 .bottom-folder-shell.tabs-expanded .bottom-folder-tabs {
-  transform: translateY(0);
+  transform: translateY(8px);
 }
 
 .bottom-folder-tab {
   min-width: 108px;
   padding: 6px 14px 7px;
   border: 1px solid #3a3a5a;
-  border-bottom: none;
+  border-bottom-color: transparent;
   border-radius: 12px 12px 0 0;
   background: rgba(22, 22, 38, 0.92);
   color: #b8b8cc;
@@ -835,15 +835,18 @@ body {
 }
 
 .bottom-folder-tab.active {
-  background: rgba(22, 22, 38, 0.97);
+  position: relative;
+  z-index: 3;
+  background: rgba(20, 20, 34, 0.98);
   border-color: #7272a0;
+  border-bottom-color: rgba(20, 20, 34, 0.98);
   box-shadow: inset 0 0 0 1px rgba(204, 210, 245, 0.18);
   color: #e6e8ff;
   transform: translateY(0);
 }
 
 .bottom-folder-shell:not(.tabs-expanded) .bottom-folder-tab {
-  color: transparent;
+  color: #b8b8cc;
 }
 
 .bottom-folder-tab.hidden {
@@ -1607,10 +1610,17 @@ body {
   overflow-y: auto;
 }
 
-.associations-avatar-controls {
+.association-subtab-controls {
   align-items: center;
   gap: 6px;
   padding-bottom: 6px;
+  border-bottom: 1px solid rgba(104, 104, 150, 0.25);
+}
+
+.associations-avatar-controls {
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
 }
 
 .associations-cluster-controls {
@@ -1618,6 +1628,12 @@ body {
   gap: 6px;
   padding-top: 6px;
   border-top: 1px solid rgba(104, 104, 150, 0.25);
+}
+
+.associations-package-controls {
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
 }
 
 .associations-note {

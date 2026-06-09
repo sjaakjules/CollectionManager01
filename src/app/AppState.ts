@@ -73,8 +73,10 @@ export interface UIState {
   associationsEnabled: boolean;
   associationMode: AssociationMode;
   associationSourceZone: AssociationSourceZone;
+  associationPanelView: 'clusters' | 'packages';
   associationClusterGroupId: string | null;
   associationClusterId: string | null;
+  associationPackageId: string | null;
 }
 
 export interface Notification {
@@ -112,8 +114,10 @@ export const initialAppState: AppState = {
     associationsEnabled: false,
     associationMode: 'balanced',
     associationSourceZone: 'main',
+    associationPanelView: 'clusters',
     associationClusterGroupId: null,
     associationClusterId: null,
+    associationPackageId: null,
   },
 };
 
@@ -145,8 +149,10 @@ export type AppAction =
   | { type: 'SET_ASSOCIATIONS_ENABLED'; enabled: boolean }
   | { type: 'SET_ASSOCIATION_MODE'; mode: AssociationMode }
   | { type: 'SET_ASSOCIATION_SOURCE_ZONE'; sourceZone: AssociationSourceZone }
+  | { type: 'SET_ASSOCIATION_PANEL_VIEW'; panelView: 'clusters' | 'packages' }
   | { type: 'SET_ASSOCIATION_CLUSTER_GROUP'; groupId: string | null }
   | { type: 'SET_ASSOCIATION_CLUSTER'; clusterId: string | null }
+  | { type: 'SET_ASSOCIATION_PACKAGE'; packageId: string | null }
   | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
   | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData }
   | { type: 'SET_CANVAS_AREAS'; canvasAreas: CanvasArea[] };
@@ -419,8 +425,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ...state.ui,
           associationsEnabled: action.enabled,
           associationSourceZone: action.enabled ? state.ui.associationSourceZone : 'main',
+          associationPanelView: action.enabled ? state.ui.associationPanelView : 'clusters',
           associationClusterGroupId: action.enabled ? state.ui.associationClusterGroupId : null,
           associationClusterId: action.enabled ? state.ui.associationClusterId : null,
+          associationPackageId: action.enabled ? state.ui.associationPackageId : null,
           selectedArchetype: action.enabled ? null : state.ui.selectedArchetype,
         },
         userData:
@@ -437,6 +445,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           associationMode: action.mode,
           associationClusterGroupId: null,
           associationClusterId: null,
+          associationPackageId: null,
         },
       };
 
@@ -446,20 +455,54 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ui: { ...state.ui, associationSourceZone: action.sourceZone, associationClusterId: null },
       };
 
+    case 'SET_ASSOCIATION_PANEL_VIEW':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          associationPanelView: action.panelView,
+          associationClusterGroupId:
+            action.panelView === 'clusters' ? state.ui.associationClusterGroupId : null,
+          associationClusterId:
+            action.panelView === 'clusters' ? state.ui.associationClusterId : null,
+          associationPackageId:
+            action.panelView === 'packages' ? state.ui.associationPackageId : null,
+        },
+      };
+
     case 'SET_ASSOCIATION_CLUSTER_GROUP':
       return {
         ...state,
         ui: {
           ...state.ui,
+          associationPanelView: 'clusters',
           associationClusterGroupId: action.groupId,
           associationClusterId: null,
+          associationPackageId: null,
         },
       };
 
     case 'SET_ASSOCIATION_CLUSTER':
       return {
         ...state,
-        ui: { ...state.ui, associationClusterId: action.clusterId },
+        ui: {
+          ...state.ui,
+          associationPanelView: 'clusters',
+          associationClusterId: action.clusterId,
+          associationPackageId: null,
+        },
+      };
+
+    case 'SET_ASSOCIATION_PACKAGE':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          associationPanelView: 'packages',
+          associationPackageId: action.packageId,
+          associationClusterGroupId: null,
+          associationClusterId: null,
+        },
       };
 
     case 'SET_CANVAS_LABELS':

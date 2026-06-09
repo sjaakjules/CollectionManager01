@@ -163,4 +163,48 @@ describe('appReducer associations state', () => {
     expect(closed.ui.associationClusterId).toBeNull();
     expect(closed.ui.associationClusterGroupId).toBeNull();
   });
+
+  it('switches between association cluster and package browse modes', () => {
+    const withCluster = appReducer(
+      appReducer(initialAppState, {
+        type: 'SET_ASSOCIATION_CLUSTER_GROUP',
+        groupId: 'avatar:a',
+      }),
+      {
+        type: 'SET_ASSOCIATION_CLUSTER',
+        clusterId: 'cluster-1',
+      },
+    );
+
+    const withPackage = appReducer(withCluster, {
+      type: 'SET_ASSOCIATION_PACKAGE',
+      packageId: 'pkg-01',
+    });
+    const backToClusters = appReducer(withPackage, {
+      type: 'SET_ASSOCIATION_PANEL_VIEW',
+      panelView: 'clusters',
+    });
+
+    expect(withPackage.ui.associationPanelView).toBe('packages');
+    expect(withPackage.ui.associationPackageId).toBe('pkg-01');
+    expect(withPackage.ui.associationClusterGroupId).toBeNull();
+    expect(withPackage.ui.associationClusterId).toBeNull();
+    expect(backToClusters.ui.associationPanelView).toBe('clusters');
+    expect(backToClusters.ui.associationPackageId).toBeNull();
+  });
+
+  it('keeps the package browse mode when associations are re-enabled', () => {
+    const withPackage = appReducer(initialAppState, {
+      type: 'SET_ASSOCIATION_PACKAGE',
+      packageId: 'pkg-01',
+    });
+
+    const reopened = appReducer(withPackage, {
+      type: 'SET_ASSOCIATIONS_ENABLED',
+      enabled: true,
+    });
+
+    expect(reopened.ui.associationPanelView).toBe('packages');
+    expect(reopened.ui.associationPackageId).toBe('pkg-01');
+  });
 });

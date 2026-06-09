@@ -85,13 +85,17 @@ import {
 } from "@/data/archetypeScores";
 import {
   formatAssociationEvidence,
+  formatAssociationPackageEvidence,
   getAssociationClusterCardScore,
-  getAssociationScores,
+  getAssociationClusterGroupCardScore,
+  getAssociationClusterGroups,
+  getAssociationDisplayScores,
+  getAssociationPackageCardScore,
   hasCollectionAssociationSource,
   resolveAssociationNodeId,
+  type AssociationDisplayScores,
   type AssociationSourceZone,
   type CardAssociationData,
-  type LinkStats,
   type NodeId,
 } from "@/data/cardAssociations";
 import {
@@ -443,6 +447,13 @@ interface DeckKeywordSpec {
   subTypePatterns?: RegExp[];
 }
 
+interface AssociationShelfEntry {
+  nodeId: NodeId;
+  card: Card;
+  score: number;
+  targetZone: AssociationSourceZone;
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -461,6 +472,9 @@ const ZONE_DELETE_SIZE = 18;
 const ZONE_CARD_ACTION_GAP = 4;
 const MAIN_QUADRANT_CARD_PADDING = 220;
 const ZONE_DECK_BOARD_GAP = 10;
+const ASSOCIATION_SHELF_MAX_CARDS = 48;
+const ASSOCIATION_SHELF_TOP_GAP = DRAWN_GRID.height * 2;
+const ASSOCIATION_SHELF_TITLE_CARD_GAP = DRAWN_GRID.height * 2;
 const ZONE_DECK_BOARD_INNER_LEFT = 12;
 const ZONE_DECK_CARD_TOP_GAP = DRAWN_GRID.height;
 const ZONE_DECK_BOARD_BOTTOM_PADDING = 10;
@@ -750,7 +764,16 @@ export class PixiStage {
   // Deck display state
   private deckSprites: Map<string, CardSpriteData> = new Map();
   private deckHeaderLabels: Text[] = [];
+  private associationShelfSprites: Map<string, CardSpriteData> = new Map();
+  private associationShelfTargetZones: Map<string, AssociationSourceZone> = new Map();
+  private associationShelfHeaderLabels: Text[] = [];
   private collectionBounds: ContentBounds = {
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+  };
+  private associationShelfBounds: ContentBounds = {
     left: 0,
     top: 0,
     right: 0,
@@ -766,7 +789,9 @@ export class PixiStage {
   // Read-only association highlighting state
   private associationsEnabled = false;
   private associationSourceZone: AssociationSourceZone = "main";
+  private selectedAssociationClusterGroupId: string | null = null;
   private selectedAssociationClusterId: string | null = null;
+  private selectedAssociationPackageId: string | null = null;
   private selectedAssociationCardName: string | null = null;
   private cardAssociations: CardAssociationData | null = null;
 
@@ -4788,14 +4813,15 @@ export class PixiStage {
     worldPos: { x: number; y: number },
     cardName: string | null,
     cardType: CardType | null = null,
+    targetZone: AssociationSourceZone = "main",
   ): void {
     if (!cardName || !this.cardAssociations) {
       this.hideAssociationTooltip();
       return;
     }
 
-    const stats = this.getAssociationTooltipStats(cardName, cardType);
-    if (!stats.main && !stats.collection) {
+    const stats = this.getAssociationTooltipStats(cardName, cardType, targetZone);
+    if (!stats.main && !stats.collection && !stats.packages) {
       this.hideAssociationTooltip();
       return;
     }
@@ -4805,7 +4831,13 @@ export class PixiStage {
       lines.push(
         "",
         "Main relation",
-        formatAssociationEvidence(this.cardAssociations, stats.main),
+        formatAssociationEvidence(this.cardAssociations, stats.main, stats.packages),
+      );
+    } else if (stats.packages && stats.mainScore) {
+      lines.push(
+        "",
+        "Package relation",
+        formatAssociationPackageEvidence(stats.packages, this.cardAssociations),
       );
     }
     if (stats.collection) {
@@ -4930,7 +4962,7 @@ export class PixiStage {
     if (zoneCard) {
       this.setHoveredCard(zoneCard.cardName);
       this.updateDeckGraphHoverTooltip(worldPos);
-      this.updateAssociationTooltip(worldPos, zoneCard.cardName, zoneCard.cardType);
+      this.updateAssociationTooltip(worldPos, zoneCard.cardName, zoneCard.cardType, "main");
       return;
     }
 
@@ -4953,7 +4985,10 @@ export class PixiStage {
     const cardName = data?.layout.name ?? null;
     this.setHoveredCard(cardName);
     this.updateDeckGraphHoverTooltip(worldPos);
-    this.updateAssociationTooltip(worldPos, cardName, data?.layout.type ?? null);
+    const targetZone: AssociationSourceZone = cardKey && this.cardSprites.has(cardKey)
+      ? "collection"
+      : this.associationShelfTargetZones.get(cardKey) ?? "main";
+    this.updateAssociationTooltip(worldPos, cardName, data?.layout.type ?? null, targetZone);
   }
 
   private onPointerDown(event: FederatedPointerEvent): void {
@@ -5532,7 +5567,11 @@ export class PixiStage {
 
   /** Look up sprite data by key from either collection or deck sprites */
   private getSpriteData(key: string): CardSpriteData | undefined {
-    return this.cardSprites.get(key) ?? this.deckSprites.get(key);
+    return (
+      this.cardSprites.get(key) ??
+      this.deckSprites.get(key) ??
+      this.associationShelfSprites.get(key)
+    );
   }
 
   private getLabelAtPosition(worldPos: { x: number; y: number }): string | null {
@@ -5882,6 +5921,11 @@ export class PixiStage {
       considerCard(key, data);
     }
 
+    for (const [key, data] of this.associationShelfSprites) {
+      if (!data.sprite.visible) continue;
+      considerCard(key, data);
+    }
+
     return topCard;
   }
 
@@ -6016,9 +6060,12 @@ export class PixiStage {
           isLandscape,
         );
         const isDeckSprite = this.deckSprites.has(cardName);
+        const isAssociationShelfSprite = this.associationShelfSprites.has(cardName);
         data.gridKey = isDeckSprite
           ? `deck:${gridPos.x},${gridPos.y}`
-          : `${isLandscape ? "L" : "P"}:${gridPos.x},${gridPos.y}`;
+          : isAssociationShelfSprite
+            ? `association:${gridPos.x},${gridPos.y}`
+            : `${isLandscape ? "L" : "P"}:${gridPos.x},${gridPos.y}`;
 
         // Restore original zIndex (will be recalculated by rebuildCardStacks)
         const originalZ = this.dragState.cardOriginalZIndices.get(cardName);
@@ -6993,6 +7040,11 @@ export class PixiStage {
             this.selectCard(key, true);
           }
         }
+        for (const [key, data] of this.associationShelfSprites) {
+          if (this.boundsIntersect(data.bounds, selectionBounds)) {
+            this.selectCard(key, true);
+          }
+        }
       }
       this.emitSelectionChange();
     }
@@ -7141,14 +7193,19 @@ export class PixiStage {
     enabled: boolean;
     selectedCardName: string | null;
     sourceZone: AssociationSourceZone;
+    selectedClusterGroupId: string | null;
     selectedClusterId: string | null;
+    selectedPackageId: string | null;
     associations: CardAssociationData | null;
   }): void {
     this.associationsEnabled = options.enabled;
     this.selectedAssociationCardName = options.selectedCardName;
     this.associationSourceZone = options.sourceZone;
+    this.selectedAssociationClusterGroupId = options.selectedClusterGroupId;
     this.selectedAssociationClusterId = options.selectedClusterId;
+    this.selectedAssociationPackageId = options.selectedPackageId;
     this.cardAssociations = options.associations;
+    this.rebuildAssociationShelfSprites();
     this.applyAssociationHighlighting();
     if (!options.enabled) {
       this.hideAssociationTooltip();
@@ -7351,6 +7408,7 @@ export class PixiStage {
       data.text.destroy();
     }
     this.labelSprites.clear();
+    this.clearAssociationShelfSprites();
     this.clearZoneDropPreview();
     this.clearZoneVisuals();
 
@@ -7410,13 +7468,288 @@ export class PixiStage {
     }
   }
 
+  private clearAssociationShelfSprites(): void {
+    for (const data of this.associationShelfSprites.values()) {
+      data.sprite.destroy();
+    }
+    for (const label of this.associationShelfHeaderLabels) {
+      label.destroy();
+    }
+    this.associationShelfSprites.clear();
+    this.associationShelfTargetZones.clear();
+    this.associationShelfHeaderLabels = [];
+    this.associationShelfBounds = { left: 0, top: 0, right: 0, bottom: 0 };
+  }
+
+  private rebuildAssociationShelfSprites(rebuildDeck = true): void {
+    this.clearAssociationShelfSprites();
+
+    const entries = this.getAssociationShelfEntries();
+    if (entries.length === 0) {
+      if (rebuildDeck && this.activeDeck) {
+        this.rebuildDeckSprites();
+      } else {
+        this.performCulling();
+      }
+      return;
+    }
+
+    const layoutCards = entries.map((entry) => this.getLayoutCardInput(entry.card));
+    const { cards: layout, bounds: contentBounds } = calculateCardLayout({
+      cards: layoutCards,
+      mode: "filteredFlat",
+      layoutVariant: this.collectionLayoutVariant ?? this.getCollectionLayoutVariant(),
+    });
+
+    const targetLeft = this.collectionBounds.left;
+    const headerY = this.collectionBounds.bottom + ASSOCIATION_SHELF_TOP_GAP;
+    const targetCardTop = headerY + ASSOCIATION_SHELF_TITLE_CARD_GAP;
+    const offsetX = targetLeft - contentBounds.left;
+    const offsetY = targetCardTop - contentBounds.top;
+    const shiftedBounds: ContentBounds = {
+      left: contentBounds.left + offsetX,
+      top: contentBounds.top + offsetY,
+      right: contentBounds.right + offsetX,
+      bottom: contentBounds.bottom + offsetY,
+    };
+
+    const header = new Text({
+      text: `Associations (${entries.length})`,
+      style: {
+        fontFamily: "Arial",
+        fontSize: Math.round(HEADER_HEIGHT * 0.34),
+        fill: 0x7fb7ff,
+        fontWeight: "bold",
+      },
+    });
+    header.x = targetLeft;
+    header.y = headerY;
+    this.cardContainer.addChild(header);
+    this.associationShelfHeaderLabels.push(header);
+
+    const entryByName = new Map(entries.map((entry) => [entry.card.name, entry]));
+    for (const cardLayout of layout) {
+      const entry = entryByName.get(cardLayout.name);
+      if (!entry) continue;
+
+      const shiftedLayout: CardLayoutInfo = {
+        ...cardLayout,
+        position: {
+          x: cardLayout.position.x + offsetX,
+          y: cardLayout.position.y + offsetY,
+        },
+      };
+      const cardSize = shiftedLayout.isLandscape
+        ? CARD_SIZE.LANDSCAPE
+        : CARD_SIZE.PORTRAIT;
+      const centerX = shiftedLayout.position.x;
+      const centerY = shiftedLayout.position.y;
+      const topLeftX = centerX - cardSize.width / 2;
+      const topLeftY = centerY - cardSize.height / 2;
+      const gridPos = pixelsToSnapGrid(centerX, centerY, shiftedLayout.isLandscape);
+      const key = this.getAssociationShelfSpriteKey(entry.nodeId);
+
+      const sprite = new CardSprite({
+        name: shiftedLayout.name,
+        isLandscape: shiftedLayout.isLandscape,
+        x: centerX,
+        y: centerY,
+      });
+      sprite.on("pointerover", () => this.setHoveredCard(shiftedLayout.name));
+      sprite.on("pointerout", () => this.setHoveredCard(null));
+      sprite.setSelected(this.selectedCards.has(key));
+
+      this.associationShelfSprites.set(key, {
+        sprite,
+        bounds: {
+          left: topLeftX,
+          top: topLeftY,
+          right: topLeftX + cardSize.width,
+          bottom: topLeftY + cardSize.height,
+        },
+        layout: shiftedLayout,
+        gridKey: `association:${gridPos.x},${gridPos.y}`,
+        displaySize: { width: cardSize.width, height: cardSize.height },
+        basePosition: { x: topLeftX, y: topLeftY },
+      });
+      this.associationShelfTargetZones.set(key, entry.targetZone);
+
+      this.cardContainer.addChild(sprite);
+    }
+
+    this.associationShelfBounds = {
+      left: Math.min(shiftedBounds.left, header.x),
+      top: Math.min(shiftedBounds.top, header.y),
+      right: Math.max(shiftedBounds.right, header.x + header.width),
+      bottom: Math.max(shiftedBounds.bottom, header.y + header.height),
+    };
+
+    if (rebuildDeck && this.activeDeck) {
+      this.rebuildDeckSprites();
+    } else {
+      this.performCulling();
+    }
+  }
+
+  private getAssociationShelfEntries(): AssociationShelfEntry[] {
+    const associations = this.cardAssociations;
+    if (!this.associationsEnabled || !associations) return [];
+
+    const selectedNodeId = this.getSelectedAssociationNodeId();
+    const cardByNodeId = this.getAssociationCardLookup(associations);
+    const entriesByNodeId = new Map<NodeId, AssociationShelfEntry>();
+    const addEntry = (
+      nodeId: NodeId,
+      rawScore: number | null | undefined,
+      excludeSelectedNode = false,
+      targetZone: AssociationSourceZone = "main",
+    ): void => {
+      if (excludeSelectedNode && nodeId === selectedNodeId) return;
+      const card = cardByNodeId.get(nodeId);
+      if (!card) return;
+      const score = Math.round(rawScore ?? 0);
+      if (score <= 0) return;
+      const existing = entriesByNodeId.get(nodeId);
+      if (!existing || score > existing.score) {
+        entriesByNodeId.set(nodeId, { nodeId, card, score, targetZone });
+      }
+    };
+
+    if (this.selectedAssociationClusterId) {
+      const cluster = associations.clusters[this.selectedAssociationClusterId];
+      for (const [nodeId, score] of Object.entries(cluster?.cards ?? {})) {
+        addEntry(nodeId, score.score);
+      }
+      return this.sortAssociationShelfEntries(entriesByNodeId);
+    }
+
+    if (this.selectedAssociationClusterGroupId) {
+      const group = getAssociationClusterGroups(associations).find(
+        (entry) => entry.id === this.selectedAssociationClusterGroupId,
+      );
+      for (const cluster of group?.clusters ?? []) {
+        for (const [nodeId, score] of Object.entries(cluster.cards)) {
+          addEntry(nodeId, score.score);
+        }
+      }
+      return this.sortAssociationShelfEntries(entriesByNodeId);
+    }
+
+    if (this.selectedAssociationPackageId) {
+      const pkg = associations.packages?.find(
+        (entry) => entry.id === this.selectedAssociationPackageId,
+      );
+      for (const node of pkg?.topNodes ?? []) {
+        addEntry(node.nodeId, node.weight * 100);
+      }
+      return this.sortAssociationShelfEntries(entriesByNodeId);
+    }
+
+    if (!selectedNodeId || !this.selectedAssociationCardName) return [];
+    for (const link of associations.index[selectedNodeId] ?? []) {
+      const mainScores = getAssociationDisplayScores(
+        associations,
+        selectedNodeId,
+        link.to,
+        this.associationSourceZone,
+        "main",
+      );
+      const collectionScores = getAssociationDisplayScores(
+        associations,
+        selectedNodeId,
+        link.to,
+        this.associationSourceZone,
+        "collection",
+      );
+      addEntry(
+        link.to,
+        Math.max(mainScores.mainScore ?? 0, collectionScores.collectionScore ?? 0),
+        true,
+        (mainScores.mainScore ?? 0) >= (collectionScores.collectionScore ?? 0)
+          ? "main"
+          : "collection",
+      );
+    }
+
+    return this.sortAssociationShelfEntries(entriesByNodeId);
+  }
+
+  private sortAssociationShelfEntries(
+    entriesByNodeId: Map<NodeId, AssociationShelfEntry>,
+  ): AssociationShelfEntry[] {
+    return [...entriesByNodeId.values()]
+      .sort((left, right) => {
+        const scoreDelta = right.score - left.score;
+        if (scoreDelta !== 0) return scoreDelta;
+        return left.card.name.localeCompare(right.card.name);
+      })
+      .slice(0, ASSOCIATION_SHELF_MAX_CARDS);
+  }
+
+  private getAssociationCardLookup(
+    associations: CardAssociationData,
+  ): Map<NodeId, Card> {
+    const lookup = new Map<NodeId, Card>();
+    for (const card of this.cards) {
+      const nodeId = resolveAssociationNodeId(
+        associations,
+        card.name,
+        card.guardian.type,
+      );
+      if (!nodeId || !associations.nodes[nodeId]) continue;
+      lookup.set(nodeId, card);
+    }
+    return lookup;
+  }
+
+  private getLayoutCardInput(card: Card): {
+    name: string;
+    type: CardType;
+    thresholdGroup: ThresholdGroup;
+    cost: number | null;
+    isLandscape: boolean;
+    primarySet: string | undefined;
+    rarity: "Ordinary" | "Exceptional" | "Elite" | "Unique" | null;
+  } {
+    return {
+      name: card.name,
+      type: card.guardian.type,
+      thresholdGroup: getThresholdGroup(card.guardian.thresholds),
+      cost: card.guardian.cost,
+      isLandscape: card.guardian.type === "Site",
+      primarySet: card.sets[0]?.name,
+      rarity: card.guardian.rarity as
+        | "Ordinary"
+        | "Exceptional"
+        | "Elite"
+        | "Unique"
+        | null,
+    };
+  }
+
+  private getAssociationShelfSpriteKey(nodeId: NodeId): string {
+    return `association:${nodeId}`;
+  }
+
+  private getDeckLayoutCollectionBottom(): number {
+    return this.associationShelfSprites.size > 0
+      ? Math.max(this.collectionBounds.bottom, this.associationShelfBounds.bottom)
+      : this.collectionBounds.bottom;
+  }
+
   private applyAssociationHighlighting(): void {
     const selected = this.selectedAssociationCardName;
     const associations = this.cardAssociations;
+    const selectedClusterGroupId = this.selectedAssociationClusterGroupId;
     const selectedClusterId = this.selectedAssociationClusterId;
+    const selectedPackageId = this.selectedAssociationPackageId;
     const selectedNodeId = this.getSelectedAssociationNodeId();
     const clusterEnabled =
-      this.associationsEnabled && !!associations && !!selectedClusterId;
+      this.associationsEnabled &&
+      !!associations &&
+      (!!selectedClusterId || !!selectedClusterGroupId);
+    const packageEnabled =
+      this.associationsEnabled && !!associations && !!selectedPackageId;
     const linkEnabled =
       this.associationsEnabled && !!selected && !!associations && !!selectedNodeId;
 
@@ -7424,14 +7757,31 @@ export class PixiStage {
       cardName: string,
       cardType: CardType | null,
       sprite: CardSprite,
+      targetZone: AssociationSourceZone,
     ): void => {
       const targetNodeId = associations
         ? resolveAssociationNodeId(associations, cardName, cardType)
         : null;
       if (clusterEnabled) {
-        const score = getAssociationClusterCardScore(
+        const score = selectedClusterId
+          ? getAssociationClusterCardScore(
+              associations,
+              selectedClusterId,
+              targetNodeId,
+            )
+          : getAssociationClusterGroupCardScore(
+              associations,
+              selectedClusterGroupId,
+              targetNodeId,
+            );
+        sprite.setAssociationClusterScore(score?.score ?? null, true);
+        return;
+      }
+
+      if (packageEnabled) {
+        const score = getAssociationPackageCardScore(
           associations,
-          selectedClusterId,
+          selectedPackageId,
           targetNodeId,
         );
         sprite.setAssociationClusterScore(score?.score ?? null, true);
@@ -7448,29 +7798,39 @@ export class PixiStage {
         return;
       }
 
-      const scores = getAssociationScores(
+      const scores = getAssociationDisplayScores(
         associations,
         selectedNodeId,
         targetNodeId,
         this.associationSourceZone,
+        targetZone,
       );
       sprite.setAssociationScores(
-        scores.main?.score ?? null,
-        scores.collection?.score ?? null,
+        scores.mainScore,
+        scores.collectionScore,
         true,
       );
     };
 
     for (const [name, data] of this.cardSprites) {
-      applyToSprite(name, data.layout.type, data.sprite);
+      applyToSprite(name, data.layout.type, data.sprite, "collection");
     }
 
     for (const [, data] of this.deckSprites) {
-      applyToSprite(data.layout.name, data.layout.type, data.sprite);
+      applyToSprite(data.layout.name, data.layout.type, data.sprite, "main");
+    }
+
+    for (const [key, data] of this.associationShelfSprites) {
+      applyToSprite(
+        data.layout.name,
+        data.layout.type,
+        data.sprite,
+        this.associationShelfTargetZones.get(key) ?? "main",
+      );
     }
 
     for (const [, data] of this.zoneCardSprites) {
-      applyToSprite(data.cardName, data.cardType, data.sprite);
+      applyToSprite(data.cardName, data.cardType, data.sprite, "main");
     }
   }
 
@@ -7510,10 +7870,8 @@ export class PixiStage {
   private getAssociationTooltipStats(
     cardName: string,
     cardType: CardType | null,
-  ): {
-    main: LinkStats | null;
-    collection: LinkStats | null;
-  } {
+    targetZone: AssociationSourceZone,
+  ): AssociationDisplayScores {
     const selectedNodeId = this.getSelectedAssociationNodeId();
     const targetNodeId = resolveAssociationNodeId(this.cardAssociations, cardName, cardType);
     if (
@@ -7524,14 +7882,15 @@ export class PixiStage {
       !targetNodeId ||
       targetNodeId === selectedNodeId
     ) {
-      return { main: null, collection: null };
+      return { main: null, collection: null, mainScore: null, collectionScore: null, packages: null };
     }
 
-    return getAssociationScores(
+    return getAssociationDisplayScores(
       this.cardAssociations,
       selectedNodeId,
       targetNodeId,
       this.associationSourceZone,
+      targetZone,
     );
   }
 
@@ -8280,6 +8639,7 @@ export class PixiStage {
     for (const label of this.headerLabels) {
       label.destroy();
     }
+    this.clearAssociationShelfSprites();
     this.destroyAssociationTooltip();
     this.headerLabels = [];
     this.cardSprites.clear();
@@ -8433,6 +8793,7 @@ export class PixiStage {
     this.performCulling();
     this.drawGrid();
     this.rebuildZoneVisuals();
+    this.rebuildAssociationShelfSprites(false);
 
     // Rebuild deck display if a deck is active
     if (this.activeDeck) {
@@ -8482,7 +8843,7 @@ export class PixiStage {
     } = calculateDeckLayout({
       deck: this.activeDeck,
       cardLookup,
-      collectionBottom: this.collectionBounds.bottom,
+      collectionBottom: this.getDeckLayoutCollectionBottom(),
     });
 
     this.deckBounds = newDeckBounds;
@@ -8616,6 +8977,11 @@ export class PixiStage {
     }
     // Update deck sprite LODs
     for (const data of this.deckSprites.values()) {
+      if (data.sprite.visible) {
+        data.sprite.updateLOD(zoom);
+      }
+    }
+    for (const data of this.associationShelfSprites.values()) {
       if (data.sprite.visible) {
         data.sprite.updateLOD(zoom);
       }
@@ -8793,6 +9159,25 @@ export class PixiStage {
       }
     }
 
+    for (const [, data] of this.associationShelfSprites) {
+      const isVisible = this.boundsIntersect(data.bounds, expandedBounds);
+      if (isVisible) {
+        if (!data.sprite.visible) {
+          data.sprite.visible = true;
+          cardsToLoad.push(data.layout.name);
+        }
+
+        if (this.initialRevealCompleted && !this.isRevealInProgress) {
+          if (!data.sprite.isTextureReady) {
+            data.sprite.loadInitialTexture();
+          }
+          data.sprite.updateLOD(this.camera.zoom);
+        }
+      } else if (data.sprite.visible) {
+        data.sprite.visible = false;
+      }
+    }
+
     this.visibleCardNames = newVisible;
 
     // During the initial reveal we let `startTextureReveal()` own texture loading so
@@ -8842,6 +9227,11 @@ export class PixiStage {
       names.add(name);
     }
     for (const [, data] of this.deckSprites) {
+      if (data.sprite.visible) {
+        names.add(data.layout.name);
+      }
+    }
+    for (const data of this.associationShelfSprites.values()) {
       if (data.sprite.visible) {
         names.add(data.layout.name);
       }
@@ -8899,6 +9289,9 @@ export class PixiStage {
       visit(name, data.bounds);
     }
     for (const [, data] of this.deckSprites) {
+      visit(data.layout.name, data.bounds);
+    }
+    for (const data of this.associationShelfSprites.values()) {
       visit(data.layout.name, data.bounds);
     }
     for (const data of this.zoneCardSprites.values()) {
@@ -9075,6 +9468,11 @@ export class PixiStage {
         data.sprite.refreshCurrentLOD();
       }
     }
+    for (const data of this.associationShelfSprites.values()) {
+      if (data.sprite.visible) {
+        data.sprite.refreshCurrentLOD();
+      }
+    }
     for (const data of this.zoneCardSprites.values()) {
       if (data.sprite.visible) {
         data.sprite.refreshCurrentLOD();
@@ -9088,6 +9486,11 @@ export class PixiStage {
       data?.sprite.reloadCurrentTexture();
     }
     for (const data of this.deckSprites.values()) {
+      if (data.sprite.visible) {
+        data.sprite.reloadCurrentTexture();
+      }
+    }
+    for (const data of this.associationShelfSprites.values()) {
       if (data.sprite.visible) {
         data.sprite.reloadCurrentTexture();
       }

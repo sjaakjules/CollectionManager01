@@ -38,8 +38,10 @@ import {
   isCardFilterActive,
 } from "@/data/cardFilters";
 import {
+  getAssociationClusterGroups,
   hasCollectionAssociationSource,
   loadCardAssociations,
+  resolveAssociationNodeId,
   type CardAssociationData,
 } from "@/data/cardAssociations";
 import type { CanvasArea } from "@/canvas/canvasAreas";
@@ -134,6 +136,32 @@ export function PixiCanvas({
   const selectedAssociationCardName =
     state.ui.selectedCardNames.length === 1
       ? state.ui.selectedCardNames[0] ?? null
+      : null;
+  const selectedAssociationCard = useMemo(
+    () =>
+      selectedAssociationCardName
+        ? state.cards.find((card) => card.name === selectedAssociationCardName) ?? null
+        : null,
+    [selectedAssociationCardName, state.cards],
+  );
+  const selectedAvatarAssociationClusterGroupId = useMemo(() => {
+    const nodeId = resolveAssociationNodeId(
+      cardAssociations,
+      selectedAssociationCardName,
+      selectedAssociationCard?.guardian.type,
+    );
+    if (!nodeId?.startsWith("avatar:")) return null;
+    return getAssociationClusterGroups(cardAssociations).some((group) => group.id === nodeId)
+      ? nodeId
+      : null;
+  }, [
+    cardAssociations,
+    selectedAssociationCard?.guardian.type,
+    selectedAssociationCardName,
+  ]);
+  const selectedAssociationClusterGroupId =
+    state.ui.associationPanelView === "clusters"
+      ? state.ui.associationClusterGroupId ?? selectedAvatarAssociationClusterGroupId
       : null;
 
   // Load archetype scores from userData (when present) or static seed fallback.
@@ -391,12 +419,16 @@ export function PixiCanvas({
       enabled: state.ui.associationsEnabled,
       selectedCardName: selectedAssociationCardName,
       sourceZone: state.ui.associationSourceZone,
+      selectedClusterGroupId: selectedAssociationClusterGroupId,
       selectedClusterId: state.ui.associationClusterId,
+      selectedPackageId: state.ui.associationPackageId,
       associations: cardAssociations,
     });
   }, [
     cardAssociations,
+    selectedAssociationClusterGroupId,
     state.ui.associationClusterId,
+    state.ui.associationPackageId,
     selectedAssociationCardName,
     state.ui.associationSourceZone,
     state.ui.associationsEnabled,
