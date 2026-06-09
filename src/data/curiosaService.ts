@@ -14,7 +14,7 @@
  */
 
 import type { Deck, DeckCard } from "./dataModels";
-import { generateUUID } from "@/utils/uuid";
+import { generateUUID } from "../utils/uuid.ts";
 
 const PROXY_PREFIX = "/api/curiosa";
 const CURIOSA_HOSTS = new Set(["curiosa.io", "www.curiosa.io"]);
@@ -35,6 +35,41 @@ export interface FetchCuriosaDeckOptions {
   signal?: AbortSignal;
   onDelay?: (delay: CuriosaFetchDelay) => void;
 }
+
+export interface CuriosaDeckSearchSummary {
+  id: string;
+  createdAt?: string;
+  updatedAt?: string;
+  name?: string;
+  format?: string;
+  hotscore?: number;
+  user?: { id?: string; username?: string };
+  elements?: string[];
+  likes: number;
+  views: number;
+}
+
+export interface CuriosaDeckSearchBaseOptions {
+  query: string;
+  avatar?: string;
+  divider?: string;
+  filters?: unknown[];
+}
+
+export interface CuriosaDeckSearchPageOptions extends CuriosaDeckSearchBaseOptions {
+  sort?: string;
+  limit?: number;
+  cursor?: number;
+  direction?: "forward" | "backward";
+}
+
+export interface FetchCuriosaDeckSearchCountOptions
+  extends CuriosaDeckSearchBaseOptions,
+    FetchCuriosaDeckOptions {}
+
+export interface FetchCuriosaDeckSearchPageOptions
+  extends CuriosaDeckSearchPageOptions,
+    FetchCuriosaDeckOptions {}
 
 // ============================================================================
 // Rate limiting
@@ -466,6 +501,130 @@ function readTrpcJson(entry: unknown, procedure: string): unknown {
   return data.json;
 }
 
+function readNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function readCount(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, Math.floor(value));
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+  }
+
+  return 0;
+}
+
+function normalizeSearchQuery(query: string): string {
+  return query.replace(/\s+/g, " ").trim();
+}
+
+function normalizeSearchLimit(limit: number | undefined): number {
+  if (!Number.isFinite(limit) || limit === undefined) return 30;
+  return Math.max(1, Math.min(100, Math.floor(limit)));
+}
+
+export function buildCuriosaDeckSearchCountInput(
+  options: CuriosaDeckSearchBaseOptions,
+): Record<string, { json: Record<string, unknown> }> {
+  return {
+    "0": {
+      json: {
+        query: normalizeSearchQuery(options.query),
+        avatar: options.avatar ?? "*",
+        divider: options.divider ?? "all",
+        filters: options.filters ?? [],
+      },
+    },
+  };
+}
+
+export function buildCuriosaDeckSearchPageInput(
+  options: CuriosaDeckSearchPageOptions,
+): Record<string, { json: Record<string, unknown> }> {
+  const json: Record<string, unknown> = {
+    query: normalizeSearchQuery(options.query),
+    sort: options.sort ?? "relevance",
+    avatar: options.avatar ?? "*",
+    divider: options.divider ?? "all",
+    filters: options.filters ?? [],
+    limit: normalizeSearchLimit(options.limit),
+    direction: options.direction ?? "forward",
+  };
+
+  if (options.cursor !== undefined && options.cursor > 0) {
+    json.cursor = Math.floor(options.cursor);
+  }
+
+  return { "0": { json } };
+}
+
+export function parseCuriosaDeckSearchCount(raw: unknown): number {
+  if (typeof raw === "number" || typeof raw === "string") return readCount(raw);
+
+  const record = asRecord(raw);
+  if (!record) return 0;
+
+  return readCount(record.count ?? record.total ?? record._count);
+}
+
+function normalizeSearchUser(value: unknown): CuriosaDeckSearchSummary["user"] {
+  const record = asRecord(value);
+  if (!record) return undefined;
+
+  const id = readString(record.id);
+  const username = readString(record.username);
+  if (!id && !username) return undefined;
+
+  return { id, username };
+}
+
+function parseSearchSummary(entry: unknown): CuriosaDeckSearchSummary | null {
+  const record = asRecord(entry);
+  const id = readString(record?.id);
+  if (!record || !id) return null;
+
+  const count = asRecord(record._count);
+  const likes = readCount(count?.likes ?? record.likes);
+  const views = readCount(count?.views ?? record.views);
+  const elements = Array.isArray(record.elements)
+    ? record.elements.filter((value): value is string => typeof value === "string")
+    : undefined;
+
+  return {
+    id,
+    createdAt: readString(record.createdAt),
+    updatedAt: readString(record.updatedAt),
+    name: readString(record.name),
+    format: readString(record.format),
+    hotscore: readNumber(record.hotscore),
+    user: normalizeSearchUser(record.user),
+    elements,
+    likes,
+    views,
+  };
+}
+
+export function parseCuriosaDeckSearchPage(raw: unknown): CuriosaDeckSearchSummary[] {
+  const record = asRecord(raw);
+  const entries = Array.isArray(raw)
+    ? raw
+    : Array.isArray(record?.decks)
+      ? record.decks
+      : Array.isArray(record?.items)
+        ? record.items
+        : Array.isArray(record?.results)
+          ? record.results
+          : [];
+
+  return entries
+    .map((entry) => parseSearchSummary(entry))
+    .filter((entry): entry is CuriosaDeckSearchSummary => entry !== null);
+}
+
 function parseQuantity(value: unknown): number {
   const parsed =
     typeof value === "number"
@@ -552,6 +711,53 @@ export function extractDeckId(urlOrId: string): string {
   }
 
   return /^[a-zA-Z0-9_-]+$/.test(candidate) ? candidate : "";
+}
+
+async function fetchCuriosaTrpcJson(
+  procedure: string,
+  input: Record<string, unknown>,
+  options: FetchCuriosaDeckOptions,
+): Promise<unknown> {
+  const encodedInput = encodeURIComponent(JSON.stringify(input));
+  const trpcUrl = `${PROXY_PREFIX}/api/trpc/${procedure}?batch=1&input=${encodedInput}`;
+  const response = await curiosaFetch(trpcUrl, {
+    headers: { accept: "application/json" },
+  }, options);
+
+  if (!response.ok) {
+    const message = await readCuriosaError(response);
+    throw new Error(`Curiosa API error ${response.status}: ${message}`);
+  }
+
+  throwIfAborted(options.signal);
+  const results = (await response.json()) as unknown;
+  if (!Array.isArray(results) || results.length !== 1) {
+    throw new Error(`Unexpected response format from curiosa.io for ${procedure}`);
+  }
+
+  return readTrpcJson(results[0], procedure);
+}
+
+export async function fetchCuriosaDeckSearchCount(
+  options: FetchCuriosaDeckSearchCountOptions,
+): Promise<number> {
+  const json = await fetchCuriosaTrpcJson(
+    "deck.count",
+    buildCuriosaDeckSearchCountInput(options),
+    options,
+  );
+  return parseCuriosaDeckSearchCount(json);
+}
+
+export async function fetchCuriosaDeckSearchPage(
+  options: FetchCuriosaDeckSearchPageOptions,
+): Promise<CuriosaDeckSearchSummary[]> {
+  const json = await fetchCuriosaTrpcJson(
+    "deck.search",
+    buildCuriosaDeckSearchPageInput(options),
+    options,
+  );
+  return parseCuriosaDeckSearchPage(json);
 }
 
 /**

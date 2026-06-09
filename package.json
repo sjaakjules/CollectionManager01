@@ -18,7 +18,9 @@
     "cards:atlas": "node scripts/generate-card-thumb-atlases.mjs --input public/assets/Cards --output public/assets/CardsThumbAtlas --card-width 92 --card-height 128 --atlas-width 1024 --atlas-height 1024 --quality 58 --effort 4",
     "cards:atlas:medium": "node scripts/generate-card-thumb-atlases.mjs --input public/assets/Cards --output public/assets/CardsMediumAtlas --card-width 275 --card-height 384 --atlas-width 1112 --atlas-height 1160 --quality 64 --effort 4",
     "cards:thumbs+atlas": "pnpm cards:thumbs && pnpm cards:atlas:all",
-    "cards:atlas:all": "pnpm cards:atlas && pnpm cards:atlas:medium"
+    "cards:atlas:all": "pnpm cards:atlas && pnpm cards:atlas:medium",
+    "curiosa:decks": "node scripts/fetch-curiosa-decks.mjs",
+    "curiosa:search-decks": "node scripts/search-curiosa-decks.mjs"
   },
   "dependencies": {
     "idb-keyval": "^6.2.1",
