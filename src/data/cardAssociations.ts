@@ -97,6 +97,14 @@ export interface CardAssociationMeta {
     fullAtlasMin?: number;
   };
   deckNames: Record<string, string>;
+  clustering?: {
+    algorithm: "graphology-louvain" | "greedy-modularity";
+    clusterCount: number;
+    modularity: number | null;
+    dendrogram: Array<Record<string, number>> | null;
+    level: number;
+    fallbackReason?: string;
+  };
   collectionNodeIds: NodeId[];
 }
 

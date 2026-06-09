@@ -38,6 +38,8 @@
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.18.0",
     "eslint-plugin-react-hooks": "^5.1.0",
+    "graphology": "^0.26.0",
+    "graphology-communities-louvain": "^2.0.2",
     "jsdom": "^29.1.1",
     "sharp": "^0.34.5",
     "typescript": "^5.7.2",

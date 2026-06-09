@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import Graph from 'graphology';
+import louvain from 'graphology-communities-louvain';
 
 const DEFAULT_ARCHIVE_PATH = 'offlineData/deckArchive.json';
 const DEFAULT_CARD_DATA_PATH = 'docs/Sorcery_CardInfo.json';
@@ -457,6 +459,67 @@ export function buildDeckGraph(vectors, options = DEFAULT_ASSOCIATION_OPTIONS) {
   return adjacency;
 }
 
+function remapCommunitiesToClusterIds(communities, nodeCount) {
+  const remap = new Map();
+  let nextCluster = 1;
+  return Array.from({ length: nodeCount }, (_, index) => {
+    const community = communities[String(index)] ?? index;
+    if (!remap.has(community)) {
+      remap.set(community, `cluster-${nextCluster}`);
+      nextCluster += 1;
+    }
+    return remap.get(community);
+  });
+}
+
+function serializeLouvainDendrogram(dendrogram) {
+  if (!Array.isArray(dendrogram)) return null;
+  return dendrogram.map((level) => {
+    const serialized = {};
+    for (const [nodeId, community] of Object.entries(level).sort(([left], [right]) => {
+      const leftNumber = Number(left);
+      const rightNumber = Number(right);
+      if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+        return leftNumber - rightNumber;
+      }
+      return left.localeCompare(right);
+    })) {
+      serialized[nodeId] = community;
+    }
+    return serialized;
+  });
+}
+
+export function runGraphologyLouvainClustering(adjacency) {
+  const graph = new Graph({ type: 'undirected' });
+
+  for (let nodeIndex = 0; nodeIndex < adjacency.length; nodeIndex += 1) {
+    graph.addNode(String(nodeIndex));
+  }
+
+  for (let source = 0; source < adjacency.length; source += 1) {
+    for (const [target, weight] of adjacency[source]) {
+      if (source >= target) continue;
+      graph.mergeEdge(String(source), String(target), { weight });
+    }
+  }
+
+  const details = louvain.detailed(graph, {
+    getEdgeWeight: 'weight',
+    resolution: 1,
+    randomWalk: false,
+  });
+
+  return {
+    algorithm: 'graphology-louvain',
+    clusterIds: remapCommunitiesToClusterIds(details.communities ?? {}, adjacency.length),
+    clusterCount: details.count ?? 0,
+    modularity: details.modularity,
+    dendrogram: serializeLouvainDendrogram(details.dendrogram),
+    level: details.level ?? 0,
+  };
+}
+
 function calculateModularity(adjacency, communities) {
   let totalEdgeWeight = 0;
   const degrees = adjacency.map((neighbors) => {
@@ -558,6 +621,27 @@ export function runGreedyModularityClustering(adjacency) {
     }
     return remap.get(community);
   });
+}
+
+function runDeckClustering(adjacency) {
+  try {
+    return runGraphologyLouvainClustering(adjacency);
+  } catch (error) {
+    console.warn('Falling back to greedy clustering:', error);
+    const clusterIds = runGreedyModularityClustering(adjacency);
+    return {
+      algorithm: 'greedy-modularity',
+      clusterIds,
+      clusterCount: new Set(clusterIds).size,
+      modularity: calculateModularity(
+        adjacency,
+        clusterIds.map((clusterId) => Number(clusterId.replace(/^cluster-/u, ''))),
+      ),
+      dendrogram: null,
+      level: 0,
+      fallbackReason: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 export function calculateBalancedDeckWeights(clusterIds) {
@@ -924,7 +1008,8 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
   const { decks, summary } = normalizeDeckArchiveInternal(archive, nodes, options.filters, metadata);
   const vectors = buildDeckIdentityVectors(decks, metadata);
   const graph = buildDeckGraph(vectors, options);
-  const clusterIds = runGreedyModularityClustering(graph);
+  const clustering = runDeckClustering(graph);
+  const clusterIds = clustering.clusterIds;
   const deckWeights = calculateDeckWeights(clusterIds, mode);
   const index = new Map();
 
@@ -953,7 +1038,7 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
 
   return {
     __meta: {
-      version: 2,
+      version: 3,
       generatedAt: new Date().toISOString(),
       mode,
       sourceDeckCount: summary.sourceDeckCount,
@@ -976,6 +1061,17 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
         fullAtlasMin: options.filters.fullAtlasMin,
       },
       deckNames,
+      clustering: {
+        algorithm: clustering.algorithm,
+        clusterCount: clustering.clusterCount,
+        modularity:
+          clustering.modularity === null || clustering.modularity === undefined
+            ? null
+            : roundNumber(clustering.modularity),
+        dendrogram: clustering.dendrogram,
+        level: clustering.level,
+        fallbackReason: clustering.fallbackReason,
+      },
       collectionNodeIds: [...collectionNodeIds].sort((left, right) => left.localeCompare(right)),
       filterSummary: summary,
     },

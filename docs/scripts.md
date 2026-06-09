@@ -286,6 +286,10 @@ Association model:
 - Zone evidence is stored on directed edge channels: `mainMain`,
   `mainCollection.mainToCollection`, `mainCollection.collectionToMain`, and
   `collectionCollection`.
+- Deck archetype clusters are built with Graphology Louvain using weighted
+  edges and deterministic traversal (`randomWalk: false`). If Graphology
+  clustering fails, the builder falls back to the deterministic greedy
+  modularity approximation.
 - Balanced mode uses `1 / sqrt(clusterSize)` deck weights. Meta mode uses
   deck weight `1`.
 - The generated files are public static assets. They are intentionally not

@@ -14,6 +14,7 @@ import {
   mergeArchives,
   normalizeDeckArchive,
   parseArgs,
+  runGraphologyLouvainClustering,
   runGreedyModularityClustering,
   weightedJaccard,
 } from './build-card-associations.mjs';
@@ -223,6 +224,28 @@ describe('card association clustering', () => {
     expect(clusters[2]).not.toBe(clusters[0]);
     expect(weights[0]).toBeCloseTo(1 / Math.sqrt(2));
     expect(weights[2]).toBeCloseTo(1);
+  });
+
+  it('runs deterministic graphology Louvain with detailed dendrogram output', () => {
+    const graph = [
+      new Map([[1, 1]]),
+      new Map([
+        [0, 1],
+        [2, 0.1],
+      ]),
+      new Map([
+        [1, 0.1],
+        [3, 1],
+      ]),
+      new Map([[2, 1]]),
+    ];
+
+    const result = runGraphologyLouvainClustering(graph);
+
+    expect(result.algorithm).toBe('graphology-louvain');
+    expect(result.clusterIds).toHaveLength(4);
+    expect(result.dendrogram).toBeTruthy();
+    expect(result.level).toBeGreaterThanOrEqual(1);
   });
 });
 
