@@ -19,6 +19,31 @@ const ELEMENT_SYMBOLS = {
   fire: '🜂',
   water: '🜄',
 };
+export const PACKAGE_ZONE_WEIGHTS = {
+  spellbook: 1,
+  atlas: 1,
+  avatar: 0.75,
+};
+
+export const DEFAULT_PACKAGE_OPTIONS = {
+  enabled: true,
+  components: 24,
+  iterations: 400,
+  seed: 1337,
+  epsilon: 1e-9,
+  l1H: 0.002,
+  l1W: 0.0005,
+  minNodeStrength: 0.12,
+  minCardPackageStrength: 0.18,
+  minDeckMembership: 0.08,
+  minNodesPerPackage: 12,
+  maxNodesPerPackage: 24,
+  maxPackagesPerNode: 4,
+  maxPackagesPerDeck: 5,
+  maxExampleDecksPerPackage: 5,
+  packageBoostWeight: 0.3,
+  reliabilityWeightedSupport: 6,
+};
 
 export const DEFAULT_ASSOCIATION_OPTIONS = {
   topLinks: 60,
@@ -37,6 +62,7 @@ export const DEFAULT_ASSOCIATION_OPTIONS = {
     fullSpellbookMin: DEFAULT_FULL_SPELLBOOK_MIN,
     fullAtlasMin: DEFAULT_FULL_ATLAS_MIN,
   },
+  packageOptions: DEFAULT_PACKAGE_OPTIONS,
 };
 
 export const RARITY_LIMITS = {
@@ -433,6 +459,218 @@ export function buildDeckIdentityVectors(decks, metadata) {
   }));
 }
 
+function addPackageMatrixValue(row, nodeId, value) {
+  if (!nodeId || value <= 0) return;
+  row.set(nodeId, Math.min(1, (row.get(nodeId) ?? 0) + value));
+}
+
+function addPackageBoardValues(row, board, metadata, zoneWeight) {
+  for (const [nodeId, quantity] of board) {
+    const rarityLimit = getRarityLimit(nodeId, metadata, quantity);
+    addPackageMatrixValue(row, nodeId, copySaturation(quantity, rarityLimit) * zoneWeight);
+  }
+}
+
+export function buildPackageMatrix(
+  decks,
+  deckWeights,
+  metadata,
+  packageOptions = DEFAULT_PACKAGE_OPTIONS,
+) {
+  const zoneWeights = packageOptions.zoneWeights ?? PACKAGE_ZONE_WEIGHTS;
+  const rowMaps = decks.map((deck, deckIndex) => {
+    const row = new Map();
+    addPackageBoardValues(row, deck.spellbook, metadata, zoneWeights.spellbook ?? 1);
+    addPackageBoardValues(row, deck.atlas, metadata, zoneWeights.atlas ?? 1);
+    if (deck.avatar) {
+      addPackageMatrixValue(row, deck.avatar, zoneWeights.avatar ?? PACKAGE_ZONE_WEIGHTS.avatar);
+    }
+
+    const rowWeight = Math.sqrt(Math.max(0, deckWeights[deckIndex] ?? 1));
+    return new Map([...row].map(([nodeId, value]) => [nodeId, value * rowWeight]));
+  });
+  const nodeIds = [...new Set(rowMaps.flatMap((row) => [...row.keys()]))].sort((left, right) =>
+    left.localeCompare(right),
+  );
+  const nodeIndex = new Map(nodeIds.map((nodeId, index) => [nodeId, index]));
+  const matrix = rowMaps.map((row) => {
+    const values = Array.from({ length: nodeIds.length }, () => 0);
+    for (const [nodeId, value] of row) {
+      const index = nodeIndex.get(nodeId);
+      if (index !== undefined) values[index] = value;
+    }
+    return values;
+  });
+
+  return {
+    matrix,
+    nodeIds,
+    deckIds: decks.map((deck) => deck.id),
+  };
+}
+
+export function createSeededRandom(seed) {
+  let state = Number.isFinite(seed) ? seed >>> 0 : DEFAULT_PACKAGE_OPTIONS.seed;
+  if (state === 0) state = 0x6d2b79f5;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function transposeMatrix(matrix) {
+  const rows = matrix.length;
+  const cols = matrix[0]?.length ?? 0;
+  return Array.from({ length: cols }, (_, col) =>
+    Array.from({ length: rows }, (_, row) => matrix[row][col] ?? 0),
+  );
+}
+
+export function multiplyMatrices(left, right) {
+  const leftRows = left.length;
+  const shared = left[0]?.length ?? 0;
+  const rightCols = right[0]?.length ?? 0;
+  const result = Array.from({ length: leftRows }, () => Array.from({ length: rightCols }, () => 0));
+
+  for (let i = 0; i < leftRows; i += 1) {
+    for (let k = 0; k < shared; k += 1) {
+      const leftValue = left[i][k] ?? 0;
+      if (leftValue === 0) continue;
+      for (let j = 0; j < rightCols; j += 1) {
+        result[i][j] += leftValue * (right[k]?.[j] ?? 0);
+      }
+    }
+  }
+
+  return result;
+}
+
+function sparseRowsFromMatrix(matrix) {
+  return matrix.map((row) => {
+    const entries = [];
+    for (let index = 0; index < row.length; index += 1) {
+      const value = row[index] ?? 0;
+      if (value > 0) entries.push([index, value]);
+    }
+    return entries;
+  });
+}
+
+function multiplyTransposeLeftBySparse(W, sparseX, columnCount) {
+  const n = W.length;
+  const k = W[0]?.length ?? 0;
+  const result = Array.from({ length: k }, () => Array.from({ length: columnCount }, () => 0));
+
+  for (let i = 0; i < n; i += 1) {
+    const rowEntries = sparseX[i] ?? [];
+    if (rowEntries.length === 0) continue;
+    for (let p = 0; p < k; p += 1) {
+      const weight = W[i][p] ?? 0;
+      if (weight === 0) continue;
+      for (const [j, value] of rowEntries) {
+        result[p][j] += weight * value;
+      }
+    }
+  }
+
+  return result;
+}
+
+function multiplySparseByTransposeRight(sparseX, H, componentCount) {
+  const result = Array.from({ length: sparseX.length }, () =>
+    Array.from({ length: componentCount }, () => 0),
+  );
+
+  for (let i = 0; i < sparseX.length; i += 1) {
+    for (const [j, value] of sparseX[i]) {
+      for (let p = 0; p < componentCount; p += 1) {
+        result[i][p] += value * (H[p]?.[j] ?? 0);
+      }
+    }
+  }
+
+  return result;
+}
+
+export function frobeniusError(left, right) {
+  let sum = 0;
+  for (let i = 0; i < left.length; i += 1) {
+    const leftRow = left[i] ?? [];
+    const rightRow = right[i] ?? [];
+    for (let j = 0; j < leftRow.length; j += 1) {
+      const delta = (leftRow[j] ?? 0) - (rightRow[j] ?? 0);
+      sum += delta * delta;
+    }
+  }
+  return Math.sqrt(sum);
+}
+
+export function normalizeNmfComponents(W, H) {
+  for (let p = 0; p < H.length; p += 1) {
+    const norm = Math.sqrt(H[p].reduce((sum, value) => sum + value * value, 0));
+    if (norm <= 0) continue;
+    for (let j = 0; j < H[p].length; j += 1) {
+      H[p][j] /= norm;
+    }
+    for (let i = 0; i < W.length; i += 1) {
+      W[i][p] *= norm;
+    }
+  }
+}
+
+export function runDeterministicNmf(matrix, options = DEFAULT_PACKAGE_OPTIONS) {
+  const n = matrix.length;
+  const m = matrix[0]?.length ?? 0;
+  const k = Math.max(0, Math.floor(options.components ?? DEFAULT_PACKAGE_OPTIONS.components));
+  if (n === 0 || m === 0 || k === 0) {
+    return { W: [], H: [], reconstructionError: 0 };
+  }
+
+  const eps = options.epsilon ?? DEFAULT_PACKAGE_OPTIONS.epsilon;
+  const rng = createSeededRandom(options.seed ?? DEFAULT_PACKAGE_OPTIONS.seed);
+  const W = Array.from({ length: n }, () =>
+    Array.from({ length: k }, () => 0.05 + rng() * 0.1),
+  );
+  const H = Array.from({ length: k }, () =>
+    Array.from({ length: m }, () => 0.05 + rng() * 0.1),
+  );
+  const sparseX = sparseRowsFromMatrix(matrix);
+  const iterations = Math.max(0, Math.floor(options.iterations ?? DEFAULT_PACKAGE_OPTIONS.iterations));
+  const l1H = options.l1H ?? DEFAULT_PACKAGE_OPTIONS.l1H;
+  const l1W = options.l1W ?? DEFAULT_PACKAGE_OPTIONS.l1W;
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    const numeratorH = multiplyTransposeLeftBySparse(W, sparseX, m);
+    const denominatorH = multiplyMatrices(multiplyMatrices(transposeMatrix(W), W), H);
+
+    for (let p = 0; p < k; p += 1) {
+      for (let j = 0; j < m; j += 1) {
+        H[p][j] *= numeratorH[p][j] / (denominatorH[p][j] + l1H + eps);
+      }
+    }
+
+    const numeratorW = multiplySparseByTransposeRight(sparseX, H, k);
+    const denominatorW = multiplyMatrices(W, multiplyMatrices(H, transposeMatrix(H)));
+
+    for (let i = 0; i < n; i += 1) {
+      for (let p = 0; p < k; p += 1) {
+        W[i][p] *= numeratorW[i][p] / (denominatorW[i][p] + l1W + eps);
+      }
+    }
+
+    normalizeNmfComponents(W, H);
+  }
+
+  return {
+    W,
+    H,
+    reconstructionError: frobeniusError(matrix, multiplyMatrices(W, H)),
+  };
+}
+
 export function deckSimilarity(left, right, weights = DEFAULT_ASSOCIATION_OPTIONS.weights) {
   const avatarMatch = left.avatar && right.avatar && left.avatar === right.avatar ? 1 : 0;
   return (
@@ -762,6 +1000,368 @@ function serializeStats(stats) {
   };
 }
 
+function compareDisplayEntries(left, right, nodes) {
+  const scoreDelta = (right.score ?? 0) - (left.score ?? 0);
+  if (scoreDelta !== 0) return scoreDelta;
+  const weightDelta = (right.raw ?? right.weight ?? 0) - (left.raw ?? left.weight ?? 0);
+  if (weightDelta !== 0) return weightDelta;
+  const leftName = nodes.get(left.nodeId)?.displayName ?? left.displayName ?? left.nodeId;
+  const rightName = nodes.get(right.nodeId)?.displayName ?? right.displayName ?? right.nodeId;
+  const nameDelta = leftName.localeCompare(rightName);
+  if (nameDelta !== 0) return nameDelta;
+  return left.nodeId.localeCompare(right.nodeId);
+}
+
+export function makePackageLabel(topNodes) {
+  const names = topNodes
+    .slice(0, 3)
+    .map((node) => node.displayName)
+    .filter(Boolean);
+  return names.length > 0 ? names.join(' / ') : 'Card package';
+}
+
+function normalizePackageOptions(userOptions = {}) {
+  return {
+    ...DEFAULT_PACKAGE_OPTIONS,
+    ...userOptions,
+    zoneWeights: {
+      ...PACKAGE_ZONE_WEIGHTS,
+      ...(userOptions.zoneWeights ?? {}),
+    },
+  };
+}
+
+function serializePackageOptions(options) {
+  const { zoneWeights, ...rest } = options;
+  return {
+    ...rest,
+    zoneWeights,
+  };
+}
+
+function buildPackageTopNodes(H, packageIndex, nodeIds, nodes, options) {
+  const row = H[packageIndex] ?? [];
+  const maxWeight = Math.max(...row, 0);
+  if (maxWeight <= 0) return [];
+
+  return nodeIds
+    .map((nodeId, nodeIndex) => ({
+      nodeId,
+      displayName: nodes.get(nodeId)?.displayName ?? nodeId,
+      weight: row[nodeIndex] / maxWeight,
+      raw: row[nodeIndex] ?? 0,
+      score: row[nodeIndex] / maxWeight,
+    }))
+    .filter((entry) => entry.raw > 0)
+    .sort((left, right) => compareDisplayEntries(left, right, nodes))
+    .filter((entry, index) => entry.weight >= options.minNodeStrength || index < options.minNodesPerPackage)
+    .slice(0, options.maxNodesPerPackage)
+    .map(({ nodeId, displayName, weight }) => ({
+      nodeId,
+      weight: roundNumber(weight),
+      displayName,
+    }));
+}
+
+function buildDeckPackageRows(W, packageIds) {
+  return W.map((row) => {
+    const rowSum = row.reduce((sum, value) => sum + value, 0);
+    return packageIds.map((packageId, packageIndex) => ({
+      packageId,
+      strength: rowSum > 0 ? row[packageIndex] / rowSum : 0,
+      raw: row[packageIndex] ?? 0,
+    }));
+  });
+}
+
+function serializeDeckPackages(decks, deckPackageRows, options) {
+  const deckPackages = {};
+  for (let deckIndex = 0; deckIndex < decks.length; deckIndex += 1) {
+    const sorted = [...(deckPackageRows[deckIndex] ?? [])].sort(
+      (left, right) =>
+        right.strength - left.strength || left.packageId.localeCompare(right.packageId),
+    );
+    const kept = sorted
+      .filter((entry, index) => entry.strength >= options.minDeckMembership || index < options.maxPackagesPerDeck)
+      .slice(0, options.maxPackagesPerDeck)
+      .map((entry) => ({
+        packageId: entry.packageId,
+        strength: roundNumber(entry.strength),
+      }))
+      .filter((entry) => entry.strength > 0);
+    if (kept.length > 0) deckPackages[decks[deckIndex].id] = kept;
+  }
+  return deckPackages;
+}
+
+function buildPackageExamples(decks, deckWeights, deckPackageRows, packageIndex, options) {
+  const entries = decks
+    .map((deck, deckIndex) => ({
+      deckId: deck.id,
+      deckName: deck.name,
+      membership: deckPackageRows[deckIndex]?.[packageIndex]?.strength ?? 0,
+      weightedMembership:
+        (deckPackageRows[deckIndex]?.[packageIndex]?.strength ?? 0) * (deckWeights[deckIndex] ?? 0),
+    }))
+    .filter((entry) => entry.membership > 0)
+    .sort(
+      (left, right) =>
+        right.membership - left.membership ||
+        right.weightedMembership - left.weightedMembership ||
+        left.deckName.localeCompare(right.deckName) ||
+        left.deckId.localeCompare(right.deckId),
+    );
+
+  return entries.slice(0, options.maxExampleDecksPerPackage).map((entry) => ({
+    deckId: entry.deckId,
+    deckName: entry.deckName,
+    membership: roundNumber(entry.membership),
+  }));
+}
+
+function serializeCardPackages(H, nodeIds, packages, options) {
+  const cardPackages = {};
+  for (let nodeIndex = 0; nodeIndex < nodeIds.length; nodeIndex += 1) {
+    const column = packages.map((pkg, packageIndex) => ({
+      packageId: pkg.id,
+      packageLabel: pkg.label,
+      raw: H[packageIndex]?.[nodeIndex] ?? 0,
+    }));
+    const max = Math.max(...column.map((entry) => entry.raw), 0);
+    if (max <= 0) continue;
+    const memberships = column
+      .map((entry) => ({
+        packageId: entry.packageId,
+        strength: entry.raw / max,
+        packageLabel: entry.packageLabel,
+      }))
+      .filter((entry) => entry.strength >= options.minCardPackageStrength)
+      .sort(
+        (left, right) =>
+          right.strength - left.strength || left.packageId.localeCompare(right.packageId),
+      )
+      .slice(0, options.maxPackagesPerNode)
+      .map((entry) => ({
+        packageId: entry.packageId,
+        strength: roundNumber(entry.strength),
+        packageLabel: entry.packageLabel,
+      }));
+    if (memberships.length > 0) cardPackages[nodeIds[nodeIndex]] = memberships;
+  }
+  return cardPackages;
+}
+
+export function buildPackageModel({ decks, deckWeights, nodes, metadata, packageOptions = {} }) {
+  const options = normalizePackageOptions(packageOptions);
+  if (!options.enabled || decks.length === 0) {
+    return {
+      packages: [],
+      cardPackages: {},
+      deckPackages: {},
+      meta: {
+        ...serializePackageOptions(options),
+        enabled: false,
+        deckCount: decks.length,
+        nodeCount: 0,
+        generatedPackageCount: 0,
+        reconstructionError: 0,
+      },
+    };
+  }
+
+  const packageMatrix = buildPackageMatrix(decks, deckWeights, metadata, options);
+  const componentCount = Math.max(
+    0,
+    Math.min(
+      Math.floor(options.components),
+      packageMatrix.matrix.length,
+      packageMatrix.nodeIds.length,
+    ),
+  );
+  if (componentCount <= 0) {
+    return {
+      packages: [],
+      cardPackages: {},
+      deckPackages: {},
+      meta: {
+        ...serializePackageOptions(options),
+        components: componentCount,
+        deckCount: decks.length,
+        nodeCount: packageMatrix.nodeIds.length,
+        generatedPackageCount: 0,
+        reconstructionError: 0,
+      },
+    };
+  }
+
+  const nmf = runDeterministicNmf(packageMatrix.matrix, {
+    ...options,
+    components: componentCount,
+  });
+  const packageIds = Array.from({ length: componentCount }, (_, index) =>
+    `pkg-${String(index + 1).padStart(2, '0')}`,
+  );
+  const deckPackageRows = buildDeckPackageRows(nmf.W, packageIds);
+  const packages = packageIds.map((packageId, packageIndex) => {
+    const topNodes = buildPackageTopNodes(nmf.H, packageIndex, packageMatrix.nodeIds, nodes, options);
+    const supportEntries = deckPackageRows
+      .map((row, deckIndex) => ({
+        membership: row[packageIndex]?.strength ?? 0,
+        deckWeight: deckWeights[deckIndex] ?? 0,
+      }))
+      .filter((entry) => entry.membership >= options.minDeckMembership);
+    const weightedSupport = supportEntries.reduce(
+      (sum, entry) => sum + entry.membership * entry.deckWeight,
+      0,
+    );
+    const maxMembership = Math.max(
+      ...deckPackageRows.map((row) => row[packageIndex]?.strength ?? 0),
+      0,
+    );
+
+    return {
+      id: packageId,
+      label: makePackageLabel(topNodes),
+      topNodes,
+      exampleDecks: buildPackageExamples(decks, deckWeights, deckPackageRows, packageIndex, options),
+      supportDeckCount: supportEntries.length,
+      weightedSupport: roundNumber(weightedSupport),
+      maxMembership: roundNumber(maxMembership),
+    };
+  });
+
+  return {
+    packages,
+    cardPackages: serializeCardPackages(nmf.H, packageMatrix.nodeIds, packages, options),
+    deckPackages: serializeDeckPackages(decks, deckPackageRows, options),
+    meta: {
+      ...serializePackageOptions(options),
+      components: componentCount,
+      deckCount: decks.length,
+      nodeCount: packageMatrix.nodeIds.length,
+      generatedPackageCount: packages.length,
+      reconstructionError: roundNumber(nmf.reconstructionError),
+    },
+  };
+}
+
+export function scoreSharedPackages(sourcePackages, targetPackages, packageById, options = {}) {
+  const mergedOptions = normalizePackageOptions(options);
+  const targetByPackage = new Map(
+    (targetPackages ?? []).map((entry) => [entry.packageId, entry]),
+  );
+  const shared = [];
+  let best = 0;
+
+  for (const source of sourcePackages ?? []) {
+    const target = targetByPackage.get(source.packageId);
+    if (!target) continue;
+    const pkg = packageById.get(source.packageId);
+    if (!pkg) continue;
+    const reliability = Math.min(
+      1,
+      (pkg.weightedSupport ?? 0) / mergedOptions.reliabilityWeightedSupport,
+    );
+    const strength = Math.sqrt(source.strength * target.strength) * reliability;
+    if (strength > best) best = strength;
+    shared.push({
+      packageId: source.packageId,
+      label: pkg.label,
+      strength,
+    });
+  }
+
+  return {
+    score: Math.round(100 * best),
+    shared: shared
+      .sort((left, right) => right.strength - left.strength || left.packageId.localeCompare(right.packageId))
+      .slice(0, 3)
+      .map((entry) => ({
+        packageId: entry.packageId,
+        label: entry.label,
+        strength: roundNumber(entry.strength),
+      })),
+  };
+}
+
+export function blendAssociationScore(pairwiseScore, packageScore, packageBoostWeight = 0.3) {
+  const pairwise = Math.max(0, Number(pairwiseScore) || 0);
+  const packageValue = Math.max(0, Number(packageScore) || 0);
+  return Math.min(
+    100,
+    Math.round(Math.max(pairwise, pairwise * 0.85 + packageValue * packageBoostWeight)),
+  );
+}
+
+export function getPackageCandidateNodes(sourceNodeId, cardPackages, packageById) {
+  const sourcePackages = cardPackages[sourceNodeId] ?? [];
+  const candidates = new Map();
+
+  for (const packageRef of sourcePackages) {
+    const pkg = packageById.get(packageRef.packageId);
+    if (!pkg) continue;
+    for (const node of pkg.topNodes ?? []) {
+      if (node.nodeId === sourceNodeId) continue;
+      const score = Math.sqrt(packageRef.strength * node.weight);
+      candidates.set(node.nodeId, Math.max(candidates.get(node.nodeId) ?? 0, score));
+    }
+  }
+
+  return candidates;
+}
+
+export function getVisibleAssociationScore(link) {
+  const pairwiseScore = visibleStats(link)?.score ?? 0;
+  return Math.max(pairwiseScore, link.packages?.blendedMainScore ?? 0);
+}
+
+export function mergePackageEvidenceIntoIndex(index, packageModel, options = {}) {
+  const packageOptions = normalizePackageOptions(options.packageOptions ?? options);
+  const packageById = new Map((packageModel.packages ?? []).map((pkg) => [pkg.id, pkg]));
+  const sourceNodeIds = Object.keys(packageModel.cardPackages ?? {}).sort((left, right) =>
+    left.localeCompare(right),
+  );
+
+  for (const sourceNodeId of sourceNodeIds) {
+    let fromLinks = index.get(sourceNodeId);
+    if (!fromLinks) {
+      fromLinks = new Map();
+      index.set(sourceNodeId, fromLinks);
+    }
+    const targets = new Set(fromLinks.keys());
+    for (const targetNodeId of getPackageCandidateNodes(
+      sourceNodeId,
+      packageModel.cardPackages,
+      packageById,
+    ).keys()) {
+      targets.add(targetNodeId);
+    }
+
+    for (const targetNodeId of [...targets].sort((left, right) => left.localeCompare(right))) {
+      if (targetNodeId === sourceNodeId) continue;
+      const packageScore = scoreSharedPackages(
+        packageModel.cardPackages[sourceNodeId] ?? [],
+        packageModel.cardPackages[targetNodeId] ?? [],
+        packageById,
+        packageOptions,
+      );
+      if (packageScore.score <= 0 || packageScore.shared.length === 0) continue;
+      const link = fromLinks.get(targetNodeId) ?? { to: targetNodeId };
+      const pairwiseScore = link.mainMain?.score ?? 0;
+      link.packages = {
+        score: packageScore.score,
+        blendedMainScore: blendAssociationScore(
+          pairwiseScore,
+          packageScore.score,
+          packageOptions.packageBoostWeight,
+        ),
+        shared: packageScore.shared,
+      };
+      fromLinks.set(targetNodeId, link);
+    }
+  }
+}
+
 function mergeChannel(index, channelStats) {
   for (const [from, targets] of channelStats) {
     let fromLinks = index.get(from);
@@ -815,7 +1415,7 @@ function serializeNodes(nodes) {
 export function compareAssociationLinks(left, right, nodes) {
   const leftStats = visibleStats(left);
   const rightStats = visibleStats(right);
-  const scoreDelta = (rightStats?.score ?? 0) - (leftStats?.score ?? 0);
+  const scoreDelta = getVisibleAssociationScore(right) - getVisibleAssociationScore(left);
   if (scoreDelta !== 0) return scoreDelta;
   const coCountDelta = (rightStats?.coCount ?? 0) - (leftStats?.coCount ?? 0);
   if (coCountDelta !== 0) return coCountDelta;
@@ -997,6 +1597,7 @@ function buildOptions(userOptions) {
       ...(userOptions.weights ?? {}),
     },
     filters: buildFilterOptions(userOptions),
+    packageOptions: normalizePackageOptions(userOptions.packageOptions ?? {}),
   };
 }
 
@@ -1027,6 +1628,15 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
     calculateChannelStats(decks, deckWeights, clusterIds, 'collection', 'collection', options),
   );
 
+  const packageModel = buildPackageModel({
+    decks,
+    deckWeights,
+    nodes,
+    metadata,
+    packageOptions: options.packageOptions,
+  });
+  mergePackageEvidenceIntoIndex(index, packageModel, options);
+
   const clusterSizes = clusterSizesFromIds(clusterIds);
   const clusters = buildClusterProfiles(decks, deckWeights, clusterIds, nodes);
   const deckNames = {};
@@ -1038,7 +1648,7 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
 
   return {
     __meta: {
-      version: 3,
+      version: 4,
       generatedAt: new Date().toISOString(),
       mode,
       sourceDeckCount: summary.sourceDeckCount,
@@ -1059,7 +1669,9 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
         weights: options.weights,
         fullSpellbookMin: options.filters.fullSpellbookMin,
         fullAtlasMin: options.filters.fullAtlasMin,
+        packageOptions: serializePackageOptions(options.packageOptions),
       },
+      packageModel: packageModel.meta,
       deckNames,
       clustering: {
         algorithm: clustering.algorithm,
@@ -1077,6 +1689,9 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
     },
     nodes: serializeNodes(nodes),
     clusters,
+    packages: packageModel.packages,
+    cardPackages: packageModel.cardPackages,
+    deckPackages: packageModel.deckPackages,
     index: serializeIndex(index, options.topLinks, nodes),
   };
 }
@@ -1112,6 +1727,15 @@ Options:
       --atlas-weight <n>     Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.weights.atlas}
       --collection-weight <n> Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.weights.collection}
       --avatar-weight <n>    Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.weights.avatar}
+      --packages <n>         NMF package count. Defaults to ${DEFAULT_PACKAGE_OPTIONS.components}
+      --no-packages          Disable package model generation.
+      --package-iterations <n> Defaults to ${DEFAULT_PACKAGE_OPTIONS.iterations}
+      --package-seed <n>     Deterministic NMF seed. Defaults to ${DEFAULT_PACKAGE_OPTIONS.seed}
+      --package-min-card-strength <n> Minimum normalized card weight in package top nodes.
+      --package-min-membership <n> Minimum deck package membership to count as support.
+      --package-max-nodes <n> Maximum top nodes per package.
+      --package-max-packages-per-node <n> Maximum package memberships per card/avatar node.
+      --package-boost-weight <n> Package contribution in blended score.
       --allow-non-constructed Include non-Constructed source decks.
       --allow-incomplete    Include source decks below full-deck size.
   -h, --help                 Show this help.
@@ -1138,6 +1762,7 @@ export function parseArgs(argv) {
       ...DEFAULT_ASSOCIATION_OPTIONS,
       weights: { ...DEFAULT_ASSOCIATION_OPTIONS.weights },
       filters: { ...DEFAULT_ASSOCIATION_OPTIONS.filters },
+      packageOptions: normalizePackageOptions(DEFAULT_ASSOCIATION_OPTIONS.packageOptions),
     },
   };
 
@@ -1190,6 +1815,25 @@ export function parseArgs(argv) {
       options.associationOptions.weights.collection = parseNumber(next(), arg);
     } else if (arg === '--avatar-weight') {
       options.associationOptions.weights.avatar = parseNumber(next(), arg);
+    } else if (arg === '--packages') {
+      options.associationOptions.packageOptions.components = Math.max(1, Math.floor(parseNumber(next(), arg)));
+      options.associationOptions.packageOptions.enabled = true;
+    } else if (arg === '--no-packages') {
+      options.associationOptions.packageOptions.enabled = false;
+    } else if (arg === '--package-iterations') {
+      options.associationOptions.packageOptions.iterations = Math.max(0, Math.floor(parseNumber(next(), arg)));
+    } else if (arg === '--package-seed') {
+      options.associationOptions.packageOptions.seed = Math.floor(parseNumber(next(), arg));
+    } else if (arg === '--package-min-card-strength') {
+      options.associationOptions.packageOptions.minNodeStrength = Math.max(0, parseNumber(next(), arg));
+    } else if (arg === '--package-min-membership') {
+      options.associationOptions.packageOptions.minDeckMembership = Math.max(0, parseNumber(next(), arg));
+    } else if (arg === '--package-max-nodes') {
+      options.associationOptions.packageOptions.maxNodesPerPackage = Math.max(1, Math.floor(parseNumber(next(), arg)));
+    } else if (arg === '--package-max-packages-per-node') {
+      options.associationOptions.packageOptions.maxPackagesPerNode = Math.max(1, Math.floor(parseNumber(next(), arg)));
+    } else if (arg === '--package-boost-weight') {
+      options.associationOptions.packageOptions.packageBoostWeight = Math.max(0, parseNumber(next(), arg));
     } else if (arg === '--allow-non-constructed') {
       options.associationOptions.filters.constructedOnly = false;
     } else if (arg === '--allow-incomplete') {

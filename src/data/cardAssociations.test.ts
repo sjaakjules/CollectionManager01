@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   formatAssociationEvidence,
+  formatAssociationPackageEvidence,
   getAssociationNodeId,
   getAssociationClusterCardScore,
+  getAssociationClusterGroupCardScore,
   getAssociationClusterGroups,
   getAssociationClusters,
+  getAssociationPackageCardScore,
+  getAssociationPackages,
+  getAssociationDisplayScores,
   getAssociationScores,
   hasCollectionAssociationSource,
   loadCardAssociations,
@@ -38,8 +43,8 @@ function associations(mode: "balanced" | "meta" = "balanced"): CardAssociationDa
       acceptedDeckCount: 1,
       skippedDeckCount: 0,
       deckCount: 1,
-      clusterCount: 2,
-      clusterSizes: { "cluster-1": 1, "cluster-2": 1 },
+      clusterCount: 3,
+      clusterSizes: { "cluster-1": 1, "cluster-2": 1, "cluster-3": 1 },
       filters: {
         constructedOnly: true,
         fullDecksOnly: true,
@@ -71,6 +76,12 @@ function associations(mode: "balanced" | "meta" = "balanced"): CardAssociationDa
         kind: "card",
         displayName: "B",
         canonicalName: "b",
+      },
+      "card:c": {
+        id: "card:c",
+        kind: "card",
+        displayName: "C",
+        canonicalName: "c",
       },
       "avatar:a": {
         id: "avatar:a",
@@ -111,6 +122,45 @@ function associations(mode: "balanced" | "meta" = "balanced"): CardAssociationDa
         deckIds: ["deck-2"],
         cards: {},
       },
+      "cluster-3": {
+        id: "cluster-3",
+        label: "Cluster 3",
+        avatarIds: ["avatar:a"],
+        size: 4,
+        totalWeight: 4,
+        deckIds: ["deck-3"],
+        cards: {
+          "card:b": {
+            score: 72,
+            confidence: 0.75,
+            count: 3,
+            totalWeight: 4,
+          },
+        },
+      },
+    },
+    packages: [
+      {
+        id: "pkg-01",
+        label: "A / B / C",
+        topNodes: [
+          { nodeId: "card:a", weight: 1, displayName: "A" },
+          { nodeId: "card:b", weight: 0.8, displayName: "B" },
+          { nodeId: "card:c", weight: 0.6, displayName: "C" },
+        ],
+        exampleDecks: [{ deckId: "deck-1", deckName: "Example Deck", membership: 1 }],
+        supportDeckCount: 3,
+        weightedSupport: 6,
+        maxMembership: 1,
+      },
+    ],
+    cardPackages: {
+      "card:a": [{ packageId: "pkg-01", strength: 1, packageLabel: "A / B / C" }],
+      "card:b": [{ packageId: "pkg-01", strength: 0.8, packageLabel: "A / B / C" }],
+      "card:c": [{ packageId: "pkg-01", strength: 0.6, packageLabel: "A / B / C" }],
+    },
+    deckPackages: {
+      "deck-1": [{ packageId: "pkg-01", strength: 1 }],
     },
     index: {
       "card:a": [
@@ -122,6 +172,19 @@ function associations(mode: "balanced" | "meta" = "balanced"): CardAssociationDa
             collectionToMain: stats(33),
           },
           collectionCollection: stats(44),
+          packages: {
+            score: 80,
+            blendedMainScore: 37,
+            shared: [{ packageId: "pkg-01", label: "A / B / C", strength: 0.8 }],
+          },
+        },
+        {
+          to: "card:c",
+          packages: {
+            score: 60,
+            blendedMainScore: 18,
+            shared: [{ packageId: "pkg-01", label: "A / B / C", strength: 0.6 }],
+          },
         },
       ],
     },
@@ -146,6 +209,60 @@ describe("card association runtime helpers", () => {
     });
   });
 
+  it("returns package-boosted display scores without fabricating pairwise stats", () => {
+    const data = associations();
+
+    expect(getAssociationDisplayScores(data, "card:a", "card:b", "main")).toMatchObject({
+      main: { score: 11 },
+      collection: null,
+      mainScore: 37,
+      collectionScore: null,
+      packages: { score: 80, blendedMainScore: 37 },
+    });
+
+    expect(getAssociationDisplayScores(data, "card:a", "card:c", "main")).toMatchObject({
+      main: null,
+      collection: null,
+      mainScore: 18,
+      collectionScore: null,
+      packages: { score: 60, blendedMainScore: 18 },
+    });
+  });
+
+  it("keeps package boosts scoped to main targets", () => {
+    const data = associations();
+
+    expect(
+      getAssociationDisplayScores(data, "card:a", "card:b", "main", "collection"),
+    ).toMatchObject({
+      main: null,
+      collection: { score: 22 },
+      mainScore: null,
+      collectionScore: 22,
+      packages: null,
+    });
+
+    expect(
+      getAssociationDisplayScores(data, "card:a", "card:b", "collection", "main"),
+    ).toMatchObject({
+      main: { score: 33 },
+      collection: null,
+      mainScore: 37,
+      collectionScore: null,
+      packages: { score: 80, blendedMainScore: 37 },
+    });
+
+    expect(
+      getAssociationDisplayScores(data, "card:a", "card:b", "collection", "collection"),
+    ).toMatchObject({
+      main: null,
+      collection: { score: 44 },
+      mainScore: null,
+      collectionScore: 44,
+      packages: null,
+    });
+  });
+
   it("resolves canonical node ids with card and avatar kinds kept distinct", () => {
     const data = associations();
 
@@ -162,12 +279,37 @@ describe("card association runtime helpers", () => {
     );
   });
 
+  it("formats package evidence after pairwise evidence", () => {
+    const data = associations();
+    const display = getAssociationDisplayScores(data, "card:a", "card:b", "main");
+
+    expect(display.main).not.toBeNull();
+    const text = formatAssociationEvidence(data, display.main as LinkStats, display.packages);
+
+    expect(text).toContain("Score: 11");
+    expect(text).toContain("Displayed score: 37");
+    expect(text).toContain("Package relation");
+    expect(text).toContain("Shared package: A / B / C (80%)");
+    expect(text).toContain("Also appears in: Example Deck");
+    expect(text.indexOf("Confidence:")).toBeLessThan(text.indexOf("Package relation"));
+  });
+
+  it("formats package-only evidence", () => {
+    const data = associations();
+    const display = getAssociationDisplayScores(data, "card:a", "card:c", "main");
+
+    expect(formatAssociationPackageEvidence(display.packages, data)).toContain(
+      "Shared package: A / B / C (60%)",
+    );
+  });
+
   it("sorts clusters and returns card scores for a selected cluster", () => {
     const data = associations();
 
     expect(getAssociationClusters(data).map((cluster) => cluster.id)).toEqual([
       "cluster-1",
       "cluster-2",
+      "cluster-3",
     ]);
     expect(getAssociationClusterCardScore(data, "cluster-1", "card:a")).toMatchObject({
       score: 100,
@@ -178,8 +320,36 @@ describe("card association runtime helpers", () => {
     const groups = getAssociationClusterGroups(associations());
 
     expect(groups.map((group) => group.label)).toEqual(["A", "Multi-avatar"]);
-    expect(groups[0]?.clusters.map((cluster) => cluster.id)).toEqual(["cluster-1"]);
+    expect(groups[0]?.clusters.map((cluster) => cluster.id)).toEqual([
+      "cluster-1",
+      "cluster-3",
+    ]);
     expect(groups[1]?.clusters.map((cluster) => cluster.id)).toEqual(["cluster-2"]);
+  });
+
+  it("returns the best card score across every cluster in an avatar group", () => {
+    const data = associations();
+
+    expect(getAssociationClusterGroupCardScore(data, "avatar:a", "card:a")).toMatchObject({
+      score: 100,
+    });
+    expect(getAssociationClusterGroupCardScore(data, "avatar:a", "card:b")).toMatchObject({
+      score: 72,
+    });
+    expect(getAssociationClusterGroupCardScore(data, "avatar:a", "card:c")).toBeNull();
+  });
+
+  it("returns packages and package card scores for package browsing", () => {
+    const data = associations();
+
+    expect(getAssociationPackages(data).map((pkg) => pkg.id)).toEqual(["pkg-01"]);
+    expect(getAssociationPackageCardScore(data, "pkg-01", "card:b")).toMatchObject({
+      score: 80,
+      strength: 0.8,
+      packageId: "pkg-01",
+      packageLabel: "A / B / C",
+    });
+    expect(getAssociationPackageCardScore(data, "pkg-01", "avatar:a")).toBeNull();
   });
 
   it("loads the selected balanced or meta static asset", async () => {
