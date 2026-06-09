@@ -1601,6 +1601,25 @@ body {
   align-items: center;
 }
 
+.association-cluster-picker {
+  margin-top: 8px;
+  max-height: 136px;
+  overflow-y: auto;
+}
+
+.associations-avatar-controls {
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.associations-cluster-controls {
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(104, 104, 150, 0.25);
+}
+
 .associations-note {
   margin-top: 8px;
 }

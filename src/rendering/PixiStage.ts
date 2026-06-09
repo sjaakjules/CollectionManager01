@@ -85,11 +85,14 @@ import {
 } from "@/data/archetypeScores";
 import {
   formatAssociationEvidence,
+  getAssociationClusterCardScore,
   getAssociationScores,
   hasCollectionAssociationSource,
+  resolveAssociationNodeId,
   type AssociationSourceZone,
   type CardAssociationData,
   type LinkStats,
+  type NodeId,
 } from "@/data/cardAssociations";
 import {
   applyCardFilters,
@@ -154,6 +157,15 @@ export interface DeckAddPlacement {
   cardName: string;
   centerX: number;
   centerY: number;
+}
+
+export function mergeSelectedCardNames(
+  mainCardNames: string[],
+  zoneCardNames: string[],
+): string[] {
+  return [...new Set([...mainCardNames, ...zoneCardNames])].sort((a, b) =>
+    a.localeCompare(b),
+  );
 }
 
 export interface DeckAddRequestPayload {
@@ -279,13 +291,19 @@ interface ZoneDragState {
 
 type TouchCanvasTarget =
   | ({ kind: "empty" } & TouchGestureTarget)
-  | ({ kind: "card"; cardKey: string; cardName: string } & TouchGestureTarget)
+  | ({
+      kind: "card";
+      cardKey: string;
+      cardName: string;
+      cardType: CardType | null;
+    } & TouchGestureTarget)
   | ({
       kind: "zone-card";
       zoneCardKey: string;
       zoneId: string;
       instanceId: string;
       cardName: string;
+      cardType: CardType | null;
     } & TouchGestureTarget)
   | ({ kind: "zone-header"; zoneId: string } & TouchGestureTarget)
   | ({ kind: "zone"; zoneId: string } & TouchGestureTarget)
@@ -748,6 +766,7 @@ export class PixiStage {
   // Read-only association highlighting state
   private associationsEnabled = false;
   private associationSourceZone: AssociationSourceZone = "main";
+  private selectedAssociationClusterId: string | null = null;
   private selectedAssociationCardName: string | null = null;
   private cardAssociations: CardAssociationData | null = null;
 
@@ -1139,6 +1158,7 @@ export class PixiStage {
         zoneId: zoneCard.zoneId,
         instanceId: zoneCard.instanceId,
         cardName: zoneCard.cardName,
+        cardType: zoneCard.cardType,
       };
     }
 
@@ -1168,6 +1188,7 @@ export class PixiStage {
         key: `card:${cardKey}`,
         cardKey,
         cardName: data?.layout.name ?? cardKey,
+        cardType: data?.layout.type ?? null,
       };
     }
 
@@ -1406,7 +1427,7 @@ export class PixiStage {
       if (isDoubleTap) {
         if (
           this.selectedCards.has(target.cardKey) &&
-          this.canToggleAssociationSourceForCard(target.cardName)
+          this.canToggleAssociationSourceForCard(target.cardName, target.cardType)
         ) {
           this.onAssociationSourceZoneToggle?.(target.cardName);
         } else if (this.selectedArchetype && this.archetypeScores) {
@@ -4766,13 +4787,14 @@ export class PixiStage {
   private updateAssociationTooltip(
     worldPos: { x: number; y: number },
     cardName: string | null,
+    cardType: CardType | null = null,
   ): void {
     if (!cardName || !this.cardAssociations) {
       this.hideAssociationTooltip();
       return;
     }
 
-    const stats = this.getAssociationTooltipStats(cardName);
+    const stats = this.getAssociationTooltipStats(cardName, cardType);
     if (!stats.main && !stats.collection) {
       this.hideAssociationTooltip();
       return;
@@ -4908,7 +4930,7 @@ export class PixiStage {
     if (zoneCard) {
       this.setHoveredCard(zoneCard.cardName);
       this.updateDeckGraphHoverTooltip(worldPos);
-      this.updateAssociationTooltip(worldPos, zoneCard.cardName);
+      this.updateAssociationTooltip(worldPos, zoneCard.cardName, zoneCard.cardType);
       return;
     }
 
@@ -4931,7 +4953,7 @@ export class PixiStage {
     const cardName = data?.layout.name ?? null;
     this.setHoveredCard(cardName);
     this.updateDeckGraphHoverTooltip(worldPos);
-    this.updateAssociationTooltip(worldPos, cardName);
+    this.updateAssociationTooltip(worldPos, cardName, data?.layout.type ?? null);
   }
 
   private onPointerDown(event: FederatedPointerEvent): void {
@@ -5195,7 +5217,7 @@ export class PixiStage {
         const cardName = data?.layout.name ?? clickedCard;
         if (
           wasSelected &&
-          this.canToggleAssociationSourceForCard(cardName)
+          this.canToggleAssociationSourceForCard(cardName, data?.layout.type ?? null)
         ) {
           this.onAssociationSourceZoneToggle?.(cardName);
         } else if (this.selectedArchetype && this.archetypeScores) {
@@ -5805,13 +5827,19 @@ export class PixiStage {
   }
 
   private getSelectedCardNames(): string[] {
-    const names = new Set<string>();
+    const mainNames: string[] = [];
     for (const key of this.selectedCards) {
       const data = this.getSpriteData(key);
       if (!data) continue;
-      names.add(data.layout.name);
+      mainNames.push(data.layout.name);
     }
-    return [...names].sort((a, b) => a.localeCompare(b));
+    const zoneNames: string[] = [];
+    for (const key of this.selectedZoneCardKeys) {
+      const data = this.zoneCardSprites.get(key);
+      if (!data) continue;
+      zoneNames.push(data.cardName);
+    }
+    return mergeSelectedCardNames(mainNames, zoneNames);
   }
 
   private emitSelectionChange(): void {
@@ -7113,11 +7141,13 @@ export class PixiStage {
     enabled: boolean;
     selectedCardName: string | null;
     sourceZone: AssociationSourceZone;
+    selectedClusterId: string | null;
     associations: CardAssociationData | null;
   }): void {
     this.associationsEnabled = options.enabled;
     this.selectedAssociationCardName = options.selectedCardName;
     this.associationSourceZone = options.sourceZone;
+    this.selectedAssociationClusterId = options.selectedClusterId;
     this.cardAssociations = options.associations;
     this.applyAssociationHighlighting();
     if (!options.enabled) {
@@ -7383,63 +7413,124 @@ export class PixiStage {
   private applyAssociationHighlighting(): void {
     const selected = this.selectedAssociationCardName;
     const associations = this.cardAssociations;
-    const enabled = this.associationsEnabled && !!selected && !!associations;
+    const selectedClusterId = this.selectedAssociationClusterId;
+    const selectedNodeId = this.getSelectedAssociationNodeId();
+    const clusterEnabled =
+      this.associationsEnabled && !!associations && !!selectedClusterId;
+    const linkEnabled =
+      this.associationsEnabled && !!selected && !!associations && !!selectedNodeId;
 
-    const applyToSprite = (cardName: string, sprite: CardSprite): void => {
-      if (!enabled || cardName === selected) {
+    const applyToSprite = (
+      cardName: string,
+      cardType: CardType | null,
+      sprite: CardSprite,
+    ): void => {
+      const targetNodeId = associations
+        ? resolveAssociationNodeId(associations, cardName, cardType)
+        : null;
+      if (clusterEnabled) {
+        const score = getAssociationClusterCardScore(
+          associations,
+          selectedClusterId,
+          targetNodeId,
+        );
+        sprite.setAssociationClusterScore(score?.score ?? null, true);
+        return;
+      }
+
+      if (!linkEnabled || !targetNodeId) {
         sprite.setAssociationScores(null, null);
         return;
       }
+
+      if (targetNodeId === selectedNodeId) {
+        sprite.setAssociationScores(null, null);
+        return;
+      }
+
       const scores = getAssociationScores(
         associations,
-        selected,
-        cardName,
+        selectedNodeId,
+        targetNodeId,
         this.associationSourceZone,
       );
       sprite.setAssociationScores(
         scores.main?.score ?? null,
         scores.collection?.score ?? null,
+        true,
       );
     };
 
     for (const [name, data] of this.cardSprites) {
-      applyToSprite(name, data.sprite);
+      applyToSprite(name, data.layout.type, data.sprite);
     }
 
     for (const [, data] of this.deckSprites) {
-      applyToSprite(data.layout.name, data.sprite);
+      applyToSprite(data.layout.name, data.layout.type, data.sprite);
     }
 
     for (const [, data] of this.zoneCardSprites) {
-      applyToSprite(data.cardName, data.sprite);
+      applyToSprite(data.cardName, data.cardType, data.sprite);
     }
   }
 
-  private canToggleAssociationSourceForCard(cardName: string | null): boolean {
+  private getSelectedAssociationNodeId(): NodeId | null {
+    if (!this.cardAssociations || !this.selectedAssociationCardName) return null;
+
+    for (const key of this.selectedCards) {
+      const data = this.getSpriteData(key);
+      if (!data || data.layout.name !== this.selectedAssociationCardName) continue;
+      return resolveAssociationNodeId(
+        this.cardAssociations,
+        data.layout.name,
+        data.layout.type,
+      );
+    }
+
+    for (const key of this.selectedZoneCardKeys) {
+      const data = this.zoneCardSprites.get(key);
+      if (!data || data.cardName !== this.selectedAssociationCardName) continue;
+      return resolveAssociationNodeId(this.cardAssociations, data.cardName, data.cardType);
+    }
+
+    return resolveAssociationNodeId(this.cardAssociations, this.selectedAssociationCardName);
+  }
+
+  private canToggleAssociationSourceForCard(
+    cardName: string | null,
+    cardType: CardType | null = null,
+  ): boolean {
     return (
       this.associationsEnabled &&
       !!cardName &&
-      hasCollectionAssociationSource(this.cardAssociations, cardName)
+      hasCollectionAssociationSource(this.cardAssociations, cardName, cardType)
     );
   }
 
-  private getAssociationTooltipStats(cardName: string): {
+  private getAssociationTooltipStats(
+    cardName: string,
+    cardType: CardType | null,
+  ): {
     main: LinkStats | null;
     collection: LinkStats | null;
   } {
+    const selectedNodeId = this.getSelectedAssociationNodeId();
+    const targetNodeId = resolveAssociationNodeId(this.cardAssociations, cardName, cardType);
     if (
       !this.associationsEnabled ||
       !this.cardAssociations ||
       !this.selectedAssociationCardName ||
-      cardName === this.selectedAssociationCardName
+      !selectedNodeId ||
+      !targetNodeId ||
+      targetNodeId === selectedNodeId
     ) {
       return { main: null, collection: null };
     }
 
     return getAssociationScores(
       this.cardAssociations,
-      this.selectedAssociationCardName,
-      cardName,
+      selectedNodeId,
+      targetNodeId,
       this.associationSourceZone,
     );
   }

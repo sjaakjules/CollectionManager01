@@ -318,7 +318,11 @@ export class CardSprite extends Container {
     this.alpha = 1;
   }
 
-  setAssociationScores(mainScore: number | null, collectionScore: number | null): void {
+  setAssociationScores(
+    mainScore: number | null,
+    collectionScore: number | null,
+    dimInactive = false,
+  ): void {
     const hasMain = typeof mainScore === "number" && mainScore > 0;
     const hasCollection =
       typeof collectionScore === "number" && collectionScore > 0;
@@ -350,15 +354,46 @@ export class CardSprite extends Container {
 
     if (hasMain) {
       this.associationMainScoreText.text = String(mainScore);
-      this.associationMainScoreText.x = hasCollection ? w * 0.36 : w / 2;
+      this.associationMainScoreText.x = w / 2;
+      this.associationMainScoreText.y = hasCollection ? h * 0.42 : h / 2;
     }
     this.associationMainScoreText.visible = hasMain;
 
     if (hasCollection) {
       this.associationCollectionScoreText.text = String(collectionScore);
-      this.associationCollectionScoreText.x = hasMain ? w * 0.64 : w / 2;
+      this.associationCollectionScoreText.x = w / 2;
+      this.associationCollectionScoreText.y = hasMain ? h * 0.58 : h / 2;
     }
     this.associationCollectionScoreText.visible = hasCollection;
+
+    this.alpha = hasMain || hasCollection || !dimInactive ? 1 : 0.3;
+  }
+
+  setAssociationClusterScore(score: number | null, dimInactive = false): void {
+    const hasScore = typeof score === "number" && score > 0;
+    const w = this.displayWidth;
+    const h = this.displayHeight;
+
+    this.associationMainOutline.clear();
+    this.associationCollectionOutline.clear();
+    this.associationCollectionOutline.visible = false;
+    this.associationCollectionScoreText.visible = false;
+
+    if (hasScore) {
+      this.associationMainOutline.rect(3, 3, w - 6, h - 6);
+      this.associationMainOutline.stroke({
+        width: 3,
+        color: 0x4aa8ff,
+        alpha: Math.min(1, 0.35 + score / 120),
+      });
+      this.associationMainScoreText.text = String(score);
+      this.associationMainScoreText.x = w / 2;
+      this.associationMainScoreText.y = h / 2;
+    }
+
+    this.associationMainOutline.visible = hasScore;
+    this.associationMainScoreText.visible = hasScore;
+    this.alpha = hasScore || !dimInactive ? 1 : 0.3;
   }
 
   updateLOD(zoom: number): void {

@@ -83,3 +83,84 @@ describe('appReducer deck board additions', () => {
     expect(next.userData?.decks[0]?.boards.mainboard).toEqual([]);
   });
 });
+
+describe('appReducer associations state', () => {
+  it('clears archetype edit mode when associations are enabled', () => {
+    const withArchetype = appReducer(initialAppState, {
+      type: 'SET_SELECTED_ARCHETYPE',
+      archetype: 'control',
+    });
+
+    const next = appReducer(withArchetype, {
+      type: 'SET_ASSOCIATIONS_ENABLED',
+      enabled: true,
+    });
+
+    expect(next.ui.associationsEnabled).toBe(true);
+    expect(next.ui.selectedArchetype).toBeNull();
+  });
+
+  it('stores the selected association mode only in UI state', () => {
+    const withGroup = appReducer(initialAppState, {
+      type: 'SET_ASSOCIATION_CLUSTER_GROUP',
+      groupId: 'avatar:a',
+    });
+    const next = appReducer(withGroup, {
+      type: 'SET_ASSOCIATION_MODE',
+      mode: 'meta',
+    });
+
+    expect(next.ui.associationMode).toBe('meta');
+    expect(next.ui.associationClusterGroupId).toBeNull();
+    expect(next.ui.associationClusterId).toBeNull();
+    expect(next.userData).toBeNull();
+  });
+
+  it('clears the selected association cluster when cluster group changes', () => {
+    const withCluster = appReducer(
+      appReducer(initialAppState, {
+        type: 'SET_ASSOCIATION_CLUSTER_GROUP',
+        groupId: 'avatar:a',
+      }),
+      {
+        type: 'SET_ASSOCIATION_CLUSTER',
+        clusterId: 'cluster-1',
+      },
+    );
+
+    const next = appReducer(withCluster, {
+      type: 'SET_ASSOCIATION_CLUSTER_GROUP',
+      groupId: 'avatar:b',
+    });
+
+    expect(next.ui.associationClusterGroupId).toBe('avatar:b');
+    expect(next.ui.associationClusterId).toBeNull();
+  });
+
+  it('clears selected association clusters when source zone changes or associations close', () => {
+    const withCluster = appReducer(
+      appReducer(initialAppState, {
+        type: 'SET_ASSOCIATION_CLUSTER_GROUP',
+        groupId: 'avatar:a',
+      }),
+      {
+        type: 'SET_ASSOCIATION_CLUSTER',
+        clusterId: 'cluster-1',
+      },
+    );
+
+    const withSource = appReducer(withCluster, {
+      type: 'SET_ASSOCIATION_SOURCE_ZONE',
+      sourceZone: 'collection',
+    });
+    const closed = appReducer(withCluster, {
+      type: 'SET_ASSOCIATIONS_ENABLED',
+      enabled: false,
+    });
+
+    expect(withSource.ui.associationClusterId).toBeNull();
+    expect(withSource.ui.associationClusterGroupId).toBe('avatar:a');
+    expect(closed.ui.associationClusterId).toBeNull();
+    expect(closed.ui.associationClusterGroupId).toBeNull();
+  });
+});

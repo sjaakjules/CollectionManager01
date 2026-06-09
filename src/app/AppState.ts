@@ -27,7 +27,7 @@ import {
   ensureCardFilterState,
   type CardFilterState,
 } from '@/data/cardFilters';
-import type { AssociationSourceZone } from '@/data/cardAssociations';
+import type { AssociationMode, AssociationSourceZone } from '@/data/cardAssociations';
 
 // ============================================================================
 // State Shape
@@ -71,7 +71,10 @@ export interface UIState {
   cardFilters: CardFilterState;
   selectedCardNames: string[];
   associationsEnabled: boolean;
+  associationMode: AssociationMode;
   associationSourceZone: AssociationSourceZone;
+  associationClusterGroupId: string | null;
+  associationClusterId: string | null;
 }
 
 export interface Notification {
@@ -107,7 +110,10 @@ export const initialAppState: AppState = {
     cardFilters: createDefaultCardFilters(),
     selectedCardNames: [],
     associationsEnabled: false,
+    associationMode: 'balanced',
     associationSourceZone: 'main',
+    associationClusterGroupId: null,
+    associationClusterId: null,
   },
 };
 
@@ -137,7 +143,10 @@ export type AppAction =
   | { type: 'CLEAR_CARD_FILTERS' }
   | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
   | { type: 'SET_ASSOCIATIONS_ENABLED'; enabled: boolean }
+  | { type: 'SET_ASSOCIATION_MODE'; mode: AssociationMode }
   | { type: 'SET_ASSOCIATION_SOURCE_ZONE'; sourceZone: AssociationSourceZone }
+  | { type: 'SET_ASSOCIATION_CLUSTER_GROUP'; groupId: string | null }
+  | { type: 'SET_ASSOCIATION_CLUSTER'; clusterId: string | null }
   | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
   | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData }
   | { type: 'SET_CANVAS_AREAS'; canvasAreas: CanvasArea[] };
@@ -410,6 +419,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ...state.ui,
           associationsEnabled: action.enabled,
           associationSourceZone: action.enabled ? state.ui.associationSourceZone : 'main',
+          associationClusterGroupId: action.enabled ? state.ui.associationClusterGroupId : null,
+          associationClusterId: action.enabled ? state.ui.associationClusterId : null,
           selectedArchetype: action.enabled ? null : state.ui.selectedArchetype,
         },
         userData:
@@ -418,10 +429,37 @@ export function appReducer(state: AppState, action: AppAction): AppState {
             : state.userData,
       };
 
+    case 'SET_ASSOCIATION_MODE':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          associationMode: action.mode,
+          associationClusterGroupId: null,
+          associationClusterId: null,
+        },
+      };
+
     case 'SET_ASSOCIATION_SOURCE_ZONE':
       return {
         ...state,
-        ui: { ...state.ui, associationSourceZone: action.sourceZone },
+        ui: { ...state.ui, associationSourceZone: action.sourceZone, associationClusterId: null },
+      };
+
+    case 'SET_ASSOCIATION_CLUSTER_GROUP':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          associationClusterGroupId: action.groupId,
+          associationClusterId: null,
+        },
+      };
+
+    case 'SET_ASSOCIATION_CLUSTER':
+      return {
+        ...state,
+        ui: { ...state.ui, associationClusterId: action.clusterId },
       };
 
     case 'SET_CANVAS_LABELS':

@@ -16,6 +16,7 @@ import {
   type ArchetypeScores,
 } from "@/data/archetypeScores";
 import {
+  getAssociationClusterGroups,
   hasCollectionAssociationSource,
   loadCardAssociations,
   type CardAssociationData,
@@ -193,10 +194,21 @@ export function BottomPanel({
     associations,
     selectedAssociationCardName,
   );
+  const associationClusterGroups = useMemo(
+    () => getAssociationClusterGroups(associations),
+    [associations],
+  );
+  const selectedAssociationClusterGroup = useMemo(
+    () =>
+      associationClusterGroups.find(
+        (group) => group.id === state.ui.associationClusterGroupId,
+      ) ?? null,
+    [associationClusterGroups, state.ui.associationClusterGroupId],
+  );
 
   useEffect(() => {
     let cancelled = false;
-    loadCardAssociations()
+    loadCardAssociations(state.ui.associationMode)
       .then((data) => {
         if (!cancelled) setAssociations(data);
       })
@@ -210,13 +222,23 @@ export function BottomPanel({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [state.ui.associationMode]);
 
   useEffect(() => {
     if (state.ui.associationSourceZone !== "collection") return;
     if (canUseCollectionSource) return;
     dispatch({ type: "SET_ASSOCIATION_SOURCE_ZONE", sourceZone: "main" });
   }, [canUseCollectionSource, dispatch, state.ui.associationSourceZone]);
+
+  useEffect(() => {
+    if (!state.ui.associationClusterGroupId) return;
+    if (selectedAssociationClusterGroup) return;
+    dispatch({ type: "SET_ASSOCIATION_CLUSTER_GROUP", groupId: null });
+  }, [
+    dispatch,
+    selectedAssociationClusterGroup,
+    state.ui.associationClusterGroupId,
+  ]);
 
   const handleOpenAccount = useCallback(() => {
     dispatch({ type: "TOGGLE_LOGIN_MODAL" });
@@ -273,6 +295,8 @@ export function BottomPanel({
     setHighlightRemoveMode(false);
     dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: true });
     dispatch({ type: "SET_ASSOCIATION_SOURCE_ZONE", sourceZone: "main" });
+    dispatch({ type: "SET_ASSOCIATION_CLUSTER_GROUP", groupId: null });
+    dispatch({ type: "SET_ASSOCIATION_CLUSTER", clusterId: null });
     dispatch({ type: "SET_SELECTED_ARCHETYPE", archetype: null });
     setActiveToolTab("associations");
   }, [dispatch]);
@@ -702,6 +726,34 @@ export function BottomPanel({
                   <button
                     type="button"
                     className={`archetype-button ${
+                      state.ui.associationMode === "balanced" ? "active" : ""
+                    }`}
+                    onClick={() =>
+                      dispatch({
+                        type: "SET_ASSOCIATION_MODE",
+                        mode: "balanced",
+                      })
+                    }
+                  >
+                    Balanced
+                  </button>
+                  <button
+                    type="button"
+                    className={`archetype-button ${
+                      state.ui.associationMode === "meta" ? "active" : ""
+                    }`}
+                    onClick={() =>
+                      dispatch({
+                        type: "SET_ASSOCIATION_MODE",
+                        mode: "meta",
+                      })
+                    }
+                  >
+                    Meta
+                  </button>
+                  <button
+                    type="button"
+                    className={`archetype-button ${
                       state.ui.associationSourceZone === "main" ? "active" : ""
                     }`}
                     onClick={() =>
@@ -749,6 +801,71 @@ export function BottomPanel({
                     ? `Selected: ${selectedAssociationCardName}`
                     : "Select one card to show associations."}
                 </p>
+                {associationClusterGroups.length > 0 && (
+                  <div className="association-cluster-picker">
+                    <div className="bottom-panel-buttons associations-avatar-controls">
+                      {associationClusterGroups.map((group) => {
+                        return (
+                          <button
+                            key={group.id}
+                            type="button"
+                            className={`archetype-button ${
+                              state.ui.associationClusterGroupId === group.id ? "active" : ""
+                            }`}
+                            onClick={() =>
+                              dispatch({
+                                type: "SET_ASSOCIATION_CLUSTER_GROUP",
+                                groupId:
+                                  state.ui.associationClusterGroupId === group.id
+                                    ? null
+                                    : group.id,
+                              })
+                            }
+                            title={`${group.clusters.length} cluster${
+                              group.clusters.length === 1 ? "" : "s"
+                            }`}
+                          >
+                            {group.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedAssociationClusterGroup && (
+                      <div className="bottom-panel-buttons associations-cluster-controls">
+                        {selectedAssociationClusterGroup.clusters.map((cluster) => {
+                          const deckNames = cluster.deckIds
+                            .map((deckId) => associations?.__meta.deckNames[deckId] ?? deckId)
+                            .slice(0, 8);
+                          const title =
+                            deckNames.length > 0
+                              ? `${cluster.label}\n${deckNames.join("\n")}`
+                              : cluster.label;
+                          return (
+                            <button
+                              key={cluster.id}
+                              type="button"
+                              className={`archetype-button ${
+                                state.ui.associationClusterId === cluster.id ? "active" : ""
+                              }`}
+                              onClick={() =>
+                                dispatch({
+                                  type: "SET_ASSOCIATION_CLUSTER",
+                                  clusterId:
+                                    state.ui.associationClusterId === cluster.id
+                                      ? null
+                                      : cluster.id,
+                                })
+                              }
+                              title={title}
+                            >
+                              {cluster.label} ({cluster.size})
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -165,7 +165,7 @@ export function PixiCanvas({
 
   useEffect(() => {
     let cancelled = false;
-    loadCardAssociations()
+    loadCardAssociations(state.ui.associationMode)
       .then((data) => {
         if (!cancelled) setCardAssociations(data);
       })
@@ -179,7 +179,7 @@ export function PixiCanvas({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [state.ui.associationMode]);
 
   // Route archetype score saves into userData for both guest and logged-in users.
   useEffect(() => {
@@ -391,10 +391,12 @@ export function PixiCanvas({
       enabled: state.ui.associationsEnabled,
       selectedCardName: selectedAssociationCardName,
       sourceZone: state.ui.associationSourceZone,
+      selectedClusterId: state.ui.associationClusterId,
       associations: cardAssociations,
     });
   }, [
     cardAssociations,
+    state.ui.associationClusterId,
     selectedAssociationCardName,
     state.ui.associationSourceZone,
     state.ui.associationsEnabled,

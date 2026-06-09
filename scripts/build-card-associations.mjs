@@ -2,9 +2,21 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DEFAULT_ARCHIVE_PATH = 'tmp/deckArchive.json';
+const DEFAULT_ARCHIVE_PATH = 'offlineData/deckArchive.json';
 const DEFAULT_CARD_DATA_PATH = 'docs/Sorcery_CardInfo.json';
-const DEFAULT_OUTPUT_PATH = 'public/assets/sorcery_card_associations.json';
+const DEFAULT_OUTPUT_BASE_PATH = 'public/assets/sorcery_card_associations';
+const DEFAULT_SKIPPED_SPELLBOOK_MIN = 50;
+const DEFAULT_SKIPPED_ATLAS_MIN = 20;
+const DEFAULT_FULL_SPELLBOOK_MIN = 60;
+const DEFAULT_FULL_ATLAS_MIN = 30;
+const ASSOCIATION_MODES = ['balanced', 'meta'];
+const ELEMENT_ORDER = ['air', 'earth', 'fire', 'water'];
+const ELEMENT_SYMBOLS = {
+  air: '🜁',
+  earth: '🜃',
+  fire: '🜂',
+  water: '🜄',
+};
 
 export const DEFAULT_ASSOCIATION_OPTIONS = {
   topLinks: 60,
@@ -12,9 +24,16 @@ export const DEFAULT_ASSOCIATION_OPTIONS = {
   similarityThreshold: 0.32,
   weights: {
     spellbook: 0.75,
-    atlas: 0.15,
-    collection: 0.05,
+    atlas: 0.2,
+    collection: 0,
     avatar: 0.05,
+  },
+  filters: {
+    constructedOnly: true,
+    fullDecksOnly: true,
+    includeSkipped: false,
+    fullSpellbookMin: DEFAULT_FULL_SPELLBOOK_MIN,
+    fullAtlasMin: DEFAULT_FULL_ATLAS_MIN,
   },
 };
 
@@ -68,6 +87,40 @@ function addEvidence(root, from, to, deckId, clusterId) {
   evidence.clusterIds.add(clusterId);
 }
 
+export function canonicalizeAssociationName(name) {
+  return String(name ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/['’`]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function associationNodeId(kind, name) {
+  const canonicalName = canonicalizeAssociationName(name);
+  return `${kind}:${canonicalName || 'unknown'}`;
+}
+
+function createNode(kind, displayName) {
+  const canonicalName = canonicalizeAssociationName(displayName);
+  return {
+    id: `${kind}:${canonicalName || 'unknown'}`,
+    kind,
+    displayName,
+    canonicalName,
+  };
+}
+
+function registerNode(nodes, kind, displayName) {
+  if (!displayName) return null;
+  const node = createNode(kind, displayName);
+  const existing = nodes.get(node.id);
+  if (existing) return existing.id;
+  nodes.set(node.id, node);
+  return node.id;
+}
+
 function getCardStats(card) {
   const guardian = isRecord(card?.guardian) ? card.guardian : {};
   const setStats = Array.isArray(card?.sets)
@@ -81,20 +134,53 @@ function getCardStats(card) {
         : typeof setStats?.rarity === 'string' && setStats.rarity in RARITY_LIMITS
           ? setStats.rarity
           : null,
+    elements: parseElementList(card?.elements),
+    thresholds: normalizeThresholds(guardian.thresholds),
   };
+}
+
+function normalizeThresholds(thresholds) {
+  const normalized = {};
+  if (!isRecord(thresholds)) return normalized;
+  for (const element of ELEMENT_ORDER) {
+    const value = Number(thresholds[element]);
+    if (Number.isFinite(value) && value > 0) normalized[element] = value;
+  }
+  return normalized;
+}
+
+function normalizeElementName(value) {
+  const normalized = canonicalizeAssociationName(String(value ?? ''));
+  return ELEMENT_ORDER.find((element) => normalized.includes(element)) ?? null;
+}
+
+function parseElementList(value) {
+  if (Array.isArray(value)) {
+    return [...new Set(value.map(normalizeElementName).filter(Boolean))];
+  }
+  if (typeof value !== 'string') return [];
+  return [
+    ...new Set(
+      value
+        .split(/[,/|+&\s]+/u)
+        .map(normalizeElementName)
+        .filter(Boolean),
+    ),
+  ];
 }
 
 export function buildCardMetadata(cards) {
   const metadata = new Map();
   for (const card of Array.isArray(cards) ? cards : []) {
     if (!card || typeof card.name !== 'string' || !card.name.trim()) continue;
-    metadata.set(card.name, getCardStats(card));
+    const kind = getCardStats(card).type === 'Avatar' ? 'avatar' : 'card';
+    metadata.set(associationNodeId(kind, card.name), getCardStats(card));
   }
   return metadata;
 }
 
-export function getRarityLimit(cardName, metadata, quantity = 1) {
-  const rarity = metadata.get(cardName)?.rarity ?? null;
+export function getRarityLimit(nodeId, metadata, quantity = 1) {
+  const rarity = metadata.get(nodeId)?.rarity ?? null;
   if (rarity && rarity in RARITY_LIMITS) return RARITY_LIMITS[rarity];
   return Math.max(1, quantity);
 }
@@ -105,62 +191,218 @@ export function copySaturation(quantity, rarityLimit) {
   return Math.min(1, quantity / rarityLimit);
 }
 
-function boardToQuantityMap(board) {
+function boardToQuantityMap(board, nodes, kind = 'card') {
   const map = new Map();
   for (const [name, quantity] of sortedEntries(board)) {
-    map.set(name, quantity);
+    const nodeId = registerNode(nodes, kind, name);
+    if (!nodeId) continue;
+    map.set(nodeId, (map.get(nodeId) ?? 0) + quantity);
   }
   return map;
 }
 
-export function normalizeDeckArchive(archive) {
-  const decks = [];
+function boardQuantityTotal(board) {
+  return sortedEntries(board).reduce((sum, [, quantity]) => sum + quantity, 0);
+}
+
+function getDeckCardCount(deckinfo, boardName) {
+  const cardCount = isRecord(deckinfo?.cardCount) ? deckinfo.cardCount : {};
+  const counted = Number(cardCount[boardName]);
+  if (Number.isFinite(counted) && counted >= 0) return counted;
+
+  const cards = isRecord(deckinfo?.cards) ? deckinfo.cards : {};
+  return boardQuantityTotal(cards[boardName]);
+}
+
+function getDeckFormat(entry, deckinfo) {
+  const candidates = [
+    deckinfo?.format,
+    entry?.format,
+    entry?.metadata?.format,
+    entry?.hint?.format,
+    entry?.deckinfo?.format,
+  ];
+  return candidates.find((value) => typeof value === 'string' && value.trim())?.trim() ?? '';
+}
+
+function isConstructedDeck(entry, deckinfo) {
+  const format = getDeckFormat(entry, deckinfo);
+  return !format || format.toLowerCase() === 'constructed';
+}
+
+function isFullDeck(deckinfo, filters) {
+  return (
+    getDeckCardCount(deckinfo, 'spellbook') >= filters.fullSpellbookMin &&
+    getDeckCardCount(deckinfo, 'atlas') >= filters.fullAtlasMin
+  );
+}
+
+function createFilterSummary(sourceDeckCount) {
+  return {
+    sourceDeckCount,
+    acceptedDeckCount: 0,
+    skippedDeckCount: 0,
+    missingDeckinfo: 0,
+    nonConstructed: 0,
+    incomplete: 0,
+  };
+}
+
+function inferDeckElements(spellbook, atlas, metadata) {
+  const scores = new Map();
+  for (const board of [spellbook, atlas]) {
+    for (const [nodeId, quantity] of board) {
+      const stats = metadata.get(nodeId);
+      if (!stats) continue;
+      const elements =
+        stats.elements.length > 0 ? stats.elements : Object.keys(stats.thresholds ?? {});
+      for (const element of elements) {
+        const threshold = stats.thresholds?.[element] ?? 1;
+        incrementMap(scores, element, quantity * Math.max(1, threshold));
+      }
+    }
+  }
+
+  return [...scores]
+    .filter(([element]) => ELEMENT_ORDER.includes(element))
+    .sort((left, right) => {
+      if (right[1] !== left[1]) return right[1] - left[1];
+      return ELEMENT_ORDER.indexOf(left[0]) - ELEMENT_ORDER.indexOf(right[0]);
+    })
+    .slice(0, 2)
+    .map(([element]) => element);
+}
+
+function normalizeDeckElements(deckinfo, spellbook, atlas, metadata) {
+  const declared = parseElementList(deckinfo.elements);
+  return declared.length > 0 ? declared.slice(0, 2) : inferDeckElements(spellbook, atlas, metadata);
+}
+
+function normalizeDeckArchiveInternal(archive, nodes, filters = {}, metadata = new Map()) {
+  const mergedFilters = {
+    ...DEFAULT_ASSOCIATION_OPTIONS.filters,
+    ...filters,
+  };
   const entries = Array.isArray(archive)
     ? archive.map((deck, index) => [deck?.deckinfo?.id ?? `deck-${index + 1}`, deck])
     : Object.entries(isRecord(archive) ? archive : {});
+  const decks = [];
+  const summary = createFilterSummary(entries.length);
 
   for (const [archiveId, value] of entries) {
     const deckinfo = isRecord(value?.deckinfo) ? value.deckinfo : value;
-    if (!isRecord(deckinfo)) continue;
+    if (!isRecord(deckinfo)) {
+      summary.missingDeckinfo += 1;
+      summary.skippedDeckCount += 1;
+      continue;
+    }
+    if (mergedFilters.constructedOnly && !isConstructedDeck(value, deckinfo)) {
+      summary.nonConstructed += 1;
+      summary.skippedDeckCount += 1;
+      continue;
+    }
+    if (mergedFilters.fullDecksOnly && !isFullDeck(deckinfo, mergedFilters)) {
+      summary.incomplete += 1;
+      summary.skippedDeckCount += 1;
+      continue;
+    }
 
     const id =
       typeof deckinfo.id === 'string' && deckinfo.id.trim()
         ? deckinfo.id.trim()
         : String(archiveId);
     const cards = isRecord(deckinfo.cards) ? deckinfo.cards : {};
-    const spellbook = boardToQuantityMap(cards.spellbook);
-    const atlas = boardToQuantityMap(cards.atlas);
-    const collection = boardToQuantityMap(cards.collection);
+    const spellbook = boardToQuantityMap(cards.spellbook, nodes);
+    const atlas = boardToQuantityMap(cards.atlas, nodes);
+    const collection = boardToQuantityMap(cards.collection, nodes);
     const avatar =
       typeof deckinfo.avatar === 'string' && deckinfo.avatar.trim()
         ? deckinfo.avatar.trim()
         : null;
+    const avatarNodeId = avatar ? registerNode(nodes, 'avatar', avatar) : null;
     const main = new Map();
 
-    if (avatar) main.set(avatar, 1);
-    for (const [name, quantity] of spellbook) main.set(name, quantity);
-    for (const [name, quantity] of atlas) {
-      main.set(name, (main.get(name) ?? 0) + quantity);
+    if (avatarNodeId) main.set(avatarNodeId, 1);
+    for (const [nodeId, quantity] of spellbook) main.set(nodeId, quantity);
+    for (const [nodeId, quantity] of atlas) {
+      main.set(nodeId, (main.get(nodeId) ?? 0) + quantity);
     }
 
     decks.push({
       id,
       name: typeof deckinfo.name === 'string' && deckinfo.name.trim() ? deckinfo.name.trim() : id,
-      avatar,
+      avatar: avatarNodeId,
       spellbook,
       atlas,
       collection,
       main,
+      elements: normalizeDeckElements(deckinfo, spellbook, atlas, metadata),
     });
+    summary.acceptedDeckCount += 1;
   }
 
-  return decks.sort((left, right) => left.id.localeCompare(right.id));
+  return {
+    decks: decks.sort((left, right) => left.id.localeCompare(right.id)),
+    summary,
+  };
+}
+
+export function normalizeDeckArchive(archive, filters = {}) {
+  return normalizeDeckArchiveInternal(archive, new Map(), {
+    constructedOnly: false,
+    fullDecksOnly: false,
+    ...filters,
+  }).decks;
+}
+
+export function filterSkippedArchiveDecks(skippedArchive, options = {}) {
+  const minSpellbook = options.minSpellbook ?? DEFAULT_SKIPPED_SPELLBOOK_MIN;
+  const minAtlas = options.minAtlas ?? DEFAULT_SKIPPED_ATLAS_MIN;
+  const entries = Object.entries(isRecord(skippedArchive) ? skippedArchive : {});
+  const accepted = {};
+  const summary = {
+    total: entries.length,
+    accepted: 0,
+    missingDeckinfo: 0,
+    belowMinimum: 0,
+  };
+
+  for (const [id, entry] of entries) {
+    const deckinfo = isRecord(entry?.deckinfo) ? entry.deckinfo : null;
+    if (!deckinfo) {
+      summary.missingDeckinfo += 1;
+      continue;
+    }
+
+    const spellbookCount = getDeckCardCount(deckinfo, 'spellbook');
+    const atlasCount = getDeckCardCount(deckinfo, 'atlas');
+    if (spellbookCount < minSpellbook || atlasCount < minAtlas) {
+      summary.belowMinimum += 1;
+      continue;
+    }
+
+    accepted[id] = { deckinfo, hint: entry.hint, status: entry.status, reason: entry.reason };
+    summary.accepted += 1;
+  }
+
+  return { archive: accepted, summary };
+}
+
+export function mergeArchives(...archives) {
+  const merged = {};
+  for (const archive of archives) {
+    for (const [id, entry] of Object.entries(isRecord(archive) ? archive : {})) {
+      if (isRecord(merged[id]?.deckinfo)) continue;
+      merged[id] = entry;
+    }
+  }
+  return merged;
 }
 
 export function buildSaturationVector(board, metadata) {
   const vector = new Map();
-  for (const [name, quantity] of board) {
-    vector.set(name, copySaturation(quantity, getRarityLimit(name, metadata, quantity)));
+  for (const [nodeId, quantity] of board) {
+    vector.set(nodeId, copySaturation(quantity, getRarityLimit(nodeId, metadata, quantity)));
   }
   return vector;
 }
@@ -255,7 +497,9 @@ function calculateModularity(adjacency, communities) {
   return modularity;
 }
 
-export function runLouvainLikeClustering(adjacency) {
+// Deterministic greedy modularity clustering, a Louvain-style approximation
+// without graph coarsening.
+export function runGreedyModularityClustering(adjacency) {
   const communities = adjacency.map((_, index) => index);
   if (adjacency.every((neighbors) => neighbors.size === 0)) {
     return communities.map((_, index) => `cluster-${index + 1}`);
@@ -316,7 +560,7 @@ export function runLouvainLikeClustering(adjacency) {
   });
 }
 
-export function calculateDeckWeights(clusterIds) {
+export function calculateBalancedDeckWeights(clusterIds) {
   const sizes = new Map();
   for (const clusterId of clusterIds) {
     sizes.set(clusterId, (sizes.get(clusterId) ?? 0) + 1);
@@ -324,9 +568,20 @@ export function calculateDeckWeights(clusterIds) {
   return clusterIds.map((clusterId) => 1 / Math.sqrt(sizes.get(clusterId) ?? 1));
 }
 
+export function calculateMetaDeckWeights(clusterIds) {
+  return clusterIds.map(() => 1);
+}
+
+export function calculateDeckWeights(clusterIds, mode = 'balanced') {
+  return mode === 'meta'
+    ? calculateMetaDeckWeights(clusterIds)
+    : calculateBalancedDeckWeights(clusterIds);
+}
+
 function channelKey(sourceZone, targetZone) {
   if (sourceZone === 'main' && targetZone === 'main') return 'mainMain';
-  if (sourceZone === 'main' && targetZone === 'collection') return 'mainCollection';
+  if (sourceZone === 'main' && targetZone === 'collection') return 'mainToCollection';
+  if (sourceZone === 'collection' && targetZone === 'main') return 'collectionToMain';
   if (sourceZone === 'collection' && targetZone === 'collection') return 'collectionCollection';
   throw new Error(`Unsupported association channel: ${sourceZone}-${targetZone}`);
 }
@@ -349,8 +604,8 @@ function calculateChannelStats(decks, deckWeights, clusterIds, sourceZone, targe
     const sourceCards = [...zoneMap(deck, sourceZone).keys()].sort((a, b) => a.localeCompare(b));
     const targetCards = [...zoneMap(deck, targetZone).keys()].sort((a, b) => a.localeCompare(b));
 
-    for (const card of sourceCards) incrementMap(countA, card, weight);
-    for (const card of targetCards) incrementMap(countB, card, weight);
+    for (const nodeId of sourceCards) incrementMap(countA, nodeId, weight);
+    for (const nodeId of targetCards) incrementMap(countB, nodeId, weight);
 
     for (const from of sourceCards) {
       for (const to of targetCards) {
@@ -376,7 +631,7 @@ function calculateChannelStats(decks, deckWeights, clusterIds, sourceZone, targe
       const lift = baseline > 0 ? confidence / baseline : 0;
       const reliability = coCount / (coCount + minEvidence);
       const confidenceComponent = Math.sqrt(confidence);
-      const liftComponent = Math.min(1, Math.log2(lift + 1) / 3);
+      const liftComponent = lift <= 1 ? 0 : Math.min(1, Math.log2(lift) / 2);
       const score = Math.round(100 * reliability * confidenceComponent * liftComponent);
       if (score <= 0) continue;
 
@@ -432,46 +687,245 @@ function mergeChannel(index, channelStats) {
     }
     for (const [to, stats] of targets) {
       const existing = fromLinks.get(to) ?? { to };
-      existing[stats.channel] = serializeStats(stats);
+      const serializedStats = serializeStats(stats);
+      if (stats.channel === 'mainToCollection' || stats.channel === 'collectionToMain') {
+        existing.mainCollection = {
+          ...(existing.mainCollection ?? {}),
+          [stats.channel]: serializedStats,
+        };
+      } else {
+        existing[stats.channel] = serializedStats;
+      }
       fromLinks.set(to, existing);
     }
   }
 }
 
-function topScore(link) {
-  return Math.max(
-    link.mainMain?.score ?? 0,
-    link.mainCollection?.score ?? 0,
-    link.collectionCollection?.score ?? 0,
-  );
+function linkStats(link) {
+  return [
+    link.mainMain,
+    link.mainCollection?.mainToCollection,
+    link.mainCollection?.collectionToMain,
+    link.collectionCollection,
+  ].filter(Boolean);
 }
 
-function serializeIndex(index, topLinks) {
+function visibleStats(link) {
+  return linkStats(link).sort(
+    (left, right) =>
+      right.score - left.score ||
+      right.coCount - left.coCount ||
+      right.confidence - left.confidence ||
+      right.lift - left.lift,
+  )[0] ?? null;
+}
+
+function serializeNodes(nodes) {
+  const serialized = {};
+  for (const [id, node] of [...nodes].sort(([left], [right]) => left.localeCompare(right))) {
+    serialized[id] = node;
+  }
+  return serialized;
+}
+
+export function compareAssociationLinks(left, right, nodes) {
+  const leftStats = visibleStats(left);
+  const rightStats = visibleStats(right);
+  const scoreDelta = (rightStats?.score ?? 0) - (leftStats?.score ?? 0);
+  if (scoreDelta !== 0) return scoreDelta;
+  const coCountDelta = (rightStats?.coCount ?? 0) - (leftStats?.coCount ?? 0);
+  if (coCountDelta !== 0) return coCountDelta;
+  const confidenceDelta = (rightStats?.confidence ?? 0) - (leftStats?.confidence ?? 0);
+  if (confidenceDelta !== 0) return confidenceDelta;
+  const liftDelta = (rightStats?.lift ?? 0) - (leftStats?.lift ?? 0);
+  if (liftDelta !== 0) return liftDelta;
+  const nameDelta = (nodes.get(left.to)?.displayName ?? left.to).localeCompare(
+    nodes.get(right.to)?.displayName ?? right.to,
+  );
+  if (nameDelta !== 0) return nameDelta;
+  return left.to.localeCompare(right.to);
+}
+
+function serializeIndex(index, topLinks, nodes) {
   const serialized = {};
   for (const [from, links] of [...index].sort(([left], [right]) => left.localeCompare(right))) {
     const top = [...links.values()]
-      .sort((left, right) => topScore(right) - topScore(left) || left.to.localeCompare(right.to))
+      .sort((left, right) => compareAssociationLinks(left, right, nodes))
       .slice(0, topLinks);
     if (top.length > 0) serialized[from] = top;
   }
   return serialized;
 }
 
-export function buildCardAssociations(archive, cards, userOptions = {}) {
-  const options = {
+function clusterSizesFromIds(clusterIds) {
+  const clusterSizes = {};
+  for (const clusterId of clusterIds) {
+    clusterSizes[clusterId] = (clusterSizes[clusterId] ?? 0) + 1;
+  }
+  return clusterSizes;
+}
+
+function clusterSort(left, right) {
+  const leftNumber = Number(left.replace(/^cluster-/u, ''));
+  const rightNumber = Number(right.replace(/^cluster-/u, ''));
+  if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+    return leftNumber - rightNumber;
+  }
+  return left.localeCompare(right);
+}
+
+function defaultClusterLabel(clusterId) {
+  return clusterId.replace(/^cluster-/u, 'Cluster ');
+}
+
+function getElementalAvatarElement(displayName) {
+  const match = displayName.match(/^Avatar\s+of\s+(.+)$/iu);
+  return match ? normalizeElementName(match[1]) : null;
+}
+
+function shortenAvatarName(displayName) {
+  const elementalAvatarElement = getElementalAvatarElement(displayName);
+  if (elementalAvatarElement) return ELEMENT_SYMBOLS[elementalAvatarElement];
+  return displayName.trim();
+}
+
+function buildClusterLabel(clusterId, cluster, nodes) {
+  const avatarIds = [...cluster.avatarIds].filter(Boolean);
+  if (avatarIds.length !== 1) return defaultClusterLabel(clusterId);
+
+  const avatarDisplayName = nodes.get(avatarIds[0])?.displayName ?? avatarIds[0];
+  const avatarName = shortenAvatarName(avatarDisplayName);
+  if (!avatarName) return defaultClusterLabel(clusterId);
+
+  const elementalAvatarElement = getElementalAvatarElement(avatarDisplayName);
+  const elements = [...cluster.elementCounts]
+    .filter(([element]) => ELEMENT_ORDER.includes(element))
+    .sort((left, right) => {
+      if (right[1] !== left[1]) return right[1] - left[1];
+      return ELEMENT_ORDER.indexOf(left[0]) - ELEMENT_ORDER.indexOf(right[0]);
+    })
+    .slice(0, 2)
+    .map(([element]) => element)
+    .filter((element) => element !== elementalAvatarElement);
+  const elementLabel = elements.map((element) => ELEMENT_SYMBOLS[element]).join('/');
+
+  return elementLabel ? `${avatarName} - ${elementLabel}` : avatarName;
+}
+
+function buildClusterProfiles(decks, deckWeights, clusterIds, nodes) {
+  const clusters = new Map();
+
+  for (let deckIndex = 0; deckIndex < decks.length; deckIndex += 1) {
+    const deck = decks[deckIndex];
+    const clusterId = clusterIds[deckIndex] ?? `cluster-${deckIndex + 1}`;
+    const weight = deckWeights[deckIndex] ?? 0;
+    let cluster = clusters.get(clusterId);
+    if (!cluster) {
+      cluster = {
+        id: clusterId,
+        size: 0,
+        totalWeight: 0,
+        deckIds: [],
+        cardCounts: new Map(),
+        avatarIds: new Set(),
+        elementCounts: new Map(),
+      };
+      clusters.set(clusterId, cluster);
+    }
+
+    cluster.size += 1;
+    cluster.totalWeight += weight;
+    cluster.deckIds.push(deck.id);
+    if (deck.avatar) cluster.avatarIds.add(deck.avatar);
+    for (const element of deck.elements) incrementMap(cluster.elementCounts, element, weight);
+    for (const nodeId of deck.main.keys()) {
+      incrementMap(cluster.cardCounts, nodeId, weight);
+    }
+  }
+
+  const serialized = {};
+  for (const [clusterId, cluster] of [...clusters].sort(([left], [right]) => clusterSort(left, right))) {
+    const cards = {};
+    const cardEntries = [...cluster.cardCounts]
+      .map(([nodeId, count]) => {
+        const confidence = cluster.totalWeight > 0 ? count / cluster.totalWeight : 0;
+        return {
+          nodeId,
+          score: Math.round(confidence * 100),
+          confidence,
+          count,
+          totalWeight: cluster.totalWeight,
+        };
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score;
+        if (right.count !== left.count) return right.count - left.count;
+        const nameDelta = (nodes.get(left.nodeId)?.displayName ?? left.nodeId).localeCompare(
+          nodes.get(right.nodeId)?.displayName ?? right.nodeId,
+        );
+        if (nameDelta !== 0) return nameDelta;
+        return left.nodeId.localeCompare(right.nodeId);
+      });
+
+    for (const entry of cardEntries) {
+      cards[entry.nodeId] = {
+        score: entry.score,
+        confidence: roundNumber(entry.confidence),
+        count: roundNumber(entry.count),
+        totalWeight: roundNumber(entry.totalWeight),
+      };
+    }
+
+    serialized[clusterId] = {
+      id: cluster.id,
+      label: buildClusterLabel(clusterId, cluster, nodes),
+      avatarIds: [...cluster.avatarIds].sort((left, right) => {
+        const leftName = nodes.get(left)?.displayName ?? left;
+        const rightName = nodes.get(right)?.displayName ?? right;
+        const nameDelta = leftName.localeCompare(rightName);
+        if (nameDelta !== 0) return nameDelta;
+        return left.localeCompare(right);
+      }),
+      size: cluster.size,
+      totalWeight: roundNumber(cluster.totalWeight),
+      deckIds: cluster.deckIds.sort((left, right) => left.localeCompare(right)),
+      cards,
+    };
+  }
+
+  return serialized;
+}
+
+function buildFilterOptions(userOptions) {
+  return {
+    ...DEFAULT_ASSOCIATION_OPTIONS.filters,
+    ...(userOptions.filters ?? {}),
+  };
+}
+
+function buildOptions(userOptions) {
+  return {
     ...DEFAULT_ASSOCIATION_OPTIONS,
     ...userOptions,
     weights: {
       ...DEFAULT_ASSOCIATION_OPTIONS.weights,
       ...(userOptions.weights ?? {}),
     },
+    filters: buildFilterOptions(userOptions),
   };
+}
+
+export function buildCardAssociations(archive, cards, userOptions = {}) {
+  const mode = userOptions.mode === 'meta' ? 'meta' : 'balanced';
+  const options = buildOptions(userOptions);
+  const nodes = new Map();
   const metadata = buildCardMetadata(cards);
-  const decks = normalizeDeckArchive(archive);
+  const { decks, summary } = normalizeDeckArchiveInternal(archive, nodes, options.filters, metadata);
   const vectors = buildDeckIdentityVectors(decks, metadata);
   const graph = buildDeckGraph(vectors, options);
-  const clusterIds = runLouvainLikeClustering(graph);
-  const deckWeights = calculateDeckWeights(clusterIds);
+  const clusterIds = runGreedyModularityClustering(graph);
+  const deckWeights = calculateDeckWeights(clusterIds, mode);
   const index = new Map();
 
   mergeChannel(index, calculateChannelStats(decks, deckWeights, clusterIds, 'main', 'main', options));
@@ -481,38 +935,53 @@ export function buildCardAssociations(archive, cards, userOptions = {}) {
   );
   mergeChannel(
     index,
+    calculateChannelStats(decks, deckWeights, clusterIds, 'collection', 'main', options),
+  );
+  mergeChannel(
+    index,
     calculateChannelStats(decks, deckWeights, clusterIds, 'collection', 'collection', options),
   );
 
-  const clusterSizes = {};
-  for (const clusterId of clusterIds) {
-    clusterSizes[clusterId] = (clusterSizes[clusterId] ?? 0) + 1;
-  }
-
+  const clusterSizes = clusterSizesFromIds(clusterIds);
+  const clusters = buildClusterProfiles(decks, deckWeights, clusterIds, nodes);
   const deckNames = {};
-  const collectionNodeNames = new Set();
+  const collectionNodeIds = new Set();
   for (const deck of decks) {
     deckNames[deck.id] = deck.name;
-    for (const cardName of deck.collection.keys()) collectionNodeNames.add(cardName);
+    for (const nodeId of deck.collection.keys()) collectionNodeIds.add(nodeId);
   }
 
   return {
     __meta: {
-      version: 1,
+      version: 2,
       generatedAt: new Date().toISOString(),
-      deckCount: decks.length,
+      mode,
+      sourceDeckCount: summary.sourceDeckCount,
+      acceptedDeckCount: summary.acceptedDeckCount,
+      skippedDeckCount: summary.skippedDeckCount,
+      deckCount: summary.acceptedDeckCount,
       clusterCount: Object.keys(clusterSizes).length,
       clusterSizes,
+      filters: {
+        constructedOnly: options.filters.constructedOnly,
+        fullDecksOnly: options.filters.fullDecksOnly,
+        includeSkipped: options.filters.includeSkipped,
+      },
       options: {
         topLinks: options.topLinks,
         minEvidence: options.minEvidence,
         similarityThreshold: options.similarityThreshold,
         weights: options.weights,
+        fullSpellbookMin: options.filters.fullSpellbookMin,
+        fullAtlasMin: options.filters.fullAtlasMin,
       },
       deckNames,
-      collectionNodeNames: [...collectionNodeNames].sort((left, right) => left.localeCompare(right)),
+      collectionNodeIds: [...collectionNodeIds].sort((left, right) => left.localeCompare(right)),
+      filterSummary: summary,
     },
-    index: serializeIndex(index, options.topLinks),
+    nodes: serializeNodes(nodes),
+    clusters,
+    index: serializeIndex(index, options.topLinks, nodes),
   };
 }
 
@@ -528,12 +997,18 @@ function printHelp() {
   console.log(`Build card/avatar association graph from a Curiosa deck archive.
 
 Usage:
-  node scripts/build-card-associations.mjs --archive tmp/deckArchive.json --output public/assets/sorcery_card_associations.json
+  node scripts/build-card-associations.mjs
+  node scripts/build-card-associations.mjs --include-skipped --min-spells 50 --min-atlas 20
 
 Options:
       --archive <file>       Deck archive JSON. Defaults to ${DEFAULT_ARCHIVE_PATH}
+      --include-skipped      Include filtered decks from the skipped archive.
+      --skipped-archive <file> Skipped JSON. Defaults to <archive>.skipped.json.
+      --min-spells <n>       Minimum skipped spellbook cards. Defaults to ${DEFAULT_SKIPPED_SPELLBOOK_MIN}
+      --min-atlas <n>        Minimum skipped atlas cards. Defaults to ${DEFAULT_SKIPPED_ATLAS_MIN}
       --card-data <file>     Card catalog JSON. Defaults to ${DEFAULT_CARD_DATA_PATH}
-      --output <file>        Output JSON. Defaults to ${DEFAULT_OUTPUT_PATH}
+      --output-base <path>   Output path without _balanced/_meta suffix. Defaults to ${DEFAULT_OUTPUT_BASE_PATH}
+      --output <file>        Compatibility alias. The suffix and .json are removed before writing both modes.
       --top-links <n>        Links per source node. Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.topLinks}
       --threshold <n>        Deck graph threshold. Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.similarityThreshold}
       --min-evidence <n>     Reliability midpoint. Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.minEvidence}
@@ -541,19 +1016,32 @@ Options:
       --atlas-weight <n>     Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.weights.atlas}
       --collection-weight <n> Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.weights.collection}
       --avatar-weight <n>    Defaults to ${DEFAULT_ASSOCIATION_OPTIONS.weights.avatar}
+      --allow-non-constructed Include non-Constructed source decks.
+      --allow-incomplete    Include source decks below full-deck size.
   -h, --help                 Show this help.
 `);
+}
+
+function outputBaseFromFile(filePath) {
+  return filePath
+    .replace(/_(balanced|meta)\.json$/u, '')
+    .replace(/\.json$/u, '');
 }
 
 export function parseArgs(argv) {
   const options = {
     archive: DEFAULT_ARCHIVE_PATH,
+    skippedArchive: '',
+    includeSkipped: false,
+    minSkippedSpellbook: DEFAULT_SKIPPED_SPELLBOOK_MIN,
+    minSkippedAtlas: DEFAULT_SKIPPED_ATLAS_MIN,
     cardData: DEFAULT_CARD_DATA_PATH,
-    output: DEFAULT_OUTPUT_PATH,
+    outputBase: DEFAULT_OUTPUT_BASE_PATH,
     help: false,
     associationOptions: {
       ...DEFAULT_ASSOCIATION_OPTIONS,
       weights: { ...DEFAULT_ASSOCIATION_OPTIONS.weights },
+      filters: { ...DEFAULT_ASSOCIATION_OPTIONS.filters },
     },
   };
 
@@ -571,10 +1059,27 @@ export function parseArgs(argv) {
       options.help = true;
     } else if (arg === '--archive') {
       options.archive = next();
+    } else if (arg === '--include-skipped') {
+      options.includeSkipped = true;
+      options.associationOptions.filters.includeSkipped = true;
+    } else if (arg === '--skipped-archive') {
+      options.skippedArchive = next();
+      options.includeSkipped = true;
+      options.associationOptions.filters.includeSkipped = true;
+    } else if (arg === '--min-spells' || arg === '--min-skipped-spellbook') {
+      options.minSkippedSpellbook = Math.max(0, Math.floor(parseNumber(next(), arg)));
+      options.includeSkipped = true;
+      options.associationOptions.filters.includeSkipped = true;
+    } else if (arg === '--min-atlas' || arg === '--min-skipped-atlas') {
+      options.minSkippedAtlas = Math.max(0, Math.floor(parseNumber(next(), arg)));
+      options.includeSkipped = true;
+      options.associationOptions.filters.includeSkipped = true;
     } else if (arg === '--card-data') {
       options.cardData = next();
+    } else if (arg === '--output-base') {
+      options.outputBase = outputBaseFromFile(next());
     } else if (arg === '--output') {
-      options.output = next();
+      options.outputBase = outputBaseFromFile(next());
     } else if (arg === '--top-links') {
       options.associationOptions.topLinks = Math.max(1, Math.floor(parseNumber(next(), arg)));
     } else if (arg === '--threshold') {
@@ -589,6 +1094,10 @@ export function parseArgs(argv) {
       options.associationOptions.weights.collection = parseNumber(next(), arg);
     } else if (arg === '--avatar-weight') {
       options.associationOptions.weights.avatar = parseNumber(next(), arg);
+    } else if (arg === '--allow-non-constructed') {
+      options.associationOptions.filters.constructedOnly = false;
+    } else if (arg === '--allow-incomplete') {
+      options.associationOptions.filters.fullDecksOnly = false;
     } else {
       throw new Error(`Unknown option: ${arg}`);
     }
@@ -601,13 +1110,46 @@ async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, 'utf8'));
 }
 
+function outputPathForMode(outputBase, mode) {
+  return `${outputBase}_${mode}.json`;
+}
+
 export async function runBuild(options) {
-  const archive = await readJson(options.archive);
+  let archive = await readJson(options.archive);
+  let skippedSummary = null;
+  if (options.includeSkipped) {
+    const skippedArchivePath = options.skippedArchive || `${options.archive}.skipped.json`;
+    const skippedArchive = await readJson(skippedArchivePath);
+    const filteredSkipped = filterSkippedArchiveDecks(skippedArchive, {
+      minSpellbook: options.minSkippedSpellbook,
+      minAtlas: options.minSkippedAtlas,
+    });
+    archive = mergeArchives(archive, filteredSkipped.archive);
+    skippedSummary = {
+      path: skippedArchivePath,
+      minSpellbook: options.minSkippedSpellbook,
+      minAtlas: options.minSkippedAtlas,
+      ...filteredSkipped.summary,
+    };
+  }
+
   const cards = await readJson(options.cardData);
-  const associations = buildCardAssociations(archive, cards, options.associationOptions);
-  await fs.mkdir(path.dirname(options.output), { recursive: true });
-  await fs.writeFile(options.output, `${JSON.stringify(associations)}\n`);
-  return associations;
+  const written = {};
+  for (const mode of ASSOCIATION_MODES) {
+    const associations = buildCardAssociations(archive, cards, {
+      ...options.associationOptions,
+      mode,
+    });
+    associations.__meta.archiveSource = {
+      path: options.archive,
+      skipped: skippedSummary,
+    };
+    const outputPath = outputPathForMode(options.outputBase, mode);
+    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+    await fs.writeFile(outputPath, `${JSON.stringify(associations, null, 2)}\n`);
+    written[mode] = { outputPath, associations };
+  }
+  return written;
 }
 
 async function main() {
@@ -617,11 +1159,15 @@ async function main() {
     return;
   }
 
-  const associations = await runBuild(options);
-  console.log(
-    `Wrote ${options.output}: ${Object.keys(associations.index).length} source nodes, ` +
-      `${associations.__meta.deckCount} decks, ${associations.__meta.clusterCount} clusters`,
-  );
+  const written = await runBuild(options);
+  for (const mode of ASSOCIATION_MODES) {
+    const entry = written[mode];
+    console.log(
+      `Wrote ${entry.outputPath}: ${Object.keys(entry.associations.index).length} source nodes, ` +
+        `${entry.associations.__meta.acceptedDeckCount} accepted decks, ` +
+        `${entry.associations.__meta.clusterCount} clusters`,
+    );
+  }
 }
 
 const thisFile = fileURLToPath(import.meta.url);
