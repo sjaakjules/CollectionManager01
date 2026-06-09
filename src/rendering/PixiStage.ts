@@ -41,6 +41,7 @@ import {
   snapCardCenter,
   pixelsToSnapGrid,
   type CardLayoutInfo,
+  type CollectionLayoutVariant,
   type ContentBounds,
 } from "./Grid";
 import {
@@ -574,6 +575,7 @@ export class PixiStage {
     | { cards: Card[]; filteredMode: boolean }
     | null = null;
   private collectionFilteredMode = false;
+  private collectionLayoutVariant: CollectionLayoutVariant | null = null;
 
   // Culling state
   private lastCullingUpdate = 0;
@@ -7593,6 +7595,8 @@ export class PixiStage {
         | "Unique"
         | null,
     }));
+    const layoutVariant = this.getCollectionLayoutVariant();
+    this.collectionLayoutVariant = layoutVariant;
 
     const {
       cards: layout,
@@ -7601,6 +7605,7 @@ export class PixiStage {
     } = calculateCardLayout({
       cards: layoutCards,
       mode: this.collectionFilteredMode ? "filteredFlat" : "grouped",
+      layoutVariant,
     });
 
     const mainQuadrant = QUADRANT_BOUNDS.main;
@@ -7908,11 +7913,41 @@ export class PixiStage {
   }
 
   private handleViewportChange(): void {
+    this.rebuildCollectionForLayoutVariantChange();
     this.scheduleCulling();
     this.drawGrid();
     if (this.camera) {
       this.onViewportCenterChange?.(this.camera.getScreenCenter());
     }
+  }
+
+  private getCollectionLayoutVariant(): CollectionLayoutVariant {
+    // Prefer the visual viewport so mobile browser chrome and orientation changes
+    // trigger the same collection layout decision the user actually sees.
+    const viewport = globalThis.window?.visualViewport;
+    const width = viewport?.width ?? globalThis.window?.innerWidth;
+    const height = viewport?.height ?? globalThis.window?.innerHeight;
+
+    if (
+      typeof width === "number" &&
+      typeof height === "number" &&
+      width > 0 &&
+      height > 0
+    ) {
+      return height > width ? "portrait" : "wide";
+    }
+
+    return this.app.screen.height > this.app.screen.width ? "portrait" : "wide";
+  }
+
+  private rebuildCollectionForLayoutVariantChange(): void {
+    const nextVariant = this.getCollectionLayoutVariant();
+    if (this.collectionLayoutVariant === nextVariant) return;
+
+    this.collectionLayoutVariant = nextVariant;
+    if (this.collectionFilteredMode || this.cards.length === 0) return;
+
+    this.rebuildCardSprites();
   }
 
   private scheduleCulling(): void {

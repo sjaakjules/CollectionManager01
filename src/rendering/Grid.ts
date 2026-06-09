@@ -138,7 +138,7 @@ export interface CardLayoutInfo {
   isLandscape: boolean;
   thresholdGroup: ThresholdGroup;
   type: CardType;
-  cost: number;
+  cost: number | null;
 }
 
 // ============================================================================
@@ -347,17 +347,22 @@ const TYPE_LABELS: Record<CardType, string> = {
   Site: "Sites",
 };
 
+export type CollectionLayoutVariant = "wide" | "portrait";
+
+export interface LayoutCardInput {
+  name: string;
+  type: CardType;
+  thresholdGroup: ThresholdGroup;
+  cost: number | null;
+  isLandscape: boolean;
+  primarySet?: string;
+  rarity?: CardRarity | null;
+}
+
 export interface LayoutConfig {
-  cards: Array<{
-    name: string;
-    type: CardType;
-    thresholdGroup: ThresholdGroup;
-    cost: number;
-    isLandscape: boolean;
-    primarySet?: string;
-    rarity?: CardRarity | null;
-  }>;
+  cards: LayoutCardInput[];
   mode?: "grouped" | "filteredFlat";
+  layoutVariant?: CollectionLayoutVariant;
 }
 
 export interface ContentBounds {
@@ -406,6 +411,45 @@ export const HEADER_HEIGHT = 3 * DRAWN_GRID.height;
 /** Gap between bottom of header text and top of first card */
 const HEADER_GAP = DRAWN_GRID.height;
 
+const PROVIDER_THRESHOLD_OVERRIDES: Readonly<Record<string, ThresholdGroup>> = {
+  "Castle Servants": "air",
+  "Common Cottagers": "earth",
+  "Blacksmith Family": "fire",
+  "Fisherman's Family": "water",
+};
+
+const PORTRAIT_ELEMENT_GROUPS: ThresholdGroup[] = [
+  "air",
+  "earth",
+  "fire",
+  "water",
+];
+
+const PORTRAIT_COLUMN_GAP_UNITS = GROUP_GAP_UNITS;
+const PORTRAIT_SECTION_GAP_UNITS = GROUP_GAP_UNITS + 3;
+const PORTRAIT_MIN_COLUMN_WIDTH_UNITS = 8;
+const PORTRAIT_MIN_SECTION_WIDTH_UNITS = 28;
+
+type BoundsUpdater = (
+  centerX: number,
+  centerY: number,
+  isLandscape: boolean,
+) => void;
+
+type GroupedCards = Map<ThresholdGroup, Map<CardType, LayoutCardInput[]>>;
+
+interface CardSubgroup {
+  type: CardType;
+  cards: LayoutCardInput[];
+  label?: string;
+  showHeader?: boolean;
+}
+
+interface ColumnSplit {
+  leftWidthUnits: number;
+  rightWidthUnits: number;
+}
+
 export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   const cards: CardLayoutInfo[] = [];
   const headers: GroupHeader[] = [];
@@ -449,6 +493,7 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
 
   // Layout avatars as a single row above all other cards
   let nonAvatarStartGridY = 0;
+  let avatarGridWidthUnits = 0;
 
   if (avatars.length > 0) {
     // Avatar group header
@@ -481,6 +526,8 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
     });
 
     const spacing = getCardCellSpacing(false); // Avatars are portrait
+    avatarGridWidthUnits =
+      (sortedAvatars.length - 1) * spacing.x + spacing.x;
 
     for (const [i, avatar] of sortedAvatars.entries()) {
       const gridX = i * spacing.x;
@@ -505,70 +552,88 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   }
 
   // Layout non-avatar cards below avatars
-  const grouped = groupCards(nonAvatars);
+  const grouped = groupCards(applyGroupedCollectionRules(nonAvatars));
 
+  if ((config.layoutVariant ?? "wide") === "portrait") {
+    layoutPortraitGroupedCards({
+      grouped,
+      cards,
+      headers,
+      updateBounds,
+      startGridY: nonAvatarStartGridY,
+      sectionWidthUnits: Math.max(
+        PORTRAIT_MIN_SECTION_WIDTH_UNITS,
+        avatarGridWidthUnits,
+      ),
+    });
+  } else {
+    layoutWideGroupedCards({
+      grouped,
+      cards,
+      headers,
+      updateBounds,
+      startGridY: nonAvatarStartGridY,
+    });
+  }
+
+  // Default bounds if no cards
+  const bounds: ContentBounds = {
+    left: contentLeft === Infinity ? 0 : contentLeft,
+    top: contentTop === Infinity ? 0 : contentTop,
+    right: contentRight === -Infinity ? 0 : contentRight,
+    bottom: contentBottom === -Infinity ? 0 : contentBottom,
+  };
+
+  return { cards, headers, bounds };
+}
+
+function layoutWideGroupedCards({
+  grouped,
+  cards,
+  headers,
+  updateBounds,
+  startGridY,
+}: {
+  grouped: GroupedCards;
+  cards: CardLayoutInfo[];
+  headers: GroupHeader[];
+  updateBounds: BoundsUpdater;
+  startGridY: number;
+}): void {
   let currentGridX = 0;
 
   for (const thresholdGroup of THRESHOLD_GROUP_ORDER) {
     const thresholdCards = grouped.get(thresholdGroup);
     if (!thresholdCards || thresholdCards.size === 0) continue;
 
-    // Group header above the first card row
-    const headerPos = snapGridToPixels(
+    addCollectionHeader(
+      THRESHOLD_GROUP_LABELS[thresholdGroup],
       currentGridX,
-      nonAvatarStartGridY,
-      false,
+      startGridY,
+      headers,
     );
-    headers.push({
-      label: THRESHOLD_GROUP_LABELS[thresholdGroup],
-      position: {
-        x: headerPos.x - CARD_SIZE.PORTRAIT.width / 2,
-        y:
-          headerPos.y -
-          CARD_SIZE.PORTRAIT.height / 2 -
-          HEADER_GAP -
-          HEADER_HEIGHT,
-      },
-      kind: "collection",
-    });
 
     let maxGroupGridWidth = 0;
-    // Offset down to leave room between the threshold heading and first type heading
-    let currentGridY = nonAvatarStartGridY + 2;
-
-    const typeFontSize = HEADER_HEIGHT * 0.3;
-    const typeHeaderGap = typeFontSize * 0.4;
+    let currentGridY = startGridY + 2;
 
     for (const type of TYPE_ORDER) {
       const typeCards = thresholdCards.get(type);
       if (!typeCards || typeCards.length === 0) continue;
 
-      const sorted = [...typeCards].sort((a, b) => a.cost - b.cost);
+      const sorted = [...typeCards].sort(compareLayoutCards);
       const isLandscape = type === "Site";
       const cardsPerRow = isLandscape
         ? CARDS_PER_ROW.SITE
         : CARDS_PER_ROW.SPELL;
       const spacing = getCardCellSpacing(isLandscape);
 
-      // Type subgroup header
-      const typeHeaderPos = snapGridToPixels(
+      addTypeSubgroupHeader(
+        TYPE_LABELS[type],
         currentGridX,
         currentGridY,
         isLandscape,
+        headers,
       );
-      const cardSize = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-      headers.push({
-        label: TYPE_LABELS[type],
-        kind: "type-subgroup",
-        position: {
-          x: typeHeaderPos.x - cardSize.width / 2,
-          y:
-            typeHeaderPos.y -
-            cardSize.height / 2 -
-            typeHeaderGap -
-            typeFontSize,
-        },
-      });
 
       for (const [i, card] of sorted.entries()) {
         const col = i % cardsPerRow;
@@ -602,16 +667,85 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
 
     currentGridX += maxGroupGridWidth + GROUP_GAP_UNITS;
   }
+}
 
-  // Default bounds if no cards
-  const bounds: ContentBounds = {
-    left: contentLeft === Infinity ? 0 : contentLeft,
-    top: contentTop === Infinity ? 0 : contentTop,
-    right: contentRight === -Infinity ? 0 : contentRight,
-    bottom: contentBottom === -Infinity ? 0 : contentBottom,
-  };
+function layoutPortraitGroupedCards({
+  grouped,
+  cards,
+  headers,
+  updateBounds,
+  startGridY,
+  sectionWidthUnits,
+}: {
+  grouped: GroupedCards;
+  cards: CardLayoutInfo[];
+  headers: GroupHeader[];
+  updateBounds: BoundsUpdater;
+  startGridY: number;
+  sectionWidthUnits: number;
+}): void {
+  let currentGridY = startGridY;
 
-  return { cards, headers, bounds };
+  for (const thresholdGroup of PORTRAIT_ELEMENT_GROUPS) {
+    const thresholdCards = grouped.get(thresholdGroup);
+    if (!thresholdCards || thresholdCards.size === 0) continue;
+
+    const leftGroups = [createCardSubgroup(thresholdCards, "Minion")].filter(
+      (group): group is CardSubgroup => group !== null,
+    );
+    const rightGroups = (["Magic", "Aura", "Site"] as const)
+      .map((type) => createCardSubgroup(thresholdCards, type))
+      .filter((group): group is CardSubgroup => group !== null);
+
+    if (leftGroups.length === 0 && rightGroups.length === 0) continue;
+
+    addCollectionHeader(
+      THRESHOLD_GROUP_LABELS[thresholdGroup],
+      0,
+      currentGridY,
+      headers,
+    );
+
+    const split = chooseTwoColumnSplit(
+      leftGroups,
+      rightGroups,
+      sectionWidthUnits,
+    );
+    const cardStartGridY = currentGridY + 2;
+    const rightStartGridX =
+      split.leftWidthUnits + PORTRAIT_COLUMN_GAP_UNITS;
+    const leftBottomGridY = layoutColumnSubgroups({
+      subgroups: leftGroups,
+      startGridX: 0,
+      startGridY: cardStartGridY,
+      widthUnits: split.leftWidthUnits,
+      cards,
+      headers,
+      updateBounds,
+    });
+    const rightBottomGridY = layoutColumnSubgroups({
+      subgroups: rightGroups,
+      startGridX: rightStartGridX,
+      startGridY: cardStartGridY,
+      widthUnits: split.rightWidthUnits,
+      cards,
+      headers,
+      updateBounds,
+    });
+
+    currentGridY =
+      Math.max(leftBottomGridY, rightBottomGridY, cardStartGridY) +
+      PORTRAIT_SECTION_GAP_UNITS;
+  }
+
+  layoutPortraitArtifactsAndMultiNone({
+    grouped,
+    cards,
+    headers,
+    updateBounds,
+    startGridY: currentGridY,
+    sectionWidthUnits,
+  });
 }
 
 function layoutFilteredCards(
@@ -627,8 +761,7 @@ function layoutFilteredCards(
     a: LayoutConfig["cards"][number],
     b: LayoutConfig["cards"][number],
   ) => {
-    if (a.cost !== b.cost) return a.cost - b.cost;
-    return a.name.localeCompare(b.name);
+    return compareLayoutCards(a, b);
   };
 
   const portraitCards = [...inputCards.filter((c) => c.type !== "Site")].sort(
@@ -683,6 +816,323 @@ function layoutFilteredCards(
   return flatCards;
 }
 
+function layoutPortraitArtifactsAndMultiNone({
+  grouped,
+  cards,
+  headers,
+  updateBounds,
+  startGridY,
+  sectionWidthUnits,
+}: {
+  grouped: GroupedCards;
+  cards: CardLayoutInfo[];
+  headers: GroupHeader[];
+  updateBounds: BoundsUpdater;
+  startGridY: number;
+  sectionWidthUnits: number;
+}): void {
+  const noneCards = grouped.get("none");
+  const multiCards = grouped.get("multiple");
+  const artifacts = noneCards?.get("Artifact") ?? [];
+  const leftGroups: CardSubgroup[] =
+    artifacts.length > 0
+      ? [
+          {
+            type: "Artifact",
+            cards: artifacts,
+            label: "Artifacts",
+            showHeader: false,
+          },
+        ]
+      : [];
+  const rightGroups = [
+    multiCards ? createCardSubgroup(multiCards, "Minion") : null,
+    multiCards ? createCardSubgroup(multiCards, "Magic") : null,
+    multiCards ? createCardSubgroup(multiCards, "Aura") : null,
+    multiCards ? createCardSubgroup(multiCards, "Site") : null,
+    createCardSubgroup(noneCards, "Site", "None Sites"),
+  ].filter((group): group is CardSubgroup => group !== null);
+
+  if (leftGroups.length === 0 && rightGroups.length === 0) return;
+
+  const split = chooseTwoColumnSplit(leftGroups, rightGroups, sectionWidthUnits);
+  const rightStartGridX = split.leftWidthUnits + PORTRAIT_COLUMN_GAP_UNITS;
+
+  if (leftGroups.length > 0) {
+    addCollectionHeader("Artifacts", 0, startGridY, headers);
+  }
+  if (rightGroups.length > 0) {
+    addCollectionHeader("Multi / None", rightStartGridX, startGridY, headers);
+  }
+
+  const cardStartGridY = startGridY + 2;
+  layoutColumnSubgroups({
+    subgroups: leftGroups,
+    startGridX: 0,
+    startGridY: cardStartGridY,
+    widthUnits: split.leftWidthUnits,
+    cards,
+    headers,
+    updateBounds,
+  });
+  layoutColumnSubgroups({
+    subgroups: rightGroups,
+    startGridX: rightStartGridX,
+    startGridY: cardStartGridY,
+    widthUnits: split.rightWidthUnits,
+    cards,
+    headers,
+    updateBounds,
+  });
+}
+
+function addCollectionHeader(
+  label: string,
+  gridX: number,
+  gridY: number,
+  headers: GroupHeader[],
+): void {
+  const headerPos = snapGridToPixels(gridX, gridY, false);
+  headers.push({
+    label,
+    position: {
+      x: headerPos.x - CARD_SIZE.PORTRAIT.width / 2,
+      y:
+        headerPos.y -
+        CARD_SIZE.PORTRAIT.height / 2 -
+        HEADER_GAP -
+        HEADER_HEIGHT,
+    },
+    kind: "collection",
+  });
+}
+
+function addTypeSubgroupHeader(
+  label: string,
+  gridX: number,
+  gridY: number,
+  isLandscape: boolean,
+  headers: GroupHeader[],
+): void {
+  const typeFontSize = HEADER_HEIGHT * 0.3;
+  const typeHeaderGap = typeFontSize * 0.4;
+  const typeHeaderPos = snapGridToPixels(gridX, gridY, isLandscape);
+  const cardSize = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+
+  headers.push({
+    label,
+    kind: "type-subgroup",
+    position: {
+      x: typeHeaderPos.x - cardSize.width / 2,
+      y:
+        typeHeaderPos.y -
+        cardSize.height / 2 -
+        typeHeaderGap -
+        typeFontSize,
+    },
+  });
+}
+
+function layoutColumnSubgroups({
+  subgroups,
+  startGridX,
+  startGridY,
+  widthUnits,
+  cards,
+  headers,
+  updateBounds,
+}: {
+  subgroups: CardSubgroup[];
+  startGridX: number;
+  startGridY: number;
+  widthUnits: number;
+  cards: CardLayoutInfo[];
+  headers: GroupHeader[];
+  updateBounds: BoundsUpdater;
+}): number {
+  let currentGridY = startGridY;
+  let placedAny = false;
+
+  for (const subgroup of subgroups) {
+    if (subgroup.cards.length === 0) continue;
+
+    const isLandscape = subgroup.type === "Site";
+    const cardsPerRow = getCardsPerRowForWidth(subgroup.type, widthUnits);
+    const spacing = getCardCellSpacing(isLandscape);
+
+    if (subgroup.showHeader !== false) {
+      addTypeSubgroupHeader(
+        subgroup.label ?? TYPE_LABELS[subgroup.type],
+        startGridX,
+        currentGridY,
+        isLandscape,
+        headers,
+      );
+    }
+
+    const sorted = [...subgroup.cards].sort(compareLayoutCards);
+    for (const [index, card] of sorted.entries()) {
+      const col = index % cardsPerRow;
+      const row = Math.floor(index / cardsPerRow);
+      const gridX = startGridX + col * spacing.x;
+      const gridY = currentGridY + row * spacing.y;
+      const position = snapGridToPixels(gridX, gridY, isLandscape);
+
+      cards.push({
+        name: card.name,
+        position,
+        isLandscape,
+        thresholdGroup: card.thresholdGroup,
+        type: card.type,
+        cost: card.cost,
+      });
+
+      updateBounds(position.x, position.y, isLandscape);
+    }
+
+    currentGridY +=
+      Math.ceil(sorted.length / cardsPerRow) * spacing.y + SUBGROUP_GAP_UNITS;
+    placedAny = true;
+  }
+
+  return placedAny ? currentGridY - SUBGROUP_GAP_UNITS : startGridY;
+}
+
+function chooseTwoColumnSplit(
+  leftGroups: CardSubgroup[],
+  rightGroups: CardSubgroup[],
+  requestedWidthUnits: number,
+): ColumnSplit {
+  const totalWidthUnits = Math.max(
+    Math.round(requestedWidthUnits),
+    PORTRAIT_MIN_COLUMN_WIDTH_UNITS * 2 + PORTRAIT_COLUMN_GAP_UNITS,
+  );
+  const maxLeftWidth =
+    totalWidthUnits -
+    PORTRAIT_COLUMN_GAP_UNITS -
+    PORTRAIT_MIN_COLUMN_WIDTH_UNITS;
+  let best: ColumnSplit | null = null;
+  let bestScore: [number, number] | null = null;
+
+  for (
+    let leftWidth = PORTRAIT_MIN_COLUMN_WIDTH_UNITS;
+    leftWidth <= maxLeftWidth;
+    leftWidth += 1
+  ) {
+    const rightWidth =
+      totalWidthUnits - PORTRAIT_COLUMN_GAP_UNITS - leftWidth;
+    const leftHeight = measureColumnHeightUnits(leftGroups, leftWidth);
+    const rightHeight = measureColumnHeightUnits(rightGroups, rightWidth);
+    const score: [number, number] = [
+      Math.abs(leftHeight - rightHeight),
+      Math.abs(leftWidth - rightWidth),
+    ];
+
+    if (
+      !bestScore ||
+      score[0] < bestScore[0] ||
+      (score[0] === bestScore[0] && score[1] < bestScore[1])
+    ) {
+      bestScore = score;
+      best = { leftWidthUnits: leftWidth, rightWidthUnits: rightWidth };
+    }
+  }
+
+  return (
+    best ?? {
+      leftWidthUnits: PORTRAIT_MIN_COLUMN_WIDTH_UNITS,
+      rightWidthUnits: PORTRAIT_MIN_COLUMN_WIDTH_UNITS,
+    }
+  );
+}
+
+function measureColumnHeightUnits(
+  subgroups: CardSubgroup[],
+  widthUnits: number,
+): number {
+  let height = 0;
+  let placedAny = false;
+
+  for (const subgroup of subgroups) {
+    if (subgroup.cards.length === 0) continue;
+
+    if (placedAny) height += SUBGROUP_GAP_UNITS;
+
+    const isLandscape = subgroup.type === "Site";
+    const spacing = getCardCellSpacing(isLandscape);
+    const rows = Math.ceil(
+      subgroup.cards.length / getCardsPerRowForWidth(subgroup.type, widthUnits),
+    );
+    height += rows * spacing.y;
+    placedAny = true;
+  }
+
+  return height;
+}
+
+function getCardsPerRowForWidth(type: CardType, widthUnits: number): number {
+  const spacing = getCardCellSpacing(type === "Site");
+  return Math.max(1, Math.floor(widthUnits / spacing.x));
+}
+
+function createCardSubgroup(
+  thresholdCards: Map<CardType, LayoutCardInput[]> | undefined,
+  type: CardType,
+  label?: string,
+): CardSubgroup | null {
+  const cards = thresholdCards?.get(type);
+  if (!cards || cards.length === 0) return null;
+
+  return {
+    type,
+    cards,
+    label,
+  };
+}
+
+function applyGroupedCollectionRules(
+  inputCards: LayoutCardInput[],
+): LayoutCardInput[] {
+  const result: LayoutCardInput[] = [];
+
+  for (const card of inputCards) {
+    const overrideThresholdGroup = PROVIDER_THRESHOLD_OVERRIDES[card.name];
+    const thresholdGroup = overrideThresholdGroup ?? card.thresholdGroup;
+
+    if (
+      thresholdGroup === "none" &&
+      card.type === "Minion" &&
+      card.cost === null
+    ) {
+      continue;
+    }
+
+    result.push(
+      thresholdGroup === card.thresholdGroup
+        ? card
+        : {
+            ...card,
+            thresholdGroup,
+          },
+    );
+  }
+
+  return result;
+}
+
+function compareLayoutCards(
+  a: LayoutCardInput,
+  b: LayoutCardInput,
+): number {
+  const costDifference = getCostSortValue(a.cost) - getCostSortValue(b.cost);
+  if (costDifference !== 0) return costDifference;
+  return a.name.localeCompare(b.name);
+}
+
+function getCostSortValue(cost: number | null): number {
+  return typeof cost === "number" && Number.isFinite(cost) ? cost : 0;
+}
+
 function getAvatarSetIndex(setName?: string): number {
   if (!setName) return AVATAR_SET_ORDER.length;
   const index = AVATAR_SET_ORDER.indexOf(
@@ -692,12 +1142,9 @@ function getAvatarSetIndex(setName?: string): number {
 }
 
 function groupCards(
-  cards: LayoutConfig["cards"],
-): Map<ThresholdGroup, Map<CardType, LayoutConfig["cards"]>> {
-  const result = new Map<
-    ThresholdGroup,
-    Map<CardType, LayoutConfig["cards"]>
-  >();
+  cards: LayoutCardInput[],
+): GroupedCards {
+  const result: GroupedCards = new Map();
 
   for (const card of cards) {
     let thresholdMap = result.get(card.thresholdGroup);

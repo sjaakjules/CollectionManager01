@@ -8,16 +8,17 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 
 ## Phase 1 — Core Rendering
 
-| Task | Status | Notes |
-|------|--------|-------|
-| PixiJS setup | Done | `PixiStage.ts` complete |
-| Grid & snapping | Done | `Grid.ts` with 55px base unit, 6-cell cards |
-| Card sprites | Done | `CardSprite.ts` with portrait/landscape support |
-| Pan/zoom | Done | `Camera.ts` using pixi-viewport |
-| Camera system | Done | Fit-to-content, zoom constraints |
-| LOD switching | Done | `LODManager.ts` with zoom-based resolution |
+| Task            | Status | Notes                                           |
+| --------------- | ------ | ----------------------------------------------- |
+| PixiJS setup    | Done   | `PixiStage.ts` complete                         |
+| Grid & snapping | Done   | `Grid.ts` with 55px base unit, 6-cell cards     |
+| Card sprites    | Done   | `CardSprite.ts` with portrait/landscape support |
+| Pan/zoom        | Done   | `Camera.ts` using pixi-viewport                 |
+| Camera system   | Done   | Fit-to-content, zoom constraints                |
+| LOD switching   | Done   | `LODManager.ts` with zoom-based resolution      |
 
 **Phase 1 Remaining:**
+
 - [x] Hover preview shows highest resolution (verified working)
 - [x] Test performance with large card sets (1104 cards - working with viewport culling)
 - [x] Fix site card rotation (now +90° clockwise)
@@ -38,16 +39,17 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 
 ## Phase 2 — Local Decks
 
-| Task | Status | Notes |
-|------|--------|-------|
-| guest.json storage | Done | `userStorage.ts` with IndexedDB + localStorage fallback |
-| Deck editing (add/remove) | Done | Double-click interactions |
-| Board selection | Done | Mainboard/sideboard/avatar/maybeboard |
-| Quantity overlays | Done | Color-coded based on collection |
-| Export to .txt | Done | `importExport.ts` with Curiosa format |
-| Import from .txt | Done | Parse with unknown card highlighting |
+| Task                      | Status | Notes                                                   |
+| ------------------------- | ------ | ------------------------------------------------------- |
+| guest.json storage        | Done   | `userStorage.ts` with IndexedDB + localStorage fallback |
+| Deck editing (add/remove) | Done   | Double-click interactions                               |
+| Board selection           | Done   | Mainboard/sideboard/avatar/maybeboard                   |
+| Quantity overlays         | Done   | Color-coded based on collection                         |
+| Export to .txt            | Done   | `importExport.ts` with Curiosa format                   |
+| Import from .txt          | Done   | Parse with unknown card highlighting                    |
 
 **Phase 2 Remaining:**
+
 - [ ] Add export button to UI (SidePanel or toolbar)
 - [ ] Add import button/modal to UI
 - [ ] Implement collection management UI (add/remove owned cards)
@@ -57,15 +59,16 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 
 ## Phase 3 — UI & Rules
 
-| Task | Status | Notes |
-|------|--------|-------|
-| Side panel | Done | Collapsible with deck list |
-| Deck validation | Done | `deckRules.ts` with all Sorcery rules |
-| Rule notifications | Done | Validation errors shown in UI |
-| Deck statistics | Done | Card counts per board |
-| Create/rename/delete decks | Done | Full CRUD in SidePanel |
+| Task                       | Status | Notes                                 |
+| -------------------------- | ------ | ------------------------------------- |
+| Side panel                 | Done   | Collapsible with deck list            |
+| Deck validation            | Done   | `deckRules.ts` with all Sorcery rules |
+| Rule notifications         | Done   | Validation errors shown in UI         |
+| Deck statistics            | Done   | Card counts per board                 |
+| Create/rename/delete decks | Done   | Full CRUD in SidePanel                |
 
 **Phase 3 Remaining:**
+
 - [ ] Improve deck statistics display (mana curve, type breakdown)
 - [ ] Add keyboard shortcuts for common actions
 - [ ] Implement undo/redo for deck edits
@@ -75,15 +78,16 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 
 ## Phase 4 — Login & Sync
 
-| Task | Status | Notes |
-|------|--------|-------|
-| Auth service | Partial | `authService.ts` scaffolded |
-| Session management | Done | `session.ts` with localStorage |
-| API wrapper | Partial | `api.ts` needs backend endpoints |
-| Sync logic | Done | `userSync.ts` with debounced saves |
-| Merge logic | Done | Server-precedence merge strategy |
+| Task               | Status  | Notes                              |
+| ------------------ | ------- | ---------------------------------- |
+| Auth service       | Partial | `authService.ts` scaffolded        |
+| Session management | Done    | `session.ts` with localStorage     |
+| API wrapper        | Partial | `api.ts` needs backend endpoints   |
+| Sync logic         | Done    | `userSync.ts` with debounced saves |
+| Merge logic        | Done    | Server-precedence merge strategy   |
 
 **Phase 4 Remaining:**
+
 - [ ] Complete LoginModal UI (password field, error states)
 - [ ] Implement logout flow with data flush
 - [ ] Test sync with real backend
@@ -95,14 +99,15 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 
 ## Phase 5 — Polish
 
-| Task | Status | Notes |
-|------|--------|-------|
-| Performance tuning | Not Started | |
-| Error handling | Partial | Basic try/catch in place |
-| UX improvements | Not Started | |
-| Filters (post-MVP) | Scaffolded | `FiltersPanel.tsx` placeholder |
+| Task               | Status      | Notes                          |
+| ------------------ | ----------- | ------------------------------ |
+| Performance tuning | Not Started |                                |
+| Error handling     | Partial     | Basic try/catch in place       |
+| UX improvements    | Not Started |                                |
+| Filters (post-MVP) | Scaffolded  | `FiltersPanel.tsx` placeholder |
 
 **Phase 5 Remaining:**
+
 - [ ] Implement offscreen card culling for performance
 - [ ] Add loading states for async operations
 - [ ] Improve error messages and recovery options
@@ -149,13 +154,25 @@ These items are explicitly excluded from MVP per PDR section 10:
 
 ---
 
-*Last updated: 2026-01-16*
+_Last updated: 2026-06-09_
+
+---
+
+## Recent Changes (2026-06-09)
+
+**Mobile Orientation Layout:**
+
+- Collection layout now switches between wide and portrait variants.
+- Portrait layout stacks element sections vertically and balances minions against other card types in two columns.
+- Orientation changes rebuild the grouped collection layout while leaving filtered flat layouts unchanged.
+- Added grid layout tests for portrait grouping, provider-family element overrides, and null-cost token filtering.
 
 ---
 
 ## Recent Changes (2026-01-16)
 
 **Grid System Overhaul (v2):**
+
 - Grid unit: 55px (visible as faint background)
 - Cards occupy 6 grid cells: 2×3 portrait (110×165px), 3×2 landscape (165×110px)
 - Cards centered within their grid cell area
@@ -163,6 +180,7 @@ These items are explicitly excluded from MVP per PDR section 10:
 - 4 grid unit gap between element groups, 1 grid unit gap between type subgroups
 
 **Card Stacking:**
+
 - Stack offset: 10 grid units (550px) for name visibility
 - Spells offset downward (names on top)
 - Sites offset upward (names on bottom)
@@ -171,6 +189,7 @@ These items are explicitly excluded from MVP per PDR section 10:
 - Top cards have higher z-index for proper click handling
 
 **Interaction Improvements:**
+
 - Click on unselected card: selects it (clears others)
 - Click on selected card: deselects it
 - Shift+click: toggle multi-selection
