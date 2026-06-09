@@ -129,9 +129,44 @@ export interface PixiStageConfig {
     anchorClientRect: { left: number; top: number; right: number; bottom: number };
   }) => void;
   onCardDragDrop?: (payload: CardDragDropPayload) => void;
+  onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
+  onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
+  onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
+  deckTransferTargets?: QuickTransferDeckTarget[];
 }
 
 export interface CardDragDropPayload {
+  cardNames: string[];
+  clientX: number;
+  clientY: number;
+}
+
+export interface DeckAddPlacement {
+  cardName: string;
+  centerX: number;
+  centerY: number;
+}
+
+export interface DeckAddRequestPayload {
+  deckId: string;
+  canvasAreaId?: string | null;
+  cardNames: string[];
+  placements?: DeckAddPlacement[];
+  worldPos: { x: number; y: number };
+  clientX: number;
+  clientY: number;
+  source: "active-deck" | "quick-transfer" | "side-rail" | "canvas-zone";
+}
+
+export interface QuickTransferDeckTarget {
+  id: string;
+  deckId: string;
+  canvasAreaId?: string | null;
+  label: string;
+}
+
+export interface QuickTransferCreateTargetPayload {
+  category: QuickTransferCategory;
   cardNames: string[];
   clientX: number;
   clientY: number;
@@ -270,8 +305,19 @@ interface QuickTransferCategoryBounds {
 }
 
 interface QuickTransferCanvasAreaBounds {
-  zoneId: string;
+  zoneId: string | null;
+  deckId: string | null;
+  category: QuickTransferCategory;
+  isCreate: boolean;
   bounds: { left: number; top: number; right: number; bottom: number };
+}
+
+interface QuickTransferTargetRow {
+  id: string;
+  label: string;
+  zoneId: string | null;
+  deckId: string | null;
+  isCreate: boolean;
 }
 
 interface QuickTransferState {
@@ -289,6 +335,12 @@ interface DraggedCardPlacement {
   cardName: string;
   centerX: number;
   centerY: number;
+}
+
+interface CanvasDomDropTarget {
+  type: "stack" | "deck" | null;
+  zoneId: string | null;
+  deckId: string | null;
 }
 
 type DeckZoneBoard = "mainboard" | "sideboard";
@@ -431,6 +483,7 @@ const ZONE_DECK_GRAPH_COLORS = {
 const ZONE_DECK_GRAPH_LINE_WIDTH = 0.9;
 const ZONE_DECK_GRAPH_HOVER_DOT_RADIUS = 2.7;
 const QUICK_TRANSFER_HOLD_MS = 500;
+const QUICK_TRANSFER_OPEN_HOLD_MS = 430;
 const QUICK_TRANSFER_CATEGORY_WIDTH = 112;
 const QUICK_TRANSFER_BOX_HEIGHT = 28;
 const QUICK_TRANSFER_ZONE_WIDTH = 142;
@@ -710,9 +763,14 @@ export class PixiStage {
     anchorClientRect: { left: number; top: number; right: number; bottom: number };
   }) => void;
   private onCardDragDrop?: (payload: CardDragDropPayload) => void;
+  private onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
+  private onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
+  private onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
+  private deckTransferTargets: QuickTransferDeckTarget[] = [];
   private hoveredCardName: string | null = null;
   private lastPointerScreenPos: { x: number; y: number } | null = null;
   private quickTransferLastTickMs = 0;
+  private quickTransferHoldTimerId: number | null = null;
   private readonly touchGestures = new TouchGestureTracker<TouchCanvasTarget>();
   private activeTouchDragTarget: TouchCanvasTarget | null = null;
   private lastTouchPointerEventMs = 0;
@@ -733,6 +791,10 @@ export class PixiStage {
     this.onViewportCenterChange = config.onViewportCenterChange;
     this.onDeckFilterRequest = config.onDeckFilterRequest;
     this.onCardDragDrop = config.onCardDragDrop;
+    this.onCardsAddedToCanvasArea = config.onCardsAddedToCanvasArea;
+    this.onQuickTransferCreateTarget = config.onQuickTransferCreateTarget;
+    this.onDeckAddRequest = config.onDeckAddRequest;
+    this.deckTransferTargets = config.deckTransferTargets ?? [];
     this.removeTextureInvalidationListener = lodManager.onTextureInvalidated(
       this.handleTextureInvalidated.bind(this),
     );
@@ -899,6 +961,7 @@ export class PixiStage {
     viewport.on("pointerupoutside", this.onPointerUp.bind(this));
     viewport.on("pointercancel", this.onPointerCancel.bind(this));
     viewport.on("pointerleave", () => {
+      this.clearQuickTransferHold();
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
       this.clearZoneDropPreview();
@@ -934,6 +997,7 @@ export class PixiStage {
       this.webglContextRestoredHandler,
     );
     this.app.canvas.addEventListener("pointerleave", () => {
+      this.clearQuickTransferHold();
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
       this.clearZoneDropPreview();
@@ -1135,6 +1199,14 @@ export class PixiStage {
     this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
     const move = this.touchGestures.move(this.toTouchPoint(event));
 
+    if (this.quickTransferState.active && this.dragState.isDragging) {
+      this.setStacksDropVisual(false);
+      this.clearZoneDropPreview();
+      this.updateCardDrag(worldPos);
+      this.updateQuickTransferHover({ x: event.globalX, y: event.globalY });
+      return;
+    }
+
     if (move.type === "pan-start") {
       this.setHoveredCard(null);
       this.hoveredZoneCardKey = null;
@@ -1172,6 +1244,16 @@ export class PixiStage {
     const release = this.touchGestures.release(this.toTouchPoint(event));
     this.releaseTouchPointer(event);
 
+    if (this.quickTransferState.active) {
+      this.completeQuickTransferDrop(worldPos, screenPos);
+      this.camera.resumeDrag();
+      this.activeTouchDragTarget = null;
+      this.pointerDownOnSelectedCard = false;
+      this.setStacksDropVisual(false);
+      this.updateHoveredFromWorldPos(worldPos);
+      return;
+    }
+
     if (release.type === "tap") {
       this.handleTouchTap(release.target, worldPos, screenPos, release.isDoubleTap);
     } else if (release.type === "action") {
@@ -1189,6 +1271,7 @@ export class PixiStage {
   }
 
   private onPointerCancel(event: FederatedPointerEvent): void {
+    this.clearQuickTransferHold();
     if (this.isTouchPointer(event)) {
       this.markTouchPointerEvent();
       this.touchGestures.cancel();
@@ -1214,6 +1297,15 @@ export class PixiStage {
   ): void {
     if (!this.camera) return;
     if (gesture.target.kind === "empty") return;
+    if (gesture.target.kind === "card") {
+      const worldPos = this.camera.screenToWorld(gesture.current.x, gesture.current.y);
+      this.activeTouchDragTarget = gesture.target;
+      this.beginQuickTransferDrag(gesture.target.cardKey, worldPos, {
+        x: gesture.current.x,
+        y: gesture.current.y,
+      });
+      return;
+    }
     this.camera.pauseDrag();
     this.activeTouchDragTarget = gesture.target;
     this.updateTouchSelectionPreview(gesture.target);
@@ -1526,27 +1618,49 @@ export class PixiStage {
     const clientY = rect.top + screenPos.y;
     const draggedPlacements = this.getDraggedCardPlacements();
     const droppedInStacksTarget = this.isPointInsideStacksDropTarget(clientX, clientY);
-    const droppedStackZoneId = droppedInStacksTarget
-      ? this.getStackZoneIdFromDropTarget(clientX, clientY)
+    const domDropTarget = droppedInStacksTarget
+      ? this.getCanvasDomDropTarget(clientX, clientY)
       : null;
     const draggedCardNames = this.getDraggedCardNames();
     const droppedZone = this.getZoneAtPosition(worldPos);
-    const shouldDropToStackTarget = !!droppedStackZoneId && draggedCardNames.length > 0;
+    const shouldDropToStackTarget =
+      domDropTarget?.type === "stack" &&
+      !!domDropTarget.zoneId &&
+      draggedCardNames.length > 0;
+    const shouldDropToDeckTarget =
+      domDropTarget?.type === "deck" &&
+      !!domDropTarget.deckId &&
+      draggedCardNames.length > 0;
     const shouldDropToCanvasZone =
       !droppedInStacksTarget && !!droppedZone && draggedCardNames.length > 0;
 
     if (shouldDropToCanvasZone && droppedZone) {
-      this.copyCardsIntoZone(droppedZone.id, draggedCardNames, worldPos, {
-        placements: draggedPlacements,
-      });
+      this.addDraggedCardsToZoneOrRequestDeck(
+        droppedZone,
+        draggedCardNames,
+        worldPos,
+        screenPos,
+        draggedPlacements,
+        "canvas-zone",
+      );
     }
 
     this.endCardDrag(true);
 
-    if (shouldDropToStackTarget && droppedStackZoneId) {
-      this.copyCardsIntoZone(droppedStackZoneId, draggedCardNames, worldPos, {
+    if (shouldDropToStackTarget && domDropTarget?.zoneId) {
+      this.copyCardsIntoZone(domDropTarget.zoneId, draggedCardNames, worldPos, {
         useZonePlacement: true,
         placements: draggedPlacements,
+      });
+    } else if (shouldDropToDeckTarget && domDropTarget?.deckId) {
+      this.requestDeckAdd({
+        deckId: domDropTarget.deckId,
+        canvasAreaId: domDropTarget.zoneId,
+        cardNames: draggedCardNames,
+        placements: draggedPlacements,
+        worldPos,
+        screenPos,
+        source: "side-rail",
       });
     } else if (
       droppedInStacksTarget &&
@@ -1652,7 +1766,9 @@ export class PixiStage {
     const target = document.elementFromPoint(clientX, clientY);
     if (!(target instanceof Element)) return null;
 
-    return target.closest(".stacks-panel.open, .stack-tab, .stack-tab-add");
+    return target.closest(
+      ".stacks-panel.open, .stack-tab, .stack-tab-add, .deck-tab, [data-canvas-drop-zone-id], [data-canvas-drop-deck-id]",
+    );
   }
 
   private isPointInsideStacksDropTarget(clientX: number, clientY: number): boolean {
@@ -1664,20 +1780,41 @@ export class PixiStage {
     return dropTarget instanceof HTMLElement && dropTarget.classList.contains("stacks-panel");
   }
 
-  private getStackZoneIdFromDropTarget(clientX: number, clientY: number): string | null {
+  private getCanvasDomDropTarget(clientX: number, clientY: number): CanvasDomDropTarget {
     const dropTarget = this.getStacksDropTargetAtPoint(clientX, clientY);
-    if (!(dropTarget instanceof HTMLElement)) return null;
+    if (!(dropTarget instanceof HTMLElement)) {
+      return { type: null, zoneId: null, deckId: null };
+    }
 
-    const stackTarget = dropTarget.closest("[data-stack-area-id]");
-    if (!(stackTarget instanceof HTMLElement)) return null;
-
-    const zoneId = stackTarget.dataset.stackAreaId;
-    if (!zoneId) return null;
-
-    const matching = this.canvasAreas.find(
-      (zone) => zone.id === zoneId && zone.type === "stack",
+    const target = dropTarget.closest(
+      "[data-stack-area-id], [data-canvas-drop-zone-id], [data-canvas-drop-deck-id]",
     );
-    return matching ? matching.id : null;
+    if (!(target instanceof HTMLElement)) {
+      return { type: null, zoneId: null, deckId: null };
+    }
+
+    const zoneId = target.dataset.canvasDropZoneId ?? target.dataset.stackAreaId ?? null;
+    const deckId = target.dataset.canvasDropDeckId ?? null;
+    const requestedType = target.dataset.canvasDropZoneType;
+
+    if (zoneId) {
+      const matching = this.canvasAreas.find(
+        (zone) => zone.id === zoneId && (zone.type === "stack" || zone.type === "deck"),
+      );
+      if (matching) {
+        return {
+          type: matching.type,
+          zoneId: matching.id,
+          deckId: matching.type === "deck" ? matching.deckId ?? deckId : null,
+        };
+      }
+    }
+
+    if (requestedType === "deck" && deckId) {
+      return { type: "deck", zoneId: null, deckId };
+    }
+
+    return { type: null, zoneId: null, deckId: null };
   }
 
   private setStacksDropVisual(active: boolean): void {
@@ -1754,11 +1891,29 @@ export class PixiStage {
     return label;
   }
 
-  private getQuickTransferTargets(category: QuickTransferCategory): CanvasArea[] {
-    const zoneType = category === "deck" ? "deck" : "stack";
+  private getQuickTransferTargets(category: QuickTransferCategory): QuickTransferTargetRow[] {
+    if (category === "deck") {
+      return this.deckTransferTargets
+        .map((target) => ({
+          id: target.id,
+          label: target.label.trim() || "Deck",
+          zoneId: target.canvasAreaId ?? null,
+          deckId: target.deckId,
+          isCreate: false,
+        }))
+        .sort((left, right) => left.label.localeCompare(right.label));
+    }
+
     return this.canvasAreas
-      .filter((zone) => zone.type === zoneType)
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .filter((zone) => zone.type === "stack")
+      .map((zone) => ({
+        id: zone.id,
+        label: zone.name.trim() || "(Unnamed)",
+        zoneId: zone.id,
+        deckId: null,
+        isCreate: false,
+      }))
+      .sort((left, right) => left.label.localeCompare(right.label));
   }
 
   private getQuickTransferCategoryAtPosition(
@@ -1772,10 +1927,12 @@ export class PixiStage {
     return null;
   }
 
-  private getQuickTransferZoneAtPosition(screenPos: { x: number; y: number }): string | null {
+  private getQuickTransferZoneAtPosition(
+    screenPos: { x: number; y: number },
+  ): QuickTransferCanvasAreaBounds | null {
     for (const entry of this.quickTransferState.zoneBounds) {
       if (this.pointInBounds(screenPos, entry.bounds)) {
-        return entry.zoneId;
+        return entry;
       }
     }
     return null;
@@ -1965,37 +2122,23 @@ export class PixiStage {
           (boxHeight + gap),
       ),
     );
-    const visibleTargets = zoneTargets.slice(0, maxRows);
+    const targetRows: QuickTransferTargetRow[] = [
+      {
+        id: `create:${expandedCategory}`,
+        label: expandedCategory === "deck" ? "+ New deck" : "+ New stack",
+        zoneId: null,
+        deckId: null,
+        isCreate: true,
+      },
+      ...zoneTargets,
+    ];
+    const visibleTargets = targetRows.slice(0, maxRows);
 
-    if (zoneTargets.length === 0) {
-      const noDataWidth = zoneWidth;
-      overlay.roundRect(zoneLeft, zoneTop, noDataWidth, boxHeight, cornerRadius);
-      overlay.fill({ color: QUICK_TRANSFER_COLORS.baseFill, alpha: 1 });
-      overlay.stroke({
-        width: borderWidth,
-        color: QUICK_TRANSFER_COLORS.baseBorder,
-        alpha: 1,
-      });
-      this.addQuickTransferText(
-        expandedCategory === "deck" ? "No saved decks" : "No saved stacks",
-        {
-          x: zoneLeft + textInsetX,
-          y: zoneTop + textInsetY,
-          maxWidth: noDataWidth - textInsetX * 2,
-          fill: QUICK_TRANSFER_COLORS.hoverText,
-          fontSize: rowFontSize,
-          bold: true,
-          strokeWidth: textStrokeWidth,
-        },
-      );
-      return;
-    }
-
-    visibleTargets.forEach((zone, index) => {
+    visibleTargets.forEach((target, index) => {
       const topY = zoneTop + index * (boxHeight + gap);
       const right = zoneLeft + zoneWidth;
       const bottom = topY + boxHeight;
-      const isHover = this.quickTransferState.zoneHoverId === zone.id;
+      const isHover = this.quickTransferState.zoneHoverId === target.id;
       const pulse = isHover ? 0.72 + Math.sin(nowMs / 130) * 0.1 : 0.7;
 
       overlay.roundRect(
@@ -2020,11 +2163,14 @@ export class PixiStage {
       });
 
       this.quickTransferState.zoneBounds.push({
-        zoneId: zone.id,
+        zoneId: target.zoneId,
+        deckId: target.deckId,
+        category: expandedCategory,
+        isCreate: target.isCreate,
         bounds: { left: zoneLeft, top: topY, right, bottom },
       });
 
-      this.addQuickTransferText(zone.name.trim() || "(Unnamed)", {
+      this.addQuickTransferText(target.label, {
         x: zoneLeft + textInsetX,
         y: topY + textInsetY,
         maxWidth: zoneWidth - textInsetX * 2,
@@ -2037,7 +2183,7 @@ export class PixiStage {
       });
     });
 
-    const hiddenCount = zoneTargets.length - visibleTargets.length;
+    const hiddenCount = targetRows.length - visibleTargets.length;
     if (hiddenCount > 0) {
       const noteTop =
         zoneTop +
@@ -2093,7 +2239,12 @@ export class PixiStage {
         this.quickTransferState.categoryHoverStartMs = nowMs;
         this.quickTransferState.zoneHoverId = null;
       }
-      this.quickTransferState.zoneHoverId = this.getQuickTransferZoneAtPosition(screenPos);
+      const zoneTarget = this.getQuickTransferZoneAtPosition(screenPos);
+      this.quickTransferState.zoneHoverId = zoneTarget
+        ? zoneTarget.zoneId ??
+          zoneTarget.deckId ??
+          `create:${zoneTarget.category}`
+        : null;
     }
 
     this.drawQuickTransferOverlay(anchorScreenPos, nowMs);
@@ -2105,17 +2256,21 @@ export class PixiStage {
     screenPos: { x: number; y: number },
   ): boolean {
     if (!this.cardSprites.has(cardKey)) return false;
-    const hasTargets = this.canvasAreas.some(
-      (zone) => zone.type === "deck" || zone.type === "stack",
-    );
+    const hasTargets =
+      this.canvasAreas.some((zone) => zone.type === "stack") ||
+      this.deckTransferTargets.length > 0;
     if (!hasTargets) return false;
 
-    this.clearSelection(true);
-    this.selectCard(cardKey, true);
-    this.emitSelectionChange();
+    if (!this.selectedCards.has(cardKey)) {
+      this.clearSelection(true);
+      this.selectCard(cardKey, true);
+      this.emitSelectionChange();
+    }
 
     this.pointerDownOnSelectedCard = true;
-    this.startCardDrag(worldPos);
+    if (!this.dragState.isDragging) {
+      this.startCardDrag(worldPos);
+    }
     this.camera?.pauseDrag();
     this.quickTransferState.active = true;
     this.quickTransferState.anchorScreenPos = { ...screenPos };
@@ -2130,6 +2285,60 @@ export class PixiStage {
     return true;
   }
 
+  private scheduleQuickTransferHold(
+    cardKey: string,
+    worldPos: { x: number; y: number },
+    screenPos: { x: number; y: number },
+  ): void {
+    this.clearQuickTransferHold();
+    if (this.selectedArchetype && this.archetypeScores) return;
+    this.quickTransferHoldTimerId = window.setTimeout(() => {
+      this.quickTransferHoldTimerId = null;
+      if (!this.dragState.isDragging || !this.pointerDownOnSelectedCard) return;
+      this.beginQuickTransferDrag(cardKey, worldPos, screenPos);
+    }, QUICK_TRANSFER_OPEN_HOLD_MS);
+  }
+
+  private clearQuickTransferHold(): void {
+    if (this.quickTransferHoldTimerId === null) return;
+    window.clearTimeout(this.quickTransferHoldTimerId);
+    this.quickTransferHoldTimerId = null;
+  }
+
+  private toDeckAddPlacements(placements: DraggedCardPlacement[]): DeckAddPlacement[] {
+    return placements.map((placement) => ({
+      cardName: placement.cardName,
+      centerX: placement.centerX,
+      centerY: placement.centerY,
+    }));
+  }
+
+  private requestDeckAdd(payload: {
+    deckId: string;
+    canvasAreaId?: string | null;
+    cardNames: string[];
+    placements?: DraggedCardPlacement[];
+    worldPos: { x: number; y: number };
+    screenPos: { x: number; y: number };
+    source: DeckAddRequestPayload["source"];
+  }): void {
+    if (payload.cardNames.length === 0) return;
+    const rect = this.app.canvas.getBoundingClientRect();
+    this.onDeckAddRequest?.({
+      deckId: payload.deckId,
+      canvasAreaId: payload.canvasAreaId ?? null,
+      cardNames: payload.cardNames,
+      placements:
+        payload.placements && payload.placements.length > 0
+          ? this.toDeckAddPlacements(payload.placements)
+          : undefined,
+      worldPos: payload.worldPos,
+      clientX: rect.left + payload.screenPos.x,
+      clientY: rect.top + payload.screenPos.y,
+      source: payload.source,
+    });
+  }
+
   private completeQuickTransferDrop(
     worldPos: { x: number; y: number },
     screenPos: { x: number; y: number },
@@ -2137,17 +2346,39 @@ export class PixiStage {
     if (!this.quickTransferState.active) return;
 
     this.updateQuickTransferHover(screenPos);
-    const dropZoneId = this.getQuickTransferZoneAtPosition(screenPos);
+    const dropTarget = this.getQuickTransferZoneAtPosition(screenPos);
     const draggedCardNames = this.getDraggedCardNames();
     const draggedPlacements = this.getDraggedCardPlacements();
+    const rect = this.app.canvas.getBoundingClientRect();
 
     this.endCardDrag(true);
     this.pointerDownOnSelectedCard = false;
     this.camera?.resumeDrag();
     this.setStacksDropVisual(false);
 
-    if (dropZoneId && draggedCardNames.length > 0) {
-      this.copyCardsIntoZone(dropZoneId, draggedCardNames, worldPos, {
+    if (dropTarget?.isCreate && draggedCardNames.length > 0) {
+      this.onQuickTransferCreateTarget?.({
+        category: dropTarget.category,
+        cardNames: draggedCardNames,
+        clientX: rect.left + screenPos.x,
+        clientY: rect.top + screenPos.y,
+      });
+    } else if (
+      dropTarget?.category === "deck" &&
+      dropTarget.deckId &&
+      draggedCardNames.length > 0
+    ) {
+      this.requestDeckAdd({
+        deckId: dropTarget.deckId,
+        canvasAreaId: dropTarget.zoneId,
+        cardNames: draggedCardNames,
+        placements: draggedPlacements,
+        worldPos,
+        screenPos,
+        source: "quick-transfer",
+      });
+    } else if (dropTarget?.zoneId && draggedCardNames.length > 0) {
+      this.copyCardsIntoZone(dropTarget.zoneId, draggedCardNames, worldPos, {
         useZonePlacement: true,
         placements: draggedPlacements,
       });
@@ -4565,6 +4796,7 @@ export class PixiStage {
 
   private onPointerDown(event: FederatedPointerEvent): void {
     if (!this.camera) return;
+    this.clearQuickTransferHold();
 
     if (this.isTouchPointer(event)) {
       this.onTouchPointerDown(event);
@@ -4822,14 +5054,7 @@ export class PixiStage {
         if (this.selectedArchetype && this.archetypeScores) {
           this.modifyArchetypeScore(clickedCard, +1);
         } else {
-          const startedQuickTransfer = this.beginQuickTransferDrag(
-            clickedCard,
-            worldPos,
-            { x: event.globalX, y: event.globalY },
-          );
-          if (!startedQuickTransfer) {
-            this.onAddToDeck(clickedCard);
-          }
+          this.onAddToDeck(clickedCard);
         }
         return;
       }
@@ -4849,6 +5074,10 @@ export class PixiStage {
         // Clicked on ALREADY selected card - prepare for drag
         this.pointerDownOnSelectedCard = true;
         this.startCardDrag(worldPos);
+        this.scheduleQuickTransferHold(clickedCard, worldPos, {
+          x: event.globalX,
+          y: event.globalY,
+        });
         this.camera.pauseDrag();
       } else {
         // Clicked on unselected card - select it and start dragging
@@ -4857,6 +5086,10 @@ export class PixiStage {
         this.emitSelectionChange();
         this.pointerDownOnSelectedCard = true;
         this.startCardDrag(worldPos);
+        this.scheduleQuickTransferHold(clickedCard, worldPos, {
+          x: event.globalX,
+          y: event.globalY,
+        });
         this.camera.pauseDrag();
       }
     } else {
@@ -4956,6 +5189,7 @@ export class PixiStage {
 
   private onPointerUp(event: FederatedPointerEvent): void {
     if (!this.camera) return;
+    this.clearQuickTransferHold();
 
     if (this.isTouchPointer(event)) {
       this.onTouchPointerUp(event);
@@ -5060,28 +5294,49 @@ export class PixiStage {
         clientX,
         clientY,
       );
-      const droppedStackZoneId = droppedInStacksTarget
-        ? this.getStackZoneIdFromDropTarget(clientX, clientY)
+      const domDropTarget = droppedInStacksTarget
+        ? this.getCanvasDomDropTarget(clientX, clientY)
         : null;
       const draggedCardNames = this.getDraggedCardNames();
       const droppedZone = this.getZoneAtPosition(worldPos);
       const shouldDropToStackTarget =
-        !!droppedStackZoneId && draggedCardNames.length > 0;
+        domDropTarget?.type === "stack" &&
+        !!domDropTarget.zoneId &&
+        draggedCardNames.length > 0;
+      const shouldDropToDeckTarget =
+        domDropTarget?.type === "deck" &&
+        !!domDropTarget.deckId &&
+        draggedCardNames.length > 0;
       const shouldDropToCanvasZone =
         !droppedInStacksTarget && !!droppedZone && draggedCardNames.length > 0;
       if (shouldDropToCanvasZone && droppedZone) {
-        this.copyCardsIntoZone(droppedZone.id, draggedCardNames, worldPos, {
-          placements: draggedPlacements,
-        });
+        this.addDraggedCardsToZoneOrRequestDeck(
+          droppedZone,
+          draggedCardNames,
+          worldPos,
+          { x: event.globalX, y: event.globalY },
+          draggedPlacements,
+          "canvas-zone",
+        );
       }
       this.endCardDrag(true);
       this.camera.resumeDrag();
       this.setStacksDropVisual(false);
 
-      if (shouldDropToStackTarget && droppedStackZoneId) {
-        this.copyCardsIntoZone(droppedStackZoneId, draggedCardNames, worldPos, {
+      if (shouldDropToStackTarget && domDropTarget?.zoneId) {
+        this.copyCardsIntoZone(domDropTarget.zoneId, draggedCardNames, worldPos, {
           useZonePlacement: true,
           placements: draggedPlacements,
+        });
+      } else if (shouldDropToDeckTarget && domDropTarget?.deckId) {
+        this.requestDeckAdd({
+          deckId: domDropTarget.deckId,
+          canvasAreaId: domDropTarget.zoneId,
+          cardNames: draggedCardNames,
+          placements: draggedPlacements,
+          worldPos,
+          screenPos: { x: event.globalX, y: event.globalY },
+          source: "side-rail",
         });
       } else if (
         droppedInStacksTarget &&
@@ -6203,6 +6458,34 @@ export class PixiStage {
     this.zoneDropPreviewSprites = [];
   }
 
+  private addDraggedCardsToZoneOrRequestDeck(
+    zone: CanvasArea,
+    cardNames: string[],
+    worldPos: { x: number; y: number },
+    screenPos: { x: number; y: number },
+    placements: DraggedCardPlacement[],
+    source: DeckAddRequestPayload["source"],
+    options?: { useZonePlacement?: boolean },
+  ): void {
+    if (zone.type === "deck" && zone.deckId) {
+      this.requestDeckAdd({
+        deckId: zone.deckId,
+        canvasAreaId: zone.id,
+        cardNames,
+        placements,
+        worldPos,
+        screenPos,
+        source,
+      });
+      return;
+    }
+
+    this.copyCardsIntoZone(zone.id, cardNames, worldPos, {
+      useZonePlacement: options?.useZonePlacement ?? false,
+      placements,
+    });
+  }
+
   private copyCardsIntoZone(
     zoneId: string,
     cardNames: string[],
@@ -6227,6 +6510,10 @@ export class PixiStage {
 
     zone.cards = [...zone.cards, ...additions];
     this.registerDeckVariantAdditions(zone, additions);
+    this.onCardsAddedToCanvasArea?.(
+      zone.id,
+      additions.map((addition) => addition.cardName),
+    );
 
     if (zone.type === "stack") {
       this.reconcileCanvasAreaBounds(zone.id);
@@ -6578,6 +6865,13 @@ export class PixiStage {
     this.deactivateQuickTransfer();
     this.closeDeckCardDeletePrompt();
     this.rebuildZoneVisuals();
+  }
+
+  setDeckTransferTargets(targets: QuickTransferDeckTarget[]): void {
+    this.deckTransferTargets = targets.map((target) => ({ ...target }));
+    if (this.quickTransferState.active) {
+      this.deactivateQuickTransfer();
+    }
   }
 
   focusZone(zoneId: string): void {

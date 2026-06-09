@@ -1,97 +1,71 @@
 /**
- * Bottom panel for account/deck tools plus card filter/highlight drawers.
+ * Bottom card tools for filters, archetype highlights, and canvas labels.
  */
 
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useAppState } from '@/app/AppState';
-import type { Deck } from '@/data/dataModels';
-import { fetchCuriosaDeck } from '@/data/curiosaService';
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useAppState } from "@/app/AppState";
 import {
-  loadArchetypeScores,
+  addCategory,
+  formatArchetypeName,
   getArchetypeNames,
   getRemovedArchetypeNames,
-  formatArchetypeName,
-  addCategory,
-  removeCategory,
   invalidateArchetypeCache,
+  loadArchetypeScores,
+  removeCategory,
   setCachedArchetypeScores,
   type ArchetypeScores,
-} from '@/data/archetypeScores';
-import {
-  applyCardFilters,
-  ensureCardFilterState,
-} from '@/data/cardFilters';
-import { buildCardFilterOptions } from '@/data/cardService';
-import { CardFilterDrawer } from '@/ui/CardFilterDrawer';
-import { CardFilterChipTabs } from '@/ui/CardFilterChipTabs';
-import { useCardFilterEditor } from '@/ui/useCardFilterEditor';
-import type { CanvasArea } from '@/canvas/canvasAreas';
+} from "@/data/archetypeScores";
+import { applyCardFilters, ensureCardFilterState } from "@/data/cardFilters";
+import { buildCardFilterOptions } from "@/data/cardService";
+import { CardFilterChipTabs } from "@/ui/CardFilterChipTabs";
+import { CardFilterDrawer } from "@/ui/CardFilterDrawer";
+import { countFilterClauseMatches } from "@/ui/filterDetails";
+import { describeFilterClause } from "@/ui/cardFilterUi";
+import { useCardFilterEditor } from "@/ui/useCardFilterEditor";
 
-type ToolTab = 'filter' | 'highlight' | null;
-type ActionPanel = 'label' | null;
-type BottomHubTab = 'cards' | 'decks' | null;
+type ToolTab = "filter" | "highlight" | null;
+type ActionPanel = "label" | null;
+type FilterPanelMode = "details" | "settings" | null;
 
 const BOTTOM_EDGE_TRIGGER_PX = 92;
-const CURIOSA_KIND_DELAY_MESSAGE = 'Slowing download to be kind to Curiosa.io';
 
 interface BottomPanelProps {
-  canvasAreas: CanvasArea[];
-  onCreateDeckZone: (deck: Deck) => string | null;
-  onDeleteCanvasArea: (canvasAreaId: string) => void;
-  onFocusCanvasArea: (canvasAreaId: string) => void;
-}
-
-function findUnknownDeckCardNames(deck: Deck, knownCardNames: Set<string>): string[] {
-  if (knownCardNames.size === 0) return [];
-
-  const unknown = new Set<string>();
-  for (const board of Object.values(deck.boards)) {
-    for (const card of board) {
-      if (!knownCardNames.has(card.name.toLowerCase())) {
-        unknown.add(card.name);
-      }
-    }
-  }
-
-  return [...unknown].sort((left, right) => left.localeCompare(right));
+  isPhone?: boolean;
+  phoneExpanded?: boolean;
+  onPhoneTabToggle?: () => void;
 }
 
 export function BottomPanel({
-  canvasAreas,
-  onCreateDeckZone,
-  onDeleteCanvasArea,
-  onFocusCanvasArea,
+  isPhone = false,
+  phoneExpanded = false,
+  onPhoneTabToggle,
 }: BottomPanelProps) {
   const { state, dispatch } = useAppState();
   const [archetypes, setArchetypes] = useState<string[]>([]);
   const [removedArchetypes, setRemovedArchetypes] = useState<string[]>([]);
   const [scores, setScores] = useState<ArchetypeScores | null>(null);
-  const [activeHubTab, setActiveHubTab] = useState<BottomHubTab>(null);
   const [activeToolTab, setActiveToolTab] = useState<ToolTab>(null);
   const [activeActionPanel, setActiveActionPanel] = useState<ActionPanel>(null);
+  const [filterPanelMode, setFilterPanelMode] = useState<FilterPanelMode>(null);
+  const [filterDetailIndex, setFilterDetailIndex] = useState<number | null>(null);
   const [edgeNear, setEdgeNear] = useState(false);
   const [highlightRemoveMode, setHighlightRemoveMode] = useState(false);
-  const [isLoadingDeck, setIsLoadingDeck] = useState(false);
-  const [deckError, setDeckError] = useState<string | null>(null);
-  const [deckImportNotice, setDeckImportNotice] = useState<string | null>(null);
-  const [showDeckUrlInput, setShowDeckUrlInput] = useState(false);
-  const [deckUrlInput, setDeckUrlInput] = useState('');
-  const deckImportAbortRef = useRef<AbortController | null>(null);
+  const filterDetailSwipeStartRef = useRef<number | null>(null);
 
-  // Add/remove-category UI state
   const [showAddInput, setShowAddInput] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [selectedRemovedCategory, setSelectedRemovedCategory] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [selectedRemovedCategory, setSelectedRemovedCategory] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [removingCategory, setRemovingCategory] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
 
-  const deckCanvasAreas = useMemo(
-    () => canvasAreas.filter((area) => area.type === 'deck'),
-    [canvasAreas],
-  );
-  const tabsExpanded = edgeNear || activeHubTab !== null;
+  const tabsExpanded = isPhone
+    ? phoneExpanded
+    : edgeNear || activeToolTab !== null || activeActionPanel !== null;
+  const panelOpen = isPhone
+    ? phoneExpanded
+    : activeToolTab !== null || activeActionPanel !== null;
 
   const cardFilters = useMemo(
     () => ensureCardFilterState(state.ui.cardFilters),
@@ -111,21 +85,25 @@ export function BottomPanel({
     activeFilterCount,
     beginNewFilter,
     selectFilterClause,
+    setEditingFilterIndex,
     toggleFilterClauseEnabled,
     deleteFilterClause,
     toggleCurrentFilterToken,
     updateCurrentFilter,
   } = useCardFilterEditor({
     filters: cardFilters,
-    onFiltersChange: (next) => dispatch({ type: 'SET_CARD_FILTERS', filters: next }),
+    onFiltersChange: (next) => dispatch({ type: "SET_CARD_FILTERS", filters: next }),
   });
 
+  const detailClause =
+    filterDetailIndex !== null
+      ? editableCardFilters.clauses[filterDetailIndex] ?? null
+      : null;
+  const detailCount = detailClause
+    ? countFilterClauseMatches(state.cards, detailClause)
+    : 0;
   const availableFilterOptions = useMemo(
     () => buildCardFilterOptions(state.cards),
-    [state.cards],
-  );
-  const knownCardNames = useMemo(
-    () => new Set(state.cards.map((card) => card.name.toLowerCase())),
     [state.cards],
   );
 
@@ -157,7 +135,7 @@ export function BottomPanel({
       })
       .catch((loadError) => {
         if (cancelled) return;
-        console.warn('Failed to load archetype scores:', loadError);
+        console.warn("Failed to load archetype scores:", loadError);
         setScores(null);
         setArchetypes([]);
         setRemovedArchetypes([]);
@@ -168,19 +146,143 @@ export function BottomPanel({
     };
   }, [applyArchetypeState, state.userData?.archetypeScores]);
 
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const near = event.clientY >= window.innerHeight - BOTTOM_EDGE_TRIGGER_PX;
+      setEdgeNear((prev) => (prev === near ? prev : near));
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    return () => window.removeEventListener("pointermove", handlePointerMove);
+  }, []);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Element)) return;
+      if (!event.target.closest(".pixi-canvas-container")) return;
+      setActiveToolTab(null);
+      setActiveActionPanel(null);
+      setFilterPanelMode(null);
+      setFilterDetailIndex(null);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    return () => document.removeEventListener("pointerdown", handlePointerDown, true);
+  }, []);
+
+  useEffect(() => {
+    if (filterDetailIndex === null) return;
+    if (filterDetailIndex < editableCardFilters.clauses.length) return;
+    setFilterDetailIndex(
+      editableCardFilters.clauses.length > 0
+        ? editableCardFilters.clauses.length - 1
+        : null,
+    );
+  }, [editableCardFilters.clauses.length, filterDetailIndex]);
+
   const selectedArchetype = state.ui.selectedArchetype;
 
   const handleOpenAccount = useCallback(() => {
-    dispatch({ type: 'TOGGLE_LOGIN_MODAL' });
+    dispatch({ type: "TOGGLE_LOGIN_MODAL" });
     setActiveActionPanel(null);
   }, [dispatch]);
 
   const handleToggleLabelMode = useCallback(() => {
     dispatch({
-      type: 'SET_LABEL_PLACEMENT_MODE',
+      type: "SET_LABEL_PLACEMENT_MODE",
       enabled: !state.ui.labelPlacementMode,
     });
   }, [dispatch, state.ui.labelPlacementMode]);
+
+  const openFilterTab = useCallback(() => {
+    if (isPhone) {
+      if (!phoneExpanded) {
+        setActiveToolTab("filter");
+        setActiveActionPanel(null);
+      } else {
+        setActiveToolTab(null);
+        setActiveActionPanel(null);
+        setFilterPanelMode(null);
+        setFilterDetailIndex(null);
+      }
+      onPhoneTabToggle?.();
+      return;
+    }
+    setActiveActionPanel(null);
+    setHighlightRemoveMode(false);
+    setActiveToolTab((previous) => {
+      const next = previous === "filter" ? null : "filter";
+      if (next === null) {
+        setFilterPanelMode(null);
+        setFilterDetailIndex(null);
+      }
+      return next;
+    });
+  }, [isPhone, onPhoneTabToggle, phoneExpanded]);
+
+  const openHighlightTab = useCallback(() => {
+    setActiveActionPanel(null);
+    setFilterPanelMode(null);
+    setFilterDetailIndex(null);
+    setHighlightRemoveMode(false);
+    setActiveToolTab((previous) => (previous === "highlight" ? null : "highlight"));
+  }, []);
+
+  const openLabelPanel = useCallback(() => {
+    setActiveToolTab(null);
+    setFilterPanelMode(null);
+    setFilterDetailIndex(null);
+    setActiveActionPanel((previous) => (previous === "label" ? null : "label"));
+  }, []);
+
+  const handleBeginNewFilter = useCallback(() => {
+    beginNewFilter();
+    setActiveToolTab("filter");
+    setActiveActionPanel(null);
+    setFilterDetailIndex(null);
+    setFilterPanelMode("settings");
+    if (isPhone && !phoneExpanded) {
+      onPhoneTabToggle?.();
+    }
+  }, [beginNewFilter, isPhone, onPhoneTabToggle, phoneExpanded]);
+
+  const openFilterSettings = useCallback(
+    (index: number) => {
+      selectFilterClause(index);
+      setFilterDetailIndex(index);
+      setFilterPanelMode("settings");
+      setActiveToolTab("filter");
+      setActiveActionPanel(null);
+    },
+    [selectFilterClause],
+  );
+
+  const handleSelectFilterClause = useCallback(
+    (index: number) => {
+      if (filterDetailIndex === index && filterPanelMode === "details") {
+        openFilterSettings(index);
+        return;
+      }
+
+      setEditingFilterIndex(index);
+      setFilterDetailIndex(index);
+      setFilterPanelMode("details");
+      setActiveToolTab("filter");
+      setActiveActionPanel(null);
+    },
+    [filterDetailIndex, filterPanelMode, openFilterSettings, setEditingFilterIndex],
+  );
+
+  const handleDeleteFilterClause = useCallback(
+    (index: number) => {
+      deleteFilterClause(index);
+      if (filterDetailIndex === index) {
+        setFilterDetailIndex(null);
+        setFilterPanelMode(null);
+      }
+    },
+    [deleteFilterClause, filterDetailIndex],
+  );
 
   const handleAddCategory = useCallback(async () => {
     const candidate = selectedRemovedCategory || newCategoryName;
@@ -195,12 +297,12 @@ export function BottomPanel({
       const sanitized = await addCategory(trimmed);
       const refreshed = await loadArchetypeScores();
       applyArchetypeState(refreshed);
-      setNewCategoryName('');
-      setSelectedRemovedCategory('');
+      setNewCategoryName("");
+      setSelectedRemovedCategory("");
       setShowAddInput(false);
-      dispatch({ type: 'SET_SELECTED_ARCHETYPE', archetype: sanitized });
+      dispatch({ type: "SET_SELECTED_ARCHETYPE", archetype: sanitized });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to add category';
+      const message = err instanceof Error ? err.message : "Failed to add category";
       setAddError(message);
     } finally {
       setAddingCategory(false);
@@ -227,10 +329,10 @@ export function BottomPanel({
         applyArchetypeState(refreshed);
 
         if (state.ui.selectedArchetype === removed) {
-          dispatch({ type: 'SET_SELECTED_ARCHETYPE', archetype: null });
+          dispatch({ type: "SET_SELECTED_ARCHETYPE", archetype: null });
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to remove category';
+        const message = err instanceof Error ? err.message : "Failed to remove category";
         setRemoveError(message);
       } finally {
         setRemovingCategory(null);
@@ -239,559 +341,347 @@ export function BottomPanel({
     [applyArchetypeState, dispatch, removingCategory, state.ui.selectedArchetype],
   );
 
-  const handleAddKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleAddKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter") {
       void handleAddCategory();
-    } else if (e.key === 'Escape') {
+    } else if (event.key === "Escape") {
       setShowAddInput(false);
-      setNewCategoryName('');
-      setSelectedRemovedCategory('');
+      setNewCategoryName("");
+      setSelectedRemovedCategory("");
       setAddError(null);
       setRemoveError(null);
     }
   };
 
-  const abortDeckImport = useCallback(() => {
-    const controller = deckImportAbortRef.current;
-    if (!controller) return;
-
-    controller.abort();
-    deckImportAbortRef.current = null;
-    setIsLoadingDeck(false);
-    setDeckImportNotice(null);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      deckImportAbortRef.current?.abort();
-      deckImportAbortRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
-      const near = event.clientY >= window.innerHeight - BOTTOM_EDGE_TRIGGER_PX;
-      setEdgeNear((prev) => (prev === near ? prev : near));
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!(event.target instanceof Element)) return;
-      if (!event.target.closest('.pixi-canvas-container')) return;
-      abortDeckImport();
-      setActiveHubTab(null);
-      setActiveToolTab(null);
-      setActiveActionPanel(null);
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown, true);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true);
-    };
-  }, [abortDeckImport]);
-
-  const openToolTab = useCallback(
-    (tab: Exclude<ToolTab, null>) => {
-      if (tab === 'highlight') {
-        setHighlightRemoveMode(false);
-        setActiveToolTab(activeToolTab === 'highlight' ? null : 'highlight');
-        return;
-      }
-
-      if (activeToolTab !== 'filter') {
-        beginNewFilter();
-        setActiveToolTab('filter');
-        return;
-      }
-
-      if (editingFilterIndex !== null) {
-        beginNewFilter();
-        return;
-      }
-
-      setActiveToolTab(null);
-    },
-    [activeToolTab, beginNewFilter, editingFilterIndex],
-  );
-
-  const handleSelectFilterClause = useCallback(
-    (index: number) => {
-      selectFilterClause(index);
-      setActiveToolTab('filter');
-    },
-    [selectFilterClause],
-  );
-
-  const openActionPanel = useCallback((panel: Exclude<ActionPanel, null>) => {
-    setActiveActionPanel((prev) => (prev === panel ? null : panel));
-  }, []);
-
-  const openHubTab = useCallback(
-    (tab: Exclude<BottomHubTab, null>) => {
-      const nextTab = activeHubTab === tab ? null : tab;
-      setActiveHubTab(nextTab);
-      if (nextTab !== 'cards') {
-        setActiveToolTab(null);
-        setActiveActionPanel(null);
-        setHighlightRemoveMode(false);
-      }
-      if (nextTab !== 'decks') {
-        abortDeckImport();
-        setDeckError(null);
-        setDeckImportNotice(null);
-        setShowDeckUrlInput(false);
-        setDeckUrlInput('');
-      }
-    },
-    [abortDeckImport, activeHubTab],
-  );
-
-  const handleCreateDeckZone = useCallback(async (deckUrl: string) => {
-    if (isLoadingDeck) return;
-    const trimmed = deckUrl.trim();
-    if (!trimmed) return;
-
-    const controller = new AbortController();
-    deckImportAbortRef.current = controller;
-    setIsLoadingDeck(true);
-    setDeckError(null);
-    setDeckImportNotice(null);
-
-    const slowNoticeTimer = setTimeout(() => {
-      if (controller.signal.aborted || deckImportAbortRef.current !== controller) return;
-      setDeckImportNotice(CURIOSA_KIND_DELAY_MESSAGE);
-    }, 1000);
-
-    try {
-      const deck = await fetchCuriosaDeck(trimmed, {
-        signal: controller.signal,
-        onDelay: (delay) => {
-          if (delay.delayMs >= 1000) {
-            setDeckImportNotice(CURIOSA_KIND_DELAY_MESSAGE);
-          }
-        },
-      });
-      if (controller.signal.aborted || deckImportAbortRef.current !== controller) return;
-      const unknownCards = findUnknownDeckCardNames(deck, knownCardNames);
-      const canvasAreaId = onCreateDeckZone(deck);
-      if (!canvasAreaId) return;
-      setDeckUrlInput('');
-      setShowDeckUrlInput(false);
-      setDeckImportNotice(null);
-      if (unknownCards.length > 0) {
-        const preview = unknownCards.slice(0, 4).join(', ');
-        const suffix = unknownCards.length > 4 ? `, +${unknownCards.length - 4} more` : '';
-        dispatch({
-          type: 'ADD_NOTIFICATION',
-          notification: {
-            type: 'warning',
-            message: `Imported deck contains ${unknownCards.length} unknown card ${
-              unknownCards.length === 1 ? 'name' : 'names'
-            }: ${preview}${suffix}`,
-          },
-        });
-      }
-      setActiveHubTab('decks');
-    } catch (error) {
-      if (
-        controller.signal.aborted ||
-        (error instanceof Error && error.name === 'AbortError')
-      ) {
-        return;
-      }
-      const message = error instanceof Error ? error.message : 'Failed to load deck';
-      setDeckError(message);
-    } finally {
-      clearTimeout(slowNoticeTimer);
-      if (deckImportAbortRef.current === controller) {
-        deckImportAbortRef.current = null;
-        setIsLoadingDeck(false);
-      }
-    }
-  }, [dispatch, isLoadingDeck, knownCardNames, onCreateDeckZone]);
-
-  const handleDeckImportSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      void handleCreateDeckZone(deckUrlInput);
-    },
-    [deckUrlInput, handleCreateDeckZone],
-  );
-
   return (
     <>
-      <button
-        type="button"
-        className="top-login-button"
-        onClick={handleOpenAccount}
-      >
-        {state.session.isGuest ? 'Guest' : (state.session.username ?? 'Account')}
+      <button type="button" className="top-login-button" onClick={handleOpenAccount}>
+        {state.session.isGuest ? "Guest" : state.session.username ?? "Account"}
       </button>
 
-      <div
-        className={`bottom-folder-shell ${activeHubTab ? 'open' : ''} ${
-          tabsExpanded ? 'tabs-expanded' : ''
-        }`}
-      >
-        <div className={`bottom-folder-panel ${activeHubTab ? 'open' : ''}`}>
-        {activeHubTab === 'cards' && (
-          <>
-            <div className="cards-panel-toolbar">
-              <div className="bottom-tools-tabs bottom-tools-tabs-inline">
-                <button
-                  type="button"
-                  className={`bottom-tool-tab ${activeToolTab === 'highlight' ? 'active' : ''}`}
-                  onClick={() => openToolTab('highlight')}
-                >
-                  Highlight Cards
-                </button>
-                <button
-                  type="button"
-                  className={`bottom-tool-tab ${activeToolTab === 'filter' ? 'active' : ''}`}
-                  onClick={() => openToolTab('filter')}
-                  >
-                    Filter Cards
-                  </button>
-                  <button
-                    type="button"
-                    className={`bottom-tool-tab ${
-                      activeActionPanel === 'label' || state.ui.labelPlacementMode ? 'active' : ''
-                    }`}
-                    onClick={() => openActionPanel('label')}
-                  >
-                    Add Label
-                  </button>
+      <div className={`bottom-folder-shell ${tabsExpanded ? "tabs-expanded" : ""}`}>
+        <div
+          className={`bottom-folder-panel ${panelOpen ? "open" : ""}`}
+        >
+          <div className="cards-panel-toolbar">
+            <div className="bottom-tools-tabs bottom-tools-tabs-inline">
+              <button
+                type="button"
+                className={`bottom-tool-tab filter-root-tab ${
+                  activeToolTab === "filter" ? "active" : ""
+                }`}
+                onClick={openFilterTab}
+              >
+                Filter
+              </button>
+              <button
+                type="button"
+                className={`bottom-tool-tab highlight-root-tab ${
+                  activeToolTab === "highlight" ? "active" : ""
+                }`}
+                onClick={openHighlightTab}
+              >
+                Highlight
+              </button>
+              <button
+                type="button"
+                className={`bottom-tool-tab label-root-tab ${
+                  activeActionPanel === "label" || state.ui.labelPlacementMode
+                    ? "active"
+                    : ""
+                }`}
+                onClick={openLabelPanel}
+              >
+                Labels
+              </button>
+            </div>
+          </div>
 
+          {activeToolTab === "filter" && (
+            <>
+              <div className="filter-subtabs">
+                <button
+                  type="button"
+                  className={`bottom-tool-tab filter-add-tab ${
+                    filterPanelMode === "settings" && editingFilterIndex === null
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={handleBeginNewFilter}
+                  title="Add filter"
+                >
+                  +
+                </button>
                 <CardFilterChipTabs
                   clauses={editableCardFilters.clauses}
                   editingFilterIndex={editingFilterIndex}
-                  filterEditorOpen={activeToolTab === 'filter'}
+                  activeFilterIndex={filterDetailIndex}
+                  filterEditorOpen={filterPanelMode === "settings"}
                   onSelectClause={handleSelectFilterClause}
-                  onRemoveClause={deleteFilterClause}
+                  onRemoveClause={handleDeleteFilterClause}
+                  enableHoldDragDelete
                 />
               </div>
 
-              <div className="bottom-panel-deck" />
-            </div>
+              {filterPanelMode === "details" && detailClause && (
+                <div
+                  className="filter-detail-panel"
+                  onPointerDown={(event) => {
+                    filterDetailSwipeStartRef.current = event.clientY;
+                  }}
+                  onPointerUp={(event) => {
+                    const startY = filterDetailSwipeStartRef.current;
+                    filterDetailSwipeStartRef.current = null;
+                    if (startY === null || filterDetailIndex === null) return;
+                    if (startY - event.clientY > 32) {
+                      openFilterSettings(filterDetailIndex);
+                    }
+                  }}
+                >
+                  <div className="filter-detail-count">
+                    {detailCount} / {state.cards.length} cards
+                  </div>
+                  <div className="filter-detail-description">
+                    {describeFilterClause(detailClause.criteria) || "Empty filter"}
+                  </div>
+                </div>
+              )}
 
-            <div className={`cards-tools-drawer ${activeToolTab ? 'open' : ''}`}>
-              <CardFilterDrawer
-                isOpen={activeToolTab === 'filter'}
-                currentFilterCriteria={currentFilterCriteria}
-                editingExistingFilter={editingExistingFilter}
-                editingFilterIndex={editingFilterIndex}
-                editingFilterEnabled={editingFilterClause?.enabled ?? false}
-                filteredCardCount={filteredCards.length}
-                totalCardCount={state.cards.length}
-                activeFilterCount={activeFilterCount}
-                clauseCount={editableCardFilters.clauses.length}
-                availableOptions={availableFilterOptions}
-                onUpdateCurrentFilter={updateCurrentFilter}
-                onToggleCurrentFilterToken={toggleCurrentFilterToken}
-                onToggleEditingFilterEnabled={toggleFilterClauseEnabled}
-                onDeleteEditingFilter={deleteFilterClause}
-              />
+              <div
+                className={`cards-tools-drawer ${
+                  filterPanelMode === "settings" ? "open" : ""
+                }`}
+              >
+                <CardFilterDrawer
+                  isOpen={filterPanelMode === "settings"}
+                  currentFilterCriteria={currentFilterCriteria}
+                  editingExistingFilter={editingExistingFilter}
+                  editingFilterIndex={editingFilterIndex}
+                  editingFilterEnabled={editingFilterClause?.enabled ?? false}
+                  filteredCardCount={filteredCards.length}
+                  totalCardCount={state.cards.length}
+                  activeFilterCount={activeFilterCount}
+                  clauseCount={editableCardFilters.clauses.length}
+                  availableOptions={availableFilterOptions}
+                  onUpdateCurrentFilter={updateCurrentFilter}
+                  onToggleCurrentFilterToken={toggleCurrentFilterToken}
+                  onToggleEditingFilterEnabled={toggleFilterClauseEnabled}
+                  onDeleteEditingFilter={handleDeleteFilterClause}
+                />
+              </div>
+            </>
+          )}
 
-              {activeToolTab === 'highlight' && (
-                <div className="bottom-tools-content">
-                  {scores && archetypes.length > 0 ? (
-                    <div className="bottom-panel-buttons">
-                      <button
-                        type="button"
-                        className={`archetype-button ${selectedArchetype === null ? 'active' : ''}`}
-                        onClick={() => dispatch({ type: 'SET_SELECTED_ARCHETYPE', archetype: null })}
-                        disabled={highlightRemoveMode}
-                      >
-                        None
-                      </button>
+          {activeToolTab === "highlight" && (
+            <div className="cards-tools-drawer open">
+              <div className="bottom-tools-content">
+                {scores && archetypes.length > 0 ? (
+                  <div className="bottom-panel-buttons">
+                    <button
+                      type="button"
+                      className={`archetype-button ${
+                        selectedArchetype === null ? "active" : ""
+                      }`}
+                      onClick={() =>
+                        dispatch({ type: "SET_SELECTED_ARCHETYPE", archetype: null })
+                      }
+                      disabled={highlightRemoveMode}
+                    >
+                      None
+                    </button>
 
-                      {archetypes.map((archetype) => (
-                        <div key={archetype} className="highlight-category-item">
+                    {archetypes.map((archetype) => (
+                      <div key={archetype} className="highlight-category-item">
+                        <button
+                          type="button"
+                          className={`archetype-button ${
+                            highlightRemoveMode
+                              ? "remove-mode"
+                              : selectedArchetype === archetype
+                                ? "active"
+                                : ""
+                          }`}
+                          onClick={() => {
+                            if (highlightRemoveMode) {
+                              void handleRemoveCategory(archetype);
+                            } else {
+                              dispatch({
+                                type: "SET_SELECTED_ARCHETYPE",
+                                archetype,
+                              });
+                            }
+                          }}
+                          disabled={!!removingCategory}
+                          title={
+                            highlightRemoveMode
+                              ? `Remove ${formatArchetypeName(archetype)}`
+                              : undefined
+                          }
+                        >
+                          {removingCategory === archetype
+                            ? "Removing..."
+                            : formatArchetypeName(archetype)}
+                        </button>
+                      </div>
+                    ))}
+
+                    <div className="highlight-mode-controls">
+                      {showAddInput ? (
+                        <div className="add-category-inline add-category-inline-expanded">
+                          {removedArchetypes.length > 0 && (
+                            <select
+                              className="add-category-select"
+                              value={selectedRemovedCategory}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                setSelectedRemovedCategory(value);
+                                if (value) setNewCategoryName("");
+                                setAddError(null);
+                              }}
+                              disabled={addingCategory}
+                            >
+                              <option value="">Restore removed category...</option>
+                              {removedArchetypes.map((removed) => (
+                                <option key={removed} value={removed}>
+                                  {formatArchetypeName(removed)}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          <input
+                            type="text"
+                            className="add-category-input"
+                            placeholder={
+                              removedArchetypes.length > 0
+                                ? "Or type a new category..."
+                                : "Category name..."
+                            }
+                            value={newCategoryName}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setNewCategoryName(value);
+                              if (value.trim()) setSelectedRemovedCategory("");
+                              setAddError(null);
+                            }}
+                            onKeyDown={handleAddKeyDown}
+                            disabled={addingCategory}
+                            autoFocus
+                          />
                           <button
                             type="button"
-                            className={`archetype-button ${
-                              highlightRemoveMode
-                                ? 'remove-mode'
-                                : selectedArchetype === archetype
-                                  ? 'active'
-                                  : ''
-                            }`}
-                            onClick={() => {
-                              if (highlightRemoveMode) {
-                                void handleRemoveCategory(archetype);
-                              } else {
-                                dispatch({ type: 'SET_SELECTED_ARCHETYPE', archetype });
-                              }
-                            }}
-                            disabled={!!removingCategory}
-                            title={
-                              highlightRemoveMode
-                                ? `Remove ${formatArchetypeName(archetype)}`
-                                : undefined
+                            className="add-category-confirm"
+                            onClick={() => void handleAddCategory()}
+                            disabled={
+                              addingCategory ||
+                              (!selectedRemovedCategory && newCategoryName.trim().length === 0)
                             }
                           >
-                            {removingCategory === archetype
-                              ? 'Removing...'
-                              : formatArchetypeName(archetype)}
+                            {addingCategory
+                              ? "..."
+                              : selectedRemovedCategory
+                                ? "Restore"
+                                : "Add"}
                           </button>
-                        </div>
-                      ))}
-
-                      <div className="highlight-mode-controls">
-                        {showAddInput ? (
-                          <div className="add-category-inline add-category-inline-expanded">
-                            {removedArchetypes.length > 0 && (
-                              <select
-                                className="add-category-select"
-                                value={selectedRemovedCategory}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setSelectedRemovedCategory(value);
-                                  if (value) setNewCategoryName('');
-                                  setAddError(null);
-                                }}
-                                disabled={addingCategory}
-                              >
-                                <option value="">Restore removed category...</option>
-                                {removedArchetypes.map((removed) => (
-                                  <option key={removed} value={removed}>
-                                    {formatArchetypeName(removed)}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-
-                            <input
-                              type="text"
-                              className="add-category-input"
-                              placeholder={
-                                removedArchetypes.length > 0
-                                  ? 'Or type a new category...'
-                                  : 'Category name...'
-                              }
-                              value={newCategoryName}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setNewCategoryName(value);
-                                if (value.trim()) setSelectedRemovedCategory('');
-                                setAddError(null);
-                              }}
-                              onKeyDown={handleAddKeyDown}
-                              disabled={addingCategory}
-                              autoFocus
-                            />
-                            <button
-                              type="button"
-                              className="add-category-confirm"
-                              onClick={() => void handleAddCategory()}
-                              disabled={
-                                addingCategory ||
-                                (!selectedRemovedCategory && newCategoryName.trim().length === 0)
-                              }
-                            >
-                              {addingCategory
-                                ? '...'
-                                : selectedRemovedCategory
-                                  ? 'Restore'
-                                  : 'Add'}
-                            </button>
-                            <button
-                              type="button"
-                              className="add-category-cancel"
-                              onClick={() => {
-                                setShowAddInput(false);
-                                setNewCategoryName('');
-                                setSelectedRemovedCategory('');
-                                setAddError(null);
-                                setRemoveError(null);
-                              }}
-                            >
-                              ✕
-                            </button>
-                            {addError && <span className="add-category-error">{addError}</span>}
-                          </div>
-                        ) : (
                           <button
                             type="button"
-                            className="archetype-button add-category-btn"
+                            className="add-category-cancel"
                             onClick={() => {
-                              setShowAddInput(true);
+                              setShowAddInput(false);
+                              setNewCategoryName("");
+                              setSelectedRemovedCategory("");
                               setAddError(null);
                               setRemoveError(null);
                             }}
-                            disabled={highlightRemoveMode}
-                            title={
-                              highlightRemoveMode
-                                ? 'Disable remove mode to add/restore categories'
-                                : undefined
-                            }
                           >
-                            +
+                            X
                           </button>
-                        )}
-
+                          {addError && <span className="add-category-error">{addError}</span>}
+                        </div>
+                      ) : (
                         <button
                           type="button"
-                          className={`archetype-button highlight-remove-toggle ${
-                            highlightRemoveMode ? 'active remove-mode' : ''
-                          }`}
+                          className="archetype-button add-category-btn"
                           onClick={() => {
-                            setHighlightRemoveMode((prev) => !prev);
+                            setShowAddInput(true);
+                            setAddError(null);
+                            setRemoveError(null);
                           }}
-                          disabled={!!removingCategory || addingCategory}
+                          disabled={highlightRemoveMode}
                         >
-                          -
+                          +
                         </button>
-                      </div>
+                      )}
+
+                      <button
+                        type="button"
+                        className={`archetype-button highlight-remove-toggle ${
+                          highlightRemoveMode ? "active remove-mode" : ""
+                        }`}
+                        onClick={() => setHighlightRemoveMode((previous) => !previous)}
+                        disabled={!!removingCategory || addingCategory}
+                      >
+                        -
+                      </button>
                     </div>
-                  ) : (
-                    <p className="bottom-tools-note">No highlight categories available.</p>
-                  )}
+                  </div>
+                ) : (
+                  <p className="bottom-tools-note">No highlight categories available.</p>
+                )}
 
-                  {removeError && <p className="bottom-tools-note">{removeError}</p>}
-                </div>
-              )}
+                {removeError && <p className="bottom-tools-note">{removeError}</p>}
+              </div>
             </div>
+          )}
 
-            <div className={`cards-action-drawer ${activeActionPanel ? 'open' : ''}`}>
-              {activeActionPanel === 'label' && (
-                <div className="bottom-action-content">
-                  <button
-                    type="button"
-                    className={`archetype-button ${state.ui.labelPlacementMode ? 'active' : ''}`}
-                    onClick={handleToggleLabelMode}
-                  >
-                    {state.ui.labelPlacementMode ? 'Stop Label Placement' : 'Start Label Placement'}
-                  </button>
-                  <p className="bottom-tools-note">
-                    When enabled, click the canvas to place a label. Double-click a label to edit.
-                  </p>
-                </div>
-              )}
+          {activeActionPanel === "label" && (
+            <div className="cards-action-drawer open">
+              <div className="bottom-action-content">
+                <button
+                  type="button"
+                  className={`archetype-button ${
+                    state.ui.labelPlacementMode ? "active" : ""
+                  }`}
+                  onClick={handleToggleLabelMode}
+                >
+                  {state.ui.labelPlacementMode ? "Stop Label Placement" : "Start Label Placement"}
+                </button>
+              </div>
             </div>
-          </>
-        )}
+          )}
+        </div>
 
-        {activeHubTab === 'decks' && (
-          <div className="folder-list-panel">
-            <div className="folder-chip-row">
-              <button
-                type="button"
-                className="bottom-tool-tab folder-add-button"
-                onClick={() => {
-                  setDeckError(null);
-                  setShowDeckUrlInput(true);
-                }}
-                disabled={isLoadingDeck || showDeckUrlInput}
-                aria-label="Load deck from URL"
-                title="Load deck from URL"
-              >
-                {isLoadingDeck ? '...' : '+'}
-              </button>
-              {showDeckUrlInput && (
-                <form className="deck-url-import-form" onSubmit={handleDeckImportSubmit}>
-                  <input
-                    type="url"
-                    className="deck-url-input"
-                    placeholder="Curiosa deck URL"
-                    value={deckUrlInput}
-                    onChange={(event) => {
-                      setDeckUrlInput(event.target.value);
-                      setDeckError(null);
-                      setDeckImportNotice(null);
-                    }}
-                    disabled={isLoadingDeck}
-                    autoFocus
-                  />
-                  <button
-                    type="submit"
-                    className="deck-url-submit"
-                    disabled={isLoadingDeck || deckUrlInput.trim().length === 0}
-                  >
-                    {isLoadingDeck ? '...' : 'Load'}
-                  </button>
-                  <button
-                    type="button"
-                    className="deck-url-cancel"
-                    onClick={() => {
-                      if (isLoadingDeck) {
-                        abortDeckImport();
-                        return;
-                      }
-                      setShowDeckUrlInput(false);
-                      setDeckUrlInput('');
-                      setDeckError(null);
-                      setDeckImportNotice(null);
-                    }}
-                    aria-label="Cancel deck URL import"
-                    title={isLoadingDeck ? 'Cancel import' : 'Cancel'}
-                  >
-                    X
-                  </button>
-                </form>
-              )}
-              {deckCanvasAreas.map((area) => (
-                <div key={area.id} className="folder-chip">
-                  <button
-                    type="button"
-                    className="bottom-tool-tab folder-chip-main"
-                    onClick={() => onFocusCanvasArea(area.id)}
-                    title={area.name}
-                  >
-                    {area.name}
-                  </button>
-                  <button
-                    type="button"
-                    className="folder-chip-delete"
-                    onClick={() => onDeleteCanvasArea(area.id)}
-                    aria-label={`Delete ${area.name}`}
-                    title={`Delete ${area.name}`}
-                  >
-                    X
-                  </button>
-                </div>
-              ))}
-            </div>
-            {deckCanvasAreas.length === 0 && (
-              <p className="bottom-tools-note">No decks loaded yet.</p>
-            )}
-            {deckImportNotice && (
-              <p className="bottom-tools-note deck-import-notice">{deckImportNotice}</p>
-            )}
-            {deckError && <p className="bottom-tools-note">{deckError}</p>}
-          </div>
-        )}
-      </div>
-
-      <div
-        className="bottom-folder-tabs"
-      >
-        {([
-          ['cards', 'Canvas'],
-          ['decks', 'Decks'],
-        ] as const).map(([tabId, label]) => {
-          const isActive = activeHubTab === tabId;
-          const hidden = activeHubTab !== null && !isActive;
-          return (
-            <button
-              key={tabId}
-              type="button"
-              className={`bottom-folder-tab ${isActive ? 'active' : ''} ${
-                hidden ? 'hidden' : ''
-              }`}
-              onClick={() => openHubTab(tabId)}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+        <div className="bottom-folder-tabs">
+          <button
+            type="button"
+            className={`bottom-folder-tab filter-root-tab ${
+              activeToolTab === "filter" ? "active" : ""
+            }`}
+            onClick={openFilterTab}
+          >
+            Filter
+          </button>
+          <button
+            type="button"
+            className={`bottom-folder-tab highlight-root-tab ${
+              activeToolTab === "highlight" ? "active" : ""
+            }`}
+            onClick={openHighlightTab}
+          >
+            Highlight
+          </button>
+          <button
+            type="button"
+            className={`bottom-folder-tab label-root-tab ${
+              activeActionPanel === "label" || state.ui.labelPlacementMode
+                ? "active"
+                : ""
+            }`}
+            onClick={openLabelPanel}
+          >
+            Labels
+          </button>
+        </div>
       </div>
     </>
   );

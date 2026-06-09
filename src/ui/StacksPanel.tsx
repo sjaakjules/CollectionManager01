@@ -24,6 +24,9 @@ import type { CanvasArea } from "@/canvas/canvasAreas";
 
 interface StacksPanelProps {
   canvasAreas: CanvasArea[];
+  isPhone?: boolean;
+  phoneExpanded?: boolean;
+  onPhoneTabToggle?: () => void;
   onCreateStack: (name: string) => string | null;
   onSetCanvasAreaPinned: (canvasAreaId: string, pinned: boolean) => void;
   onFocusCanvasArea: (canvasAreaId: string) => void;
@@ -65,6 +68,9 @@ const STACK_ELEMENT_FILTERS: Array<{
  */
 export function StacksPanel({
   canvasAreas,
+  isPhone = false,
+  phoneExpanded = false,
+  onPhoneTabToggle,
   onCreateStack,
   onSetCanvasAreaPinned,
   onFocusCanvasArea,
@@ -76,6 +82,7 @@ export function StacksPanel({
   const [edgeNear, setEdgeNear] = useState(false);
   const [hoveringTabs, setHoveringTabs] = useState(false);
   const [hoveringPanel, setHoveringPanel] = useState(false);
+  const [manualExpanded, setManualExpanded] = useState(false);
   const [stackCardWidth, setStackCardWidth] = useState(250);
   const [selectedElementFilters, setSelectedElementFilters] = useState<
     ThresholdGroup[]
@@ -198,17 +205,17 @@ export function StacksPanel({
     };
   }, []);
 
-  const tabsExpanded =
-    edgeNear || hoveringTabs || hoveringPanel || activeStackId !== null;
+  const tabsExpanded = isPhone
+    ? phoneExpanded
+    : manualExpanded || edgeNear || hoveringTabs || hoveringPanel || activeStackId !== null;
+  const panelOpen = activeStack !== null && (!isPhone || phoneExpanded);
 
   const handleCreateStack = useCallback(() => {
     const value = window.prompt("Stack name", "");
     if (value === null) return;
     const trimmed = value.trim();
     if (!trimmed) return;
-    const createdId = onCreateStack(trimmed);
-    if (!createdId) return;
-    setActiveStackId(createdId);
+    onCreateStack(trimmed);
   }, [onCreateStack]);
 
   const handleElementFilterToggle = useCallback((value: ThresholdGroup) => {
@@ -245,7 +252,19 @@ export function StacksPanel({
         onMouseEnter={() => setHoveringTabs(true)}
         onMouseLeave={() => setHoveringTabs(false)}
       >
-        <div className="stack-tabs-label">Stacks</div>
+        <button
+          type="button"
+          className="stack-tabs-label"
+          onClick={() => {
+            if (isPhone) {
+              onPhoneTabToggle?.();
+              return;
+            }
+            setManualExpanded((previous) => !previous);
+          }}
+        >
+          Stacks
+        </button>
         <button
           type="button"
           className="stack-tab stack-tab-add"
@@ -261,6 +280,8 @@ export function StacksPanel({
             type="button"
             className={`stack-tab ${activeStackId === stack.id ? "active" : ""}`}
             data-stack-area-id={stack.id}
+            data-canvas-drop-zone-id={stack.id}
+            data-canvas-drop-zone-type="stack"
             onClick={() => setActiveStackId(stack.id)}
             onDoubleClick={() => {
               setActiveStackId(stack.id);
@@ -274,7 +295,7 @@ export function StacksPanel({
       </div>
 
       <div
-        className={`stacks-panel ${activeStack ? "open" : ""}`}
+        className={`stacks-panel ${panelOpen ? "open" : ""}`}
         data-stack-area-id={activeStack?.id ?? ""}
         onMouseEnter={() => setHoveringPanel(true)}
         onMouseLeave={() => setHoveringPanel(false)}

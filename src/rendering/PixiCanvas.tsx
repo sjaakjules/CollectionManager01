@@ -18,7 +18,12 @@
 
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { useAppState } from "@/app/AppState";
-import { PixiStage, type CardDragDropPayload } from "./PixiStage";
+import {
+  PixiStage,
+  type CardDragDropPayload,
+  type DeckAddRequestPayload,
+  type QuickTransferCreateTargetPayload,
+} from "./PixiStage";
 import { cardNameToSlug } from "./LODManager";
 import { shouldUseFullCardHoverPreview } from "./deviceProfile";
 import {
@@ -33,11 +38,16 @@ import {
   isCardFilterActive,
 } from "@/data/cardFilters";
 import type { CanvasArea } from "@/canvas/canvasAreas";
+import { buildQuickTransferDeckTargets } from "@/ui/deckTransferTargets";
 
 interface PixiCanvasProps {
   splashDone: boolean;
   canvasAreas: CanvasArea[];
   onCardDragDrop?: (payload: CardDragDropPayload) => void;
+  onAddToDeckRequest?: (cardName: string) => void;
+  onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
+  onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
+  onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
   onCanvasAreasChange?: (canvasAreas: CanvasArea[]) => void;
   onStackHeaderClick?: (stackId: string) => void;
   onViewportCenterChange?: (center: { x: number; y: number }) => void;
@@ -67,6 +77,10 @@ export function PixiCanvas({
   splashDone,
   canvasAreas,
   onCardDragDrop,
+  onAddToDeckRequest,
+  onDeckAddRequest,
+  onCardsAddedToCanvasArea,
+  onQuickTransferCreateTarget,
   onCanvasAreasChange,
   onStackHeaderClick,
   onViewportCenterChange,
@@ -105,6 +119,10 @@ export function PixiCanvas({
   const filteredMode = useMemo(
     () => isCardFilterActive(cardFilters),
     [cardFilters],
+  );
+  const deckTransferTargets = useMemo(
+    () => buildQuickTransferDeckTargets(state.userData?.decks ?? [], canvasAreas),
+    [canvasAreas, state.userData?.decks],
   );
 
   // Load archetype scores from userData (when present) or static seed fallback.
@@ -161,6 +179,14 @@ export function PixiCanvas({
   backgroundProgressRef.current = setBackgroundLoadProgress;
   const cardDragDropRef = useRef(onCardDragDrop);
   cardDragDropRef.current = onCardDragDrop;
+  const addToDeckRequestRef = useRef(onAddToDeckRequest);
+  addToDeckRequestRef.current = onAddToDeckRequest;
+  const deckAddRequestRef = useRef(onDeckAddRequest);
+  deckAddRequestRef.current = onDeckAddRequest;
+  const cardsAddedToCanvasAreaRef = useRef(onCardsAddedToCanvasArea);
+  cardsAddedToCanvasAreaRef.current = onCardsAddedToCanvasArea;
+  const quickTransferCreateTargetRef = useRef(onQuickTransferCreateTarget);
+  quickTransferCreateTargetRef.current = onQuickTransferCreateTarget;
   const canvasAreasChangeRef = useRef(onCanvasAreasChange);
   canvasAreasChangeRef.current = onCanvasAreasChange;
   const stackHeaderClickRef = useRef(onStackHeaderClick);
@@ -179,7 +205,7 @@ export function PixiCanvas({
     const stage = new PixiStage({
       container: containerRef.current,
       onAddToDeck: (cardName) => {
-        dispatch({ type: "ADD_CARD_TO_DECK", cardName });
+        addToDeckRequestRef.current?.(cardName);
       },
       onRemoveFromDeck: (cardName) => {
         dispatch({ type: "REMOVE_CARD_FROM_DECK", cardName });
@@ -223,6 +249,15 @@ export function PixiCanvas({
       onCardDragDrop: (payload) => {
         cardDragDropRef.current?.(payload);
       },
+      onDeckAddRequest: (payload) => {
+        deckAddRequestRef.current?.(payload);
+      },
+      onCardsAddedToCanvasArea: (canvasAreaId, cardNames) => {
+        cardsAddedToCanvasAreaRef.current?.(canvasAreaId, cardNames);
+      },
+      onQuickTransferCreateTarget: (payload) => {
+        quickTransferCreateTargetRef.current?.(payload);
+      },
       onCanvasAreasChange: (nextCanvasAreas) => {
         canvasAreasChangeRef.current?.(nextCanvasAreas);
       },
@@ -262,6 +297,11 @@ export function PixiCanvas({
     if (!stageRef.current) return;
     stageRef.current.setCanvasAreas(canvasAreas);
   }, [canvasAreas]);
+
+  useEffect(() => {
+    if (!stageRef.current) return;
+    stageRef.current.setDeckTransferTargets(deckTransferTargets);
+  }, [deckTransferTargets]);
 
   // Replay reveal/progress only when the source card dataset changes.
   useEffect(() => {

@@ -556,15 +556,24 @@ export function createDeckZone(
   const mainActiveCardIds: string[] = [];
   const cardsByBoard: Record<
     DeckBoardKey,
-    Array<DeckCard & { activeByDefault: boolean }>
+    Array<DeckCard & { activeByDefault: boolean; instanceBoard: ActiveBoard }>
   > = {
     mainboard: [
-      ...deck.boards.mainboard.map((card) => ({ ...card, activeByDefault: true })),
-      ...deck.boards.maybeboard.map((card) => ({ ...card, activeByDefault: false })),
+      ...deck.boards.mainboard.map((card) => ({
+        ...card,
+        activeByDefault: true,
+        instanceBoard: "mainboard" as const,
+      })),
+      ...deck.boards.maybeboard.map((card) => ({
+        ...card,
+        activeByDefault: false,
+        instanceBoard: "maybeboard" as const,
+      })),
     ],
     sideboard: deck.boards.sideboard.map((card) => ({
       ...card,
       activeByDefault: false,
+      instanceBoard: "sideboard" as const,
     })),
   };
   const bodyLeft = bounds.x + DECK_BOARD_LEFT_PADDING;
@@ -590,7 +599,10 @@ export function createDeckZone(
 
       return left.name.localeCompare(right.name);
     });
-    const cardsByType = new Map<DeckGroupKey, Array<DeckCard & { activeByDefault: boolean }>>();
+    const cardsByType = new Map<
+      DeckGroupKey,
+      Array<DeckCard & { activeByDefault: boolean; instanceBoard: ActiveBoard }>
+    >();
     for (const card of boardCards) {
       const cardType = cardInfoByName.get(card.name)?.type;
       const key: DeckGroupKey =
@@ -654,7 +666,7 @@ export function createDeckZone(
             cardName: card.name,
             x: snapped.x,
             y: snapped.y,
-            board,
+            board: card.instanceBoard,
           });
           if (board === "mainboard" && card.activeByDefault) {
             mainActiveCardIds.push(instanceId);

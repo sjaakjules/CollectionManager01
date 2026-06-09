@@ -117,6 +117,7 @@ export type AppAction =
   | { type: 'SET_ACTIVE_DECK'; deckId: string | null }
   | { type: 'SET_ACTIVE_BOARD'; board: ActiveBoard }
   | { type: 'ADD_CARD_TO_DECK'; cardName: string }
+  | { type: 'ADD_CARDS_TO_DECK_BY_ID'; deckId: string; cardNames: string[]; board?: ActiveBoard }
   | { type: 'REMOVE_CARD_FROM_DECK'; cardName: string }
   | { type: 'CREATE_DECK'; deck: Deck }
   | { type: 'DELETE_DECK'; deckId: string }
@@ -199,6 +200,51 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         return {
           ...deck,
           boards: { ...deck.boards, [state.editor.activeBoard]: updatedBoard },
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      return {
+        ...state,
+        userData: { ...state.userData, decks: updatedDecks },
+      };
+    }
+
+    case 'ADD_CARDS_TO_DECK_BY_ID': {
+      if (!state.userData || action.cardNames.length === 0) return state;
+      const targetBoard = action.board ?? 'mainboard';
+
+      const updatedDecks = state.userData.decks.map((deck) => {
+        if (deck.id !== action.deckId) return deck;
+
+        const quantities = new Map<string, number>();
+        for (const cardName of action.cardNames) {
+          const trimmed = cardName.trim();
+          if (!trimmed) continue;
+          quantities.set(trimmed, (quantities.get(trimmed) ?? 0) + 1);
+        }
+        if (quantities.size === 0) return deck;
+
+        const board = deck.boards[targetBoard];
+        let updatedBoard = [...board];
+        for (const [cardName, quantity] of quantities) {
+          const existingIndex = updatedBoard.findIndex((card) => card.name === cardName);
+          if (existingIndex >= 0) {
+            const existing = updatedBoard[existingIndex];
+            if (!existing) continue;
+            updatedBoard = updatedBoard.map((card, index) =>
+              index === existingIndex
+                ? { ...card, quantity: card.quantity + quantity }
+                : card,
+            );
+          } else {
+            updatedBoard = [...updatedBoard, { name: cardName, quantity }];
+          }
+        }
+
+        return {
+          ...deck,
+          boards: { ...deck.boards, [targetBoard]: updatedBoard },
           updatedAt: new Date().toISOString(),
         };
       });

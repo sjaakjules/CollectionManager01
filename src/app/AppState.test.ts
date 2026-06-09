@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { appReducer, initialAppState } from '@/app/AppState';
-import { createGuestUserData, type UserData } from '@/data/dataModels';
+import { createEmptyDeck, createGuestUserData, type UserData } from '@/data/dataModels';
 import type { CanvasArea } from '@/canvas/canvasAreas';
 
 function stackArea(overrides: Partial<CanvasArea> = {}): CanvasArea {
@@ -53,5 +53,33 @@ describe('appReducer canvas areas', () => {
 
     expect(next.userData?.canvasAreas).toHaveLength(1);
     expect(next.userData?.canvasAreas?.[0]?.id).toBe('deck-1');
+  });
+});
+
+describe('appReducer deck board additions', () => {
+  it('adds multiple card names to the requested deck board by deck id', () => {
+    const deck = createEmptyDeck('Avatar of Fire Deck', 'deck-1');
+    deck.boards.avatar = [{ name: 'Avatar of Fire', quantity: 1 }];
+    deck.boards.sideboard = [{ name: 'Spark', quantity: 1 }];
+    const withUser = appReducer(initialAppState, {
+      type: 'SET_USER_DATA',
+      userData: {
+        ...createGuestUserData('guest-1'),
+        decks: [deck],
+      },
+    });
+
+    const next = appReducer(withUser, {
+      type: 'ADD_CARDS_TO_DECK_BY_ID',
+      deckId: 'deck-1',
+      board: 'sideboard',
+      cardNames: ['Spark', 'Spark', 'Bolt'],
+    });
+
+    expect(next.userData?.decks[0]?.boards.sideboard).toEqual([
+      { name: 'Spark', quantity: 3 },
+      { name: 'Bolt', quantity: 1 },
+    ]);
+    expect(next.userData?.decks[0]?.boards.mainboard).toEqual([]);
   });
 });
