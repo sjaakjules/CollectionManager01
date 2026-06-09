@@ -84,6 +84,14 @@ import {
   type ArchetypeScores,
 } from "@/data/archetypeScores";
 import {
+  formatAssociationEvidence,
+  getAssociationScores,
+  hasCollectionAssociationSource,
+  type AssociationSourceZone,
+  type CardAssociationData,
+  type LinkStats,
+} from "@/data/cardAssociations";
+import {
   applyCardFilters,
   cloneCardFilterState,
   createDefaultCardFilters,
@@ -132,6 +140,7 @@ export interface PixiStageConfig {
   onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
   onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
   onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
+  onAssociationSourceZoneToggle?: (cardName: string) => void;
   deckTransferTargets?: QuickTransferDeckTarget[];
 }
 
@@ -605,6 +614,8 @@ export class PixiStage {
   private deckGraphTooltipBox: Graphics | null = null;
   private deckGraphTooltipText: Text | null = null;
   private deckGraphHoverDots: Graphics | null = null;
+  private associationTooltipBox: Graphics | null = null;
+  private associationTooltipText: Text | null = null;
   private zoneDropPreviewOverlay: Graphics | null = null;
   private zoneDropPreviewSprites: CardSprite[] = [];
   private zoneDropPreviewSignature: string | null = null;
@@ -734,6 +745,12 @@ export class PixiStage {
   private archetypeScores: ArchetypeScores | null = null;
   private selectedArchetype: string | null = null;
 
+  // Read-only association highlighting state
+  private associationsEnabled = false;
+  private associationSourceZone: AssociationSourceZone = "main";
+  private selectedAssociationCardName: string | null = null;
+  private cardAssociations: CardAssociationData | null = null;
+
   // Reveal animation state
   private revealFading = false;
   private revealFadeStart = 0;
@@ -766,6 +783,7 @@ export class PixiStage {
   private onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
   private onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
   private onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
+  private onAssociationSourceZoneToggle?: (cardName: string) => void;
   private deckTransferTargets: QuickTransferDeckTarget[] = [];
   private hoveredCardName: string | null = null;
   private lastPointerScreenPos: { x: number; y: number } | null = null;
@@ -794,6 +812,7 @@ export class PixiStage {
     this.onCardsAddedToCanvasArea = config.onCardsAddedToCanvasArea;
     this.onQuickTransferCreateTarget = config.onQuickTransferCreateTarget;
     this.onDeckAddRequest = config.onDeckAddRequest;
+    this.onAssociationSourceZoneToggle = config.onAssociationSourceZoneToggle;
     this.deckTransferTargets = config.deckTransferTargets ?? [];
     this.removeTextureInvalidationListener = lodManager.onTextureInvalidated(
       this.handleTextureInvalidated.bind(this),
@@ -1385,7 +1404,12 @@ export class PixiStage {
     if (target.kind === "card") {
       this.clearZoneSelection();
       if (isDoubleTap) {
-        if (this.selectedArchetype && this.archetypeScores) {
+        if (
+          this.selectedCards.has(target.cardKey) &&
+          this.canToggleAssociationSourceForCard(target.cardName)
+        ) {
+          this.onAssociationSourceZoneToggle?.(target.cardName);
+        } else if (this.selectedArchetype && this.archetypeScores) {
           this.modifyArchetypeScore(target.cardName, +1);
         } else {
           this.onAddToDeck(target.cardName);
@@ -4691,6 +4715,117 @@ export class PixiStage {
     this.deckGraphHoverDots = null;
   }
 
+  private ensureAssociationTooltip(): {
+    box: Graphics;
+    text: Text;
+  } {
+    if (!this.associationTooltipBox || !this.associationTooltipText) {
+      const box = new Graphics();
+      box.zIndex = 9_999_998;
+      box.visible = false;
+      const text = new Text({
+        text: "",
+        style: {
+          fontFamily: "Arial",
+          fontSize: 10,
+          fill: 0xecf1ff,
+          fontWeight: "normal",
+          stroke: { color: 0x050814, width: 3 },
+        },
+      });
+      this.configureTextQuality(text);
+      text.zIndex = 9_999_999;
+      text.visible = false;
+      this.cardContainer.addChild(box);
+      this.cardContainer.addChild(text);
+      this.associationTooltipBox = box;
+      this.associationTooltipText = text;
+    }
+    return {
+      box: this.associationTooltipBox,
+      text: this.associationTooltipText,
+    };
+  }
+
+  private hideAssociationTooltip(): void {
+    if (this.associationTooltipBox) {
+      this.associationTooltipBox.visible = false;
+    }
+    if (this.associationTooltipText) {
+      this.associationTooltipText.visible = false;
+    }
+  }
+
+  private destroyAssociationTooltip(): void {
+    this.associationTooltipBox?.destroy();
+    this.associationTooltipText?.destroy();
+    this.associationTooltipBox = null;
+    this.associationTooltipText = null;
+  }
+
+  private updateAssociationTooltip(
+    worldPos: { x: number; y: number },
+    cardName: string | null,
+  ): void {
+    if (!cardName || !this.cardAssociations) {
+      this.hideAssociationTooltip();
+      return;
+    }
+
+    const stats = this.getAssociationTooltipStats(cardName);
+    if (!stats.main && !stats.collection) {
+      this.hideAssociationTooltip();
+      return;
+    }
+
+    const lines = [cardName];
+    if (stats.main) {
+      lines.push(
+        "",
+        "Main relation",
+        formatAssociationEvidence(this.cardAssociations, stats.main),
+      );
+    }
+    if (stats.collection) {
+      lines.push(
+        "",
+        "Collection relation",
+        formatAssociationEvidence(this.cardAssociations, stats.collection),
+      );
+    }
+
+    const tooltip = this.ensureAssociationTooltip();
+    tooltip.text.text = lines.join("\n");
+    const paddingX = 8;
+    const paddingY = 6;
+    const boxWidth = tooltip.text.width + paddingX * 2;
+    const boxHeight = tooltip.text.height + paddingY * 2;
+    let boxX = worldPos.x + 12;
+    let boxY = worldPos.y - boxHeight - 10;
+
+    const viewBounds = this.camera?.getVisibleBounds();
+    if (viewBounds) {
+      boxX = Math.max(
+        viewBounds.left + 4,
+        Math.min(boxX, viewBounds.right - boxWidth - 4),
+      );
+      boxY = Math.max(
+        viewBounds.top + 4,
+        Math.min(boxY, viewBounds.bottom - boxHeight - 4),
+      );
+    }
+
+    tooltip.box.clear();
+    tooltip.box.roundRect(boxX, boxY, boxWidth, boxHeight, 6);
+    tooltip.box.fill({ color: 0x111a35, alpha: 0.94 });
+    tooltip.box.stroke({ width: 1, color: 0x5f7fe8, alpha: 0.86 });
+    tooltip.box.visible = true;
+
+    tooltip.text.x = Math.round(boxX + paddingX);
+    tooltip.text.y = Math.round(boxY + paddingY);
+    tooltip.text.visible = true;
+  }
+
   private getDeckGraphHoverRegionAtPosition(
     worldPos: { x: number; y: number },
   ): DeckGraphHoverRegion | null {
@@ -4773,12 +4908,14 @@ export class PixiStage {
     if (zoneCard) {
       this.setHoveredCard(zoneCard.cardName);
       this.updateDeckGraphHoverTooltip(worldPos);
+      this.updateAssociationTooltip(worldPos, zoneCard.cardName);
       return;
     }
 
     if (zoneUnderPointer) {
       this.setHoveredCard(null);
       this.updateDeckGraphHoverTooltip(worldPos);
+      this.updateAssociationTooltip(worldPos, null);
       return;
     }
 
@@ -4786,12 +4923,15 @@ export class PixiStage {
     if (!cardKey) {
       this.setHoveredCard(null);
       this.updateDeckGraphHoverTooltip(worldPos);
+      this.updateAssociationTooltip(worldPos, null);
       return;
     }
 
     const data = this.getSpriteData(cardKey);
-    this.setHoveredCard(data?.layout.name ?? null);
+    const cardName = data?.layout.name ?? null;
+    this.setHoveredCard(cardName);
     this.updateDeckGraphHoverTooltip(worldPos);
+    this.updateAssociationTooltip(worldPos, cardName);
   }
 
   private onPointerDown(event: FederatedPointerEvent): void {
@@ -5051,10 +5191,17 @@ export class PixiStage {
       this.lastClickedCard = clickedCard;
 
       if (isDoubleClick) {
-        if (this.selectedArchetype && this.archetypeScores) {
-          this.modifyArchetypeScore(clickedCard, +1);
+        const data = this.getSpriteData(clickedCard);
+        const cardName = data?.layout.name ?? clickedCard;
+        if (
+          wasSelected &&
+          this.canToggleAssociationSourceForCard(cardName)
+        ) {
+          this.onAssociationSourceZoneToggle?.(cardName);
+        } else if (this.selectedArchetype && this.archetypeScores) {
+          this.modifyArchetypeScore(cardName, +1);
         } else {
-          this.onAddToDeck(clickedCard);
+          this.onAddToDeck(cardName);
         }
         return;
       }
@@ -6962,6 +7109,22 @@ export class PixiStage {
     this.applyArchetypeHighlighting();
   }
 
+  updateAssociationHighlight(options: {
+    enabled: boolean;
+    selectedCardName: string | null;
+    sourceZone: AssociationSourceZone;
+    associations: CardAssociationData | null;
+  }): void {
+    this.associationsEnabled = options.enabled;
+    this.selectedAssociationCardName = options.selectedCardName;
+    this.associationSourceZone = options.sourceZone;
+    this.cardAssociations = options.associations;
+    this.applyAssociationHighlighting();
+    if (!options.enabled) {
+      this.hideAssociationTooltip();
+    }
+  }
+
   setLabelPlacementMode(enabled: boolean): void {
     this.labelPlacementMode = enabled;
   }
@@ -7152,6 +7315,7 @@ export class PixiStage {
     this.closeDeckCardDeletePrompt();
     this.closeTouchActionSheet();
     this.deactivateQuickTransfer();
+    this.destroyAssociationTooltip();
 
     for (const data of this.labelSprites.values()) {
       data.text.destroy();
@@ -7214,6 +7378,70 @@ export class PixiStage {
         data.sprite.setArchetypeScore(scores[name]?.[archetype] ?? 0);
       }
     }
+  }
+
+  private applyAssociationHighlighting(): void {
+    const selected = this.selectedAssociationCardName;
+    const associations = this.cardAssociations;
+    const enabled = this.associationsEnabled && !!selected && !!associations;
+
+    const applyToSprite = (cardName: string, sprite: CardSprite): void => {
+      if (!enabled || cardName === selected) {
+        sprite.setAssociationScores(null, null);
+        return;
+      }
+      const scores = getAssociationScores(
+        associations,
+        selected,
+        cardName,
+        this.associationSourceZone,
+      );
+      sprite.setAssociationScores(
+        scores.main?.score ?? null,
+        scores.collection?.score ?? null,
+      );
+    };
+
+    for (const [name, data] of this.cardSprites) {
+      applyToSprite(name, data.sprite);
+    }
+
+    for (const [, data] of this.deckSprites) {
+      applyToSprite(data.layout.name, data.sprite);
+    }
+
+    for (const [, data] of this.zoneCardSprites) {
+      applyToSprite(data.cardName, data.sprite);
+    }
+  }
+
+  private canToggleAssociationSourceForCard(cardName: string | null): boolean {
+    return (
+      this.associationsEnabled &&
+      !!cardName &&
+      hasCollectionAssociationSource(this.cardAssociations, cardName)
+    );
+  }
+
+  private getAssociationTooltipStats(cardName: string): {
+    main: LinkStats | null;
+    collection: LinkStats | null;
+  } {
+    if (
+      !this.associationsEnabled ||
+      !this.cardAssociations ||
+      !this.selectedAssociationCardName ||
+      cardName === this.selectedAssociationCardName
+    ) {
+      return { main: null, collection: null };
+    }
+
+    return getAssociationScores(
+      this.cardAssociations,
+      this.selectedAssociationCardName,
+      cardName,
+      this.associationSourceZone,
+    );
   }
 
   private modifyArchetypeScore(cardName: string, delta: number): void {
@@ -7948,6 +8176,7 @@ export class PixiStage {
 
     this.zoneContainer.sortChildren();
     this.syncZoneSelectionVisuals();
+    this.applyAssociationHighlighting();
     this.drawZoneDeleteOverlay();
   }
 
@@ -7960,6 +8189,7 @@ export class PixiStage {
     for (const label of this.headerLabels) {
       label.destroy();
     }
+    this.destroyAssociationTooltip();
     this.headerLabels = [];
     this.cardSprites.clear();
     this.cardContainer.removeChildren();
@@ -8117,6 +8347,7 @@ export class PixiStage {
     if (this.activeDeck) {
       this.rebuildDeckSprites();
     }
+    this.applyAssociationHighlighting();
   }
 
   private rebuildDeckSprites(): void {
@@ -8281,6 +8512,7 @@ export class PixiStage {
       data.sprite.loadInitialTexture();
     }
 
+    this.applyAssociationHighlighting();
     this.performCulling();
   }
 

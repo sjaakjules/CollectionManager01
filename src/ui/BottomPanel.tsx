@@ -15,6 +15,11 @@ import {
   setCachedArchetypeScores,
   type ArchetypeScores,
 } from "@/data/archetypeScores";
+import {
+  hasCollectionAssociationSource,
+  loadCardAssociations,
+  type CardAssociationData,
+} from "@/data/cardAssociations";
 import { applyCardFilters, ensureCardFilterState } from "@/data/cardFilters";
 import { buildCardFilterOptions } from "@/data/cardService";
 import { CardFilterChipTabs } from "@/ui/CardFilterChipTabs";
@@ -23,7 +28,7 @@ import { countFilterClauseMatches } from "@/ui/filterDetails";
 import { describeFilterClause } from "@/ui/cardFilterUi";
 import { useCardFilterEditor } from "@/ui/useCardFilterEditor";
 
-type ToolTab = "filter" | "highlight" | null;
+type ToolTab = "filter" | "highlight" | "associations" | null;
 type ActionPanel = "label" | null;
 type FilterPanelMode = "details" | "settings" | null;
 
@@ -44,6 +49,7 @@ export function BottomPanel({
   const [archetypes, setArchetypes] = useState<string[]>([]);
   const [removedArchetypes, setRemovedArchetypes] = useState<string[]>([]);
   const [scores, setScores] = useState<ArchetypeScores | null>(null);
+  const [associations, setAssociations] = useState<CardAssociationData | null>(null);
   const [activeToolTab, setActiveToolTab] = useState<ToolTab>(null);
   const [activeActionPanel, setActiveActionPanel] = useState<ActionPanel>(null);
   const [filterPanelMode, setFilterPanelMode] = useState<FilterPanelMode>(null);
@@ -181,6 +187,36 @@ export function BottomPanel({
   }, [editableCardFilters.clauses.length, filterDetailIndex]);
 
   const selectedArchetype = state.ui.selectedArchetype;
+  const selectedAssociationCardName =
+    state.ui.selectedCardNames.length === 1 ? state.ui.selectedCardNames[0] ?? null : null;
+  const canUseCollectionSource = hasCollectionAssociationSource(
+    associations,
+    selectedAssociationCardName,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    loadCardAssociations()
+      .then((data) => {
+        if (!cancelled) setAssociations(data);
+      })
+      .catch((loadError) => {
+        if (!cancelled) {
+          console.warn("Failed to load card associations:", loadError);
+          setAssociations(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (state.ui.associationSourceZone !== "collection") return;
+    if (canUseCollectionSource) return;
+    dispatch({ type: "SET_ASSOCIATION_SOURCE_ZONE", sourceZone: "main" });
+  }, [canUseCollectionSource, dispatch, state.ui.associationSourceZone]);
 
   const handleOpenAccount = useCallback(() => {
     dispatch({ type: "TOGGLE_LOGIN_MODAL" });
@@ -195,6 +231,7 @@ export function BottomPanel({
   }, [dispatch, state.ui.labelPlacementMode]);
 
   const openFilterTab = useCallback(() => {
+    dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
     if (isPhone) {
       if (!phoneExpanded) {
         setActiveToolTab("filter");
@@ -218,22 +255,35 @@ export function BottomPanel({
       }
       return next;
     });
-  }, [isPhone, onPhoneTabToggle, phoneExpanded]);
+  }, [dispatch, isPhone, onPhoneTabToggle, phoneExpanded]);
 
   const openHighlightTab = useCallback(() => {
+    dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
     setActiveActionPanel(null);
     setFilterPanelMode(null);
     setFilterDetailIndex(null);
     setHighlightRemoveMode(false);
     setActiveToolTab((previous) => (previous === "highlight" ? null : "highlight"));
-  }, []);
+  }, [dispatch]);
+
+  const openAssociationsTab = useCallback(() => {
+    setActiveActionPanel(null);
+    setFilterPanelMode(null);
+    setFilterDetailIndex(null);
+    setHighlightRemoveMode(false);
+    dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: true });
+    dispatch({ type: "SET_ASSOCIATION_SOURCE_ZONE", sourceZone: "main" });
+    dispatch({ type: "SET_SELECTED_ARCHETYPE", archetype: null });
+    setActiveToolTab("associations");
+  }, [dispatch]);
 
   const openLabelPanel = useCallback(() => {
+    dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
     setActiveToolTab(null);
     setFilterPanelMode(null);
     setFilterDetailIndex(null);
     setActiveActionPanel((previous) => (previous === "label" ? null : "label"));
-  }, []);
+  }, [dispatch]);
 
   const handleBeginNewFilter = useCallback(() => {
     beginNewFilter();
@@ -382,6 +432,17 @@ export function BottomPanel({
                 onClick={openHighlightTab}
               >
                 Highlight
+              </button>
+              <button
+                type="button"
+                className={`bottom-tool-tab associations-root-tab ${
+                  activeToolTab === "associations" || state.ui.associationsEnabled
+                    ? "active"
+                    : ""
+                }`}
+                onClick={openAssociationsTab}
+              >
+                Associations
               </button>
               <button
                 type="button"
@@ -634,6 +695,64 @@ export function BottomPanel({
             </div>
           )}
 
+          {activeToolTab === "associations" && (
+            <div className="cards-tools-drawer open">
+              <div className="bottom-tools-content">
+                <div className="bottom-panel-buttons associations-controls">
+                  <button
+                    type="button"
+                    className={`archetype-button ${
+                      state.ui.associationSourceZone === "main" ? "active" : ""
+                    }`}
+                    onClick={() =>
+                      dispatch({
+                        type: "SET_ASSOCIATION_SOURCE_ZONE",
+                        sourceZone: "main",
+                      })
+                    }
+                  >
+                    Main
+                  </button>
+                  <button
+                    type="button"
+                    className={`archetype-button ${
+                      state.ui.associationSourceZone === "collection" ? "active" : ""
+                    }`}
+                    onClick={() =>
+                      dispatch({
+                        type: "SET_ASSOCIATION_SOURCE_ZONE",
+                        sourceZone: "collection",
+                      })
+                    }
+                    disabled={!canUseCollectionSource}
+                    title={
+                      canUseCollectionSource
+                        ? undefined
+                        : "No collection evidence for the selected card"
+                    }
+                  >
+                    Collection
+                  </button>
+                  <button
+                    type="button"
+                    className="archetype-button"
+                    onClick={() => {
+                      dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
+                      setActiveToolTab(null);
+                    }}
+                  >
+                    Off
+                  </button>
+                </div>
+                <p className="bottom-tools-note associations-note">
+                  {selectedAssociationCardName
+                    ? `Selected: ${selectedAssociationCardName}`
+                    : "Select one card to show associations."}
+                </p>
+              </div>
+            </div>
+          )}
+
           {activeActionPanel === "label" && (
             <div className="cards-action-drawer open">
               <div className="bottom-action-content">
@@ -669,6 +788,17 @@ export function BottomPanel({
             onClick={openHighlightTab}
           >
             Highlight
+          </button>
+          <button
+            type="button"
+            className={`bottom-folder-tab associations-root-tab ${
+              activeToolTab === "associations" || state.ui.associationsEnabled
+                ? "active"
+                : ""
+            }`}
+            onClick={openAssociationsTab}
+          >
+            Associations
           </button>
           <button
             type="button"

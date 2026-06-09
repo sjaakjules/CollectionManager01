@@ -27,6 +27,7 @@ import {
   ensureCardFilterState,
   type CardFilterState,
 } from '@/data/cardFilters';
+import type { AssociationSourceZone } from '@/data/cardAssociations';
 
 // ============================================================================
 // State Shape
@@ -69,6 +70,8 @@ export interface UIState {
   labelPlacementMode: boolean;
   cardFilters: CardFilterState;
   selectedCardNames: string[];
+  associationsEnabled: boolean;
+  associationSourceZone: AssociationSourceZone;
 }
 
 export interface Notification {
@@ -103,6 +106,8 @@ export const initialAppState: AppState = {
     labelPlacementMode: false,
     cardFilters: createDefaultCardFilters(),
     selectedCardNames: [],
+    associationsEnabled: false,
+    associationSourceZone: 'main',
   },
 };
 
@@ -131,6 +136,8 @@ export type AppAction =
   | { type: 'SET_CARD_FILTERS'; filters: CardFilterState }
   | { type: 'CLEAR_CARD_FILTERS' }
   | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
+  | { type: 'SET_ASSOCIATIONS_ENABLED'; enabled: boolean }
+  | { type: 'SET_ASSOCIATION_SOURCE_ZONE'; sourceZone: AssociationSourceZone }
   | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
   | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData }
   | { type: 'SET_CANVAS_AREAS'; canvasAreas: CanvasArea[] };
@@ -364,6 +371,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ui: {
           ...state.ui,
           selectedArchetype: nextArchetype,
+          associationsEnabled: nextArchetype ? false : state.ui.associationsEnabled,
         },
         userData: state.userData
           ? { ...state.userData, selectedArchetype: nextArchetype }
@@ -393,6 +401,27 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         ui: { ...state.ui, selectedCardNames: action.names },
+      };
+
+    case 'SET_ASSOCIATIONS_ENABLED':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          associationsEnabled: action.enabled,
+          associationSourceZone: action.enabled ? state.ui.associationSourceZone : 'main',
+          selectedArchetype: action.enabled ? null : state.ui.selectedArchetype,
+        },
+        userData:
+          action.enabled && state.userData
+            ? { ...state.userData, selectedArchetype: null }
+            : state.userData,
+      };
+
+    case 'SET_ASSOCIATION_SOURCE_ZONE':
+      return {
+        ...state,
+        ui: { ...state.ui, associationSourceZone: action.sourceZone },
       };
 
     case 'SET_CANVAS_LABELS':

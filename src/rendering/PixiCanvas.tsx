@@ -37,6 +37,11 @@ import {
   ensureCardFilterState,
   isCardFilterActive,
 } from "@/data/cardFilters";
+import {
+  hasCollectionAssociationSource,
+  loadCardAssociations,
+  type CardAssociationData,
+} from "@/data/cardAssociations";
 import type { CanvasArea } from "@/canvas/canvasAreas";
 import { buildQuickTransferDeckTargets } from "@/ui/deckTransferTargets";
 
@@ -98,6 +103,8 @@ export function PixiCanvas({
   );
   const [archetypeScores, setArchetypeScores] =
     useState<ArchetypeScores | null>(null);
+  const [cardAssociations, setCardAssociations] =
+    useState<CardAssociationData | null>(null);
   const [loadProgress, setLoadProgress] = useState<{
     loaded: number;
     total: number;
@@ -124,6 +131,10 @@ export function PixiCanvas({
     () => buildQuickTransferDeckTargets(state.userData?.decks ?? [], canvasAreas),
     [canvasAreas, state.userData?.decks],
   );
+  const selectedAssociationCardName =
+    state.ui.selectedCardNames.length === 1
+      ? state.ui.selectedCardNames[0] ?? null
+      : null;
 
   // Load archetype scores from userData (when present) or static seed fallback.
   useEffect(() => {
@@ -151,6 +162,24 @@ export function PixiCanvas({
       cancelled = true;
     };
   }, [userArchetypeScores]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadCardAssociations()
+      .then((data) => {
+        if (!cancelled) setCardAssociations(data);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.warn("Failed to load card association data:", error);
+          setCardAssociations(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Route archetype score saves into userData for both guest and logged-in users.
   useEffect(() => {
@@ -195,6 +224,10 @@ export function PixiCanvas({
   viewportCenterRef.current = onViewportCenterChange;
   const deckFilterRequestRef = useRef(onDeckFilterRequest);
   deckFilterRequestRef.current = onDeckFilterRequest;
+  const cardAssociationsRef = useRef<CardAssociationData | null>(cardAssociations);
+  cardAssociationsRef.current = cardAssociations;
+  const associationSourceZoneRef = useRef(state.ui.associationSourceZone);
+  associationSourceZoneRef.current = state.ui.associationSourceZone;
 
   // Initialize PixiJS stage
   useEffect(() => {
@@ -274,6 +307,14 @@ export function PixiCanvas({
           anchorClientRect: request.anchorClientRect,
         });
       },
+      onAssociationSourceZoneToggle: (cardName) => {
+        if (!hasCollectionAssociationSource(cardAssociationsRef.current, cardName)) return;
+        dispatch({
+          type: "SET_ASSOCIATION_SOURCE_ZONE",
+          sourceZone:
+            associationSourceZoneRef.current === "main" ? "collection" : "main",
+        });
+      },
     });
 
     stageRef.current = stage;
@@ -343,6 +384,21 @@ export function PixiCanvas({
       archetypeScores,
     );
   }, [state.ui.selectedArchetype, archetypeScores]);
+
+  useEffect(() => {
+    if (!stageRef.current) return;
+    stageRef.current.updateAssociationHighlight({
+      enabled: state.ui.associationsEnabled,
+      selectedCardName: selectedAssociationCardName,
+      sourceZone: state.ui.associationSourceZone,
+      associations: cardAssociations,
+    });
+  }, [
+    cardAssociations,
+    selectedAssociationCardName,
+    state.ui.associationSourceZone,
+    state.ui.associationsEnabled,
+  ]);
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {

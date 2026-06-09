@@ -62,7 +62,11 @@ export class CardSprite extends Container {
   private quantityText: Text;
   private selectionBorder: Graphics;
   private archetypeOutline: Graphics;
+  private associationMainOutline: Graphics;
+  private associationCollectionOutline: Graphics;
   private scoreText: Text;
+  private associationMainScoreText: Text;
+  private associationCollectionScoreText: Text;
   private displayWidth: number;
   private displayHeight: number;
   private currentLOD: LODLevel = lodManager.getStartupLOD();
@@ -119,6 +123,14 @@ export class CardSprite extends Container {
     this.archetypeOutline.visible = false;
     this.addChild(this.archetypeOutline);
 
+    this.associationCollectionOutline = new Graphics();
+    this.associationCollectionOutline.visible = false;
+    this.addChild(this.associationCollectionOutline);
+
+    this.associationMainOutline = new Graphics();
+    this.associationMainOutline.visible = false;
+    this.addChild(this.associationMainOutline);
+
     // Selection border
     this.selectionBorder = new Graphics();
     this.selectionBorder.rect(0, 0, width, height);
@@ -163,6 +175,32 @@ export class CardSprite extends Container {
     this.scoreText.y = height / 2;
     this.scoreText.visible = false;
     this.addChild(this.scoreText);
+
+    const associationFontSize = Math.round(Math.min(width, height) * 0.24);
+    const associationTextStyle = {
+      fontFamily: "Arial",
+      fontSize: associationFontSize,
+      fontWeight: "bold" as const,
+      fill: 0xffffff,
+      stroke: { color: 0x000000, width: 3 },
+    };
+    this.associationMainScoreText = new Text({
+      text: "",
+      style: { ...associationTextStyle, fill: 0x4aa8ff },
+    });
+    this.associationMainScoreText.anchor.set(0.5);
+    this.associationMainScoreText.y = height / 2;
+    this.associationMainScoreText.visible = false;
+    this.addChild(this.associationMainScoreText);
+
+    this.associationCollectionScoreText = new Text({
+      text: "",
+      style: { ...associationTextStyle, fill: 0xff9f2f },
+    });
+    this.associationCollectionScoreText.anchor.set(0.5);
+    this.associationCollectionScoreText.y = height / 2;
+    this.associationCollectionScoreText.visible = false;
+    this.addChild(this.associationCollectionScoreText);
 
     // Enable interactivity - events are handled by PixiStage
     this.eventMode = "static";
@@ -278,6 +316,49 @@ export class CardSprite extends Container {
     this.scoreText.visible = true;
 
     this.alpha = 1;
+  }
+
+  setAssociationScores(mainScore: number | null, collectionScore: number | null): void {
+    const hasMain = typeof mainScore === "number" && mainScore > 0;
+    const hasCollection =
+      typeof collectionScore === "number" && collectionScore > 0;
+    const w = this.displayWidth;
+    const h = this.displayHeight;
+
+    this.associationMainOutline.clear();
+    this.associationCollectionOutline.clear();
+
+    if (hasMain) {
+      this.associationMainOutline.rect(3, 3, w - 6, h - 6);
+      this.associationMainOutline.stroke({
+        width: 3,
+        color: 0x4aa8ff,
+        alpha: Math.min(1, 0.38 + mainScore / 130),
+      });
+    }
+    this.associationMainOutline.visible = hasMain;
+
+    if (hasCollection) {
+      this.associationCollectionOutline.rect(-4, -4, w + 8, h + 8);
+      this.associationCollectionOutline.stroke({
+        width: 3,
+        color: 0xff9f2f,
+        alpha: Math.min(1, 0.38 + collectionScore / 130),
+      });
+    }
+    this.associationCollectionOutline.visible = hasCollection;
+
+    if (hasMain) {
+      this.associationMainScoreText.text = String(mainScore);
+      this.associationMainScoreText.x = hasCollection ? w * 0.36 : w / 2;
+    }
+    this.associationMainScoreText.visible = hasMain;
+
+    if (hasCollection) {
+      this.associationCollectionScoreText.text = String(collectionScore);
+      this.associationCollectionScoreText.x = hasMain ? w * 0.64 : w / 2;
+    }
+    this.associationCollectionScoreText.visible = hasCollection;
   }
 
   updateLOD(zoom: number): void {
