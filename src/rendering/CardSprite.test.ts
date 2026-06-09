@@ -12,11 +12,18 @@ function stubLODManager() {
 
   vi.spyOn(lodManager, "getStartupLOD").mockReturnValue(LOD_LEVELS.THUMBNAIL);
   vi.spyOn(lodManager, "resolveLOD").mockImplementation((lod) => lod);
+  vi.spyOn(lodManager, "getInteractiveDetailLOD").mockReturnValue(
+    LOD_LEVELS.FULL,
+  );
+  vi.spyOn(lodManager, "shouldDeferAsyncTextureLoad").mockReturnValue(false);
   vi.spyOn(lodManager, "hasExactTexture").mockImplementation((_slug, lod) =>
     exactLODs.has(lod),
   );
   vi.spyOn(lodManager, "getTextureMatchSync").mockImplementation((_slug, lod) =>
     exactLODs.has(lod) ? { lod, texture: Texture.EMPTY } : null,
+  );
+  vi.spyOn(lodManager, "getExactTextureSync").mockImplementation((_slug, lod) =>
+    exactLODs.has(lod) ? Texture.EMPTY : null,
   );
   vi.spyOn(lodManager, "getTexture").mockImplementation(async () => Texture.EMPTY);
 
@@ -105,5 +112,25 @@ describe("CardSprite LOD display", () => {
     stubs.setFullAvailable(false);
     sprite.emit("pointerout", pointerEvent);
     expect(sprite.currentTextureLOD).toBe(LOD_LEVELS.MEDIUM);
+  });
+
+  it("releases an invalidated medium texture to the exact thumbnail fallback", () => {
+    stubLODManager();
+    vi.spyOn(lodManager, "getLODForCardDisplay").mockReturnValue(
+      LOD_LEVELS.MEDIUM,
+    );
+
+    const sprite = new CardSprite({
+      name: "Shield Maidens",
+      isLandscape: false,
+      x: 0,
+      y: 0,
+    });
+
+    sprite.updateLOD(1);
+    expect(sprite.currentTextureLOD).toBe(LOD_LEVELS.MEDIUM);
+
+    sprite.releaseTextureForLOD(LOD_LEVELS.MEDIUM);
+    expect(sprite.currentTextureLOD).toBe(LOD_LEVELS.THUMBNAIL);
   });
 });

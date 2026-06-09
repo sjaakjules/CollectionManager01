@@ -20,6 +20,7 @@ import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { useAppState } from "@/app/AppState";
 import { PixiStage, type CardDragDropPayload } from "./PixiStage";
 import { cardNameToSlug } from "./LODManager";
+import { shouldUseFullCardHoverPreview } from "./deviceProfile";
 import {
   loadArchetypeScores,
   setCachedArchetypeScores,
@@ -93,6 +94,9 @@ export function PixiCanvas({
   } | null>(null);
   const [hoveredCardName, setHoveredCardName] = useState<string | null>(null);
   const [isPointerOverOverlayUi, setIsPointerOverOverlayUi] = useState(false);
+  const [useFullCardHoverPreview, setUseFullCardHoverPreview] = useState(
+    shouldUseFullCardHoverPreview,
+  );
 
   const filteredCards = useMemo(
     () => applyCardFilters(state.cards, cardFilters),
@@ -319,6 +323,20 @@ export function PixiCanvas({
     };
   }, []);
 
+  useEffect(() => {
+    const updatePreviewPolicy = () => {
+      setUseFullCardHoverPreview(shouldUseFullCardHoverPreview());
+    };
+
+    updatePreviewPolicy();
+    window.addEventListener("resize", updatePreviewPolicy);
+    window.visualViewport?.addEventListener("resize", updatePreviewPolicy);
+    return () => {
+      window.removeEventListener("resize", updatePreviewPolicy);
+      window.visualViewport?.removeEventListener("resize", updatePreviewPolicy);
+    };
+  }, []);
+
   // Prevent context menu on canvas (for right-click interactions)
   const handleContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -334,7 +352,7 @@ export function PixiCanvas({
     backgroundLoadProgress !== null &&
     backgroundLoadProgress.total > 0 &&
     backgroundLoadProgress.loaded < backgroundLoadProgress.total;
-  const hoveredCardPreviewSrc = hoveredCardName
+  const hoveredCardPreviewSrc = hoveredCardName && useFullCardHoverPreview
     ? `/assets/Cards/${cardNameToSlug(hoveredCardName)}.webp`
     : null;
   const hoveredCardIsLandscape = useMemo(() => {
@@ -370,6 +388,8 @@ export function PixiCanvas({
             className={hoveredCardIsLandscape ? "landscape" : ""}
             src={hoveredCardPreviewSrc}
             alt={hoveredCardName ?? "Card preview"}
+            decoding="async"
+            loading="lazy"
           />
         </div>
       )}
@@ -416,11 +436,11 @@ function BackgroundTextureSpinner({
   return (
     <div
       className="texture-background-spinner"
-      aria-label={`Loading high-detail card images ${loaded} of ${total}`}
+      aria-label={`Loading card detail ${loaded} of ${total}`}
     >
       <span className="texture-background-spinner-wheel" aria-hidden="true" />
       <span className="texture-background-spinner-label">
-        Loading High Detail {pct}%
+        Loading Detail {pct}%
       </span>
     </div>
   );

@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  getMediumAtlasPageBudget,
   getInitialRevealConcurrentLoads,
   getPixiCanvasResolution,
   isConstrainedTextureDevice,
+  isHighMemoryConstrainedTextureDevice,
   isLowDetailTextureDevice,
+  shouldUseFullCardHoverPreview,
   shouldPreloadFullTextureCatalog,
 } from "./deviceProfile";
 
@@ -67,6 +70,11 @@ describe("deviceProfile", () => {
     expect(isConstrainedTextureDevice()).toBe(false);
     expect(getPixiCanvasResolution()).toBe(2);
     expect(getInitialRevealConcurrentLoads()).toBe(24);
+    expect(getMediumAtlasPageBudget()).toEqual({
+      targetPages: Number.POSITIVE_INFINITY,
+      maxPages: Number.POSITIVE_INFINITY,
+    });
+    expect(shouldUseFullCardHoverPreview()).toBe(true);
     expect(shouldPreloadFullTextureCatalog()).toBe(false);
   });
 
@@ -85,10 +93,40 @@ describe("deviceProfile", () => {
     });
 
     expect(isConstrainedTextureDevice()).toBe(true);
+    expect(isHighMemoryConstrainedTextureDevice()).toBe(false);
     expect(isLowDetailTextureDevice()).toBe(false);
     expect(getPixiCanvasResolution()).toBe(3);
-    expect(getInitialRevealConcurrentLoads()).toBe(4);
+    expect(getInitialRevealConcurrentLoads()).toBe(1);
+    expect(getMediumAtlasPageBudget()).toEqual({
+      targetPages: 12,
+      maxPages: 18,
+    });
+    expect(shouldUseFullCardHoverPreview()).toBe(false);
     expect(shouldPreloadFullTextureCatalog()).toBe(false);
+  });
+
+  it("gives high-memory constrained devices a larger medium atlas budget", () => {
+    useDevice({
+      width: 430,
+      height: 932,
+      dpr: 3,
+      userAgent:
+        "Mozilla/5.0 (Android 15; Mobile) AppleWebKit/537.36 Chrome/125.0.0.0 Mobile Safari/537.36",
+      maxTouchPoints: 5,
+      deviceMemory: 8,
+      media: {
+        "(pointer: coarse)": true,
+        "(hover: none)": true,
+      },
+    });
+
+    expect(isConstrainedTextureDevice()).toBe(true);
+    expect(isHighMemoryConstrainedTextureDevice()).toBe(true);
+    expect(isLowDetailTextureDevice()).toBe(false);
+    expect(getMediumAtlasPageBudget()).toEqual({
+      targetPages: 16,
+      maxPages: 24,
+    });
   });
 
   it("keeps save-data phone-sized touch devices on the safest texture path", () => {
@@ -109,7 +147,12 @@ describe("deviceProfile", () => {
     expect(isConstrainedTextureDevice()).toBe(true);
     expect(isLowDetailTextureDevice()).toBe(true);
     expect(getPixiCanvasResolution()).toBe(1.5);
-    expect(getInitialRevealConcurrentLoads()).toBe(4);
+    expect(getInitialRevealConcurrentLoads()).toBe(1);
+    expect(getMediumAtlasPageBudget()).toEqual({
+      targetPages: 0,
+      maxPages: 0,
+    });
+    expect(shouldUseFullCardHoverPreview()).toBe(false);
     expect(shouldPreloadFullTextureCatalog()).toBe(false);
   });
 

@@ -8,6 +8,12 @@ const LOW_DETAIL_RENDER_RESOLUTION_CAP = 1.5;
 const DESKTOP_RENDER_RESOLUTION_CAP = 2;
 const DESKTOP_TEXT_RESOLUTION_MAX = 3;
 const LOW_DEVICE_MEMORY_GB_MAX = 4;
+const HIGH_DEVICE_MEMORY_GB_MIN = 8;
+
+export interface AtlasPageBudget {
+  targetPages: number;
+  maxPages: number;
+}
 
 interface NavigatorWithResourceHints extends Navigator {
   connection?: {
@@ -83,6 +89,18 @@ export function isLowDetailTextureDevice(): boolean {
   return lowDeviceMemory || saveData;
 }
 
+export function isHighMemoryConstrainedTextureDevice(): boolean {
+  const nav = getNavigator();
+  if (!nav || !isConstrainedTextureDevice() || isLowDetailTextureDevice()) {
+    return false;
+  }
+
+  return (
+    typeof nav.deviceMemory === "number" &&
+    nav.deviceMemory >= HIGH_DEVICE_MEMORY_GB_MIN
+  );
+}
+
 export function getPixiCanvasResolution(): number {
   let cap = DESKTOP_RENDER_RESOLUTION_CAP;
   if (isConstrainedTextureDevice()) {
@@ -101,7 +119,7 @@ export function getPixiTextResolution(): number {
 }
 
 export function getInitialRevealConcurrentLoads(): number {
-  return isConstrainedTextureDevice() ? 4 : 24;
+  return isConstrainedTextureDevice() ? 1 : 24;
 }
 
 export function getHighDetailLoadOptions(): {
@@ -109,10 +127,33 @@ export function getHighDetailLoadOptions(): {
   batchSize: number;
 } {
   return isConstrainedTextureDevice()
-    ? { concurrentLoads: 2, batchSize: 4 }
+    ? { concurrentLoads: 1, batchSize: 4 }
     : { concurrentLoads: 6, batchSize: 24 };
+}
+
+export function getMediumAtlasPageBudget(): AtlasPageBudget {
+  if (!isConstrainedTextureDevice()) {
+    return {
+      targetPages: Number.POSITIVE_INFINITY,
+      maxPages: Number.POSITIVE_INFINITY,
+    };
+  }
+
+  if (isLowDetailTextureDevice()) {
+    return { targetPages: 0, maxPages: 0 };
+  }
+
+  if (isHighMemoryConstrainedTextureDevice()) {
+    return { targetPages: 16, maxPages: 24 };
+  }
+
+  return { targetPages: 12, maxPages: 18 };
 }
 
 export function shouldPreloadFullTextureCatalog(): boolean {
   return false;
+}
+
+export function shouldUseFullCardHoverPreview(): boolean {
+  return !isConstrainedTextureDevice();
 }

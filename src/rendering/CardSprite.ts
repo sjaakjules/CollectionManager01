@@ -288,6 +288,48 @@ export class CardSprite extends Container {
     }
   }
 
+  refreshCurrentLOD(): void {
+    void this.loadTexture(this.currentLOD);
+  }
+
+  reloadCurrentTexture(): void {
+    this.displayedLOD = null;
+    this._textureLoaded = false;
+    this.sprite.texture = Texture.WHITE;
+    this.sprite.tint = 0x2a2a3e;
+    this.sprite.visible = false;
+    const fallbackLOD = lodManager.getStartupLOD();
+    void this.loadTexture(fallbackLOD).then(() => {
+      if (this.currentLOD !== fallbackLOD) {
+        this.refreshCurrentLOD();
+      }
+    });
+  }
+
+  releaseTextureForLOD(lod: LODLevel): void {
+    if (this.displayedLOD !== lod) return;
+
+    const fallbackTexture = lod === LOD_LEVELS.THUMBNAIL
+      ? null
+      : lodManager.getExactTextureSync(this.imageSlug, LOD_LEVELS.THUMBNAIL);
+    if (fallbackTexture) {
+      this.applyTexture(fallbackTexture, LOD_LEVELS.THUMBNAIL);
+      return;
+    }
+
+    const wasVisible = this.sprite.visible;
+    this.displayedLOD = null;
+    this.sprite.texture = Texture.WHITE;
+    this.sprite.tint = 0x2a2a3e;
+    this.sprite.visible = wasVisible;
+
+    if (lod !== LOD_LEVELS.THUMBNAIL) {
+      setTimeout(() => {
+        void this.loadTexture(LOD_LEVELS.THUMBNAIL);
+      }, 0);
+    }
+  }
+
   /**
    * Get the card's CENTER position in world coordinates
    */
@@ -320,8 +362,8 @@ export class CardSprite extends Container {
   // ============================================================================
 
   private onPointerOver(): void {
-    // Hovered cards are prioritized so detail snaps in quickly regardless of zoom.
-    this.loadTexture(LOD_LEVELS.FULL);
+    // Hovered cards are prioritized up to the highest tier this device allows.
+    this.loadTexture(lodManager.getInteractiveDetailLOD());
   }
 
   private onPointerOut(): void {
@@ -346,6 +388,11 @@ export class CardSprite extends Container {
         if (hasExactTexture || effectiveLOD === LOD_LEVELS.THUMBNAIL) {
           return;
         }
+      }
+
+      if (lodManager.shouldDeferAsyncTextureLoad(effectiveLOD)) {
+        this.markTextureLoaded();
+        return;
       }
 
       // Load async

@@ -49,6 +49,7 @@ import {
   LOD_LEVELS,
   cardNameToSlug,
   type LODLevel,
+  type LODTextureInvalidation,
 } from "./LODManager";
 import {
   getHighDetailLoadOptions,
@@ -371,6 +372,10 @@ const CULLING_MARGIN = 300;
 const CULLING_THROTTLE_MS = 50;
 const DOUBLE_CLICK_TIME_MS = 300;
 const ATLAS_CARD_REVEAL_SPREAD_MS = 300;
+const PHONE_MEDIUM_NEAR_VIEWPORT_MULTIPLIER = 0.75;
+const PHONE_MEDIUM_PAN_DIRECTION_VIEWPORTS = 1;
+const PHONE_MEDIUM_HIGH_PAN_VELOCITY_PX_PER_MS = 0.8;
+const PHONE_MEDIUM_LOAD_RESUME_IDLE_MS = 160;
 const ZONE_BODY_PADDING = 14;
 const ZONE_AUTO_EXPAND_PADDING = 24;
 const ZONE_DELETE_SIZE = 18;
@@ -581,6 +586,12 @@ export class PixiStage {
   private lastCullingUpdate = 0;
   private visibleCardNames: Set<string> = new Set();
   private cullingScheduled = false;
+  private lastViewportCenter: { x: number; y: number } | null = null;
+  private lastViewportMoveMs = 0;
+  private viewportVelocityPxPerMs = { x: 0, y: 0 };
+  private lastHighVelocityPanMs = -Infinity;
+  private mediumLoadResumeTimerId: number | null = null;
+  private removeTextureInvalidationListener: (() => void) | null = null;
 
   // Selection state
   private selectedCards: Set<string> = new Set();
@@ -679,6 +690,7 @@ export class PixiStage {
   private initialRevealCompleted = false;
   private highDetailPreloadRunning = false;
   private highDetailPreloadQueued = false;
+  private highDetailPreloadRunId = 0;
 
   // Callbacks
   private onAddToDeck: (cardName: string) => void;
@@ -704,6 +716,8 @@ export class PixiStage {
   private readonly touchGestures = new TouchGestureTracker<TouchCanvasTarget>();
   private activeTouchDragTarget: TouchCanvasTarget | null = null;
   private lastTouchPointerEventMs = 0;
+  private webglContextLostHandler: ((event: Event) => void) | null = null;
+  private webglContextRestoredHandler: (() => void) | null = null;
 
   constructor(config: PixiStageConfig) {
     this.onAddToDeck = config.onAddToDeck;
@@ -719,6 +733,9 @@ export class PixiStage {
     this.onViewportCenterChange = config.onViewportCenterChange;
     this.onDeckFilterRequest = config.onDeckFilterRequest;
     this.onCardDragDrop = config.onCardDragDrop;
+    this.removeTextureInvalidationListener = lodManager.onTextureInvalidated(
+      this.handleTextureInvalidated.bind(this),
+    );
 
     this.app = new Application();
     this.cardContainer = new Container();
@@ -745,7 +762,15 @@ export class PixiStage {
     });
 
     if (this.isDestroyed) {
-      this.app.destroy(true, { children: true });
+      this.app.destroy(
+        { removeView: true },
+        {
+          children: true,
+          texture: true,
+          textureSource: true,
+          context: true,
+        },
+      );
       return;
     }
 
@@ -885,6 +910,29 @@ export class PixiStage {
     });
 
     this.app.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+    this.webglContextLostHandler = (event: Event) => {
+      event.preventDefault();
+      console.warn("WebGL context lost — probably GPU memory pressure");
+      this.highDetailPreloadQueued = false;
+      this.onBackgroundTextureProgress?.(0, 0);
+      lodManager.cancelQueuedAtlasLoads(LOD_LEVELS.THUMBNAIL);
+      lodManager.cancelQueuedAtlasLoads(LOD_LEVELS.MEDIUM);
+      lodManager.clearCache();
+    };
+    this.webglContextRestoredHandler = () => {
+      console.warn("WebGL context restored — reload textures carefully");
+      lodManager.clearCache();
+      this.reloadVisibleTexturesAfterContextRestore();
+      this.queueVisibleHighDetailPreload();
+    };
+    this.app.canvas.addEventListener(
+      "webglcontextlost",
+      this.webglContextLostHandler,
+    );
+    this.app.canvas.addEventListener(
+      "webglcontextrestored",
+      this.webglContextRestoredHandler,
+    );
     this.app.canvas.addEventListener("pointerleave", () => {
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
@@ -1551,9 +1599,11 @@ export class PixiStage {
   }
 
   private prioritizeHoveredCardHighDetail(cardName: string): void {
+    if (isConstrainedTextureDevice()) return;
+
     void lodManager
       .preloadTextures([cardName], {
-        lod: LOD_LEVELS.FULL,
+        lod: lodManager.getInteractiveDetailLOD(),
         concurrentLoads: 1,
         batchSize: 1,
       })
@@ -1561,6 +1611,26 @@ export class PixiStage {
       .finally(() => {
         this.pruneFullTextureCache();
       });
+  }
+
+  private handleTextureInvalidated(invalidation: LODTextureInvalidation): void {
+    const invalidatedSlugs = new Set(invalidation.slugs);
+
+    for (const data of this.cardSprites.values()) {
+      if (invalidatedSlugs.has(data.sprite.imageSlug)) {
+        data.sprite.releaseTextureForLOD(invalidation.lod);
+      }
+    }
+    for (const data of this.deckSprites.values()) {
+      if (invalidatedSlugs.has(data.sprite.imageSlug)) {
+        data.sprite.releaseTextureForLOD(invalidation.lod);
+      }
+    }
+    for (const data of this.zoneCardSprites.values()) {
+      if (invalidatedSlugs.has(data.sprite.imageSlug)) {
+        data.sprite.releaseTextureForLOD(invalidation.lod);
+      }
+    }
   }
 
   private getRenderResolution(): number {
@@ -6768,6 +6838,7 @@ export class PixiStage {
     this.isDestroyed = true;
     this.setHoveredCard(null);
     this.highDetailPreloadQueued = false;
+    this.highDetailPreloadRunId++;
     this.onBackgroundTextureProgress?.(0, 0);
     this.onSelectionChange?.([]);
 
@@ -6777,6 +6848,12 @@ export class PixiStage {
     this.pendingRevealTimeouts = [];
     this.revealRunId++;
     this.isRevealInProgress = false;
+    if (this.mediumLoadResumeTimerId !== null) {
+      clearTimeout(this.mediumLoadResumeTimerId);
+      this.mediumLoadResumeTimerId = null;
+    }
+    this.removeTextureInvalidationListener?.();
+    this.removeTextureInvalidationListener = null;
     this.closeDeckVariantDialog();
     this.closeDeckCardDeletePrompt();
     this.closeTouchActionSheet();
@@ -6791,9 +6868,29 @@ export class PixiStage {
 
     if (this.isInitialized) {
       this.app.ticker.stop();
+      if (this.webglContextLostHandler) {
+        this.app.canvas.removeEventListener(
+          "webglcontextlost",
+          this.webglContextLostHandler,
+        );
+      }
+      if (this.webglContextRestoredHandler) {
+        this.app.canvas.removeEventListener(
+          "webglcontextrestored",
+          this.webglContextRestoredHandler,
+        );
+      }
       this.camera?.destroy();
       lodManager.clearCache();
-      this.app.destroy(true, { children: true });
+      this.app.destroy(
+        { removeView: true },
+        {
+          children: true,
+          texture: true,
+          textureSource: true,
+          context: true,
+        },
+      );
     }
   }
 
@@ -7913,12 +8010,60 @@ export class PixiStage {
   }
 
   private handleViewportChange(): void {
+    this.updateViewportVelocity();
     this.rebuildCollectionForLayoutVariantChange();
     this.scheduleCulling();
     this.drawGrid();
     if (this.camera) {
       this.onViewportCenterChange?.(this.camera.getScreenCenter());
     }
+  }
+
+  private updateViewportVelocity(): void {
+    if (!this.camera) return;
+
+    const now = performance.now();
+    const center = this.camera.getScreenCenter();
+    if (!this.lastViewportCenter || this.lastViewportMoveMs <= 0) {
+      this.lastViewportCenter = center;
+      this.lastViewportMoveMs = now;
+      return;
+    }
+
+    const elapsed = Math.max(now - this.lastViewportMoveMs, 1);
+    this.viewportVelocityPxPerMs = {
+      x: ((center.x - this.lastViewportCenter.x) * this.camera.zoom) / elapsed,
+      y: ((center.y - this.lastViewportCenter.y) * this.camera.zoom) / elapsed,
+    };
+    this.lastViewportCenter = center;
+    this.lastViewportMoveMs = now;
+
+    const speed = Math.hypot(
+      this.viewportVelocityPxPerMs.x,
+      this.viewportVelocityPxPerMs.y,
+    );
+    if (speed >= PHONE_MEDIUM_HIGH_PAN_VELOCITY_PX_PER_MS) {
+      this.lastHighVelocityPanMs = now;
+    }
+  }
+
+  private isPhoneMediumLoadingPaused(): boolean {
+    if (!isConstrainedTextureDevice() || isLowDetailTextureDevice()) {
+      return false;
+    }
+    return (
+      performance.now() - this.lastHighVelocityPanMs <
+      PHONE_MEDIUM_LOAD_RESUME_IDLE_MS
+    );
+  }
+
+  private schedulePhoneMediumLoadResume(): void {
+    if (this.mediumLoadResumeTimerId !== null) return;
+
+    this.mediumLoadResumeTimerId = window.setTimeout(() => {
+      this.mediumLoadResumeTimerId = null;
+      this.queueVisibleHighDetailPreload();
+    }, PHONE_MEDIUM_LOAD_RESUME_IDLE_MS);
   }
 
   private getCollectionLayoutVariant(): CollectionLayoutVariant {
@@ -8067,6 +8212,14 @@ export class PixiStage {
   }
 
   private getVisibleCardNamesForHighDetail(): string[] {
+    if (
+      isConstrainedTextureDevice() &&
+      !isLowDetailTextureDevice() &&
+      this.getVisibleDetailLOD() === LOD_LEVELS.MEDIUM
+    ) {
+      return this.getPhoneMediumPriorityCardNames();
+    }
+
     const names = new Set<string>();
     for (const name of this.visibleCardNames) {
       names.add(name);
@@ -8076,7 +8229,117 @@ export class PixiStage {
         names.add(data.layout.name);
       }
     }
+    for (const data of this.zoneCardSprites.values()) {
+      if (data.sprite.visible) {
+        names.add(data.cardName);
+      }
+    }
     return [...names];
+  }
+
+  private getPhoneMediumPriorityCardNames(): string[] {
+    if (!this.camera) return [];
+
+    const viewport = this.camera.getVisibleBounds();
+    const viewportWidth = viewport.right - viewport.left;
+    const viewportHeight = viewport.bottom - viewport.top;
+    const nearBounds = this.expandBounds(
+      viewport,
+      viewportWidth * PHONE_MEDIUM_NEAR_VIEWPORT_MULTIPLIER,
+      viewportHeight * PHONE_MEDIUM_NEAR_VIEWPORT_MULTIPLIER,
+    );
+    const directionBounds = this.getPanDirectionBounds(
+      nearBounds,
+      viewportWidth,
+      viewportHeight,
+    );
+
+    const exact: string[] = [];
+    const near: string[] = [];
+    const directional: string[] = [];
+    const seen = new Set<string>();
+
+    const add = (bucket: string[], name: string) => {
+      if (seen.has(name)) return;
+      seen.add(name);
+      bucket.push(name);
+    };
+
+    const visit = (
+      name: string,
+      bounds: { left: number; top: number; right: number; bottom: number },
+    ) => {
+      if (this.boundsIntersect(bounds, viewport)) {
+        add(exact, name);
+      } else if (this.boundsIntersect(bounds, nearBounds)) {
+        add(near, name);
+      } else if (directionBounds && this.boundsIntersect(bounds, directionBounds)) {
+        add(directional, name);
+      }
+    };
+
+    for (const [name, data] of this.cardSprites) {
+      visit(name, data.bounds);
+    }
+    for (const [, data] of this.deckSprites) {
+      visit(data.layout.name, data.bounds);
+    }
+    for (const data of this.zoneCardSprites.values()) {
+      visit(data.cardName, data.bounds);
+    }
+
+    return [...exact, ...near, ...directional];
+  }
+
+  private expandBounds(
+    bounds: CameraBounds,
+    xPadding: number,
+    yPadding: number,
+  ): CameraBounds {
+    return {
+      left: bounds.left - xPadding,
+      top: bounds.top - yPadding,
+      right: bounds.right + xPadding,
+      bottom: bounds.bottom + yPadding,
+    };
+  }
+
+  private getPanDirectionBounds(
+    nearBounds: CameraBounds,
+    viewportWidth: number,
+    viewportHeight: number,
+  ): CameraBounds | null {
+    const velocity = this.viewportVelocityPxPerMs;
+    const hasHorizontalDirection =
+      Math.abs(velocity.x) >= PHONE_MEDIUM_HIGH_PAN_VELOCITY_PX_PER_MS * 0.25;
+    const hasVerticalDirection =
+      Math.abs(velocity.y) >= PHONE_MEDIUM_HIGH_PAN_VELOCITY_PX_PER_MS * 0.25;
+
+    if (!hasHorizontalDirection && !hasVerticalDirection) {
+      return null;
+    }
+
+    const bounds = { ...nearBounds };
+    const xLookahead = viewportWidth * PHONE_MEDIUM_PAN_DIRECTION_VIEWPORTS;
+    const yLookahead = viewportHeight * PHONE_MEDIUM_PAN_DIRECTION_VIEWPORTS;
+
+    if (hasHorizontalDirection) {
+      if (velocity.x > 0) {
+        bounds.right += xLookahead;
+      } else {
+        bounds.left -= xLookahead;
+      }
+    }
+
+    if (hasVerticalDirection) {
+      if (velocity.y > 0) {
+        bounds.bottom += yLookahead;
+      } else {
+        bounds.top -= yLookahead;
+      }
+    }
+
+    return bounds;
   }
 
   private getFullTextureCacheKeepNames(): string[] {
@@ -8104,7 +8367,9 @@ export class PixiStage {
 
   private pruneFullTextureCache(): void {
     if (this.isDestroyed) return;
-    lodManager.pruneFullTextureCache(this.getFullTextureCacheKeepNames());
+    const keepNames = this.getFullTextureCacheKeepNames();
+    lodManager.pruneFullTextureCache(keepNames);
+    lodManager.pruneCache(keepNames);
   }
 
   private queueVisibleHighDetailPreload(): void {
@@ -8112,6 +8377,23 @@ export class PixiStage {
     if (!this.shouldLoadHighDetail()) {
       this.onBackgroundTextureProgress?.(0, 0);
       return;
+    }
+
+    const lod = this.getVisibleDetailLOD();
+    const priorityNames = this.getVisibleCardNamesForHighDetail();
+    if (
+      lod === LOD_LEVELS.MEDIUM &&
+      isConstrainedTextureDevice() &&
+      !isLowDetailTextureDevice()
+    ) {
+      lodManager.cancelQueuedAtlasLoads(LOD_LEVELS.MEDIUM, priorityNames);
+      if (this.isPhoneMediumLoadingPaused()) {
+        this.highDetailPreloadRunId++;
+        this.highDetailPreloadQueued = false;
+        this.onBackgroundTextureProgress?.(0, 0);
+        this.schedulePhoneMediumLoadResume();
+        return;
+      }
     }
 
     if (this.highDetailPreloadRunning) {
@@ -8131,6 +8413,7 @@ export class PixiStage {
     const names = this.getVisibleCardNamesForHighDetail();
     const lod = this.getVisibleDetailLOD();
     const loadOptions = getHighDetailLoadOptions();
+    const runId = ++this.highDetailPreloadRunId;
     this.highDetailPreloadRunning = true;
 
     try {
@@ -8138,17 +8421,63 @@ export class PixiStage {
         lod,
         concurrentLoads: loadOptions.concurrentLoads,
         batchSize: loadOptions.batchSize,
+        shouldContinue: () => {
+          if (this.isDestroyed || runId !== this.highDetailPreloadRunId) {
+            return false;
+          }
+          return !(
+            lod === LOD_LEVELS.MEDIUM &&
+            isConstrainedTextureDevice() &&
+            !isLowDetailTextureDevice() &&
+            this.isPhoneMediumLoadingPaused()
+          );
+        },
         onProgress: (loaded, total) => {
           if (this.isDestroyed) return;
           this.onBackgroundTextureProgress?.(loaded, total);
         },
       });
+      this.refreshVisibleTextureLODs();
     } finally {
       this.highDetailPreloadRunning = false;
       this.pruneFullTextureCache();
       if (this.highDetailPreloadQueued) {
         this.highDetailPreloadQueued = false;
         this.queueVisibleHighDetailPreload();
+      }
+    }
+  }
+
+  private refreshVisibleTextureLODs(): void {
+    for (const name of this.visibleCardNames) {
+      const data = this.cardSprites.get(name);
+      data?.sprite.refreshCurrentLOD();
+    }
+    for (const data of this.deckSprites.values()) {
+      if (data.sprite.visible) {
+        data.sprite.refreshCurrentLOD();
+      }
+    }
+    for (const data of this.zoneCardSprites.values()) {
+      if (data.sprite.visible) {
+        data.sprite.refreshCurrentLOD();
+      }
+    }
+  }
+
+  private reloadVisibleTexturesAfterContextRestore(): void {
+    for (const name of this.visibleCardNames) {
+      const data = this.cardSprites.get(name);
+      data?.sprite.reloadCurrentTexture();
+    }
+    for (const data of this.deckSprites.values()) {
+      if (data.sprite.visible) {
+        data.sprite.reloadCurrentTexture();
+      }
+    }
+    for (const data of this.zoneCardSprites.values()) {
+      if (data.sprite.visible) {
+        data.sprite.reloadCurrentTexture();
       }
     }
   }
