@@ -42,7 +42,17 @@ server/**/*.local.php
 
 # OS
 .DS_Store
+.localized
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+.apdisk
+__MACOSX/
+.Spotlight-V100/
+.Trashes/
+.fseventsd/
+.TemporaryItems/
 
 # Logs
 *.log

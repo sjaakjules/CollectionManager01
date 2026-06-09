@@ -212,6 +212,11 @@ EOF
     printf 'Artifact looks incomplete: missing api/shared/json.php in %s\n' "$artifact_dir" >&2
     exit 66
   }
+  [[ -f "$artifact_dir/.deploy-assets.json" ]] || {
+    printf 'Artifact looks incomplete: missing .deploy-assets.json in %s\n' "$artifact_dir" >&2
+    printf 'Create a fresh artifact with: pnpm build:ventraip\n' >&2
+    exit 66
+  }
 
   node - "$artifact_dir/.deploy-ready.json" "$target" <<'NODE'
 const fs = require('node:fs');
@@ -232,6 +237,227 @@ NODE
   printf '%s' "$artifact_dir"
 }
 
+ventra_remote_path() {
+  local remote_dir="$1"
+  local relative_path="$2"
+
+  if [[ "$remote_dir" == "/" ]]; then
+    printf '/%s' "$relative_path"
+  else
+    printf '%s/%s' "${remote_dir%/}" "$relative_path"
+  fi
+}
+
+ventra_lftp_connection_commands() {
+  local username="$1"
+  local password="$2"
+  local url="$3"
+
+  printf '%s\n' 'set cmd:fail-exit true'
+  printf '%s\n' 'set cmd:trace false'
+  printf '%s\n' 'set ftp:list-options -a'
+  printf '%s\n' 'set ftp:passive-mode true'
+  printf '%s\n' 'set ftp:ssl-auth TLS'
+  printf '%s\n' 'set ftp:ssl-force true'
+  printf '%s\n' 'set ftp:ssl-protect-data true'
+  printf '%s\n' 'set net:max-retries 2'
+  printf '%s\n' 'set net:timeout 30'
+  printf '%s\n' 'set ssl:verify-certificate true'
+  printf 'open -u %s,%s %s\n' \
+    "$(ventra_lftp_quote "$username")" \
+    "$(ventra_lftp_quote "$password")" \
+    "$(ventra_lftp_quote "$url")"
+}
+
+ventra_run_non_asset_mirror() {
+  local target="$1"
+  local artifact_dir="$2"
+  local remote_dir="$3"
+  local username="$4"
+  local password="$5"
+  local url="$6"
+
+  ventra_lftp_commands() {
+    local pattern
+    local asset_excludes=(
+      'assets/**'
+      'assets/'
+      './assets/**'
+      './assets/'
+      '.deploy-assets.json'
+      './.deploy-assets.json'
+    )
+
+    ventra_lftp_connection_commands "$username" "$password" "$url"
+    printf 'mirror --reverse --delete --verbose --parallel=4'
+    for pattern in "${asset_excludes[@]}"; do
+      printf ' --exclude-glob %s' "$(ventra_lftp_quote "$pattern")"
+    done
+    while IFS= read -r pattern; do
+      [[ -z "$pattern" ]] && continue
+      printf ' --exclude-glob %s' "$(ventra_lftp_quote "$pattern")"
+    done < <(ventra_all_excludes "$target")
+    printf ' %s %s\n' "$(ventra_lftp_quote "$artifact_dir")" "$(ventra_lftp_quote "$remote_dir")"
+    printf '%s\n' 'bye'
+  }
+
+  printf 'Uploading non-asset deploy files...\n'
+  ventra_lftp_commands | lftp
+}
+
+ventra_download_asset_manifest() {
+  local remote_dir="$1"
+  local username="$2"
+  local password="$3"
+  local url="$4"
+  local local_manifest_path="$5"
+  local remote_manifest_path
+
+  remote_manifest_path="$(ventra_remote_path "$remote_dir" ".deploy-assets.json")"
+  rm -f "$local_manifest_path"
+
+  ventra_lftp_commands() {
+    ventra_lftp_connection_commands "$username" "$password" "$url"
+    printf 'get %s -o %s\n' \
+      "$(ventra_lftp_quote "$remote_manifest_path")" \
+      "$(ventra_lftp_quote "$local_manifest_path")"
+    printf '%s\n' 'bye'
+  }
+
+  if ventra_lftp_commands | lftp >/dev/null 2>&1; then
+    printf 'Downloaded remote asset manifest.\n'
+  else
+    rm -f "$local_manifest_path"
+    printf 'Remote asset manifest is missing or unavailable; asset sync will bootstrap managed assets.\n'
+  fi
+}
+
+ventra_asset_plan_value() {
+  local plan_file="$1"
+  local json_path="$2"
+
+  node - "$plan_file" "$json_path" <<'NODE'
+const fs = require('node:fs');
+
+const [planPath, jsonPath] = process.argv.slice(2);
+const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+let value = plan;
+
+for (const key of jsonPath.split('.')) {
+  value = value?.[key];
+}
+
+if (value === undefined || value === null) {
+  process.exit(1);
+}
+
+process.stdout.write(String(value));
+NODE
+}
+
+ventra_upload_changed_assets() {
+  local upload_root="$1"
+  local remote_dir="$2"
+  local username="$3"
+  local password="$4"
+  local url="$5"
+  local remote_assets_dir
+
+  remote_assets_dir="$(ventra_remote_path "$remote_dir" "assets")"
+
+  ventra_lftp_commands() {
+    ventra_lftp_connection_commands "$username" "$password" "$url"
+    printf 'mirror --reverse --transfer-all --verbose --parallel=4 %s %s\n' \
+      "$(ventra_lftp_quote "$upload_root/assets")" \
+      "$(ventra_lftp_quote "$remote_assets_dir")"
+    printf '%s\n' 'bye'
+  }
+
+  ventra_lftp_commands | lftp
+}
+
+ventra_delete_stale_assets() {
+  local plan_file="$1"
+  local remote_dir="$2"
+  local username="$3"
+  local password="$4"
+  local url="$5"
+
+  ventra_lftp_commands() {
+    local asset_path
+
+    ventra_lftp_connection_commands "$username" "$password" "$url"
+    while IFS= read -r asset_path; do
+      [[ -z "$asset_path" ]] && continue
+      printf 'rm -f %s\n' "$(ventra_lftp_quote "$(ventra_remote_path "$remote_dir" "$asset_path")")"
+    done < <(node - "$plan_file" <<'NODE'
+const fs = require('node:fs');
+
+const [planPath] = process.argv.slice(2);
+const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+for (const assetPath of plan.deletePaths ?? []) {
+  console.log(assetPath);
+}
+NODE
+)
+    printf '%s\n' 'bye'
+  }
+
+  ventra_lftp_commands | lftp
+}
+
+ventra_publish_asset_manifest() {
+  local artifact_dir="$1"
+  local remote_dir="$2"
+  local username="$3"
+  local password="$4"
+  local url="$5"
+  local remote_manifest_path
+
+  remote_manifest_path="$(ventra_remote_path "$remote_dir" ".deploy-assets.json")"
+
+  ventra_lftp_commands() {
+    ventra_lftp_connection_commands "$username" "$password" "$url"
+    printf 'put %s -o %s\n' \
+      "$(ventra_lftp_quote "$artifact_dir/.deploy-assets.json")" \
+      "$(ventra_lftp_quote "$remote_manifest_path")"
+    printf '%s\n' 'bye'
+  }
+
+  ventra_lftp_commands | lftp
+}
+
+ventra_run_asset_sync() {
+  local artifact_dir="$1"
+  local remote_dir="$2"
+  local username="$3"
+  local password="$4"
+  local url="$5"
+  local plan_file="$6"
+  local upload_root="$7"
+
+  local upload_count delete_count
+  upload_count="$(ventra_asset_plan_value "$plan_file" "stats.uploadCount")"
+  delete_count="$(ventra_asset_plan_value "$plan_file" "stats.deleteCount")"
+
+  if [[ "$upload_count" -gt 0 ]]; then
+    printf 'Uploading %s changed asset file(s)...\n' "$upload_count"
+    ventra_upload_changed_assets "$upload_root" "$remote_dir" "$username" "$password" "$url"
+  else
+    printf 'No changed asset files to upload.\n'
+  fi
+
+  if [[ "$delete_count" -gt 0 ]]; then
+    printf 'Deleting %s stale remote asset file(s)...\n' "$delete_count"
+    ventra_delete_stale_assets "$plan_file" "$remote_dir" "$username" "$password" "$url"
+  else
+    printf 'No stale remote asset files to delete.\n'
+  fi
+
+  printf 'Publishing asset manifest...\n'
+  ventra_publish_asset_manifest "$artifact_dir" "$remote_dir" "$username" "$password" "$url"
+}
+
 ventra_run_lftp_mirror() {
   local target="$1"
   local artifact_dir="$2"
@@ -249,30 +475,22 @@ ventra_run_lftp_mirror() {
   password="$(ventra_keychain_password "$host" "$username")"
   url="ftp://$host:$port"
 
-  local status=0
-  ventra_lftp_commands() {
-    printf '%s\n' 'set cmd:fail-exit true'
-    printf '%s\n' 'set cmd:trace false'
-    printf '%s\n' 'set ftp:passive-mode true'
-    printf '%s\n' 'set ftp:ssl-auth TLS'
-    printf '%s\n' 'set ftp:ssl-force true'
-    printf '%s\n' 'set ftp:ssl-protect-data true'
-    printf '%s\n' 'set net:max-retries 2'
-    printf '%s\n' 'set net:timeout 30'
-    printf '%s\n' 'set ssl:verify-certificate true'
-    printf 'open -u %s,%s %s\n' \
-      "$(ventra_lftp_quote "$username")" \
-      "$(ventra_lftp_quote "$password")" \
-      "$(ventra_lftp_quote "$url")"
-    printf 'mirror --reverse --delete --verbose --parallel=4'
-    while IFS= read -r pattern; do
-      [[ -z "$pattern" ]] && continue
-      printf ' --exclude-glob %s' "$(ventra_lftp_quote "$pattern")"
-    done < <(ventra_all_excludes "$target")
-    printf ' %s %s\n' "$(ventra_lftp_quote "$artifact_dir")" "$(ventra_lftp_quote "$remote_dir")"
-    printf '%s\n' 'bye'
-  }
+  local sync_dir remote_manifest_file plan_file upload_root status
+  sync_dir="$(mktemp -d "${TMPDIR:-/tmp}/sorcery-assets-$target.XXXXXX")"
+  remote_manifest_file="$sync_dir/remote.deploy-assets.json"
+  plan_file="$sync_dir/asset-plan.json"
+  upload_root="$sync_dir/upload"
+  status=0
 
-  ventra_lftp_commands | lftp || status=$?
+  ventra_run_non_asset_mirror "$target" "$artifact_dir" "$remote_dir" "$username" "$password" "$url" || status=$?
+  if [[ "$status" -eq 0 ]]; then
+    ventra_download_asset_manifest "$remote_dir" "$username" "$password" "$url" "$remote_manifest_file"
+    node "$VENTRA_LIB_DIR/deploy-assets.mjs" plan "$artifact_dir" "$remote_manifest_file" "$plan_file" "$upload_root" || status=$?
+  fi
+  if [[ "$status" -eq 0 ]]; then
+    ventra_run_asset_sync "$artifact_dir" "$remote_dir" "$username" "$password" "$url" "$plan_file" "$upload_root" || status=$?
+  fi
+
+  rm -rf "$sync_dir"
   return "$status"
 }

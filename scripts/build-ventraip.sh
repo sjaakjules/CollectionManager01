@@ -60,7 +60,26 @@ EOF
 copy_release "$STAGING_DIR" "$ROOT_DIR/hosting/sorcerystacks.staging.htaccess" "staging"
 copy_release "$PRODUCTION_DIR" "$ROOT_DIR/hosting/sorcerystacks.production.htaccess" "production"
 
-find "$DEPLOY_ROOT" -name '.DS_Store' -type f -delete
+find "$DEPLOY_ROOT" \( \
+  -name '.DS_Store' -o \
+  -name '.localized' -o \
+  -name 'Thumbs.db' -o \
+  -name 'ehthumbs.db' -o \
+  -name 'Desktop.ini' -o \
+  -name '._*' -o \
+  -name '.apdisk' \
+\) -type f -delete
+find "$DEPLOY_ROOT" \( \
+  -name '__MACOSX' -o \
+  -name '.Spotlight-V100' -o \
+  -name '.Trashes' -o \
+  -name '.fseventsd' -o \
+  -name '.TemporaryItems' \
+\) -type d -prune -exec rm -rf {} +
+
+node "$SCRIPT_DIR/lib/deploy-assets.mjs" write-manifest "$STAGING_DIR"
+node "$SCRIPT_DIR/lib/deploy-assets.mjs" write-manifest "$PRODUCTION_DIR"
+
 find "$DEPLOY_ROOT" -type d -exec chmod 755 {} +
 find "$DEPLOY_ROOT" -type f -exec chmod 644 {} +
 
