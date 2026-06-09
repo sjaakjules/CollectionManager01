@@ -1,8 +1,7 @@
 # Curiosa Deck Import Request Policy
 
-This document describes the Curiosa deck import behavior in
-`src/data/curiosaService.ts`, why it changed, and where the current approach
-can be made more secure, fair, or efficient.
+This document describes the current Curiosa deck import behavior in
+`src/data/curiosaService.ts` and the matching production PHP proxy behavior.
 
 The important principle is that this feature is not a crawler and does not poll
 Curiosa in the background. A user-triggered deck import makes at most two
@@ -26,35 +25,6 @@ The live check performed on June 7, 2026 showed:
   `Origin: https://curiosa.io`.
 - Curiosa returned `x-ratelimit-limit: 30` and
   `x-ratelimit-remaining: 29` on the successful tRPC response.
-
-## What Was Happening Before
-
-The old service already used the same basic two-request strategy:
-
-1. Fetch `/api/curiosa/decks/{deckId}` and parse title-like HTML metadata.
-2. Fetch one batched tRPC request containing:
-   `deck.getDecklistById`, `deck.getAvatarById`,
-   `deck.getSideboardById`, and `deck.getMaybeboardById`.
-
-The previous implementation had several fairness and correctness gaps:
-
-- There was no minimum delay between normal Curiosa requests.
-- Multiple imports could run at once and send overlapping requests.
-- Rate-limit handling only waited when `x-ratelimit-remaining <= 1`.
-- If no reset header existed, the fallback wait was only 5 seconds.
-- `Retry-After` was not handled explicitly.
-- A `403`, `404`, or `410` deck page response could still be followed by the
-  tRPC decklist request.
-- tRPC batch entries with `{ error: ... }` were parsed as empty boards, so
-  internal endpoint failures could look like a valid empty deck.
-- URL extraction accepted too much by splitting on `/`, which could mishandle
-  query strings, hash fragments, or non-Curiosa URLs.
-- Metadata parsing did not use Curiosa's `__NEXT_DATA__`, so page title changes
-  could reduce import quality.
-- The Vite dev proxy sent `Origin` but not `Referer`, while the PHP proxy sent
-  both.
-- Unknown card names were reported in import diagnostics but dropped from some
-  import outputs, which made them less visible to the user.
 
 ## What Happens Now
 

@@ -236,8 +236,7 @@ export function importDeckFromText(
 // ============================================================================
 
 /**
- * Parse deck from Curiosa.io API response
- * NOTE: Full Curiosa integration is excluded from MVP
+ * Board payload returned by the Curiosa import service.
  */
 export interface CuriosaDeckData {
   name: string;
