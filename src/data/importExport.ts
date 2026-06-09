@@ -187,35 +187,42 @@ export function importDeckFromText(
       return;
     }
 
-    // Look up card in database
     const normalizedName = name.toLowerCase();
     if (!cardNames.has(normalizedName)) {
       unknownCards.push(name);
+      addCardToBoard(currentBoard, name, quantity);
       return;
     }
 
     const card = cardLookup.get(normalizedName);
     if (!card) {
       unknownCards.push(name);
+      addCardToBoard(currentBoard, name, quantity);
       return;
     }
 
-    // Determine board based on card type if not specified
     let targetBoard = currentBoard;
     if (currentBoard === 'mainboard' && card.guardian.type === 'Avatar') {
       targetBoard = 'avatar';
     }
 
-    // Add to deck
+    addCardToBoard(targetBoard, card.name, quantity);
+  }
+
+  function addCardToBoard(
+    targetBoard: keyof DeckBoards,
+    cardName: string,
+    quantity: number
+  ) {
     const existingCard = deck.boards[targetBoard].find(
-      (c) => c.name.toLowerCase() === normalizedName
+      (c) => c.name.toLowerCase() === cardName.toLowerCase()
     );
 
     if (existingCard) {
       existingCard.quantity += quantity;
     } else {
       deck.boards[targetBoard].push({
-        name: card.name, // Use canonical name from database
+        name: cardName,
         quantity,
       });
     }
@@ -269,12 +276,20 @@ export function importFromCuriosaDeck(
       const normalizedName = card.name.toLowerCase();
       if (!cardNames.has(normalizedName)) {
         unknownCards.push(card.name);
+        deck.boards[board].push({
+          name: card.name,
+          quantity: card.quantity,
+        });
         continue;
       }
 
       const dbCard = cardLookup.get(normalizedName);
       if (!dbCard) {
         unknownCards.push(card.name);
+        deck.boards[board].push({
+          name: card.name,
+          quantity: card.quantity,
+        });
         continue;
       }
       deck.boards[board].push({

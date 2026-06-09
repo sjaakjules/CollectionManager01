@@ -1,130 +1,305 @@
 /**
  * Curiosa.io deck fetching service
  *
- * Fetches deck data from curiosa.io by making two proxied requests:
- *   1. HTML page fetch to parse the deck name + author from <title>
- *   2. tRPC batch request to fetch all board data (mainboard, avatar, sideboard, maybeboard)
+ * Fetches public deck data from curiosa.io through same-origin proxy paths:
+ *   1. HTML page fetch for public deck existence and metadata.
+ *   2. One batched tRPC request for mainboard, avatar, sideboard, maybeboard.
  *
- * Both requests go through same-origin proxy paths to avoid CORS:
- * - DEV: Vite proxies `/api/curiosa/*` → `https://curiosa.io/*` (see vite.config.ts)
- * - PROD: Apache routes `/api/curiosa/*` through the same-origin PHP proxy
- *
- * Respects rate limits via x-ratelimit-* response headers.
+ * The upstream tRPC endpoint is not a published API, so this service keeps
+ * requests serialized and deliberately slower than normal browser interaction.
  *
  * Related files:
  * - `src/ui/BottomPanel.tsx` (deck URL import flow)
- * - `src/data/importExport.ts` (text-based import/export support)
  * - `vite.config.ts` and deployed Apache/PHP routes (proxy routing)
  */
 
 import type { Deck, DeckCard } from "./dataModels";
 import { generateUUID } from "@/utils/uuid";
 
-// Proxy prefix stripped by Vite dev proxy and the deployed PHP proxy route.
 const PROXY_PREFIX = "/api/curiosa";
+const CURIOSA_HOSTS = new Set(["curiosa.io", "www.curiosa.io"]);
+
+const LOCAL_BUCKET_CAPACITY = 1;
+const LOCAL_REFILL_MS = 3000;
+const LOW_REMAINING_THRESHOLD = 2;
+const SAFE_REMAINING_TARGET = 5;
+const KIND_DELAY_MESSAGE_THRESHOLD_MS = 1000;
+
+export interface CuriosaFetchDelay {
+  delayMs: number;
+  reason: string;
+  source: "client" | "server";
+}
+
+export interface FetchCuriosaDeckOptions {
+  signal?: AbortSignal;
+  onDelay?: (delay: CuriosaFetchDelay) => void;
+}
 
 // ============================================================================
-// Rate Limiting
+// Rate limiting
 // ============================================================================
 
 interface RateLimitState {
   remaining: number | null;
   limit: number | null;
-  resetMs: number;
+  resetMs: number | null;
+  retryAfterUntilMs: number | null;
 }
 
 const rateLimit: RateLimitState = {
   remaining: null,
   limit: null,
-  resetMs: 0,
+  resetMs: null,
+  retryAfterUntilMs: null,
 };
 
-/** Read rate-limit headers from a curiosa.io response and update state */
-function updateRateLimit(response: Response): void {
-  const limit = response.headers.get("x-ratelimit-limit");
-  const remaining = response.headers.get("x-ratelimit-remaining");
-  const reset = response.headers.get("x-ratelimit-reset");
+let requestQueue: Promise<void> = Promise.resolve();
+let localTokens = LOCAL_BUCKET_CAPACITY;
+let lastTokenRefillMs: number | null = null;
 
-  if (limit) rateLimit.limit = Number(limit);
-  if (remaining) rateLimit.remaining = Number(remaining);
-  if (reset) rateLimit.resetMs = Number(reset) * 1000;
+function abortError(): DOMException {
+  return new DOMException("Curiosa import cancelled", "AbortError");
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return;
+
+  const reason: unknown = signal.reason;
+  if (reason instanceof Error) {
+    throw reason;
+  }
+  throw abortError();
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  if (ms <= 0) return Promise.resolve();
+  throwIfAborted(signal);
+
+  return new Promise((resolve, reject) => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      signal?.removeEventListener("abort", handleAbort);
+    };
+
+    const handleAbort = () => {
+      cleanup();
+      reject(signal?.reason instanceof Error ? signal.reason : abortError());
+    };
+
+    timeoutId = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, ms);
+
+    signal?.addEventListener("abort", handleAbort, { once: true });
+  });
+}
+
+function notifyDelay(
+  delayMs: number,
+  reason: string,
+  source: CuriosaFetchDelay["source"],
+  onDelay?: FetchCuriosaDeckOptions["onDelay"],
+): void {
+  if (delayMs < KIND_DELAY_MESSAGE_THRESHOLD_MS) return;
+  onDelay?.({ delayMs: Math.ceil(delayMs), reason, source });
+}
+
+function parseNumericHeader(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseResetMs(value: string | null, now = Date.now()): number | null {
+  const parsed = parseNumericHeader(value);
+  if (parsed === null) return null;
+
+  // Most rate-limit reset headers are epoch seconds; very small values are
+  // treated as relative seconds to keep the client conservative if that changes.
+  if (parsed > 1_000_000_000) return parsed * 1000;
+  return now + parsed * 1000;
+}
+
+function parseRetryAfterMs(value: string | null, now = Date.now()): number | null {
+  if (!value) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) {
+    return Math.max(0, seconds * 1000);
+  }
+
+  const dateMs = Date.parse(value);
+  if (Number.isFinite(dateMs)) {
+    return Math.max(0, dateMs - now);
+  }
+
+  return null;
+}
+
+function refillLocalTokens(now = Date.now()): void {
+  if (lastTokenRefillMs === null) {
+    lastTokenRefillMs = now;
+    return;
+  }
+
+  const elapsed = now - lastTokenRefillMs;
+  if (elapsed < LOCAL_REFILL_MS) return;
+
+  const refillCount = Math.floor(elapsed / LOCAL_REFILL_MS);
+  localTokens = Math.min(LOCAL_BUCKET_CAPACITY, localTokens + refillCount);
+  lastTokenRefillMs += refillCount * LOCAL_REFILL_MS;
+}
+
+async function waitForLocalToken(options?: FetchCuriosaDeckOptions): Promise<void> {
+  while (true) {
+    throwIfAborted(options?.signal);
+    const now = Date.now();
+    refillLocalTokens(now);
+
+    if (localTokens > 0) {
+      localTokens -= 1;
+      return;
+    }
+
+    const nextRefillAt = (lastTokenRefillMs ?? now) + LOCAL_REFILL_MS;
+    const delay = Math.max(0, nextRefillAt - now);
+    notifyDelay(delay, "local-spacing", "client", options?.onDelay);
+    await sleep(delay, options?.signal);
+  }
+}
+
+async function waitForServerBudget(options?: FetchCuriosaDeckOptions): Promise<void> {
+  throwIfAborted(options?.signal);
+  const now = Date.now();
+
+  if (rateLimit.retryAfterUntilMs !== null && rateLimit.retryAfterUntilMs > now) {
+    const delay = rateLimit.retryAfterUntilMs - now;
+    console.warn(`[curiosa] retry-after requested, waiting ${delay}ms`);
+    notifyDelay(delay, "retry-after", "client", options?.onDelay);
+    await sleep(delay, options?.signal);
+    rateLimit.retryAfterUntilMs = null;
+    return;
+  }
+
+  if (rateLimit.remaining === null || rateLimit.remaining > LOW_REMAINING_THRESHOLD) {
+    return;
+  }
+
+  const resetDelay =
+    rateLimit.resetMs !== null && rateLimit.resetMs > now
+      ? rateLimit.resetMs - now
+      : null;
+  const replenishmentTicks = Math.max(0, SAFE_REMAINING_TARGET - rateLimit.remaining);
+  const replenishmentDelay = replenishmentTicks * LOCAL_REFILL_MS;
+  const delay = resetDelay ?? replenishmentDelay;
+
+  if (delay > 0) {
+    console.warn(
+      `[curiosa] rate limit low (${rateLimit.remaining} remaining), waiting ${delay}ms`,
+    );
+    notifyDelay(delay, "rate-limit-low", "client", options?.onDelay);
+    await sleep(delay, options?.signal);
+  }
+}
+
+function updateRateLimit(
+  response: Response,
+  onDelay?: FetchCuriosaDeckOptions["onDelay"],
+): number | null {
+  const now = Date.now();
+  const limit = parseNumericHeader(response.headers.get("x-ratelimit-limit"));
+  const remaining = parseNumericHeader(response.headers.get("x-ratelimit-remaining"));
+  const resetMs = parseResetMs(response.headers.get("x-ratelimit-reset"), now);
+  const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"), now);
+  const proxyDelayMs = parseNumericHeader(
+    response.headers.get("x-sorcery-proxy-delay-ms"),
+  );
+  const proxyDelayReason =
+    response.headers.get("x-sorcery-proxy-delay-reason") ?? "proxy-throttle";
+
+  if (limit !== null) rateLimit.limit = limit;
+  if (remaining !== null) rateLimit.remaining = remaining;
+  if (resetMs !== null) rateLimit.resetMs = resetMs;
+  if (retryAfterMs !== null) rateLimit.retryAfterUntilMs = now + retryAfterMs;
 
   if (rateLimit.remaining !== null && rateLimit.limit !== null) {
     console.debug(
       `[curiosa] rate limit: ${rateLimit.remaining}/${rateLimit.limit} remaining`,
     );
   }
-}
 
-/**
- * Wait if we're close to the rate limit.
- * If remaining is known and low, delay until the reset window.
- */
-async function throttleIfNeeded(): Promise<void> {
-  if (rateLimit.remaining === null) return;
-
-  if (rateLimit.remaining <= 1) {
-    const now = Date.now();
-    const waitUntil = rateLimit.resetMs || now + 5000;
-    const delay = Math.max(0, waitUntil - now);
-
-    if (delay > 0) {
-      console.warn(
-        `[curiosa] rate limit nearly exhausted (${rateLimit.remaining} left), waiting ${delay}ms`,
-      );
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
+  if (proxyDelayMs !== null) {
+    notifyDelay(proxyDelayMs, proxyDelayReason, "server", onDelay);
   }
+
+  return retryAfterMs;
 }
 
-/** Fetch wrapper that respects curiosa.io rate limits */
-async function curiosaFetch(
+async function performCuriosaFetch(
   url: string,
-  init?: RequestInit,
+  init: RequestInit | undefined,
+  hasRetried: boolean,
+  skipServerBudget = false,
+  options?: FetchCuriosaDeckOptions,
 ): Promise<Response> {
-  await throttleIfNeeded();
-  const response = await fetch(url, init);
-  updateRateLimit(response);
+  if (!skipServerBudget) {
+    await waitForServerBudget(options);
+  }
+  await waitForLocalToken(options);
+
+  throwIfAborted(options?.signal);
+  const response = await fetch(url, { ...init, signal: options?.signal ?? init?.signal });
+  const retryAfterMs = updateRateLimit(response, options?.onDelay);
+
+  if (
+    !hasRetried &&
+    retryAfterMs !== null &&
+    retryAfterMs > 0 &&
+    (response.status === 429 || response.status === 503)
+  ) {
+    notifyDelay(retryAfterMs, "retry-after", "client", options?.onDelay);
+    await sleep(retryAfterMs, options?.signal);
+    rateLimit.retryAfterUntilMs = null;
+    return performCuriosaFetch(url, init, true, true, options);
+  }
+
   return response;
 }
 
-// ============================================================================
-// tRPC response parsing
-// ============================================================================
-
-/** Parse a single board from a tRPC batch result entry */
-function parseBoardData(result: unknown): DeckCard[] {
-  try {
-    const raw = (result as { result: { data: { json: unknown } } })?.result
-      ?.data?.json;
-
-    const data = Array.isArray(raw) ? raw : raw ? [raw] : [];
-    const cards: DeckCard[] = [];
-
-    for (const entry of data) {
-      if (!entry || typeof entry !== "object") continue;
-      const record = entry as Record<string, unknown>;
-
-      const cardObj = record.card as Record<string, unknown> | undefined;
-      const name = (cardObj?.name ?? record.name) as string | undefined;
-      if (!name || typeof name !== "string") continue;
-
-      const qty = (record.quantity ??
-        record.count ??
-        record.qty ??
-        1) as number;
-      cards.push({ name, quantity: Number(qty) || 1 });
-    }
-
-    return cards;
-  } catch {
-    return [];
-  }
+async function curiosaFetch(
+  url: string,
+  init?: RequestInit,
+  options?: FetchCuriosaDeckOptions,
+): Promise<Response> {
+  const queued = requestQueue.then(() =>
+    performCuriosaFetch(url, init, false, false, options),
+  );
+  requestQueue = queued.then(
+    () => undefined,
+    () => undefined,
+  );
+  return queued;
 }
 
 // ============================================================================
-// Deck metadata parsing (name + author)
+// General parsing helpers
 // ============================================================================
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
 
 function normalizeMetaText(value: string | null | undefined): string {
   return (value ?? "").replace(/\s+/g, " ").trim();
@@ -144,7 +319,10 @@ function sanitizeDeckName(value: string | null | undefined): string | undefined 
 }
 
 function sanitizeAuthor(value: string | null | undefined): string | undefined {
-  const text = normalizeMetaText(value).replace(/^by\s+/i, "").trim();
+  const text = normalizeMetaText(value)
+    .replace(/^by\s+/i, "")
+    .replace(/[.]+$/g, "")
+    .trim();
   if (!text) return undefined;
   if (/^curiosa(?:\.io)?$/i.test(text)) return undefined;
   return text;
@@ -156,7 +334,6 @@ function parseNameAuthorCandidate(
   const raw = normalizeMetaText(candidate);
   if (!raw) return {};
 
-  // Common case: "Deck Name by Author"
   const byMatch = raw.match(/^(.*?)\s+by\s+(.+)$/i);
   if (byMatch) {
     return {
@@ -165,11 +342,10 @@ function parseNameAuthorCandidate(
     };
   }
 
-  // Common case: "Deck Name | Author | Curiosa"
   const parts = raw
     .split("|")
-    .map((p) => normalizeMetaText(p))
-    .filter((p) => p && !/^curiosa(?:\.io)?$/i.test(p));
+    .map((part) => normalizeMetaText(part))
+    .filter((part) => part && !/^curiosa(?:\.io)?$/i.test(part));
 
   if (parts.length >= 2) {
     return {
@@ -185,12 +361,57 @@ function parseNameAuthorCandidate(
   return { name: sanitizeDeckName(raw) };
 }
 
+// ============================================================================
+// Deck metadata parsing
+// ============================================================================
+
+function parseDeckMetaFromNextData(root: unknown): { name?: string; author?: string } {
+  const rootRecord = asRecord(root);
+  const props = asRecord(rootRecord?.props);
+  const pageProps = asRecord(props?.pageProps);
+  const trpcState = asRecord(pageProps?.trpcState);
+  const trpcJson = asRecord(trpcState?.json);
+  const queries = Array.isArray(trpcJson?.queries) ? trpcJson.queries : [];
+
+  for (const query of queries) {
+    const queryRecord = asRecord(query);
+    const state = asRecord(queryRecord?.state);
+    const data = asRecord(state?.data);
+    const name = sanitizeDeckName(readString(data?.name));
+    if (!name) continue;
+
+    const user = asRecord(data?.user);
+    return {
+      name,
+      author: sanitizeAuthor(readString(user?.username) ?? readString(data?.author)),
+    };
+  }
+
+  const deck = asRecord(pageProps?.deck);
+  const name = sanitizeDeckName(readString(deck?.name));
+  if (!name) return {};
+
+  const user = asRecord(deck?.user);
+  return {
+    name,
+    author: sanitizeAuthor(readString(user?.username) ?? readString(deck?.author)),
+  };
+}
+
 function parseDeckMetaFromHtml(html: string): { name?: string; author?: string } {
   let name: string | undefined;
   let author: string | undefined;
 
   try {
     const doc = new DOMParser().parseFromString(html, "text/html");
+    const nextDataText = doc.querySelector("script#__NEXT_DATA__")?.textContent;
+
+    if (nextDataText) {
+      const parsed = parseDeckMetaFromNextData(JSON.parse(nextDataText) as unknown);
+      if (parsed.name) name = parsed.name;
+      if (parsed.author) author = parsed.author;
+    }
+
     const titleCandidates = [
       doc.querySelector('meta[property="og:title"]')?.getAttribute("content"),
       doc.querySelector('meta[name="twitter:title"]')?.getAttribute("content"),
@@ -224,89 +445,172 @@ function parseDeckMetaFromHtml(html: string): { name?: string; author?: string }
 }
 
 // ============================================================================
+// tRPC response parsing
+// ============================================================================
+
+function readTrpcJson(entry: unknown, procedure: string): unknown {
+  const record = asRecord(entry);
+  const error = asRecord(record?.error);
+  const errorJson = asRecord(error?.json);
+  const errorMessage = readString(errorJson?.message);
+  if (errorMessage) {
+    throw new Error(`Curiosa ${procedure} error: ${errorMessage}`);
+  }
+
+  const result = asRecord(record?.result);
+  const data = asRecord(result?.data);
+  if (!data || !("json" in data)) {
+    throw new Error(`Unexpected Curiosa response for ${procedure}`);
+  }
+
+  return data.json;
+}
+
+function parseQuantity(value: unknown): number {
+  const parsed =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : 1;
+  if (!Number.isFinite(parsed) || parsed <= 0) return 1;
+  return Math.max(1, Math.floor(parsed));
+}
+
+function parseBoardData(raw: unknown, boardName: string): DeckCard[] {
+  const data = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const cards: DeckCard[] = [];
+
+  for (const entry of data) {
+    const record = asRecord(entry);
+    if (!record) continue;
+
+    const cardObj = asRecord(record.card);
+    const name = readString(cardObj?.name) ?? readString(record.name);
+    if (!name) {
+      throw new Error(`Unexpected card entry in Curiosa ${boardName}`);
+    }
+
+    const quantity = parseQuantity(record.quantity ?? record.count ?? record.qty);
+    cards.push({ name, quantity });
+  }
+
+  return cards;
+}
+
+async function readCuriosaError(response: Response): Promise<string> {
+  const body = await response.text();
+  try {
+    const parsed = JSON.parse(body) as unknown;
+    const entries = Array.isArray(parsed) ? parsed : [parsed];
+    for (const entry of entries) {
+      const record = asRecord(entry);
+      const error = asRecord(record?.error);
+      const errorJson = asRecord(error?.json);
+      const message = readString(errorJson?.message);
+      if (message) return message;
+    }
+  } catch {
+    // Fall through to text body.
+  }
+
+  return body.trim() || response.statusText || "Unknown error";
+}
+
+// ============================================================================
 // Public API
 // ============================================================================
 
 /**
- * Extract deck ID from a curiosa.io URL or raw ID
- * Handles: "https://curiosa.io/decks/abc123", "curiosa.io/decks/abc123", "abc123"
- *
- * Inputs:
- * - `urlOrId`: Full deck URL or plain deck identifier.
- *
- * Outputs:
- * - Returns normalized deck id token.
+ * Extract deck ID from a curiosa.io URL or raw ID.
  */
 export function extractDeckId(urlOrId: string): string {
-  const trimmed = urlOrId.trim().replace(/\/+$/, "");
-  if (trimmed.includes("/")) {
-    return trimmed.split("/").pop() ?? trimmed;
+  const raw = urlOrId.trim();
+  if (!raw) return "";
+
+  let candidate = raw.replace(/[?#].*$/g, "").replace(/\/+$/g, "");
+
+  const maybeUrl =
+    /^[a-z][a-z0-9+.-]*:\/\//i.test(raw)
+      ? raw
+      : /^curiosa\.io\//i.test(raw) || /^www\.curiosa\.io\//i.test(raw)
+        ? `https://${raw}`
+        : null;
+
+  if (maybeUrl) {
+    try {
+      const parsed = new URL(maybeUrl);
+      if (!CURIOSA_HOSTS.has(parsed.hostname.toLowerCase())) return "";
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const deckIndex = parts.indexOf("decks");
+      candidate = deckIndex >= 0 ? parts[deckIndex + 1] ?? "" : "";
+    } catch {
+      return "";
+    }
+  } else if (candidate.includes("/")) {
+    return "";
   }
-  return trimmed;
+
+  return /^[a-zA-Z0-9_-]+$/.test(candidate) ? candidate : "";
 }
 
 /**
- * Fetch a deck from curiosa.io by URL or deck ID.
- *
- * Makes two proxied requests:
- *   1. GET /api/curiosa/decks/{id}  →  HTML page (parse <title> for name/author)
- *   2. GET /api/curiosa/api/trpc/…  →  tRPC batch (board data)
- *
- * Inputs:
- * - `urlOrId`: Curiosa deck URL or deck id.
- *
- * Outputs:
- * - Resolves to an internal `Deck` model with parsed boards and metadata.
- * - Throws when URL/id is invalid or Curiosa responses are malformed.
+ * Fetch a public Curiosa deck by URL or deck ID.
  */
-export async function fetchCuriosaDeck(urlOrId: string): Promise<Deck> {
+export async function fetchCuriosaDeck(
+  urlOrId: string,
+  options: FetchCuriosaDeckOptions = {},
+): Promise<Deck> {
   const deckId = extractDeckId(urlOrId);
   if (!deckId) {
-    throw new Error("Invalid deck URL or ID");
+    throw new Error("Invalid Curiosa deck URL or ID");
   }
+  throwIfAborted(options.signal);
 
-  // 1) Fetch the deck HTML page to extract name + author from <title>
   let name = "Imported Deck";
   let author: string | undefined;
 
-  try {
-    const htmlUrl = `${PROXY_PREFIX}/decks/${encodeURIComponent(deckId)}`;
-    const htmlRes = await curiosaFetch(htmlUrl);
+  const htmlUrl = `${PROXY_PREFIX}/decks/${encodeURIComponent(deckId)}`;
+  const htmlRes = await curiosaFetch(htmlUrl, undefined, options);
 
-    if (htmlRes.ok) {
-      const html = await htmlRes.text();
-      const parsed = parseDeckMetaFromHtml(html);
-      if (parsed.name) name = parsed.name;
-      if (parsed.author) author = parsed.author;
-    }
-  } catch {
-    // keep defaults
+  if (htmlRes.status === 403 || htmlRes.status === 404 || htmlRes.status === 410) {
+    throw new Error(`Curiosa deck is unavailable (${htmlRes.status})`);
   }
 
-  // 2) Fetch board data via tRPC batch request
+  if (htmlRes.ok) {
+    throwIfAborted(options.signal);
+    const html = await htmlRes.text();
+    const parsed = parseDeckMetaFromHtml(html);
+    if (parsed.name) name = parsed.name;
+    if (parsed.author) author = parsed.author;
+  }
+
   const query: Record<string, { json: { id: string } }> = {};
-  for (let i = 0; i < 4; i++) query[String(i)] = { json: { id: deckId } };
+  for (let i = 0; i < 4; i += 1) {
+    query[String(i)] = { json: { id: deckId } };
+  }
 
   const procedures = [
     "deck.getDecklistById",
     "deck.getAvatarById",
     "deck.getSideboardById",
     "deck.getMaybeboardById",
-  ].join(",");
-
+  ];
   const input = encodeURIComponent(JSON.stringify(query));
-  const trpcUrl = `${PROXY_PREFIX}/api/trpc/${procedures}?batch=1&input=${input}`;
+  const trpcUrl = `${PROXY_PREFIX}/api/trpc/${procedures.join(",")}?batch=1&input=${input}`;
 
   const trpcRes = await curiosaFetch(trpcUrl, {
     headers: { accept: "application/json" },
-  });
+  }, options);
 
   if (!trpcRes.ok) {
-    throw new Error(`Curiosa API error: ${trpcRes.status}`);
+    const message = await readCuriosaError(trpcRes);
+    throw new Error(`Curiosa API error ${trpcRes.status}: ${message}`);
   }
 
-  const results = await trpcRes.json();
-  if (!Array.isArray(results) || results.length !== 4) {
+  throwIfAborted(options.signal);
+  const results = (await trpcRes.json()) as unknown;
+  if (!Array.isArray(results) || results.length !== procedures.length) {
     throw new Error("Unexpected response format from curiosa.io");
   }
 
@@ -316,10 +620,13 @@ export async function fetchCuriosaDeck(urlOrId: string): Promise<Deck> {
     name,
     author,
     boards: {
-      mainboard: parseBoardData(results[0]),
-      avatar: parseBoardData(results[1]),
-      sideboard: parseBoardData(results[2]),
-      maybeboard: parseBoardData(results[3]),
+      mainboard: parseBoardData(readTrpcJson(results[0], procedures[0] ?? ""), "mainboard"),
+      avatar: parseBoardData(readTrpcJson(results[1], procedures[1] ?? ""), "avatar"),
+      sideboard: parseBoardData(readTrpcJson(results[2], procedures[2] ?? ""), "sideboard"),
+      maybeboard: parseBoardData(
+        readTrpcJson(results[3], procedures[3] ?? ""),
+        "maybeboard",
+      ),
     },
     createdAt: now,
     updatedAt: now,

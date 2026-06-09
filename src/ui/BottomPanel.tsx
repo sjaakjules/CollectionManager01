@@ -2,7 +2,7 @@
  * Bottom panel for account/deck tools plus card filter/highlight drawers.
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useAppState } from '@/app/AppState';
 import type { Deck } from '@/data/dataModels';
 import { fetchCuriosaDeck } from '@/data/curiosaService';
@@ -32,12 +32,28 @@ type ActionPanel = 'label' | null;
 type BottomHubTab = 'cards' | 'decks' | null;
 
 const BOTTOM_EDGE_TRIGGER_PX = 92;
+const CURIOSA_KIND_DELAY_MESSAGE = 'Slowing download to be kind to Curiosa.io';
 
 interface BottomPanelProps {
   canvasAreas: CanvasArea[];
   onCreateDeckZone: (deck: Deck) => string | null;
   onDeleteCanvasArea: (canvasAreaId: string) => void;
   onFocusCanvasArea: (canvasAreaId: string) => void;
+}
+
+function findUnknownDeckCardNames(deck: Deck, knownCardNames: Set<string>): string[] {
+  if (knownCardNames.size === 0) return [];
+
+  const unknown = new Set<string>();
+  for (const board of Object.values(deck.boards)) {
+    for (const card of board) {
+      if (!knownCardNames.has(card.name.toLowerCase())) {
+        unknown.add(card.name);
+      }
+    }
+  }
+
+  return [...unknown].sort((left, right) => left.localeCompare(right));
 }
 
 export function BottomPanel({
@@ -57,6 +73,10 @@ export function BottomPanel({
   const [highlightRemoveMode, setHighlightRemoveMode] = useState(false);
   const [isLoadingDeck, setIsLoadingDeck] = useState(false);
   const [deckError, setDeckError] = useState<string | null>(null);
+  const [deckImportNotice, setDeckImportNotice] = useState<string | null>(null);
+  const [showDeckUrlInput, setShowDeckUrlInput] = useState(false);
+  const [deckUrlInput, setDeckUrlInput] = useState('');
+  const deckImportAbortRef = useRef<AbortController | null>(null);
 
   // Add/remove-category UI state
   const [showAddInput, setShowAddInput] = useState(false);
@@ -102,6 +122,10 @@ export function BottomPanel({
 
   const availableFilterOptions = useMemo(
     () => buildCardFilterOptions(state.cards),
+    [state.cards],
+  );
+  const knownCardNames = useMemo(
+    () => new Set(state.cards.map((card) => card.name.toLowerCase())),
     [state.cards],
   );
 
@@ -227,6 +251,23 @@ export function BottomPanel({
     }
   };
 
+  const abortDeckImport = useCallback(() => {
+    const controller = deckImportAbortRef.current;
+    if (!controller) return;
+
+    controller.abort();
+    deckImportAbortRef.current = null;
+    setIsLoadingDeck(false);
+    setDeckImportNotice(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      deckImportAbortRef.current?.abort();
+      deckImportAbortRef.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       const near = event.clientY >= window.innerHeight - BOTTOM_EDGE_TRIGGER_PX;
@@ -243,6 +284,7 @@ export function BottomPanel({
     const handlePointerDown = (event: PointerEvent) => {
       if (!(event.target instanceof Element)) return;
       if (!event.target.closest('.pixi-canvas-container')) return;
+      abortDeckImport();
       setActiveHubTab(null);
       setActiveToolTab(null);
       setActiveActionPanel(null);
@@ -252,7 +294,7 @@ export function BottomPanel({
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown, true);
     };
-  }, []);
+  }, [abortDeckImport]);
 
   const openToolTab = useCallback(
     (tab: Exclude<ToolTab, null>) => {
@@ -300,33 +342,87 @@ export function BottomPanel({
         setHighlightRemoveMode(false);
       }
       if (nextTab !== 'decks') {
+        abortDeckImport();
         setDeckError(null);
+        setDeckImportNotice(null);
+        setShowDeckUrlInput(false);
+        setDeckUrlInput('');
       }
     },
-    [activeHubTab],
+    [abortDeckImport, activeHubTab],
   );
 
-  const handleCreateDeckZone = useCallback(async () => {
+  const handleCreateDeckZone = useCallback(async (deckUrl: string) => {
     if (isLoadingDeck) return;
-    const deckUrl = window.prompt('Deck URL', '');
-    if (deckUrl === null) return;
     const trimmed = deckUrl.trim();
     if (!trimmed) return;
 
+    const controller = new AbortController();
+    deckImportAbortRef.current = controller;
     setIsLoadingDeck(true);
-      setDeckError(null);
+    setDeckError(null);
+    setDeckImportNotice(null);
+
+    const slowNoticeTimer = setTimeout(() => {
+      if (controller.signal.aborted || deckImportAbortRef.current !== controller) return;
+      setDeckImportNotice(CURIOSA_KIND_DELAY_MESSAGE);
+    }, 1000);
+
     try {
-      const deck = await fetchCuriosaDeck(trimmed);
+      const deck = await fetchCuriosaDeck(trimmed, {
+        signal: controller.signal,
+        onDelay: (delay) => {
+          if (delay.delayMs >= 1000) {
+            setDeckImportNotice(CURIOSA_KIND_DELAY_MESSAGE);
+          }
+        },
+      });
+      if (controller.signal.aborted || deckImportAbortRef.current !== controller) return;
+      const unknownCards = findUnknownDeckCardNames(deck, knownCardNames);
       const canvasAreaId = onCreateDeckZone(deck);
       if (!canvasAreaId) return;
+      setDeckUrlInput('');
+      setShowDeckUrlInput(false);
+      setDeckImportNotice(null);
+      if (unknownCards.length > 0) {
+        const preview = unknownCards.slice(0, 4).join(', ');
+        const suffix = unknownCards.length > 4 ? `, +${unknownCards.length - 4} more` : '';
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          notification: {
+            type: 'warning',
+            message: `Imported deck contains ${unknownCards.length} unknown card ${
+              unknownCards.length === 1 ? 'name' : 'names'
+            }: ${preview}${suffix}`,
+          },
+        });
+      }
       setActiveHubTab('decks');
     } catch (error) {
+      if (
+        controller.signal.aborted ||
+        (error instanceof Error && error.name === 'AbortError')
+      ) {
+        return;
+      }
       const message = error instanceof Error ? error.message : 'Failed to load deck';
       setDeckError(message);
     } finally {
-      setIsLoadingDeck(false);
+      clearTimeout(slowNoticeTimer);
+      if (deckImportAbortRef.current === controller) {
+        deckImportAbortRef.current = null;
+        setIsLoadingDeck(false);
+      }
     }
-  }, [isLoadingDeck, onCreateDeckZone]);
+  }, [dispatch, isLoadingDeck, knownCardNames, onCreateDeckZone]);
+
+  const handleDeckImportSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void handleCreateDeckZone(deckUrlInput);
+    },
+    [deckUrlInput, handleCreateDeckZone],
+  );
 
   return (
     <>
@@ -588,12 +684,58 @@ export function BottomPanel({
               <button
                 type="button"
                 className="bottom-tool-tab folder-add-button"
-                onClick={() => void handleCreateDeckZone()}
-                disabled={isLoadingDeck}
+                onClick={() => {
+                  setDeckError(null);
+                  setShowDeckUrlInput(true);
+                }}
+                disabled={isLoadingDeck || showDeckUrlInput}
+                aria-label="Load deck from URL"
                 title="Load deck from URL"
               >
                 {isLoadingDeck ? '...' : '+'}
               </button>
+              {showDeckUrlInput && (
+                <form className="deck-url-import-form" onSubmit={handleDeckImportSubmit}>
+                  <input
+                    type="url"
+                    className="deck-url-input"
+                    placeholder="Curiosa deck URL"
+                    value={deckUrlInput}
+                    onChange={(event) => {
+                      setDeckUrlInput(event.target.value);
+                      setDeckError(null);
+                      setDeckImportNotice(null);
+                    }}
+                    disabled={isLoadingDeck}
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="deck-url-submit"
+                    disabled={isLoadingDeck || deckUrlInput.trim().length === 0}
+                  >
+                    {isLoadingDeck ? '...' : 'Load'}
+                  </button>
+                  <button
+                    type="button"
+                    className="deck-url-cancel"
+                    onClick={() => {
+                      if (isLoadingDeck) {
+                        abortDeckImport();
+                        return;
+                      }
+                      setShowDeckUrlInput(false);
+                      setDeckUrlInput('');
+                      setDeckError(null);
+                      setDeckImportNotice(null);
+                    }}
+                    aria-label="Cancel deck URL import"
+                    title={isLoadingDeck ? 'Cancel import' : 'Cancel'}
+                  >
+                    X
+                  </button>
+                </form>
+              )}
               {deckCanvasAreas.map((area) => (
                 <div key={area.id} className="folder-chip">
                   <button
@@ -618,6 +760,9 @@ export function BottomPanel({
             </div>
             {deckCanvasAreas.length === 0 && (
               <p className="bottom-tools-note">No decks loaded yet.</p>
+            )}
+            {deckImportNotice && (
+              <p className="bottom-tools-note deck-import-notice">{deckImportNotice}</p>
             )}
             {deckError && <p className="bottom-tools-note">{deckError}</p>}
           </div>

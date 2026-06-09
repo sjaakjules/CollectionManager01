@@ -49,7 +49,10 @@ describe('deck import/export', () => {
     );
 
     expect(result.deck.boards.avatar).toEqual([{ name: 'Avatar of Fire', quantity: 1 }]);
-    expect(result.deck.boards.mainboard).toEqual([{ name: 'Fireball', quantity: 2 }]);
+    expect(result.deck.boards.mainboard).toEqual([
+      { name: 'Fireball', quantity: 2 },
+      { name: 'Mystery Card', quantity: 1 },
+    ]);
     expect(result.deck.boards.sideboard).toEqual([{ name: 'Relic', quantity: 2 }]);
     expect(result.unknownCards).toEqual(['Mystery Card']);
   });
@@ -78,6 +81,7 @@ describe('deck import/export', () => {
     );
 
     expect(result.unknownCards).toEqual(['Missing Card']);
+    expect(result.deck.boards.mainboard).toEqual([{ name: 'Missing Card', quantity: 1 }]);
     expect(result.deck.boards.avatar).toEqual([{ name: 'Avatar of Fire', quantity: 1 }]);
   });
 });

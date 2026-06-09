@@ -502,6 +502,7 @@ export default defineConfig({
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
             proxyReq.setHeader('Origin', 'https://curiosa.io');
+            proxyReq.setHeader('Referer', 'https://curiosa.io/');
           });
         },
       },
