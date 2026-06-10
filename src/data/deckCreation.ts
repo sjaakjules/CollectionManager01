@@ -1,4 +1,5 @@
 import { createEmptyDeck, type Deck } from "@/data/dataModels";
+import { isBlockedTokenCardName } from "@/data/tokenCards";
 import { generateUUID } from "@/utils/uuid";
 
 export interface CreateLocalDeckOptions {
@@ -21,6 +22,7 @@ export function createLocalDeck({
   for (const cardName of mainboardCardNames) {
     const trimmed = cardName.trim();
     if (!trimmed) continue;
+    if (isBlockedTokenCardName(trimmed)) continue;
     quantities.set(trimmed, (quantities.get(trimmed) ?? 0) + 1);
   }
 
@@ -33,4 +35,3 @@ export function createLocalDeck({
 
   return deck;
 }
-

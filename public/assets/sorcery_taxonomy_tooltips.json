@@ -1,0 +1,276 @@
+{
+  "version": "sorcery-style-package-taxonomy-v1",
+  "scoreScale": "0.00 to 1.00, where higher means stronger strategic alignment rather than probability.",
+  "deckStyles": {
+    "Vanguard Pressure": {
+      "tooltip": "Occupy the front early and make blockers insufficient.",
+      "description": "Honest board pressure from cheap and mid-cost bodies, token turns, charge/burst, and site attacks. The deck wins by forcing repeated combat rather than mostly bypassing blockers.",
+      "subStyles": {
+        "Board Beatdown": "Efficient bodies and combat tricks create steady, honest pressure.",
+        "Burn Pressure": "Board damage is backed by direct damage and Death's Door finishers.",
+        "Token Vanguard": "Token production and anthem effects flood the vanguard.",
+        "Site-Race Pressure": "The deck prioritizes damaging sites and forcing Death's Door quickly."
+      }
+    },
+    "Evasive Aggro": {
+      "tooltip": "Kill through hard-to-block damage and awkward attack lanes.",
+      "description": "Airborne, Stealth, Voidwalk, Submerge, Burrowing, or other evasive angles let threats ignore normal blocking patterns and pressure Avatars or Sites quickly.",
+      "subStyles": {
+        "Airborne Pressure": "Airborne bodies and air mobility carry the damage plan.",
+        "Voidwalk Pressure": "Voidwalk threats attack from the void or strange board positions.",
+        "Stealth/Infiltrate": "Stealth and control-their-minion effects create unblockable tempo swings.",
+        "Submerge Pressure": "Submerge bodies hide from normal interaction and surface to attack."
+      }
+    },
+    "Mobility Control": {
+      "tooltip": "Make combat happen in the wrong place for the opponent.",
+      "description": "Push, pull, swap, teleport, submerge, bury, drown, force attacks, or otherwise reposition units so the opponent cannot use their board efficiently.",
+      "subStyles": {
+        "Drown/Displacement": "Water and forced movement repeatedly convert positioning into removal.",
+        "Tempo Displacement": "Push, pull, swap, and bounce effects create tempo wins rather than hard locks.",
+        "Kiting Control": "Ranged/projectile threats and movement keep combat one-sided.",
+        "Tap/Disable Control": "Disable, silence, immobile, and tap effects prevent enemy threats from acting."
+      }
+    },
+    "Fortress Control": {
+      "tooltip": "Turn Sites into a defensive realm, not just mana.",
+      "description": "Defensive Sites, walls, chokepoints, big blockers, healing, Ward, and repeated board wipes make attacks inefficient until the control deck can win safely.",
+      "subStyles": {
+        "Defensive Realm": "The Atlas is used to slow paths and protect important squares.",
+        "Terrain Prison": "Terrain and auras restrict movement, attacks, or access to key regions.",
+        "Ward/Heal Fortress": "Healing, Ward, and protection effects stretch the game until threats take over."
+      }
+    },
+    "Champion Threat": {
+      "tooltip": "One central unit or Avatar becomes the main weapon.",
+      "description": "The Avatar or a single central threat is equipped, protected, moved, and repeatedly used to attack or control the board.",
+      "subStyles": {
+        "Armed Avatar": "Artifacts, weapons, and bearer buffs make the Avatar a primary attacker.",
+        "Mobile Champion": "Movement and reach effects keep the champion in the right fight.",
+        "Protected Champion": "Ward, healing, bodyguards, or prevention keep the main threat alive."
+      }
+    },
+    "Sticky Recursion": {
+      "tooltip": "Trade, die, return, and grind through removal.",
+      "description": "The deck converts death and the cemetery into board presence, tokens, Genesis re-use, or repeatable value so clean answers are hard to maintain.",
+      "subStyles": {
+        "Necro Value": "Skeletons, dead minions, and reanimation effects supply repeatable board presence.",
+        "Deathspeaker Genesis": "Dead Genesis minions are copied or replayed for value.",
+        "Sacrifice/Deathrite": "Sacrifice, Deathrite, and death triggers turn trades into resources."
+      }
+    },
+    "Realm Denial": {
+      "tooltip": "Stop the opponent using their Realm properly.",
+      "description": "Destroy, replace, disable, flood, bury, or punish Sites; interfere with threshold and Atlas plans; or block paths so the opponent's mana and movement collapse.",
+      "subStyles": {
+        "Threshold Denial": "The deck attacks threshold, mana, or site text.",
+        "Site Destruction": "The deck destroys, replaces, or banishes Sites.",
+        "Path Denial": "Sites and terrain block movement or create pathing traps."
+      }
+    },
+    "Resource Engine Midrange": {
+      "tooltip": "Out-scale with ramp, Atlas economy, card flow, and high-rate threats.",
+      "description": "A broad value style for decks whose main edge is resource production, site economy, tutors, draw, ramp, and efficient threats rather than a single pure aggro or control axis.",
+      "subStyles": {
+        "Ramp Midrange": "Site acceleration and mana engines reach large threats early.",
+        "Toolbox Goodstuff": "Collection access, tutors, and flexible answers carry the deck.",
+        "Atlas Value": "The Atlas is an engine for mana, bodies, or repeated utility."
+      }
+    },
+    "Spell Engine Control": {
+      "tooltip": "Survive, loop or chain spells, then win by inevitability.",
+      "description": "High spell density, tutoring, spell copying, recasting, board wipes, and card flow create a long-game control shell that wins once resources are exhausted.",
+      "subStyles": {
+        "Archimago Loop": "Repeated casting or copying of key spells is central to the plan.",
+        "Removal-Heavy Control": "Removal and sweepers dominate until a finisher appears.",
+        "Tutor/Cantrip Control": "Search, draw, cantrips, and selection are the core engine."
+      }
+    },
+    "Unknown": {
+      "tooltip": "No stable style signature was strong enough.",
+      "description": "Used only when the deck has too little information, is an unusual pile, or has no clear common strategic cluster.",
+      "subStyles": {
+        "Unclear": "No single style signature dominates from the card mix."
+      }
+    }
+  },
+  "cardCategories": {
+    "Swarm bodies": {
+      "tooltip": "Cheap minions or repeatable bodies that fill lanes and create repeated attack pressure.",
+      "description": "Cheap minions or repeatable bodies that fill lanes and create repeated attack pressure."
+    },
+    "Vanguard bodies": {
+      "tooltip": "Units that want to occupy the front, trade honestly, and force immediate combat.",
+      "description": "Units that want to occupy the front, trade honestly, and force immediate combat."
+    },
+    "Charge / burst": {
+      "tooltip": "Immediate damage, charge, pump, surprise attacks, or Death's Door burst.",
+      "description": "Immediate damage, charge, pump, surprise attacks, or Death's Door burst."
+    },
+    "Evasion": {
+      "tooltip": "Airborne, Stealth, Voidwalk, Submerge, Burrowing, or similar ways around normal blockers.",
+      "description": "Airborne, Stealth, Voidwalk, Submerge, Burrowing, or similar ways around normal blockers."
+    },
+    "Mobility / reach": {
+      "tooltip": "Extra movement, teleporting, carry effects, move-and-attack, or distance compression.",
+      "description": "Extra movement, teleporting, carry effects, move-and-attack, or distance compression."
+    },
+    "Displacement": {
+      "tooltip": "Push, pull, bounce, swap, drown, bury, or move enemies into bad places.",
+      "description": "Push, pull, bounce, swap, drown, bury, or move enemies into bad places."
+    },
+    "Lockdown / tax": {
+      "tooltip": "Disable, silence, immobilise, forced attacks, restricted movement, or costs/taxes.",
+      "description": "Disable, silence, immobilise, forced attacks, restricted movement, or costs/taxes."
+    },
+    "Fortification": {
+      "tooltip": "Big blockers, walls, defensive Sites, bodyguards, healing, Ward, or holding key squares.",
+      "description": "Big blockers, walls, defensive Sites, bodyguards, healing, Ward, or holding key squares."
+    },
+    "Terrain / site shaping": {
+      "tooltip": "Sites, auras, or effects that alter paths, flooding, voids, rubble, chokepoints, or board layout.",
+      "description": "Sites, auras, or effects that alter paths, flooding, voids, rubble, chokepoints, or board layout."
+    },
+    "Removal / burn": {
+      "tooltip": "Direct answers to units, artifacts, auras, Avatars, or blockers through damage, kill, destroy, bury, or banish.",
+      "description": "Direct answers to units, artifacts, auras, Avatars, or blockers through damage, kill, destroy, bury, or banish."
+    },
+    "Ranged / projectile": {
+      "tooltip": "Ranged units, projectiles, arrows, harpoons, or attacks without adjacent combat.",
+      "description": "Ranged units, projectiles, arrows, harpoons, or attacks without adjacent combat."
+    },
+    "Avatar arms": {
+      "tooltip": "Weapons, bearer artifacts, buffs, or tools that make the Avatar or one bearer a main threat.",
+      "description": "Weapons, bearer artifacts, buffs, or tools that make the Avatar or one bearer a main threat."
+    },
+    "Protection": {
+      "tooltip": "Ward, prevention, healing, bodyguards, bounce shields, or ways to avoid tempo blowouts.",
+      "description": "Ward, prevention, healing, bodyguards, bounce shields, or ways to avoid tempo blowouts."
+    },
+    "Recursion": {
+      "tooltip": "Cards that bring dead minions back, cast from the cemetery, or convert the cemetery into board presence.",
+      "description": "Cards that bring dead minions back, cast from the cemetery, or convert the cemetery into board presence."
+    },
+    "Death value": {
+      "tooltip": "Deathrite, sacrifice, self-sacrifice, death triggers, cemetery fuel, or profitable trades.",
+      "description": "Deathrite, sacrifice, self-sacrifice, death triggers, cemetery fuel, or profitable trades."
+    },
+    "Site pressure": {
+      "tooltip": "Cards that attack, destroy, disable, replace, punish, or directly damage enemy Sites.",
+      "description": "Cards that attack, destroy, disable, replace, punish, or directly damage enemy Sites."
+    },
+    "Disruption": {
+      "tooltip": "Hand attack, spell denial, silence, threshold denial, cemetery hate, collection hate, steal/control, or anti-combo.",
+      "description": "Hand attack, spell denial, silence, threshold denial, cemetery hate, collection hate, steal/control, or anti-combo."
+    },
+    "Card / Atlas engine": {
+      "tooltip": "Draw, selection, tutors, mana/ramp, site play/draw, Atlas manipulation, or Collection access.",
+      "description": "Draw, selection, tutors, mana/ramp, site play/draw, Atlas manipulation, or Collection access."
+    },
+    "Token production": {
+      "tooltip": "Creates or repeatedly supplies expendable bodies such as Foot Soldiers, Skeletons, Frogs, or other tokens.",
+      "description": "Creates or repeatedly supplies expendable bodies such as Foot Soldiers, Skeletons, Frogs, or other tokens."
+    },
+    "Spell engine": {
+      "tooltip": "Spellcasters, spell copying, spell recursion, cantrips, Magic tutors, or payoffs for casting spells.",
+      "description": "Spellcasters, spell copying, spell recursion, cantrips, Magic tutors, or payoffs for casting spells."
+    },
+    "Finishers / inevitability": {
+      "tooltip": "Large end-game threats, repeatable clocks, sweeping win conditions, or reliable Death's Door closers.",
+      "description": "Large end-game threats, repeatable clocks, sweeping win conditions, or reliable Death's Door closers."
+    }
+  },
+  "displayOrder": {
+    "deckStyles": [
+      "Vanguard Pressure",
+      "Evasive Aggro",
+      "Mobility Control",
+      "Fortress Control",
+      "Champion Threat",
+      "Sticky Recursion",
+      "Realm Denial",
+      "Resource Engine Midrange",
+      "Spell Engine Control",
+      "Unknown"
+    ],
+    "cardCategories": [
+      "Swarm bodies",
+      "Vanguard bodies",
+      "Charge / burst",
+      "Evasion",
+      "Mobility / reach",
+      "Displacement",
+      "Lockdown / tax",
+      "Fortification",
+      "Terrain / site shaping",
+      "Removal / burn",
+      "Ranged / projectile",
+      "Avatar arms",
+      "Protection",
+      "Recursion",
+      "Death value",
+      "Site pressure",
+      "Disruption",
+      "Card / Atlas engine",
+      "Token production",
+      "Spell engine",
+      "Finishers / inevitability"
+    ]
+  },
+  "addedDeckStyles": {
+    "Resource Engine Midrange": "A broad value style for decks whose main edge is resource production, site economy, tutors, draw, ramp, and efficient threats rather than a single pure aggro or control axis.",
+    "Spell Engine Control": "High spell density, tutoring, spell copying, recasting, board wipes, and card flow create a long-game control shell that wins once resources are exhausted."
+  },
+  "addedCardCategories": {
+    "Token production": "Creates or repeatedly supplies expendable bodies such as Foot Soldiers, Skeletons, Frogs, or other tokens.",
+    "Spell engine": "Spellcasters, spell copying, spell recursion, cantrips, Magic tutors, or payoffs for casting spells.",
+    "Finishers / inevitability": "Large end-game threats, repeatable clocks, sweeping win conditions, or reliable Death's Door closers."
+  },
+  "styleDistributionInDeckArchive": {
+    "Vanguard Pressure": 52,
+    "Sticky Recursion": 38,
+    "Evasive Aggro": 21,
+    "Champion Threat": 33,
+    "Spell Engine Control": 34,
+    "Resource Engine Midrange": 64,
+    "Mobility Control": 23,
+    "Fortress Control": 11,
+    "Realm Denial": 9
+  },
+  "subStyleDistributionInDeckArchive": {
+    "Vanguard Pressure / Burn Pressure": 48,
+    "Sticky Recursion / Necro Value": 26,
+    "Evasive Aggro / Airborne Pressure": 4,
+    "Evasive Aggro / Voidwalk Pressure": 13,
+    "Champion Threat / Mobile Champion": 18,
+    "Spell Engine Control / Archimago Loop": 13,
+    "Sticky Recursion / Deathspeaker Genesis": 11,
+    "Resource Engine Midrange / Atlas Value": 35,
+    "Mobility Control / Drown/Displacement": 17,
+    "Resource Engine Midrange / Toolbox Goodstuff": 20,
+    "Spell Engine Control / Removal-Heavy Control": 19,
+    "Fortress Control / Defensive Realm": 3,
+    "Evasive Aggro / Stealth/Infiltrate": 4,
+    "Mobility Control / Tap/Disable Control": 3,
+    "Mobility Control / Tempo Displacement": 2,
+    "Champion Threat / Armed Avatar": 7,
+    "Vanguard Pressure / Token Vanguard": 2,
+    "Resource Engine Midrange / Ramp Midrange": 9,
+    "Realm Denial / Site Destruction": 7,
+    "Vanguard Pressure / Board Beatdown": 2,
+    "Champion Threat / Protected Champion": 8,
+    "Sticky Recursion / Sacrifice/Deathrite": 1,
+    "Realm Denial / Path Denial": 1,
+    "Realm Denial / Threshold Denial": 1,
+    "Fortress Control / Ward/Heal Fortress": 6,
+    "Fortress Control / Terrain Prison": 2,
+    "Spell Engine Control / Tutor/Cantrip Control": 2,
+    "Mobility Control / Kiting Control": 1
+  },
+  "scoringNotes": {
+    "cardScoring": "Derived from type, rules text keywords, stats/cost, and a small popularity tie-breaker from deck occurrence in the archive.",
+    "deckScoring": "Aggregates package scores from Spellbook, Atlas, and Collection with lower weight for Collection and minimal weight for Maybe; then adds small Avatar and primer/name priors.",
+    "styleScores": "Style scores are independent affinity scores; they are not normalized to sum to 1. A deck can strongly align with multiple styles.",
+    "unknown": "Unknown is assigned only when all style affinities are weak."
+  }
+}

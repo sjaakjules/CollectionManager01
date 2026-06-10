@@ -13,7 +13,7 @@
  * Related files:
  * - `src/rendering/PixiStage.ts` (imperative Pixi scene implementation)
  * - `src/app/App.tsx` (prop wiring and canvas area events)
- * - `src/data/cardFilters.ts` and `src/data/archetypeScores.ts` (render inputs)
+ * - `src/data/cardFilters.ts` and `src/data/cardCategories.ts` (render inputs)
  */
 
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
@@ -27,23 +27,20 @@ import {
 import { cardNameToSlug } from "./LODManager";
 import { shouldUseFullCardHoverPreview } from "./deviceProfile";
 import {
-  loadArchetypeScores,
-  setCachedArchetypeScores,
-  setArchetypeSaveHandler,
-  type ArchetypeScores,
-} from "@/data/archetypeScores";
+  loadCardCategorySeed,
+  normalizeCardCategoryData,
+  setCategoryScore,
+  type CardCategoryData,
+} from "@/data/cardCategories";
 import {
   applyCardFilters,
   ensureCardFilterState,
   isCardFilterActive,
 } from "@/data/cardFilters";
 import {
-  getAssociationClusterGroups,
-  hasCollectionAssociationSource,
-  loadCardAssociations,
-  resolveAssociationNodeId,
-  type CardAssociationData,
-} from "@/data/cardAssociations";
+  loadDeckStyleAssociations,
+  type DeckStyleAssociationData,
+} from "@/data/deckStyleAssociations";
 import type { CanvasArea } from "@/canvas/canvasAreas";
 import { buildQuickTransferDeckTargets } from "@/ui/deckTransferTargets";
 
@@ -97,16 +94,14 @@ export function PixiCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<PixiStage | null>(null);
   const { state, dispatch } = useAppState();
-  const userId = state.userData?.id ?? null;
-  const userArchetypeScores = state.userData?.archetypeScores ?? null;
+  const userCategoryData = state.userData?.cardCategories ?? null;
   const cardFilters = useMemo(
     () => ensureCardFilterState(state.ui.cardFilters),
     [state.ui.cardFilters],
   );
-  const [archetypeScores, setArchetypeScores] =
-    useState<ArchetypeScores | null>(null);
-  const [cardAssociations, setCardAssociations] =
-    useState<CardAssociationData | null>(null);
+  const [cardCategories, setCardCategories] = useState<CardCategoryData | null>(null);
+  const [deckStyleAssociations, setDeckStyleAssociations] =
+    useState<DeckStyleAssociationData | null>(null);
   const [loadProgress, setLoadProgress] = useState<{
     loaded: number;
     total: number;
@@ -133,101 +128,42 @@ export function PixiCanvas({
     () => buildQuickTransferDeckTargets(state.userData?.decks ?? [], canvasAreas),
     [canvasAreas, state.userData?.decks],
   );
-  const selectedAssociationCardName =
-    state.ui.selectedCardNames.length === 1
-      ? state.ui.selectedCardNames[0] ?? null
-      : null;
-  const selectedAssociationCard = useMemo(
-    () =>
-      selectedAssociationCardName
-        ? state.cards.find((card) => card.name === selectedAssociationCardName) ?? null
-        : null,
-    [selectedAssociationCardName, state.cards],
-  );
-  const selectedAvatarAssociationClusterGroupId = useMemo(() => {
-    const nodeId = resolveAssociationNodeId(
-      cardAssociations,
-      selectedAssociationCardName,
-      selectedAssociationCard?.guardian.type,
-    );
-    if (!nodeId?.startsWith("avatar:")) return null;
-    return getAssociationClusterGroups(cardAssociations).some((group) => group.id === nodeId)
-      ? nodeId
-      : null;
-  }, [
-    cardAssociations,
-    selectedAssociationCard?.guardian.type,
-    selectedAssociationCardName,
-  ]);
-  const selectedAssociationClusterGroupId =
-    state.ui.associationPanelView === "clusters"
-      ? state.ui.associationClusterGroupId ?? selectedAvatarAssociationClusterGroupId
-      : null;
 
-  // Load archetype scores from userData (when present) or static seed fallback.
+  // Load card categories from userData (when present) or static seed fallback.
   useEffect(() => {
     let cancelled = false;
 
-    if (userArchetypeScores) {
-      setCachedArchetypeScores(userArchetypeScores);
-      setArchetypeScores(userArchetypeScores);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    setCachedArchetypeScores(null);
-    loadArchetypeScores().then((scores) => {
+    loadCardCategorySeed().then((seed) => {
       if (cancelled) return;
-      setArchetypeScores(scores);
+      setCardCategories(normalizeCardCategoryData(userCategoryData, seed));
     }).catch((error) => {
       if (cancelled) return;
-      console.warn("Failed to load archetype seed scores:", error);
-      setArchetypeScores(null);
+      console.warn("Failed to load card category seed data:", error);
+      setCardCategories(null);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [userArchetypeScores]);
+  }, [userCategoryData]);
 
   useEffect(() => {
     let cancelled = false;
-    loadCardAssociations(state.ui.associationMode)
+    loadDeckStyleAssociations()
       .then((data) => {
-        if (!cancelled) setCardAssociations(data);
+        if (!cancelled) setDeckStyleAssociations(data);
       })
       .catch((error) => {
         if (!cancelled) {
-          console.warn("Failed to load card association data:", error);
-          setCardAssociations(null);
+          console.warn("Failed to load deck style association data:", error);
+          setDeckStyleAssociations(null);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [state.ui.associationMode]);
-
-  // Route archetype score saves into userData for both guest and logged-in users.
-  useEffect(() => {
-    if (!userId) {
-      setArchetypeSaveHandler(null);
-      return;
-    }
-
-    setArchetypeSaveHandler((scores) => {
-      const cloned =
-        typeof structuredClone === "function"
-          ? structuredClone(scores)
-          : (JSON.parse(JSON.stringify(scores)) as ArchetypeScores);
-      dispatch({ type: "SET_ARCHETYPE_SCORES", scores: cloned });
-    });
-
-    return () => {
-      setArchetypeSaveHandler(null);
-    };
-  }, [userId, dispatch]);
+  }, []);
 
   // Stable progress callback (ref-based to avoid recreating PixiStage)
   const progressRef = useRef(setLoadProgress);
@@ -252,10 +188,8 @@ export function PixiCanvas({
   viewportCenterRef.current = onViewportCenterChange;
   const deckFilterRequestRef = useRef(onDeckFilterRequest);
   deckFilterRequestRef.current = onDeckFilterRequest;
-  const cardAssociationsRef = useRef<CardAssociationData | null>(cardAssociations);
-  cardAssociationsRef.current = cardAssociations;
-  const associationSourceZoneRef = useRef(state.ui.associationSourceZone);
-  associationSourceZoneRef.current = state.ui.associationSourceZone;
+  const cardCategoriesRef = useRef<CardCategoryData | null>(cardCategories);
+  cardCategoriesRef.current = cardCategories;
 
   // Initialize PixiJS stage
   useEffect(() => {
@@ -335,12 +269,12 @@ export function PixiCanvas({
           anchorClientRect: request.anchorClientRect,
         });
       },
-      onAssociationSourceZoneToggle: (cardName) => {
-        if (!hasCollectionAssociationSource(cardAssociationsRef.current, cardName)) return;
+      onCardCategoryScoreChange: (cardName, categoryId, value) => {
+        const current = cardCategoriesRef.current;
+        if (!current) return;
         dispatch({
-          type: "SET_ASSOCIATION_SOURCE_ZONE",
-          sourceZone:
-            associationSourceZoneRef.current === "main" ? "collection" : "main",
+          type: "SET_CARD_CATEGORIES",
+          data: setCategoryScore(current, cardName, categoryId, value),
         });
       },
     });
@@ -404,34 +338,30 @@ export function PixiCanvas({
     stageRef.current.setLabelPlacementMode(state.ui.labelPlacementMode);
   }, [state.ui.labelPlacementMode]);
 
-  // Update archetype highlighting
+  // Update card category highlighting.
   useEffect(() => {
     if (!stageRef.current) return;
-    stageRef.current.updateArchetypeHighlight(
-      state.ui.selectedArchetype,
-      archetypeScores,
+    stageRef.current.updateCardCategoryHighlight(
+      state.ui.selectedCardCategory,
+      cardCategories,
     );
-  }, [state.ui.selectedArchetype, archetypeScores]);
+  }, [state.ui.selectedCardCategory, cardCategories]);
 
   useEffect(() => {
     if (!stageRef.current) return;
-    stageRef.current.updateAssociationHighlight({
+    stageRef.current.updateDeckStyleAssociationHighlight({
       enabled: state.ui.associationsEnabled,
-      selectedCardName: selectedAssociationCardName,
-      sourceZone: state.ui.associationSourceZone,
-      selectedClusterGroupId: selectedAssociationClusterGroupId,
-      selectedClusterId: state.ui.associationClusterId,
-      selectedPackageId: state.ui.associationPackageId,
-      associations: cardAssociations,
+      mode: state.ui.associationMode,
+      selectedStyleId: state.ui.associationStyleId,
+      selectedSubStyleId: state.ui.associationSubStyleId,
+      associations: deckStyleAssociations,
     });
   }, [
-    cardAssociations,
-    selectedAssociationClusterGroupId,
-    state.ui.associationClusterId,
-    state.ui.associationPackageId,
-    selectedAssociationCardName,
-    state.ui.associationSourceZone,
+    deckStyleAssociations,
     state.ui.associationsEnabled,
+    state.ui.associationMode,
+    state.ui.associationStyleId,
+    state.ui.associationSubStyleId,
   ]);
 
   useEffect(() => {

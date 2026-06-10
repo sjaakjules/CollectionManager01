@@ -11,8 +11,8 @@ The generated association JSON is static application data. It is not part of
 
 The builder writes two assets:
 
-- `public/assets/sorcery_card_associations_balanced.json`
-- `public/assets/sorcery_card_associations_meta.json`
+- `tmp/oldAssociations/sorcery_card_associations_balanced.json`
+- `tmp/oldAssociations/sorcery_card_associations_meta.json`
 
 Both assets contain:
 
@@ -373,15 +373,15 @@ association channel and described in tooltips.
 Run:
 
 ```bash
-pnpm associations:build
-pnpm test -- scripts/build-card-associations.test.mjs src/data/cardAssociations.test.ts src/rendering/CardSprite.test.ts
+node scripts/build-card-associations.mjs
+pnpm test -- scripts/build-card-associations.test.mjs
 pnpm test
 pnpm lint
 pnpm typecheck
 pnpm build
 ```
 
-After `pnpm associations:build`, inspect both generated assets:
+After running the legacy offline builder, inspect both generated assets:
 
 - `__meta.version` should be `4`.
 - `__meta.mode` should match `balanced` or `meta`.
@@ -395,23 +395,23 @@ After `pnpm associations:build`, inspect both generated assets:
 Build with tighter deck clusters and more packages:
 
 ```bash
-pnpm associations:build --threshold 0.38 --packages 32
+node scripts/build-card-associations.mjs --threshold 0.38 --packages 32
 ```
 
 Build with broader clusters and less package visual influence:
 
 ```bash
-pnpm associations:build --threshold 0.25 --package-boost-weight 0.18
+node scripts/build-card-associations.mjs --threshold 0.25 --package-boost-weight 0.18
 ```
 
 Build with more avatar-sensitive clusters:
 
 ```bash
-pnpm associations:build --avatar-weight 0.15
+node scripts/build-card-associations.mjs --avatar-weight 0.15
 ```
 
 Build without packages:
 
 ```bash
-pnpm associations:build --no-packages
+node scripts/build-card-associations.mjs --no-packages
 ```

@@ -21,7 +21,7 @@
     "cards:atlas:all": "pnpm cards:atlas && pnpm cards:atlas:medium",
     "curiosa:decks": "node scripts/fetch-curiosa-decks.mjs",
     "curiosa:search-decks": "node scripts/search-curiosa-decks.mjs",
-    "associations:build": "node scripts/build-card-associations.mjs"
+    "deck-styles:build": "node scripts/build-deck-style-associations.mjs"
   },
   "dependencies": {
     "idb-keyval": "^6.2.1",

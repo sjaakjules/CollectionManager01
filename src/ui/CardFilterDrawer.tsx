@@ -5,6 +5,7 @@ import {
   includesToken,
   type MultiCriteriaField,
 } from '@/ui/cardFilterUi';
+import type { DeckElementId } from '@/ui/deckDisplay';
 
 interface CardFilterDrawerProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ interface CardFilterDrawerProps {
   onToggleEditingFilterEnabled: (index: number) => void;
   onDeleteEditingFilter: (index: number) => void;
 }
+
+const FILTER_THRESHOLD_ELEMENTS: DeckElementId[] = ['air', 'earth', 'fire', 'water'];
 
 function parseNumberOrNull(value: string): number | null {
   const trimmed = value.trim();
@@ -59,7 +62,7 @@ export function CardFilterDrawer({
         {editingExistingFilter && editingFilterIndex !== null && (
           <button
             type="button"
-            className="archetype-button"
+            className="tool-button"
             onClick={() => onToggleEditingFilterEnabled(editingFilterIndex)}
           >
             {editingFilterEnabled ? 'Hide' : 'Activate'}
@@ -68,7 +71,7 @@ export function CardFilterDrawer({
         {editingExistingFilter && editingFilterIndex !== null && (
           <button
             type="button"
-            className="archetype-button filter-delete-button"
+            className="tool-button filter-delete-button"
             onClick={() => onDeleteEditingFilter(editingFilterIndex)}
           >
             Delete
@@ -104,7 +107,7 @@ export function CardFilterDrawer({
               <button
                 key={setName}
                 type="button"
-                className={`archetype-button ${
+                className={`tool-button ${
                   includesToken(currentFilterCriteria.sets, setName) ? 'active' : ''
                 }`}
                 onClick={() => onToggleCurrentFilterToken('sets', setName)}
@@ -122,7 +125,7 @@ export function CardFilterDrawer({
               <button
                 key={typeName}
                 type="button"
-                className={`archetype-button ${
+                className={`tool-button ${
                   includesToken(currentFilterCriteria.types, typeName) ? 'active' : ''
                 }`}
                 onClick={() => onToggleCurrentFilterToken('types', typeName)}
@@ -140,7 +143,7 @@ export function CardFilterDrawer({
               <button
                 key={rarity}
                 type="button"
-                className={`archetype-button ${
+                className={`tool-button ${
                   includesToken(currentFilterCriteria.rarities, rarity) ? 'active' : ''
                 }`}
                 onClick={() => onToggleCurrentFilterToken('rarities', rarity)}
@@ -184,11 +187,11 @@ export function CardFilterDrawer({
         <div className="filter-field">
           <span>Threshold</span>
           <div className="threshold-filter-row">
-            {['air', 'earth', 'fire', 'water'].map((threshold) => (
+            {FILTER_THRESHOLD_ELEMENTS.map((threshold) => (
               <button
                 key={threshold}
                 type="button"
-                className={`archetype-button ${
+                className={`tool-button element-text element-text-${threshold} ${
                   includesToken(currentFilterCriteria.thresholds, threshold)
                     ? 'active'
                     : ''

@@ -6,13 +6,12 @@ import type { Deck } from "@/data/dataModels";
 import { fetchCuriosaDeck } from "@/data/curiosaService";
 import {
   AVATAR_SHORT_NAMES,
-  DECK_ELEMENT_ICONS,
-  DECK_ELEMENT_LABELS,
   getAvatarShortName,
   getDeckDisplayName,
   getDeckElementSummary,
   type AvatarName,
 } from "@/ui/deckDisplay";
+import { ElementIcon } from "@/ui/ElementIcon";
 
 type DeckCreateMode = "menu" | "local" | "import" | null;
 type DeckEntry =
@@ -145,11 +144,19 @@ export function DecksPanel({
     setDeckImportNotice(null);
   }, []);
 
-  const openDeckEntry = useCallback(
+  const selectDeckEntry = useCallback((entry: DeckEntry) => {
+    setActiveDeckId(entry.id);
+    setCreateMode(null);
+    setDeckError(null);
+    setDeckImportNotice(null);
+  }, []);
+
+  const placeDeckEntryOnCanvas = useCallback(
     (entry: DeckEntry) => {
       setActiveDeckId(entry.id);
       setCreateMode(null);
       setDeckError(null);
+      setDeckImportNotice(null);
       if (entry.area) {
         onFocusCanvasArea(entry.area.id);
         return;
@@ -333,20 +340,17 @@ export function DecksPanel({
               data-canvas-drop-zone-id={area?.id}
               data-canvas-drop-deck-id={deck?.id ?? area?.deckId}
               data-canvas-drop-zone-type="deck"
-              onClick={() => openDeckEntry(entry)}
+              onClick={() => selectDeckEntry(entry)}
+              onDoubleClick={() => placeDeckEntryOnCanvas(entry)}
               title={title}
             >
               <span className="deck-tab-name">{label}</span>
               <span className="deck-tab-elements" aria-label="Deck elements">
                 {elements.length === 0 ? (
-                  <img src="/assets/buttons/none.png" alt="None" />
+                  <ElementIcon element="none" decorative />
                 ) : (
                   elements.map((element) => (
-                    <img
-                      key={element}
-                      src={DECK_ELEMENT_ICONS[element]}
-                      alt={DECK_ELEMENT_LABELS[element]}
-                    />
+                    <ElementIcon key={element} element={element} decorative />
                   ))
                 )}
               </span>

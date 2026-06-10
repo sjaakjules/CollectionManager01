@@ -15,6 +15,7 @@
 
 import type { Card } from "./dataModels";
 import { get, set } from "idb-keyval";
+import { isBlockedTokenCardName } from "@/data/tokenCards";
 
 // Always fetch via same-origin to avoid CORS.
 // - DEV: Vite should proxy this path (see vite.config.ts).
@@ -39,7 +40,7 @@ export async function fetchCards(): Promise<Card[]> {
   const cached = await getCachedCards();
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     console.log("Using cached card data");
-    return cached.cards;
+    return filterPlayableCards(cached.cards);
   }
 
   // Fetch from API
@@ -54,7 +55,7 @@ export async function fetchCards(): Promise<Card[]> {
       throw new Error(`API error: ${response.status}`);
     }
 
-    const cards = (await response.json()) as Card[];
+    const cards = filterPlayableCards((await response.json()) as Card[]);
 
     // Cache the result
     await cacheCards(cards);
@@ -66,11 +67,15 @@ export async function fetchCards(): Promise<Card[]> {
     // Return cached data if available (even if stale)
     if (cached) {
       console.log("Using stale cached data due to API error");
-      return cached.cards;
+      return filterPlayableCards(cached.cards);
     }
 
     throw error;
   }
+}
+
+export function filterPlayableCards(cards: Card[]): Card[] {
+  return cards.filter((card) => !isBlockedTokenCardName(card.name));
 }
 
 export interface CardFilterOptions {

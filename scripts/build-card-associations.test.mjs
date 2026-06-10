@@ -177,7 +177,7 @@ describe('card association CLI args', () => {
 
     expect(options.archive).toBe('offlineData/deckArchive.json');
     expect(options.includeSkipped).toBe(true);
-    expect(options.outputBase).toBe('public/assets/sorcery_card_associations');
+    expect(options.outputBase).toBe('tmp/oldAssociations/sorcery_card_associations');
     expect(options.minSkippedSpellbook).toBe(50);
     expect(options.minSkippedAtlas).toBe(20);
   });

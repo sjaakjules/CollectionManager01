@@ -6,7 +6,7 @@ import louvain from 'graphology-communities-louvain';
 
 const DEFAULT_ARCHIVE_PATH = 'offlineData/deckArchive.json';
 const DEFAULT_CARD_DATA_PATH = 'docs/Sorcery_CardInfo.json';
-const DEFAULT_OUTPUT_BASE_PATH = 'public/assets/sorcery_card_associations';
+const DEFAULT_OUTPUT_BASE_PATH = 'tmp/oldAssociations/sorcery_card_associations';
 const DEFAULT_SKIPPED_SPELLBOOK_MIN = 50;
 const DEFAULT_SKIPPED_ATLAS_MIN = 20;
 const DEFAULT_FULL_SPELLBOOK_MIN = 60;

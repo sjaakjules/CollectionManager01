@@ -54,6 +54,28 @@ describe('appReducer canvas areas', () => {
     expect(next.userData?.canvasAreas).toHaveLength(1);
     expect(next.userData?.canvasAreas?.[0]?.id).toBe('deck-1');
   });
+
+  it('normalizes optional lookup deck markers on canvas areas', () => {
+    const withUser = appReducer(initialAppState, {
+      type: 'SET_USER_DATA',
+      userData: createGuestUserData('guest-1'),
+    });
+    const deckArea = stackArea({
+      id: 'lookup-deck-1',
+      name: 'Lookup Deck',
+      type: 'deck',
+      lookupDeckId: 'source-deck-1',
+      bounds: { x: -1400, y: 200, width: 1400, height: 1200 },
+      cardFilters: undefined,
+    });
+
+    const next = appReducer(withUser, {
+      type: 'SET_CANVAS_AREAS',
+      canvasAreas: [deckArea],
+    });
+
+    expect(next.userData?.canvasAreas?.[0]?.lookupDeckId).toBe('source-deck-1');
+  });
 });
 
 describe('appReducer deck board additions', () => {
@@ -82,129 +104,149 @@ describe('appReducer deck board additions', () => {
     ]);
     expect(next.userData?.decks[0]?.boards.mainboard).toEqual([]);
   });
+
+  it('does not add token cards to deck boards', () => {
+    const deck = createEmptyDeck('Token Test', 'deck-1');
+    const withUser = appReducer(initialAppState, {
+      type: 'SET_USER_DATA',
+      userData: {
+        ...createGuestUserData('guest-1'),
+        decks: [deck],
+      },
+    });
+
+    const next = appReducer(withUser, {
+      type: 'ADD_CARDS_TO_DECK_BY_ID',
+      deckId: 'deck-1',
+      cardNames: ['Frog', 'Skeleton', 'Foot Soldier 1', 'Gift of the Frog'],
+    });
+
+    expect(next.userData?.decks[0]?.boards.mainboard).toEqual([
+      { name: 'Gift of the Frog', quantity: 1 },
+    ]);
+  });
 });
 
 describe('appReducer associations state', () => {
-  it('clears archetype edit mode when associations are enabled', () => {
-    const withArchetype = appReducer(initialAppState, {
-      type: 'SET_SELECTED_ARCHETYPE',
-      archetype: 'control',
+  it('clears category mode when associations are enabled', () => {
+    const withCategory = appReducer(initialAppState, {
+      type: 'SET_SELECTED_CARD_CATEGORY',
+      categoryId: 'control',
     });
 
-    const next = appReducer(withArchetype, {
+    const next = appReducer(withCategory, {
       type: 'SET_ASSOCIATIONS_ENABLED',
       enabled: true,
     });
 
     expect(next.ui.associationsEnabled).toBe(true);
-    expect(next.ui.selectedArchetype).toBeNull();
+    expect(next.ui.selectedCardCategory).toBeNull();
   });
 
   it('stores the selected association mode only in UI state', () => {
-    const withGroup = appReducer(initialAppState, {
-      type: 'SET_ASSOCIATION_CLUSTER_GROUP',
-      groupId: 'avatar:a',
+    const withStyle = appReducer(initialAppState, {
+      type: 'SET_ASSOCIATION_STYLE',
+      styleId: 'vanguard-pressure',
     });
-    const next = appReducer(withGroup, {
+    const next = appReducer(withStyle, {
       type: 'SET_ASSOCIATION_MODE',
-      mode: 'meta',
+      mode: 'fractional',
     });
 
-    expect(next.ui.associationMode).toBe('meta');
-    expect(next.ui.associationClusterGroupId).toBeNull();
-    expect(next.ui.associationClusterId).toBeNull();
+    expect(next.ui.associationMode).toBe('fractional');
+    expect(next.ui.associationStyleId).toBe('vanguard-pressure');
+    expect(next.ui.associationSubStyleId).toBeNull();
     expect(next.userData).toBeNull();
   });
 
-  it('clears the selected association cluster when cluster group changes', () => {
-    const withCluster = appReducer(
+  it('clears the selected sub-style when style changes', () => {
+    const withSubStyle = appReducer(
       appReducer(initialAppState, {
-        type: 'SET_ASSOCIATION_CLUSTER_GROUP',
-        groupId: 'avatar:a',
+        type: 'SET_ASSOCIATION_STYLE',
+        styleId: 'vanguard-pressure',
       }),
       {
-        type: 'SET_ASSOCIATION_CLUSTER',
-        clusterId: 'cluster-1',
+        type: 'SET_ASSOCIATION_SUB_STYLE',
+        subStyleId: 'burn-pressure',
       },
     );
 
-    const next = appReducer(withCluster, {
-      type: 'SET_ASSOCIATION_CLUSTER_GROUP',
-      groupId: 'avatar:b',
+    const next = appReducer(withSubStyle, {
+      type: 'SET_ASSOCIATION_STYLE',
+      styleId: 'spell-engine-control',
     });
 
-    expect(next.ui.associationClusterGroupId).toBe('avatar:b');
-    expect(next.ui.associationClusterId).toBeNull();
+    expect(next.ui.associationStyleId).toBe('spell-engine-control');
+    expect(next.ui.associationSubStyleId).toBeNull();
   });
 
-  it('clears selected association clusters when source zone changes or associations close', () => {
-    const withCluster = appReducer(
+  it('clears selected style when associations close', () => {
+    const withStyle = appReducer(
       appReducer(initialAppState, {
-        type: 'SET_ASSOCIATION_CLUSTER_GROUP',
-        groupId: 'avatar:a',
+        type: 'SET_ASSOCIATION_STYLE',
+        styleId: 'vanguard-pressure',
       }),
       {
-        type: 'SET_ASSOCIATION_CLUSTER',
-        clusterId: 'cluster-1',
+        type: 'SET_ASSOCIATION_SUB_STYLE',
+        subStyleId: 'burn-pressure',
       },
     );
 
-    const withSource = appReducer(withCluster, {
-      type: 'SET_ASSOCIATION_SOURCE_ZONE',
-      sourceZone: 'collection',
-    });
-    const closed = appReducer(withCluster, {
+    const closed = appReducer(withStyle, {
       type: 'SET_ASSOCIATIONS_ENABLED',
       enabled: false,
     });
 
-    expect(withSource.ui.associationClusterId).toBeNull();
-    expect(withSource.ui.associationClusterGroupId).toBe('avatar:a');
-    expect(closed.ui.associationClusterId).toBeNull();
-    expect(closed.ui.associationClusterGroupId).toBeNull();
+    expect(closed.ui.associationStyleId).toBeNull();
+    expect(closed.ui.associationSubStyleId).toBeNull();
   });
 
-  it('switches between association cluster and package browse modes', () => {
-    const withCluster = appReducer(
-      appReducer(initialAppState, {
-        type: 'SET_ASSOCIATION_CLUSTER_GROUP',
-        groupId: 'avatar:a',
-      }),
-      {
-        type: 'SET_ASSOCIATION_CLUSTER',
-        clusterId: 'cluster-1',
+  it('persists card category data into user data', () => {
+    const withUser = appReducer(initialAppState, {
+      type: 'SET_USER_DATA',
+      userData: createGuestUserData('guest-1'),
+    });
+    const next = appReducer(withUser, {
+      type: 'SET_CARD_CATEGORIES',
+      data: {
+        version: 'test',
+        categories: [],
+        scores: {},
       },
-    );
-
-    const withPackage = appReducer(withCluster, {
-      type: 'SET_ASSOCIATION_PACKAGE',
-      packageId: 'pkg-01',
-    });
-    const backToClusters = appReducer(withPackage, {
-      type: 'SET_ASSOCIATION_PANEL_VIEW',
-      panelView: 'clusters',
     });
 
-    expect(withPackage.ui.associationPanelView).toBe('packages');
-    expect(withPackage.ui.associationPackageId).toBe('pkg-01');
-    expect(withPackage.ui.associationClusterGroupId).toBeNull();
-    expect(withPackage.ui.associationClusterId).toBeNull();
-    expect(backToClusters.ui.associationPanelView).toBe('clusters');
-    expect(backToClusters.ui.associationPackageId).toBeNull();
+    expect(next.userData?.cardCategories?.version).toBe('test');
+  });
+});
+
+describe('appReducer favourite lookup decks', () => {
+  it('normalizes favourite deck ids from user data', () => {
+    const next = appReducer(initialAppState, {
+      type: 'SET_USER_DATA',
+      userData: {
+        ...createGuestUserData('guest-1'),
+        favouriteDeckIds: ['deck-1', ' deck-2 ', 'deck-1', '', 'deck-3'],
+      } as UserData,
+    });
+
+    expect(next.userData?.favouriteDeckIds).toEqual(['deck-1', 'deck-2', 'deck-3']);
   });
 
-  it('keeps the package browse mode when associations are re-enabled', () => {
-    const withPackage = appReducer(initialAppState, {
-      type: 'SET_ASSOCIATION_PACKAGE',
-      packageId: 'pkg-01',
+  it('toggles favourite deck ids in user data', () => {
+    const withUser = appReducer(initialAppState, {
+      type: 'SET_USER_DATA',
+      userData: createGuestUserData('guest-1'),
+    });
+    const added = appReducer(withUser, {
+      type: 'TOGGLE_FAVOURITE_DECK',
+      deckId: 'deck-1',
+    });
+    const removed = appReducer(added, {
+      type: 'TOGGLE_FAVOURITE_DECK',
+      deckId: 'deck-1',
     });
 
-    const reopened = appReducer(withPackage, {
-      type: 'SET_ASSOCIATIONS_ENABLED',
-      enabled: true,
-    });
-
-    expect(reopened.ui.associationPanelView).toBe('packages');
-    expect(reopened.ui.associationPackageId).toBe('pkg-01');
+    expect(added.userData?.favouriteDeckIds).toEqual(['deck-1']);
+    expect(removed.userData?.favouriteDeckIds).toEqual([]);
   });
 });

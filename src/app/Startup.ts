@@ -128,7 +128,8 @@ async function loadOrCreateUserData(
           id: session.userId,
           decks: [],
           collection: [],
-          selectedArchetype: null,
+          selectedCardCategory: null,
+          favouriteDeckIds: [],
           canvasLabels: [],
           canvasAreas: [],
         };

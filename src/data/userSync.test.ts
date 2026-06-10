@@ -9,7 +9,8 @@ function userData(id: string, name: string): UserData {
     name,
     decks: [],
     collection: [],
-    selectedArchetype: null,
+    selectedCardCategory: null,
+    favouriteDeckIds: [],
     canvasLabels: [],
     canvasAreas: [],
   };
@@ -35,16 +36,32 @@ describe('mergeUserData', () => {
     const local = {
       ...userData('guest-1', 'Guest'),
       decks: [localDeck, createEmptyDeck('Local Only', 'deck-local')],
+      favouriteDeckIds: ['deck-local', 'deck-shared'],
       collection: [
         { name: 'Fireball', quantity: 2 },
         { name: 'Local Only Card', quantity: 1 },
       ],
+      selectedCardCategory: 'swarm-bodies',
+      cardCategories: {
+        version: 'test',
+        categories: [
+          {
+            id: 'swarm-bodies',
+            name: 'Swarm',
+            tooltip: 'Guest tooltip',
+            description: 'Guest description',
+            base: true,
+          },
+        ],
+        scores: { Fireball: { 'swarm-bodies': 0.5 } },
+      },
       canvasLabels: [{ id: 'label-local', text: 'Local', x: 0, y: 0 }],
       canvasAreas: [canvasArea('stack-local', 'stack')],
     };
     const server = {
       ...userData('user-1', 'Alice'),
       decks: [serverDeck],
+      favouriteDeckIds: ['deck-server', 'deck-shared'],
       collection: [
         { name: 'Fireball', quantity: 3 },
         { name: 'Server Only Card', quantity: 4 },
@@ -72,5 +89,12 @@ describe('mergeUserData', () => {
       'deck-server',
       'stack-local',
     ]);
+    expect(merged.favouriteDeckIds).toEqual([
+      'deck-server',
+      'deck-shared',
+      'deck-local',
+    ]);
+    expect(merged.selectedCardCategory).toBe('swarm-bodies');
+    expect(merged.cardCategories?.scores.Fireball?.['swarm-bodies']).toBe(0.5);
   });
 });

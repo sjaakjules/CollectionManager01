@@ -44,7 +44,7 @@ import type { CardFilterState } from '@/data/cardFilters';
 import {
   createDeckZone,
   createEmptyZone,
-  createStackZoneAtWorldPoint,
+  createLookupDeckZone,
   createZoneCardId,
   cardNameToOrientationMap,
   moveZoneIntoQuadrantPreservingCards,
@@ -56,6 +56,7 @@ import {
 import { createLocalDeck } from '@/data/deckCreation';
 import { AVATAR_SHORT_NAMES, getAvatarShortName, type AvatarName } from '@/ui/deckDisplay';
 import { BOARD_CHOICE_OPTIONS, type DeckAddBoard } from '@/ui/boardChoice';
+import { filterBlockedTokenCardNames, isBlockedTokenCardName } from '@/data/tokenCards';
 import { togglePhoneTab, type PhoneTabId } from '@/ui/phoneTabs';
 import { CARD_SIZE, DRAWN_GRID } from '@/rendering/Grid';
 import '@/styles/ui.css';
@@ -74,7 +75,7 @@ interface PendingDeckAddRequest {
 
 function addCardNamesToDeckBoard(deck: Deck, cardNames: string[], board: DeckAddBoard): Deck {
   const quantities = new Map<string, number>();
-  for (const cardName of cardNames) {
+  for (const cardName of filterBlockedTokenCardNames(cardNames)) {
     const trimmed = cardName.trim();
     if (!trimmed) continue;
     quantities.set(trimmed, (quantities.get(trimmed) ?? 0) + 1);
@@ -141,6 +142,7 @@ export function App() {
   } | null>(null);
   const [activePhoneTab, setActivePhoneTab] = useState<PhoneTabId | null>(null);
   const [pendingDeckAdd, setPendingDeckAdd] = useState<PendingDeckAddRequest | null>(null);
+  const [lookupDeckArea, setLookupDeckArea] = useState<CanvasArea | null>(null);
   const pendingDeckAddIdRef = useRef(0);
   const viewportCenterRef = useRef<{ x: number; y: number } | null>(null);
   const splashTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -149,14 +151,24 @@ export function App() {
     () => state.userData?.canvasAreas ?? [],
     [state.userData?.canvasAreas],
   );
+  const visibleCanvasAreas = useMemo(
+    () => (lookupDeckArea ? [...canvasAreas, lookupDeckArea] : canvasAreas),
+    [canvasAreas, lookupDeckArea],
+  );
   const cardOrientationMap = useMemo(
     () => cardNameToOrientationMap(state.cards),
     [state.cards],
   );
 
   const handleCanvasAreasChange = useCallback(
-    (nextCanvasAreas: typeof canvasAreas) => {
-      dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: nextCanvasAreas });
+    (nextCanvasAreas: CanvasArea[]) => {
+      const nextLookupArea =
+        nextCanvasAreas.find((area) => area.lookupDeckId) ?? null;
+      setLookupDeckArea(nextLookupArea);
+      dispatch({
+        type: 'SET_CANVAS_AREAS',
+        canvasAreas: nextCanvasAreas.filter((area) => !area.lookupDeckId),
+      });
     },
     [dispatch],
   );
@@ -165,10 +177,12 @@ export function App() {
     (canvasAreaId: string, cardNames: string[]) => {
       const targetArea = canvasAreas.find((area) => area.id === canvasAreaId);
       if (!targetArea || targetArea.type !== 'deck' || !targetArea.deckId) return;
+      const addableCardNames = filterBlockedTokenCardNames(cardNames);
+      if (addableCardNames.length === 0) return;
       dispatch({
         type: 'ADD_CARDS_TO_DECK_BY_ID',
         deckId: targetArea.deckId,
-        cardNames,
+        cardNames: addableCardNames,
         board: 'mainboard',
       });
     },
@@ -179,15 +193,12 @@ export function App() {
     const trimmed = name.trim();
     if (!trimmed) return null;
 
-    const center = viewportCenterRef.current;
-    const canvasArea = center
-      ? createStackZoneAtWorldPoint(trimmed, center, canvasAreas)
-      : createEmptyZone(
-          'stack',
-          trimmed,
-          canvasAreas.filter((entry) => entry.type === 'stack').length,
-          canvasAreas,
-        );
+    const canvasArea = createEmptyZone(
+      'stack',
+      trimmed,
+      canvasAreas.filter((entry) => entry.type === 'stack').length,
+      canvasAreas,
+    );
     const createdId = canvasArea.id;
     dispatch({
       type: 'SET_CANVAS_AREAS',
@@ -254,6 +265,26 @@ export function App() {
     [canvasAreas, cardOrientationMap, dispatch, state.userData?.decks],
   );
 
+  const loadLookupDeck = useCallback(
+    (deck: Deck) => {
+      const lookupArea = createLookupDeckZone(deck, cardOrientationMap, canvasAreas);
+      setLookupDeckArea(lookupArea);
+      setFocusCanvasAreaRequest({ canvasAreaId: lookupArea.id, nonce: Date.now() });
+    },
+    [canvasAreas, cardOrientationMap],
+  );
+
+  const saveLookupDeck = useCallback(
+    (deck: Deck) => {
+      const canvasAreaId = createDeckZoneFromDeck(deck);
+      setLookupDeckArea(null);
+      if (canvasAreaId) {
+        setFocusCanvasAreaRequest({ canvasAreaId, nonce: Date.now() });
+      }
+    },
+    [createDeckZoneFromDeck],
+  );
+
   const addCardsToCanvasAreaModel = useCallback(
     (
       area: CanvasArea,
@@ -278,6 +309,7 @@ export function App() {
         .map((cardName, index) => {
           const trimmed = cardName.trim();
           if (!trimmed) return null;
+          if (isBlockedTokenCardName(trimmed)) return null;
           if (
             area.type === 'stack' &&
             (existingStackNames?.has(trimmed) || queuedStackNames.has(trimmed))
@@ -347,7 +379,7 @@ export function App() {
     (request: Omit<PendingDeckAddRequest, 'id'>) => {
       const cardNames = request.cardNames
         .map((cardName) => cardName.trim())
-        .filter(Boolean);
+        .filter((cardName) => !!cardName && !isBlockedTokenCardName(cardName));
       if (cardNames.length === 0) return;
       pendingDeckAddIdRef.current += 1;
       setPendingDeckAdd({
@@ -363,6 +395,7 @@ export function App() {
     (cardName: string) => {
       const deckId = state.editor.activeDeckId;
       if (!deckId) return;
+      if (isBlockedTokenCardName(cardName)) return;
       const canvasAreaId =
         canvasAreas.find((area) => area.type === 'deck' && area.deckId === deckId)?.id ??
         null;
@@ -451,15 +484,12 @@ export function App() {
         if (value === null) return;
         const trimmed = value.trim();
         if (!trimmed) return;
-        const center = viewportCenterRef.current;
-        const stackArea = center
-          ? createStackZoneAtWorldPoint(trimmed, center, canvasAreas)
-          : createEmptyZone(
-              'stack',
-              trimmed,
-              canvasAreas.filter((entry) => entry.type === 'stack').length,
-              canvasAreas,
-            );
+        const stackArea = createEmptyZone(
+          'stack',
+          trimmed,
+          canvasAreas.filter((entry) => entry.type === 'stack').length,
+          canvasAreas,
+        );
         const areaWithCards = addCardsToCanvasAreaModel(stackArea, payload.cardNames);
         dispatch({
           type: 'SET_CANVAS_AREAS',
@@ -504,9 +534,6 @@ export function App() {
       if (area.id !== canvasAreaId) return area;
       if (area.pinned === pinned) return area;
       if (!pinned) return { ...area, pinned: false };
-      if (area.type === 'stack') {
-        return { ...area, pinned: true };
-      }
 
       return moveZoneIntoQuadrantPreservingCards(
         { ...area, pinned: true },
@@ -523,12 +550,14 @@ export function App() {
   }, [canvasAreas, dispatch]);
 
   const focusCanvasArea = useCallback((canvasAreaId: string) => {
+    if (lookupDeckArea?.id === canvasAreaId) {
+      setFocusCanvasAreaRequest({ canvasAreaId, nonce: Date.now() });
+      return;
+    }
+
     const nextCanvasAreas = canvasAreas.map((area) => {
       if (area.id !== canvasAreaId) return area;
       if (area.pinned) return area;
-      if (area.type === 'stack') {
-        return { ...area, pinned: true };
-      }
       return moveZoneIntoQuadrantPreservingCards(
         { ...area, pinned: true },
         canvasAreas.filter((entry) => entry.type === area.type && entry.pinned).length,
@@ -537,7 +566,7 @@ export function App() {
     });
     dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: nextCanvasAreas });
     setFocusCanvasAreaRequest({ canvasAreaId, nonce: Date.now() });
-  }, [canvasAreas, dispatch]);
+  }, [canvasAreas, dispatch, lookupDeckArea?.id]);
 
   const removeCardFromStack = useCallback((stackId: string, cardName: string) => {
     const nextCanvasAreas = canvasAreas.map((area) => {
@@ -645,6 +674,15 @@ export function App() {
   }, [uiMode]);
 
   useEffect(() => {
+    setLookupDeckArea(null);
+  }, [
+    state.ui.associationMode,
+    state.ui.associationStyleId,
+    state.ui.associationSubStyleId,
+    state.ui.associationsEnabled,
+  ]);
+
+  useEffect(() => {
     if (!state.userData) return;
 
     // Always keep a local copy for offline use/recovery.
@@ -716,7 +754,7 @@ export function App() {
       <div className={`app-container ui-${uiMode}`}>
         <PixiCanvas
           splashDone={splashPhase === 'done'}
-          canvasAreas={canvasAreas}
+          canvasAreas={visibleCanvasAreas}
           onCanvasAreasChange={handleCanvasAreasChange}
           onAddToDeckRequest={handleAddToActiveDeckRequest}
           onDeckAddRequest={handleDeckAddRequest}
@@ -757,6 +795,8 @@ export function App() {
           isPhone={uiMode === 'phone'}
           phoneExpanded={activePhoneTab === 'filter'}
           onPhoneTabToggle={() => handlePhoneTabToggle('filter')}
+          onLoadLookupDeck={loadLookupDeck}
+          onSaveLookupDeck={saveLookupDeck}
         />
         <DeckFilterPopover
           canvasArea={activeDeckFilterArea}

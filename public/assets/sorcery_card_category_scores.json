@@ -1,0 +1,4906 @@
+{
+  "13 Treasures of Britain": {
+    "Card / Atlas engine": 0.65,
+    "Displacement": 0.57,
+    "Mobility / reach": 0.57,
+    "Terrain / site shaping": 0.65
+  },
+  "A Midsummer Night's Dream": {
+    "Charge / burst": 0.56,
+    "Disruption": 0.63,
+    "Lockdown / tax": 0.63
+  },
+  "Aaj-kegon Ghost Crabs": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.78
+  },
+  "Abaddon Succubus": {
+    "Mobility / reach": 0.58,
+    "Protection": 0.65,
+    "Vanguard bodies": 0.53
+  },
+  "Abundance": {
+    "Card / Atlas engine": 0.65,
+    "Terrain / site shaping": 0.68
+  },
+  "Abyssal Assault": {
+    "Removal / burn": 0.6
+  },
+  "Accursed Albatross": {
+    "Evasion": 0.59,
+    "Removal / burn": 0.59
+  },
+  "Accursed Desert": {},
+  "Accursed Tower": {},
+  "Accusation": {},
+  "Acid Rain": {
+    "Disruption": 0.66,
+    "Lockdown / tax": 0.66,
+    "Terrain / site shaping": 0.69
+  },
+  "Active Volcano": {},
+  "Adept Illusionist": {
+    "Card / Atlas engine": 0.67,
+    "Death value": 0.61,
+    "Recursion": 0.77,
+    "Spell engine": 0.67,
+    "Swarm bodies": 0.57
+  },
+  "Adtonitum": {
+    "Displacement": 0.68,
+    "Evasion": 0.6,
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51,
+    "Mobility / reach": 0.57,
+    "Removal / burn": 0.6
+  },
+  "Aethermoeba": {
+    "Charge / burst": 0.56,
+    "Evasion": 0.69
+  },
+  "Aino": {
+    "Evasion": 0.7,
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.38
+  },
+  "Alabaster Box": {
+    "Death value": 0.59,
+    "Protection": 0.61
+  },
+  "Albespine Pikemen": {
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.56
+  },
+  "Algae Bloom": {
+    "Card / Atlas engine": 0.68
+  },
+  "Algor Omphalos": {
+    "Card / Atlas engine": 0.67,
+    "Spell engine": 0.67
+  },
+  "All Mortals Gone": {
+    "Removal / burn": 0.6
+  },
+  "All-terrain Vestments": {
+    "Avatar arms": 0.7,
+    "Displacement": 0.55,
+    "Evasion": 0.85,
+    "Terrain / site shaping": 0.62
+  },
+  "Altar of Malachai": {
+    "Death value": 0.59,
+    "Terrain / site shaping": 0.56
+  },
+  "Amazon Warriors": {
+    "Fortification": 0.48,
+    "Vanguard bodies": 0.83
+  },
+  "Amethyst Core": {
+    "Card / Atlas engine": 0.72
+  },
+  "Amulet of Niniane": {
+    "Avatar arms": 0.74,
+    "Evasion": 0.48,
+    "Protection": 0.64
+  },
+  "Ancient Dragon": {
+    "Charge / burst": 0.57,
+    "Displacement": 0.67,
+    "Evasion": 0.6,
+    "Finishers / inevitability": 0.67,
+    "Fortification": 0.51,
+    "Removal / burn": 0.6
+  },
+  "Angel Ascendant": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.6,
+    "Swarm bodies": 0.56
+  },
+  "Angel's Egg": {
+    "Finishers / inevitability": 0.64,
+    "Protection": 0.64
+  },
+  "Angry Mob": {
+    "Removal / burn": 0.64,
+    "Vanguard bodies": 0.53
+  },
+  "Animist": {
+    "Card / Atlas engine": 0.62
+  },
+  "Annual Fair": {},
+  "Anui Undine": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.6
+  },
+  "Apostles of Thamariel": {
+    "Card / Atlas engine": 0.63,
+    "Vanguard bodies": 0.51
+  },
+  "Apply Alkahest": {
+    "Removal / burn": 0.6,
+    "Site pressure": 0.75
+  },
+  "Apprentice Wizard": {
+    "Card / Atlas engine": 0.86,
+    "Spell engine": 0.7
+  },
+  "Aquamarine Core": {
+    "Card / Atlas engine": 0.72
+  },
+  "Aqueduct": {},
+  "Aramos Mercenaries": {
+    "Disruption": 0.67,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Arc Lightning": {
+    "Removal / burn": 0.64
+  },
+  "Arcade of Bones": {
+    "Evasion": 0.45,
+    "Mobility / reach": 0.55,
+    "Protection": 0.6
+  },
+  "Arcane Barrage": {
+    "Ranged / projectile": 0.75,
+    "Removal / burn": 0.61
+  },
+  "Archangel Gabriel": {
+    "Card / Atlas engine": 0.84,
+    "Evasion": 0.61,
+    "Fortification": 0.48,
+    "Protection": 0.74,
+    "Spell engine": 0.66,
+    "Vanguard bodies": 0.47
+  },
+  "Archangel Michael": {
+    "Evasion": 0.61,
+    "Fortification": 0.48,
+    "Mobility / reach": 0.58,
+    "Protection": 0.75,
+    "Vanguard bodies": 0.47
+  },
+  "Archangel Raphael": {
+    "Evasion": 0.61,
+    "Fortification": 0.48,
+    "Protection": 0.75,
+    "Vanguard bodies": 0.47
+  },
+  "Archangel Samael": {
+    "Charge / burst": 0.57,
+    "Death value": 0.6,
+    "Evasion": 0.6,
+    "Fortification": 0.47,
+    "Protection": 0.73,
+    "Recursion": 0.75,
+    "Removal / burn": 0.83,
+    "Vanguard bodies": 0.46
+  },
+  "Archimago": {
+    "Card / Atlas engine": 0.89,
+    "Disruption": 0.78,
+    "Spell engine": 0.99
+  },
+  "Arid Desert": {
+    "Charge / burst": 0.61,
+    "Removal / burn": 0.64,
+    "Site pressure": 0.8,
+    "Terrain / site shaping": 0.61
+  },
+  "Arjaro Exorcist": {
+    "Removal / burn": 0.61,
+    "Spell engine": 0.67,
+    "Swarm bodies": 0.57
+  },
+  "Armageddon": {
+    "Removal / burn": 0.59
+  },
+  "Army of the Dead": {
+    "Finishers / inevitability": 0.74,
+    "Fortification": 0.59,
+    "Recursion": 0.75,
+    "Removal / burn": 0.47,
+    "Swarm bodies": 0.57,
+    "Token production": 0.9
+  },
+  "Askelon Phoenix": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.6,
+    "Vanguard bodies": 0.46
+  },
+  "Asmodeus": {
+    "Evasion": 0.69,
+    "Removal / burn": 0.61,
+    "Site pressure": 0.76,
+    "Vanguard bodies": 0.38
+  },
+  "Assimilator Snail": {
+    "Death value": 0.59,
+    "Recursion": 0.73,
+    "Removal / burn": 0.59
+  },
+  "Assorted Animals": {
+    "Card / Atlas engine": 0.66,
+    "Spell engine": 0.66
+  },
+  "Astral Alcazar": {
+    "Displacement": 0.56,
+    "Mobility / reach": 0.56,
+    "Terrain / site shaping": 0.64
+  },
+  "Atlantean Fate": {
+    "Displacement": 0.62,
+    "Disruption": 0.68,
+    "Lockdown / tax": 0.59,
+    "Removal / burn": 0.48,
+    "Site pressure": 0.78,
+    "Terrain / site shaping": 0.71
+  },
+  "Atlas Wanderers": {
+    "Card / Atlas engine": 0.65,
+    "Fortification": 0.47,
+    "Mobility / reach": 0.57,
+    "Site pressure": 0.52,
+    "Terrain / site shaping": 0.65,
+    "Vanguard bodies": 0.79
+  },
+  "Attack by Night": {},
+  "Autumn Bloom": {
+    "Card / Atlas engine": 0.68
+  },
+  "Autumn River": {
+    "Card / Atlas engine": 0.69,
+    "Disruption": 0.69,
+    "Spell engine": 0.69,
+    "Terrain / site shaping": 0.6
+  },
+  "Autumn Unicorn": {
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.75
+  },
+  "Avalon": {
+    "Card / Atlas engine": 0.64,
+    "Disruption": 0.64
+  },
+  "Avatar of Air": {
+    "Card / Atlas engine": 0.65,
+    "Evasion": 0.63,
+    "Mobility / reach": 0.65
+  },
+  "Avatar of Earth": {
+    "Card / Atlas engine": 0.64,
+    "Charge / burst": 0.56,
+    "Terrain / site shaping": 0.72
+  },
+  "Avatar of Fire": {
+    "Card / Atlas engine": 0.62,
+    "Charge / burst": 0.55,
+    "Removal / burn": 0.65,
+    "Site pressure": 0.72
+  },
+  "Avatar of Water": {
+    "Card / Atlas engine": 0.62,
+    "Displacement": 0.62,
+    "Lockdown / tax": 0.58,
+    "Mobility / reach": 0.55,
+    "Terrain / site shaping": 0.62
+  },
+  "Avenging Angel": {
+    "Charge / burst": 0.79,
+    "Evasion": 0.61,
+    "Mobility / reach": 0.38,
+    "Removal / burn": 0.61,
+    "Vanguard bodies": 0.41
+  },
+  "Awakened Mummies": {
+    "Displacement": 0.5,
+    "Evasion": 0.48,
+    "Swarm bodies": 0.76,
+    "Vanguard bodies": 0.5
+  },
+  "Azuridge Caravan": {
+    "Displacement": 0.69,
+    "Vanguard bodies": 0.67
+  },
+  "Baba Yaga's Hut": {
+    "Displacement": 0.68
+  },
+  "Babbling Brook": {
+    "Lockdown / tax": 0.67,
+    "Terrain / site shaping": 0.58
+  },
+  "Backstab": {},
+  "Bailey": {},
+  "Ball Lightning": {
+    "Ranged / projectile": 0.88,
+    "Removal / burn": 0.6
+  },
+  "Balor of the Evil Eye": {
+    "Finishers / inevitability": 0.7,
+    "Fortification": 0.52,
+    "Removal / burn": 0.61
+  },
+  "Band of Thieves": {
+    "Evasion": 0.69,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "Bane Widow": {
+    "Removal / burn": 0.6
+  },
+  "Bane of Aventis": {
+    "Displacement": 0.53,
+    "Disruption": 0.77,
+    "Vanguard bodies": 0.75
+  },
+  "Baptize": {
+    "Fortification": 0.46,
+    "Protection": 0.75,
+    "Removal / burn": 0.83
+  },
+  "Barging Barghest": {
+    "Evasion": 0.72,
+    "Mobility / reach": 0.57,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.37
+  },
+  "Barrow Wight": {
+    "Death value": 0.62,
+    "Evasion": 0.49,
+    "Ranged / projectile": 0.74,
+    "Recursion": 0.76,
+    "Swarm bodies": 0.59,
+    "Token production": 0.79
+  },
+  "Battering Ram": {
+    "Avatar arms": 0.7,
+    "Fortification": 0.65,
+    "Removal / burn": 0.58
+  },
+  "Battlefield": {},
+  "Battlemage": {
+    "Card / Atlas engine": 0.86,
+    "Mobility / reach": 0.36,
+    "Removal / burn": 0.59,
+    "Spell engine": 0.63,
+    "Vanguard bodies": 0.41
+  },
+  "Beacon": {
+    "Terrain / site shaping": 0.58
+  },
+  "Beast of Burden": {
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.54
+  },
+  "Bedrock": {
+    "Removal / burn": 0.6
+  },
+  "Begone!": {
+    "Removal / burn": 0.6
+  },
+  "Belfry": {},
+  "Belmotte Longbowmen": {
+    "Ranged / projectile": 0.75,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Betrayal": {
+    "Displacement": 0.53,
+    "Disruption": 0.76
+  },
+  "Bind Evil": {
+    "Lockdown / tax": 0.65,
+    "Spell engine": 0.65
+  },
+  "Bitten": {
+    "Death value": 0.59,
+    "Swarm bodies": 0.65,
+    "Token production": 0.81
+  },
+  "Bitter Departed": {
+    "Mobility / reach": 0.56,
+    "Removal / burn": 0.59,
+    "Swarm bodies": 0.55
+  },
+  "Black Cat": {},
+  "Black Knight": {
+    "Lockdown / tax": 0.63,
+    "Vanguard bodies": 0.67
+  },
+  "Black Mass": {
+    "Card / Atlas engine": 0.66,
+    "Spell engine": 0.66
+  },
+  "Black Obelisk": {
+    "Card / Atlas engine": 0.64,
+    "Charge / burst": 0.56,
+    "Removal / burn": 0.46
+  },
+  "Blacksmith Family": {
+    "Card / Atlas engine": 0.66,
+    "Swarm bodies": 0.55
+  },
+  "Bladderblimp": {
+    "Charge / burst": 0.55,
+    "Death value": 0.58,
+    "Evasion": 0.58,
+    "Removal / burn": 0.45,
+    "Vanguard bodies": 0.35
+  },
+  "Blade of Thorns": {
+    "Avatar arms": 0.73,
+    "Charge / burst": 0.57,
+    "Removal / burn": 0.47
+  },
+  "Bladedancer": {
+    "Card / Atlas engine": 0.62,
+    "Mobility / reach": 0.55,
+    "Vanguard bodies": 0.4
+  },
+  "Blasphemy": {
+    "Lockdown / tax": 0.63,
+    "Removal / burn": 0.59,
+    "Site pressure": 0.73
+  },
+  "Blasted Oak": {},
+  "Blaze": {
+    "Evasion": 0.48,
+    "Mobility / reach": 0.8,
+    "Removal / burn": 0.83
+  },
+  "Blaze of Glory": {
+    "Charge / burst": 0.58,
+    "Displacement": 0.53
+  },
+  "Bleeding Skull": {
+    "Death value": 0.59,
+    "Removal / burn": 0.46
+  },
+  "Bless": {
+    "Fortification": 0.46,
+    "Protection": 0.75
+  },
+  "Blessed Village": {
+    "Fortification": 0.74,
+    "Protection": 0.76
+  },
+  "Blessed Well": {
+    "Fortification": 0.74,
+    "Protection": 0.76
+  },
+  "Blightstone": {
+    "Lockdown / tax": 0.64
+  },
+  "Blink": {
+    "Card / Atlas engine": 0.71,
+    "Mobility / reach": 0.62
+  },
+  "Blizzard": {
+    "Disruption": 0.66,
+    "Evasion": 0.46,
+    "Terrain / site shaping": 0.69
+  },
+  "Blood Mana": {},
+  "Blood Ravens": {
+    "Evasion": 0.62,
+    "Protection": 0.64,
+    "Swarm bodies": 0.53
+  },
+  "Blue Knight": {
+    "Swarm bodies": 0.35
+  },
+  "Bluecap Knockers": {
+    "Evasion": 0.49,
+    "Removal / burn": 0.59,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "Blunderbore": {
+    "Charge / burst": 0.57,
+    "Fortification": 0.47,
+    "Removal / burn": 0.6,
+    "Vanguard bodies": 0.81
+  },
+  "Bodach Bogeyman": {
+    "Lockdown / tax": 0.64,
+    "Mobility / reach": 0.57
+  },
+  "Bog": {
+    "Fortification": 0.74,
+    "Lockdown / tax": 0.68,
+    "Terrain / site shaping": 0.6
+  },
+  "Boil": {
+    "Removal / burn": 0.64,
+    "Site pressure": 0.8
+  },
+  "Bone Jumble": {
+    "Charge / burst": 0.76,
+    "Death value": 0.59,
+    "Mobility / reach": 0.36,
+    "Recursion": 0.73,
+    "Swarm bodies": 0.56,
+    "Token production": 0.76
+  },
+  "Bone Rabble": {
+    "Death value": 0.61,
+    "Recursion": 0.75
+  },
+  "Bone Spear": {
+    "Death value": 0.62,
+    "Ranged / projectile": 0.9,
+    "Removal / burn": 0.62
+  },
+  "Boneyard": {
+    "Death value": 0.6,
+    "Mobility / reach": 0.47,
+    "Recursion": 0.75,
+    "Removal / burn": 0.83,
+    "Terrain / site shaping": 0.57,
+    "Vanguard bodies": 0.32
+  },
+  "Bonfire": {
+    "Removal / burn": 0.63
+  },
+  "Book Burners": {
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Book of Blessings": {
+    "Fortification": 0.45,
+    "Protection": 0.7
+  },
+  "Book of the Dead": {
+    "Recursion": 0.76,
+    "Spell engine": 0.66
+  },
+  "Border Militia": {
+    "Swarm bodies": 0.61,
+    "Token production": 0.92
+  },
+  "Bosk Troll": {
+    "Swarm bodies": 0.72,
+    "Vanguard bodies": 0.52
+  },
+  "Bottomless Pit": {
+    "Evasion": 0.61,
+    "Removal / burn": 0.61
+  },
+  "Boudicca": {
+    "Charge / burst": 0.58,
+    "Vanguard bodies": 0.53
+  },
+  "Boulevard of Bones": {
+    "Swarm bodies": 0.58,
+    "Token production": 0.84
+  },
+  "Bound Spirit": {
+    "Lockdown / tax": 0.66,
+    "Spell engine": 0.66,
+    "Vanguard bodies": 0.74
+  },
+  "Bower of Bliss": {
+    "Disruption": 0.65,
+    "Lockdown / tax": 0.65
+  },
+  "Briar Patch": {},
+  "Bridge Troll": {
+    "Vanguard bodies": 0.5
+  },
+  "Brobdingnag Bullfrog": {
+    "Fortification": 0.68,
+    "Lockdown / tax": 0.65,
+    "Mobility / reach": 0.57,
+    "Swarm bodies": 0.47,
+    "Vanguard bodies": 0.52
+  },
+  "Brocéliande": {
+    "Evasion": 0.67
+  },
+  "Broomstick Witch": {
+    "Evasion": 0.62,
+    "Spell engine": 0.66,
+    "Swarm bodies": 0.55
+  },
+  "Brother Knight": {
+    "Card / Atlas engine": 0.64,
+    "Spell engine": 0.64
+  },
+  "Brown Bears": {
+    "Vanguard bodies": 0.74
+  },
+  "Browse": {
+    "Card / Atlas engine": 0.68,
+    "Disruption": 0.68,
+    "Spell engine": 0.68
+  },
+  "Bruin": {
+    "Charge / burst": 0.55,
+    "Removal / burn": 0.45
+  },
+  "Bull Demons of Adum": {
+    "Fortification": 0.46,
+    "Vanguard bodies": 0.78
+  },
+  "Bull Whip": {
+    "Avatar arms": 0.7,
+    "Removal / burn": 0.58
+  },
+  "Bureau of Occult Control": {
+    "Disruption": 0.84,
+    "Lockdown / tax": 0.74
+  },
+  "Buried Alive": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48
+  },
+  "Buried Treasure": {
+    "Card / Atlas engine": 0.62,
+    "Death value": 0.58,
+    "Mobility / reach": 0.55,
+    "Terrain / site shaping": 0.62
+  },
+  "Burning Hands": {
+    "Finishers / inevitability": 0.64,
+    "Removal / burn": 0.82
+  },
+  "Bury": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48
+  },
+  "Caelestis": {
+    "Displacement": 0.66,
+    "Evasion": 0.78,
+    "Finishers / inevitability": 0.54,
+    "Fortification": 0.46
+  },
+  "Caerleon-Upon-Usk": {
+    "Card / Atlas engine": 0.67,
+    "Disruption": 0.67
+  },
+  "Cage of Sidrak": {
+    "Lockdown / tax": 0.65
+  },
+  "Call of the Sea": {
+    "Displacement": 0.62,
+    "Finishers / inevitability": 0.73,
+    "Removal / burn": 0.83
+  },
+  "Call to War": {
+    "Card / Atlas engine": 0.65,
+    "Spell engine": 0.65
+  },
+  "Camelot": {
+    "Terrain / site shaping": 0.57
+  },
+  "Candlemas Monks": {
+    "Death value": 0.59,
+    "Lockdown / tax": 0.56,
+    "Swarm bodies": 0.34
+  },
+  "Captain Baldassare": {
+    "Card / Atlas engine": 0.66,
+    "Disruption": 0.66,
+    "Spell engine": 0.66,
+    "Vanguard bodies": 0.53
+  },
+  "Carrion Beetles": {
+    "Evasion": 0.51,
+    "Swarm bodies": 0.55
+  },
+  "Carrionette": {
+    "Death value": 0.59,
+    "Recursion": 0.74
+  },
+  "Cast into Exile": {
+    "Card / Atlas engine": 0.66,
+    "Removal / burn": 0.6,
+    "Spell engine": 0.66
+  },
+  "Castle Haunt": {
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.72
+  },
+  "Castle Servants": {
+    "Card / Atlas engine": 0.66,
+    "Swarm bodies": 0.55
+  },
+  "Castle's Ablaze!": {
+    "Removal / burn": 0.6,
+    "Site pressure": 0.76,
+    "Terrain / site shaping": 0.69
+  },
+  "Cauldron Crones": {
+    "Card / Atlas engine": 0.82,
+    "Death value": 0.62,
+    "Spell engine": 0.66
+  },
+  "Cave Trolls": {
+    "Evasion": 0.49,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "Cave-In": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.61
+  },
+  "Cemetery Rats": {
+    "Death value": 0.63,
+    "Disruption": 0.68,
+    "Evasion": 0.5,
+    "Recursion": 0.78,
+    "Swarm bodies": 0.54
+  },
+  "Cerberus in Chains": {
+    "Fortification": 0.47,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.82
+  },
+  "Chain Lightning": {
+    "Removal / burn": 0.59
+  },
+  "Chains of Prometheus": {
+    "Card / Atlas engine": 0.66,
+    "Lockdown / tax": 0.66
+  },
+  "Chaos Twister": {
+    "Charge / burst": 0.58,
+    "Displacement": 0.69,
+    "Removal / burn": 0.82,
+    "Site pressure": 0.76
+  },
+  "Chaoswish": {
+    "Disruption": 0.65,
+    "Spell engine": 0.87
+  },
+  "Char Omphalos": {
+    "Card / Atlas engine": 0.67,
+    "Spell engine": 0.67
+  },
+  "Charge": {
+    "Charge / burst": 0.8,
+    "Mobility / reach": 0.36
+  },
+  "Cherubim": {
+    "Evasion": 0.6,
+    "Fortification": 0.47,
+    "Protection": 0.72,
+    "Ranged / projectile": 0.87,
+    "Removal / burn": 0.6
+  },
+  "Chorus of Condemnation": {
+    "Disruption": 0.63
+  },
+  "City of Glass": {
+    "Card / Atlas engine": 0.67,
+    "Removal / burn": 0.61
+  },
+  "City of Plenty": {
+    "Card / Atlas engine": 0.65
+  },
+  "City of Souls": {
+    "Card / Atlas engine": 0.66,
+    "Site pressure": 0.76
+  },
+  "City of Traitors": {
+    "Card / Atlas engine": 0.65,
+    "Evasion": 0.68
+  },
+  "Clairvoyant": {
+    "Death value": 0.59,
+    "Fortification": 0.46,
+    "Protection": 0.71,
+    "Recursion": 0.73,
+    "Removal / burn": 0.59,
+    "Swarm bodies": 0.43
+  },
+  "Clamor of Harpies": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.6,
+    "Mobility / reach": 0.57,
+    "Vanguard bodies": 0.37
+  },
+  "Clay Golem": {
+    "Death value": 0.58,
+    "Displacement": 0.55,
+    "Terrain / site shaping": 0.62
+  },
+  "Cloud City": {
+    "Displacement": 0.58,
+    "Mobility / reach": 0.58,
+    "Terrain / site shaping": 0.67
+  },
+  "Cloud Spirit": {
+    "Evasion": 0.63,
+    "Mobility / reach": 0.82,
+    "Swarm bodies": 0.56
+  },
+  "Cold Iron Rod": {
+    "Lockdown / tax": 0.62
+  },
+  "Colicky Dragonettes": {
+    "Displacement": 0.7,
+    "Ranged / projectile": 0.9,
+    "Removal / burn": 0.61,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.53
+  },
+  "Common Cottagers": {
+    "Card / Atlas engine": 0.66,
+    "Swarm bodies": 0.55
+  },
+  "Common Sense": {
+    "Card / Atlas engine": 0.7,
+    "Spell engine": 0.7
+  },
+  "Common Village": {
+    "Lockdown / tax": 0.69,
+    "Swarm bodies": 0.6,
+    "Token production": 0.87
+  },
+  "Cone of Flame": {
+    "Finishers / inevitability": 0.69,
+    "Removal / burn": 0.79
+  },
+  "Conqueror Worm": {
+    "Displacement": 0.51,
+    "Disruption": 0.74,
+    "Finishers / inevitability": 0.73,
+    "Fortification": 0.58
+  },
+  "Consecrate": {
+    "Card / Atlas engine": 0.8,
+    "Disruption": 0.64
+  },
+  "Consecrated Ground": {},
+  "Coral-Reef Kelpie": {
+    "Evasion": 0.61,
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.35
+  },
+  "Cornerstone": {},
+  "Corpse Catapult": {
+    "Avatar arms": 0.7,
+    "Charge / burst": 0.55,
+    "Death value": 0.58,
+    "Lockdown / tax": 0.62,
+    "Recursion": 0.72,
+    "Removal / burn": 0.78
+  },
+  "Corpse Explosion": {
+    "Charge / burst": 0.56,
+    "Recursion": 0.73,
+    "Removal / burn": 0.59
+  },
+  "Corruptor": {
+    "Card / Atlas engine": 0.63
+  },
+  "Corruptor Freak": {
+    "Charge / burst": 0.57,
+    "Finishers / inevitability": 0.64,
+    "Removal / burn": 0.6,
+    "Site pressure": 0.76,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Court Jester": {
+    "Disruption": 0.63
+  },
+  "Courtesan Thaïs": {},
+  "Coy Nixie": {
+    "Displacement": 0.78,
+    "Evasion": 0.61,
+    "Lockdown / tax": 0.56,
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.36
+  },
+  "Cradle of Etherrum": {
+    "Avatar arms": 0.71,
+    "Card / Atlas engine": 0.63,
+    "Displacement": 0.66,
+    "Spell engine": 0.63
+  },
+  "Cranky Overseer": {
+    "Removal / burn": 0.58,
+    "Vanguard bodies": 0.5
+  },
+  "Craterize": {
+    "Charge / burst": 0.58,
+    "Disruption": 0.66,
+    "Finishers / inevitability": 0.72,
+    "Removal / burn": 0.82,
+    "Site pressure": 0.76,
+    "Terrain / site shaping": 0.66
+  },
+  "Crave Golem": {
+    "Displacement": 0.51,
+    "Mobility / reach": 0.76,
+    "Removal / burn": 0.79
+  },
+  "Crawler": {
+    "Ranged / projectile": 0.73,
+    "Removal / burn": 0.45,
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.5
+  },
+  "Crawling Congregation": {
+    "Fortification": 0.47,
+    "Ranged / projectile": 0.73,
+    "Removal / burn": 0.47,
+    "Vanguard bodies": 0.79
+  },
+  "Critical Strike": {
+    "Removal / burn": 0.63
+  },
+  "Croaking Swamp": {
+    "Lockdown / tax": 0.68,
+    "Swarm bodies": 0.6,
+    "Token production": 0.86
+  },
+  "Croll Morlocks": {
+    "Evasion": 0.77,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.37
+  },
+  "Crossroads": {
+    "Card / Atlas engine": 0.66,
+    "Site pressure": 0.52,
+    "Terrain / site shaping": 0.57
+  },
+  "Crown Prince": {
+    "Death value": 0.6,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Crown of the Victor": {
+    "Avatar arms": 0.74,
+    "Charge / burst": 0.57,
+    "Removal / burn": 0.6
+  },
+  "Crucifix": {
+    "Fortification": 0.66,
+    "Lockdown / tax": 0.63,
+    "Removal / burn": 0.79
+  },
+  "Crusade": {
+    "Charge / burst": 0.58,
+    "Mobility / reach": 0.48,
+    "Terrain / site shaping": 0.69,
+    "Vanguard bodies": 0.33
+  },
+  "Cursed Iron": {
+    "Finishers / inevitability": 0.61,
+    "Removal / burn": 0.59
+  },
+  "Cursed Land": {
+    "Charge / burst": 0.57,
+    "Removal / burn": 0.47,
+    "Terrain / site shaping": 0.57
+  },
+  "Dalcean Phalanx": {
+    "Fortification": 0.47,
+    "Vanguard bodies": 0.8
+  },
+  "Dame Britomart": {
+    "Death value": 0.6,
+    "Fortification": 0.47,
+    "Recursion": 0.75,
+    "Site pressure": 0.75,
+    "Vanguard bodies": 0.63
+  },
+  "Dank Omphalos": {
+    "Card / Atlas engine": 0.67,
+    "Spell engine": 0.67
+  },
+  "Daperyll Vampire": {
+    "Evasion": 0.62,
+    "Protection": 0.66,
+    "Vanguard bodies": 0.48
+  },
+  "Dark Alley": {
+    "Evasion": 0.69
+  },
+  "Dark Tower": {
+    "Card / Atlas engine": 0.72
+  },
+  "Darkest Dungeon": {
+    "Displacement": 0.69
+  },
+  "Day of Judgment": {},
+  "De Vermis Mysteriis": {
+    "Avatar arms": 0.73,
+    "Disruption": 0.65,
+    "Spell engine": 0.65
+  },
+  "Dead of Night Demon": {
+    "Evasion": 0.68,
+    "Swarm bodies": 0.54
+  },
+  "Death Dealer": {
+    "Removal / burn": 0.85
+  },
+  "Death Knight": {
+    "Charge / burst": 0.57,
+    "Vanguard bodies": 0.52
+  },
+  "Deathspeaker": {
+    "Card / Atlas engine": 0.88,
+    "Charge / burst": 0.63,
+    "Death value": 0.68,
+    "Finishers / inevitability": 0.63,
+    "Recursion": 0.93,
+    "Removal / burn": 0.6,
+    "Spell engine": 0.85,
+    "Token production": 0.57
+  },
+  "Deathwish": {
+    "Charge / burst": 0.6,
+    "Finishers / inevitability": 0.6
+  },
+  "Deep Sea": {},
+  "Deep-Sea Mermaids": {
+    "Card / Atlas engine": 0.67,
+    "Evasion": 0.63
+  },
+  "Defiler Spire": {
+    "Charge / burst": 0.57,
+    "Removal / burn": 0.47
+  },
+  "Degradation": {
+    "Swarm bodies": 0.56,
+    "Token production": 0.77
+  },
+  "Deliverance": {},
+  "Demon Hunter": {
+    "Removal / burn": 0.58,
+    "Swarm bodies": 0.54
+  },
+  "Demonic Contract": {
+    "Card / Atlas engine": 0.64,
+    "Spell engine": 0.64
+  },
+  "Den of Evil": {
+    "Disruption": 0.69
+  },
+  "Desecrate": {
+    "Card / Atlas engine": 0.81,
+    "Disruption": 0.65
+  },
+  "Desecrated Ground": {
+    "Charge / burst": 0.57
+  },
+  "Desecrator Kite": {
+    "Charge / burst": 0.59,
+    "Evasion": 0.62,
+    "Finishers / inevitability": 0.64,
+    "Removal / burn": 0.62,
+    "Site pressure": 0.76,
+    "Swarm bodies": 0.53
+  },
+  "Desert Bloom": {
+    "Card / Atlas engine": 0.68
+  },
+  "Detonate": {
+    "Removal / burn": 0.85
+  },
+  "Devil's Egg": {
+    "Charge / burst": 0.58,
+    "Finishers / inevitability": 0.63,
+    "Removal / burn": 0.47
+  },
+  "Dhol Chants": {
+    "Card / Atlas engine": 0.64,
+    "Spell engine": 0.64
+  },
+  "Diluvian Kraken": {
+    "Evasion": 0.6,
+    "Finishers / inevitability": 0.74,
+    "Fortification": 0.59
+  },
+  "Dirium Fomorians": {
+    "Evasion": 0.77,
+    "Finishers / inevitability": 0.67,
+    "Fortification": 0.5
+  },
+  "Disenchant": {
+    "Disruption": 0.49,
+    "Removal / burn": 0.65
+  },
+  "Disintegrate": {
+    "Mobility / reach": 0.58,
+    "Removal / burn": 0.61
+  },
+  "Dispel": {
+    "Disruption": 0.71,
+    "Removal / burn": 0.65
+  },
+  "Displace": {
+    "Mobility / reach": 0.61
+  },
+  "Divine Healing": {
+    "Card / Atlas engine": 0.67,
+    "Protection": 0.65
+  },
+  "Divine Intervention": {
+    "Charge / burst": 0.62,
+    "Finishers / inevitability": 0.62
+  },
+  "Divine Lance": {
+    "Charge / burst": 0.56,
+    "Removal / burn": 0.59,
+    "Site pressure": 0.73
+  },
+  "Doctor Demetrius": {
+    "Fortification": 0.48,
+    "Protection": 0.74
+  },
+  "Dodge Roll": {},
+  "Dome of Osiros": {
+    "Evasion": 0.46
+  },
+  "Donnybrook Inn": {},
+  "Doomsday Cult": {
+    "Finishers / inevitability": 0.62,
+    "Spell engine": 0.64,
+    "Vanguard bodies": 0.51
+  },
+  "Doomsday Device": {
+    "Charge / burst": 0.55,
+    "Disruption": 0.62,
+    "Finishers / inevitability": 0.6,
+    "Removal / burn": 0.8
+  },
+  "Doomsday Prophet": {
+    "Finishers / inevitability": 0.6
+  },
+  "Dormant Monstrosity": {
+    "Evasion": 0.72,
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.51,
+    "Removal / burn": 0.82
+  },
+  "Dozmary Pool": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.56
+  },
+  "Draco Corvus": {
+    "Displacement": 0.68,
+    "Evasion": 0.8,
+    "Finishers / inevitability": 0.55,
+    "Fortification": 0.47,
+    "Lockdown / tax": 0.65,
+    "Mobility / reach": 0.57
+  },
+  "Draconian Bonekite": {
+    "Displacement": 0.68,
+    "Evasion": 0.6,
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.55,
+    "Removal / burn": 0.83,
+    "Swarm bodies": 0.57,
+    "Token production": 0.85
+  },
+  "Dragonlord": {
+    "Card / Atlas engine": 0.63,
+    "Displacement": 0.66,
+    "Disruption": 0.63,
+    "Lockdown / tax": 0.63
+  },
+  "Dragonlord's Lair": {
+    "Displacement": 0.67,
+    "Disruption": 0.64
+  },
+  "Dread Thicket": {
+    "Site pressure": 0.76
+  },
+  "Dreadwing": {
+    "Disruption": 0.65,
+    "Evasion": 0.61,
+    "Vanguard bodies": 0.44
+  },
+  "Dream-Quest": {
+    "Card / Atlas engine": 0.83,
+    "Lockdown / tax": 0.65,
+    "Spell engine": 0.65
+  },
+  "Dredge": {
+    "Swarm bodies": 0.56,
+    "Token production": 0.81
+  },
+  "Driftwood Marrows": {
+    "Evasion": 0.59,
+    "Ranged / projectile": 0.71
+  },
+  "Drought": {
+    "Disruption": 0.66,
+    "Lockdown / tax": 0.57,
+    "Terrain / site shaping": 0.69
+  },
+  "Drown": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.65
+  },
+  "Drowned": {
+    "Evasion": 0.62,
+    "Removal / burn": 0.62,
+    "Swarm bodies": 0.7,
+    "Vanguard bodies": 0.36
+  },
+  "Druid": {
+    "Card / Atlas engine": 0.63
+  },
+  "Drums of Doom": {
+    "Removal / burn": 0.6
+  },
+  "Duel": {
+    "Displacement": 0.52
+  },
+  "Duplicator": {
+    "Card / Atlas engine": 0.62,
+    "Site pressure": 0.5,
+    "Spell engine": 0.62
+  },
+  "Dwarven Digging Team": {
+    "Evasion": 0.49,
+    "Swarm bodies": 0.55
+  },
+  "Dwarven Forge": {},
+  "Earl of the Ivory Towers": {
+    "Evasion": 0.47,
+    "Protection": 0.63,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Earthquake": {
+    "Displacement": 0.62,
+    "Mobility / reach": 0.59,
+    "Removal / burn": 0.62
+  },
+  "East-West Dragon": {
+    "Displacement": 0.67,
+    "Evasion": 0.6,
+    "Mobility / reach": 0.57,
+    "Vanguard bodies": 0.46
+  },
+  "Eclipse": {
+    "Charge / burst": 0.57,
+    "Terrain / site shaping": 0.69
+  },
+  "Edge of the World": {
+    "Displacement": 0.56,
+    "Terrain / site shaping": 0.63
+  },
+  "Eerie Coral": {
+    "Avatar arms": 0.71,
+    "Charge / burst": 0.56,
+    "Spell engine": 0.63
+  },
+  "Elder Ruins": {
+    "Card / Atlas engine": 0.82,
+    "Death value": 0.6,
+    "Displacement": 0.62,
+    "Disruption": 0.66,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.57
+  },
+  "Elementalist": {
+    "Card / Atlas engine": 0.86
+  },
+  "Eltham Townsfolk": {
+    "Swarm bodies": 0.69
+  },
+  "Enchantress": {
+    "Card / Atlas engine": 0.65,
+    "Spell engine": 0.65
+  },
+  "Endless Fence": {
+    "Displacement": 0.57,
+    "Fortification": 0.72,
+    "Lockdown / tax": 0.66,
+    "Terrain / site shaping": 0.66
+  },
+  "Enduring Faith": {
+    "Fortification": 0.46,
+    "Protection": 0.72,
+    "Removal / burn": 0.46
+  },
+  "Enraged Familiar": {
+    "Charge / burst": 0.59,
+    "Swarm bodies": 0.34
+  },
+  "Entangle Terrain": {
+    "Evasion": 0.62,
+    "Lockdown / tax": 0.67,
+    "Terrain / site shaping": 0.7
+  },
+  "Entombed": {
+    "Evasion": 0.49,
+    "Swarm bodies": 0.7,
+    "Vanguard bodies": 0.36
+  },
+  "Erik's Curiosa": {
+    "Card / Atlas engine": 0.81,
+    "Disruption": 0.63
+  },
+  "Ersatz Platz": {
+    "Card / Atlas engine": 0.81,
+    "Disruption": 0.65
+  },
+  "Escyllion Cyclops": {
+    "Finishers / inevitability": 0.65,
+    "Fortification": 0.49
+  },
+  "Estranged Loner": {
+    "Card / Atlas engine": 0.81,
+    "Death value": 0.6,
+    "Ranged / projectile": 0.73,
+    "Swarm bodies": 0.57,
+    "Token production": 0.78
+  },
+  "Ether Core": {
+    "Card / Atlas engine": 0.66,
+    "Displacement": 0.57,
+    "Terrain / site shaping": 0.66
+  },
+  "Evil Presence": {
+    "Charge / burst": 0.78,
+    "Mobility / reach": 0.47,
+    "Terrain / site shaping": 0.68,
+    "Vanguard bodies": 0.32
+  },
+  "Evil Twin": {
+    "Displacement": 0.52,
+    "Vanguard bodies": 0.57
+  },
+  "Excalibur": {
+    "Avatar arms": 0.72,
+    "Charge / burst": 0.57,
+    "Protection": 0.62
+  },
+  "Exhume": {
+    "Displacement": 0.62,
+    "Recursion": 0.74,
+    "Removal / burn": 0.48,
+    "Swarm bodies": 0.56,
+    "Token production": 0.82
+  },
+  "Exorcism": {
+    "Recursion": 0.78,
+    "Removal / burn": 0.84
+  },
+  "Extinguish": {
+    "Removal / burn": 0.85,
+    "Site pressure": 0.79,
+    "Terrain / site shaping": 0.69
+  },
+  "Fade": {
+    "Card / Atlas engine": 0.69,
+    "Evasion": 0.72
+  },
+  "Fae City": {
+    "Charge / burst": 0.56,
+    "Ranged / projectile": 0.86,
+    "Removal / burn": 0.59
+  },
+  "Fail-not Bow": {
+    "Avatar arms": 0.71,
+    "Ranged / projectile": 0.71
+  },
+  "Failed Mutation": {
+    "Evasion": 0.48,
+    "Protection": 0.65,
+    "Vanguard bodies": 0.75
+  },
+  "Faith Incarnate": {
+    "Charge / burst": 0.56,
+    "Fortification": 0.46,
+    "Protection": 0.72
+  },
+  "Fallen Angel": {
+    "Charge / burst": 0.56,
+    "Evasion": 0.59,
+    "Vanguard bodies": 0.36
+  },
+  "Falling Star": {
+    "Terrain / site shaping": 0.68
+  },
+  "False Idol": {
+    "Card / Atlas engine": 0.63
+  },
+  "Far East Assassin": {
+    "Evasion": 0.66,
+    "Mobility / reach": 0.56,
+    "Removal / burn": 0.46,
+    "Swarm bodies": 0.55
+  },
+  "Fatality": {
+    "Removal / burn": 0.59
+  },
+  "Feast for Crows": {
+    "Card / Atlas engine": 0.66,
+    "Death value": 0.61,
+    "Disruption": 0.66,
+    "Recursion": 0.76,
+    "Spell engine": 0.66
+  },
+  "Feign Death": {
+    "Card / Atlas engine": 0.8,
+    "Death value": 0.59,
+    "Evasion": 0.67,
+    "Spell engine": 0.64
+  },
+  "Felbog Frog Men": {
+    "Swarm bodies": 0.54
+  },
+  "Fenvale Muse": {
+    "Spell engine": 0.67
+  },
+  "Ferryman's Coin": {
+    "Disruption": 0.78
+  },
+  "Fertile Earth": {},
+  "Fey Changeling": {
+    "Mobility / reach": 0.8
+  },
+  "Field Laborers": {
+    "Swarm bodies": 0.34
+  },
+  "Fields of Camlann": {
+    "Removal / burn": 0.86
+  },
+  "Fields of Phyxis": {
+    "Disruption": 0.67,
+    "Lockdown / tax": 0.67
+  },
+  "Fine Courser": {
+    "Charge / burst": 0.78,
+    "Mobility / reach": 0.78,
+    "Swarm bodies": 0.44
+  },
+  "Finwife": {
+    "Card / Atlas engine": 0.66,
+    "Evasion": 0.62,
+    "Swarm bodies": 0.55
+  },
+  "Fire Harpoons!": {
+    "Card / Atlas engine": 0.66,
+    "Charge / burst": 0.59,
+    "Displacement": 0.69,
+    "Ranged / projectile": 0.74,
+    "Removal / burn": 0.62,
+    "Site pressure": 0.76
+  },
+  "Fireball": {
+    "Ranged / projectile": 0.87,
+    "Removal / burn": 0.59
+  },
+  "Firebolts": {
+    "Charge / burst": 0.61,
+    "Ranged / projectile": 0.78,
+    "Removal / burn": 0.64
+  },
+  "Firebreathing": {
+    "Charge / burst": 0.57,
+    "Displacement": 0.68,
+    "Finishers / inevitability": 0.63,
+    "Removal / burn": 0.81
+  },
+  "Fisherman's Family": {
+    "Card / Atlas engine": 0.66,
+    "Swarm bodies": 0.55
+  },
+  "Flagellant": {
+    "Protection": 0.61,
+    "Removal / burn": 0.46,
+    "Swarm bodies": 0.55
+  },
+  "Flame Strike": {
+    "Finishers / inevitability": 0.68,
+    "Removal / burn": 0.86
+  },
+  "Flame Wave": {
+    "Charge / burst": 0.57,
+    "Finishers / inevitability": 0.71,
+    "Removal / burn": 0.81,
+    "Site pressure": 0.75
+  },
+  "Flame of the First Ones": {
+    "Charge / burst": 0.57,
+    "Protection": 0.63,
+    "Removal / burn": 0.6
+  },
+  "Flamecaller": {
+    "Card / Atlas engine": 0.65,
+    "Charge / burst": 0.57,
+    "Death value": 0.6,
+    "Ranged / projectile": 0.88,
+    "Recursion": 0.75,
+    "Removal / burn": 0.81
+  },
+  "Flaming Skull": {
+    "Evasion": 0.62,
+    "Spell engine": 0.67,
+    "Swarm bodies": 0.55
+  },
+  "Flaming Sword": {
+    "Avatar arms": 0.74,
+    "Charge / burst": 0.57,
+    "Removal / burn": 0.6
+  },
+  "Flanking Maneuver": {
+    "Card / Atlas engine": 0.66,
+    "Mobility / reach": 0.79
+  },
+  "Flayer": {
+    "Removal / burn": 0.64,
+    "Vanguard bodies": 0.53
+  },
+  "Flood": {
+    "Terrain / site shaping": 0.66
+  },
+  "Floodplain": {
+    "Terrain / site shaping": 0.67
+  },
+  "Font of Life": {
+    "Protection": 0.63
+  },
+  "Forge": {
+    "Lockdown / tax": 0.69,
+    "Swarm bodies": 0.61,
+    "Token production": 0.82
+  },
+  "Forgotten Tomb": {
+    "Disruption": 0.65
+  },
+  "Forlorn Keep": {
+    "Card / Atlas engine": 0.82,
+    "Disruption": 0.66
+  },
+  "Forsaken": {
+    "Evasion": 0.74,
+    "Swarm bodies": 0.72,
+    "Vanguard bodies": 0.37
+  },
+  "Forsaken Crypt": {
+    "Card / Atlas engine": 0.82,
+    "Disruption": 0.66
+  },
+  "Four Fat Frogs": {
+    "Swarm bodies": 0.55,
+    "Token production": 0.8
+  },
+  "Four Waters of Paradise": {
+    "Death value": 0.61,
+    "Disruption": 0.67
+  },
+  "Fourberie Knot": {
+    "Protection": 0.62
+  },
+  "Fowl Bones": {
+    "Death value": 0.61,
+    "Evasion": 0.61,
+    "Recursion": 0.75,
+    "Swarm bodies": 0.58,
+    "Token production": 0.78
+  },
+  "Free City": {
+    "Charge / burst": 0.57
+  },
+  "Freeze": {
+    "Lockdown / tax": 0.67
+  },
+  "Frisky Red Squirrel": {
+    "Mobility / reach": 0.56,
+    "Swarm bodies": 0.53
+  },
+  "Frontier Settlers": {
+    "Card / Atlas engine": 0.66,
+    "Swarm bodies": 0.44,
+    "Terrain / site shaping": 0.66
+  },
+  "Frost Nova": {
+    "Lockdown / tax": 0.63
+  },
+  "Frozen Horror": {
+    "Evasion": 0.67,
+    "Lockdown / tax": 0.64,
+    "Vanguard bodies": 0.36
+  },
+  "Funeral Pyre": {
+    "Disruption": 0.82
+  },
+  "Garden of Eden": {
+    "Card / Atlas engine": 0.68,
+    "Disruption": 0.59,
+    "Lockdown / tax": 0.59
+  },
+  "Gargantula": {
+    "Displacement": 0.7,
+    "Vanguard bodies": 0.75
+  },
+  "Geomancer": {
+    "Card / Atlas engine": 0.79,
+    "Displacement": 0.56,
+    "Site pressure": 0.73,
+    "Terrain / site shaping": 0.71
+  },
+  "Geyser": {
+    "Card / Atlas engine": 0.66,
+    "Evasion": 0.6,
+    "Terrain / site shaping": 0.66
+  },
+  "Ghost Ship": {
+    "Death value": 0.6,
+    "Evasion": 0.71,
+    "Finishers / inevitability": 0.55,
+    "Fortification": 0.47,
+    "Recursion": 0.75
+  },
+  "Ghost Town": {},
+  "Ghostfire": {
+    "Death value": 0.63,
+    "Disruption": 0.67,
+    "Ranged / projectile": 0.75,
+    "Recursion": 0.77,
+    "Removal / burn": 0.47,
+    "Spell engine": 0.67
+  },
+  "Ghoul": {
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.53
+  },
+  "Giant Killer": {
+    "Removal / burn": 0.58,
+    "Swarm bodies": 0.33
+  },
+  "Giant Shark": {
+    "Displacement": 0.51,
+    "Evasion": 0.59,
+    "Fortification": 0.46,
+    "Vanguard bodies": 0.54
+  },
+  "Gibbous Nightgaunts": {
+    "Evasion": 0.8,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.38
+  },
+  "Gift of the Frog": {
+    "Card / Atlas engine": 0.84,
+    "Spell engine": 0.68,
+    "Swarm bodies": 0.6,
+    "Token production": 0.86
+  },
+  "Gift of the Raven": {
+    "Card / Atlas engine": 0.85,
+    "Protection": 0.67,
+    "Spell engine": 0.69
+  },
+  "Gift of the Serpent": {
+    "Card / Atlas engine": 0.86,
+    "Removal / burn": 0.64,
+    "Spell engine": 0.7
+  },
+  "Gift of the Wolf": {
+    "Avatar arms": 0.53,
+    "Card / Atlas engine": 0.86,
+    "Charge / burst": 0.61,
+    "Spell engine": 0.7
+  },
+  "Gigantism": {
+    "Avatar arms": 0.53,
+    "Charge / burst": 0.58,
+    "Disruption": 0.67
+  },
+  "Gilded Aegis": {
+    "Avatar arms": 0.71,
+    "Protection": 0.61
+  },
+  "Gilman House": {
+    "Card / Atlas engine": 0.85,
+    "Disruption": 0.67,
+    "Swarm bodies": 0.58,
+    "Token production": 0.82
+  },
+  "Glastonbury Tor": {
+    "Card / Atlas engine": 0.68,
+    "Displacement": 0.59,
+    "Disruption": 0.68
+  },
+  "Gloam Toads": {
+    "Charge / burst": 0.57,
+    "Displacement": 0.68,
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51,
+    "Lockdown / tax": 0.65,
+    "Vanguard bodies": 0.92
+  },
+  "Gnarled Wendigo": {
+    "Death value": 0.61,
+    "Finishers / inevitability": 0.48,
+    "Fortification": 0.48
+  },
+  "Gneissgnath Gnomes": {
+    "Evasion": 0.48,
+    "Swarm bodies": 0.52
+  },
+  "Gnome Hollows": {
+    "Fortification": 0.73,
+    "Lockdown / tax": 0.67,
+    "Terrain / site shaping": 0.58
+  },
+  "Goat for Azazel": {
+    "Removal / burn": 0.47
+  },
+  "Golden Dawn": {
+    "Card / Atlas engine": 0.64,
+    "Charge / burst": 0.79,
+    "Finishers / inevitability": 0.7,
+    "Mobility / reach": 0.37,
+    "Removal / burn": 0.82,
+    "Spell engine": 0.64
+  },
+  "Golden Harp": {},
+  "Golgor": {
+    "Finishers / inevitability": 0.66,
+    "Fortification": 0.54
+  },
+  "Gossamer Ghost": {
+    "Evasion": 0.68,
+    "Lockdown / tax": 0.65,
+    "Swarm bodies": 0.54
+  },
+  "Goswhit Helmet": {
+    "Avatar arms": 0.72,
+    "Protection": 0.62
+  },
+  "Gothic Tower": {
+    "Card / Atlas engine": 0.72
+  },
+  "Grain Sparrow": {
+    "Card / Atlas engine": 0.66,
+    "Evasion": 0.62,
+    "Ranged / projectile": 0.74,
+    "Swarm bodies": 0.53
+  },
+  "Granary Rats": {
+    "Swarm bodies": 0.53
+  },
+  "Grand Old Boar": {
+    "Charge / burst": 0.76,
+    "Fortification": 0.46,
+    "Mobility / reach": 0.36,
+    "Vanguard bodies": 0.77
+  },
+  "Grandmaster Wizard": {
+    "Card / Atlas engine": 0.84,
+    "Spell engine": 0.88
+  },
+  "Grapple Shot": {
+    "Charge / burst": 0.62,
+    "Displacement": 0.74,
+    "Mobility / reach": 0.62,
+    "Ranged / projectile": 0.79,
+    "Removal / burn": 0.49
+  },
+  "Grasping Ground": {
+    "Displacement": 0.66,
+    "Removal / burn": 0.79
+  },
+  "Gravedigger": {
+    "Evasion": 0.48,
+    "Swarm bodies": 0.54
+  },
+  "Great Old One": {
+    "Evasion": 0.61,
+    "Finishers / inevitability": 0.89,
+    "Fortification": 0.74,
+    "Terrain / site shaping": 0.66
+  },
+  "Great Wall": {
+    "Fortification": 0.71,
+    "Terrain / site shaping": 0.57
+  },
+  "Greater Blood Demon": {
+    "Fortification": 0.52,
+    "Removal / burn": 0.48,
+    "Vanguard bodies": 0.93
+  },
+  "Grey Wolves": {
+    "Charge / burst": 0.59,
+    "Spell engine": 0.66,
+    "Swarm bodies": 0.43
+  },
+  "Grief Larvae": {
+    "Charge / burst": 0.59,
+    "Evasion": 0.49,
+    "Finishers / inevitability": 0.64,
+    "Removal / burn": 0.62,
+    "Site pressure": 0.76,
+    "Swarm bodies": 0.53
+  },
+  "Grievous Insult": {
+    "Card / Atlas engine": 0.84,
+    "Disruption": 0.68,
+    "Lockdown / tax": 0.68,
+    "Spell engine": 0.68
+  },
+  "Grigori Rasputin": {
+    "Spell engine": 0.66,
+    "Swarm bodies": 0.57
+  },
+  "Grim Guisarme": {
+    "Avatar arms": 0.73,
+    "Removal / burn": 0.6
+  },
+  "Grim Reaper": {
+    "Card / Atlas engine": 0.65,
+    "Disruption": 0.78,
+    "Removal / burn": 0.6,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.44,
+    "Vanguard bodies": 0.57
+  },
+  "Grösse Poltergeist": {
+    "Displacement": 0.51,
+    "Disruption": 0.73
+  },
+  "Guardian Angel": {
+    "Evasion": 0.59,
+    "Fortification": 0.46,
+    "Mobility / reach": 0.56,
+    "Protection": 0.71,
+    "Vanguard bodies": 0.36
+  },
+  "Guards!": {
+    "Finishers / inevitability": 0.72,
+    "Swarm bodies": 0.58,
+    "Token production": 0.9
+  },
+  "Guile Sirens": {
+    "Evasion": 0.59,
+    "Mobility / reach": 0.56,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "Gyre Hippogriffs": {
+    "Charge / burst": 0.79,
+    "Evasion": 0.61,
+    "Mobility / reach": 0.38,
+    "Vanguard bodies": 0.38
+  },
+  "Haast Eagle": {
+    "Evasion": 0.59,
+    "Mobility / reach": 0.56,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "Hamlet": {},
+  "Hamlet's Ablaze!": {
+    "Removal / burn": 0.64,
+    "Site pressure": 0.8,
+    "Terrain / site shaping": 0.73
+  },
+  "Hand of Glory": {
+    "Avatar arms": 0.72,
+    "Charge / burst": 0.56,
+    "Spell engine": 0.64
+  },
+  "Harassing Ruffians": {
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Harbinger": {
+    "Card / Atlas engine": 0.62,
+    "Displacement": 0.65,
+    "Evasion": 0.55,
+    "Mobility / reach": 0.5
+  },
+  "Harpyon Urge": {},
+  "Harvest Festival": {
+    "Card / Atlas engine": 0.79,
+    "Disruption": 0.63
+  },
+  "Hauntless Head": {
+    "Evasion": 0.71,
+    "Mobility / reach": 0.57,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.67
+  },
+  "Haystack": {},
+  "Headless Haunt": {
+    "Evasion": 0.73,
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.52
+  },
+  "Hearkening Kraken": {
+    "Evasion": 0.59,
+    "Finishers / inevitability": 0.46,
+    "Fortification": 0.46
+  },
+  "Heat Ray": {
+    "Ranged / projectile": 0.77,
+    "Removal / burn": 0.64
+  },
+  "Heirloom Lost": {
+    "Site pressure": 0.75,
+    "Terrain / site shaping": 0.65
+  },
+  "Hellfire": {
+    "Charge / burst": 0.57,
+    "Removal / burn": 0.6,
+    "Site pressure": 0.75
+  },
+  "Hellhounds": {
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.53
+  },
+  "Hellmouth": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.57
+  },
+  "Hellstar": {
+    "Evasion": 0.59,
+    "Finishers / inevitability": 0.66,
+    "Fortification": 0.54,
+    "Lockdown / tax": 0.63,
+    "Removal / burn": 0.46
+  },
+  "Helpful Hob": {},
+  "Hemogoblet": {
+    "Protection": 0.6
+  },
+  "Hemogoblin": {
+    "Death value": 0.6,
+    "Swarm bodies": 0.56
+  },
+  "Hemogolem": {
+    "Protection": 0.61
+  },
+  "Heretics of Seth": {
+    "Fortification": 0.46,
+    "Protection": 0.71,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Highland Clansmen": {
+    "Charge / burst": 0.8,
+    "Finishers / inevitability": 0.46,
+    "Fortification": 0.46,
+    "Mobility / reach": 0.36
+  },
+  "Highland Falconer": {
+    "Card / Atlas engine": 0.65,
+    "Evasion": 0.6,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.44
+  },
+  "Highland Princess": {
+    "Card / Atlas engine": 0.68,
+    "Spell engine": 0.68,
+    "Swarm bodies": 0.46
+  },
+  "Hillock Basilisk": {
+    "Lockdown / tax": 0.66,
+    "Vanguard bodies": 0.52
+  },
+  "Hillside Chapel": {
+    "Fortification": 0.74,
+    "Lockdown / tax": 0.68,
+    "Protection": 0.76
+  },
+  "Hollow One": {
+    "Lockdown / tax": 0.62,
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.7
+  },
+  "Holy Ground": {
+    "Fortification": 0.71,
+    "Protection": 0.63
+  },
+  "Holy Nova": {
+    "Fortification": 0.47,
+    "Protection": 0.73,
+    "Removal / burn": 0.6
+  },
+  "Holy Warrior": {
+    "Fortification": 0.46,
+    "Protection": 0.75,
+    "Swarm bodies": 0.55
+  },
+  "Holy Water": {
+    "Death value": 0.59,
+    "Fortification": 0.46,
+    "Protection": 0.72,
+    "Ranged / projectile": 0.72,
+    "Removal / burn": 0.46
+  },
+  "Homecoming": {},
+  "Horn of Caerleon": {
+    "Charge / burst": 0.78,
+    "Mobility / reach": 0.37
+  },
+  "Horns of Behemoth": {
+    "Terrain / site shaping": 0.66
+  },
+  "Horrible Hybrids": {
+    "Swarm bodies": 0.61,
+    "Token production": 0.83,
+    "Vanguard bodies": 0.53
+  },
+  "Hotwheel": {
+    "Finishers / inevitability": 0.64
+  },
+  "Hounds of Ondaros": {
+    "Evasion": 1,
+    "Lockdown / tax": 0.67,
+    "Vanguard bodies": 0.47
+  },
+  "House Arn Bannerman": {
+    "Charge / burst": 0.57
+  },
+  "Howl from Beyond": {
+    "Card / Atlas engine": 0.65,
+    "Displacement": 0.57,
+    "Evasion": 0.71,
+    "Removal / burn": 0.83,
+    "Terrain / site shaping": 0.65
+  },
+  "Humble Village": {
+    "Lockdown / tax": 0.69,
+    "Swarm bodies": 0.6,
+    "Token production": 0.87
+  },
+  "Hunter's Lodge": {
+    "Evasion": 0.7,
+    "Lockdown / tax": 0.67
+  },
+  "Hunting Party": {
+    "Evasion": 0.66,
+    "Lockdown / tax": 0.63,
+    "Ranged / projectile": 0.71,
+    "Vanguard bodies": 0.36
+  },
+  "Hyperparasite": {
+    "Mobility / reach": 0.58,
+    "Vanguard bodies": 0.74
+  },
+  "Hyter Sprites": {
+    "Swarm bodies": 0.55
+  },
+  "I Am Colossus!": {
+    "Disruption": 0.78
+  },
+  "Ice Lance": {
+    "Mobility / reach": 0.61,
+    "Ranged / projectile": 0.77,
+    "Removal / burn": 0.64
+  },
+  "Ice Shards": {
+    "Ranged / projectile": 0.75,
+    "Removal / burn": 0.63
+  },
+  "Iceberg": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.56
+  },
+  "Ignis Rex": {
+    "Displacement": 0.67,
+    "Disruption": 0.64,
+    "Evasion": 0.59,
+    "Finishers / inevitability": 0.67,
+    "Fortification": 0.5,
+    "Protection": 0.62,
+    "Removal / burn": 0.59
+  },
+  "Ignited": {
+    "Charge / burst": 0.81,
+    "Mobility / reach": 0.37,
+    "Swarm bodies": 0.72,
+    "Vanguard bodies": 0.52
+  },
+  "Immolation": {
+    "Removal / burn": 0.61
+  },
+  "Impenetrable Copse": {
+    "Charge / burst": 0.57,
+    "Fortification": 0.71,
+    "Lockdown / tax": 0.65,
+    "Ranged / projectile": 0.73,
+    "Removal / burn": 0.47,
+    "Terrain / site shaping": 0.57
+  },
+  "Imperial Road": {
+    "Terrain / site shaping": 0.58
+  },
+  "Imposter": {
+    "Card / Atlas engine": 0.79,
+    "Disruption": 0.63
+  },
+  "Incinerate": {
+    "Charge / burst": 0.59,
+    "Displacement": 0.7,
+    "Removal / burn": 0.62
+  },
+  "Infernal Legion": {
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.52,
+    "Removal / burn": 0.61
+  },
+  "Infiltrate": {
+    "Disruption": 0.78,
+    "Evasion": 0.71
+  },
+  "Infusion Factory": {},
+  "Innsmouth Dock": {},
+  "Instigator Imp": {
+    "Displacement": 0.52,
+    "Swarm bodies": 0.44
+  },
+  "Interrogator": {
+    "Card / Atlas engine": 0.88,
+    "Charge / burst": 0.57,
+    "Disruption": 0.47,
+    "Spell engine": 0.65
+  },
+  "Into the Abyss": {
+    "Displacement": 0.7,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.67
+  },
+  "Intrepid Hero": {
+    "Removal / burn": 0.6,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.57
+  },
+  "Invasion": {
+    "Finishers / inevitability": 0.69,
+    "Swarm bodies": 0.56,
+    "Terrain / site shaping": 0.66,
+    "Token production": 0.76
+  },
+  "Invigorate": {
+    "Avatar arms": 0.52,
+    "Charge / burst": 0.57,
+    "Protection": 0.63
+  },
+  "Iron Maiden": {
+    "Card / Atlas engine": 0.63,
+    "Charge / burst": 0.61,
+    "Finishers / inevitability": 0.46
+  },
+  "Iron Man Talus": {
+    "Lockdown / tax": 0.63
+  },
+  "Iron Shackles": {
+    "Lockdown / tax": 0.65
+  },
+  "Ironclad": {
+    "Card / Atlas engine": 0.65,
+    "Mobility / reach": 0.37,
+    "Vanguard bodies": 0.42
+  },
+  "Island Leviathan": {
+    "Terrain / site shaping": 0.65
+  },
+  "Jack the Ripper": {
+    "Evasion": 0.69,
+    "Removal / burn": 0.61,
+    "Swarm bodies": 0.36
+  },
+  "Jihad": {
+    "Charge / burst": 0.58,
+    "Mobility / reach": 0.48,
+    "Terrain / site shaping": 0.7,
+    "Vanguard bodies": 0.33
+  },
+  "Joust!": {
+    "Displacement": 0.7,
+    "Mobility / reach": 0.6
+  },
+  "Joyous Garde": {
+    "Card / Atlas engine": 0.68,
+    "Disruption": 0.68
+  },
+  "Just a Rock": {
+    "Mobility / reach": 0.61
+  },
+  "Kairos the Archivist": {
+    "Death value": 0.59,
+    "Displacement": 0.66
+  },
+  "Karkemish Chimera": {
+    "Finishers / inevitability": 0.66,
+    "Fortification": 0.5
+  },
+  "Keening Banshee": {
+    "Vanguard bodies": 0.5
+  },
+  "Kelp Cavern": {
+    "Disruption": 0.67,
+    "Spell engine": 0.67
+  },
+  "Kettletop Leprechaun": {
+    "Card / Atlas engine": 0.7,
+    "Death value": 0.64,
+    "Swarm bodies": 0.57
+  },
+  "Key to the City": {
+    "Card / Atlas engine": 0.67
+  },
+  "Khamaseen Mummy": {
+    "Evasion": 0.49,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "King Arthur": {
+    "Fortification": 0.47,
+    "Vanguard bodies": 0.81
+  },
+  "King of the Realm": {
+    "Charge / burst": 0.57
+  },
+  "King's Council": {
+    "Card / Atlas engine": 0.65
+  },
+  "Kingdom of Agartha": {
+    "Evasion": 0.49,
+    "Terrain / site shaping": 0.56
+  },
+  "Kingswood Poachers": {
+    "Card / Atlas engine": 0.62,
+    "Evasion": 0.65,
+    "Spell engine": 0.62,
+    "Vanguard bodies": 0.35
+  },
+  "Kiss of Death": {
+    "Removal / burn": 0.6
+  },
+  "Kiss of Judas": {
+    "Card / Atlas engine": 0.65
+  },
+  "Kissers of Wounds": {
+    "Fortification": 0.46,
+    "Protection": 0.72,
+    "Swarm bodies": 0.55
+  },
+  "Kite Archer": {
+    "Mobility / reach": 0.56,
+    "Ranged / projectile": 0.71,
+    "Swarm bodies": 0.34
+  },
+  "Knighthood": {},
+  "Kor Crematory": {
+    "Disruption": 0.84,
+    "Lockdown / tax": 0.7
+  },
+  "Koschei's Egg": {
+    "Protection": 0.61
+  },
+  "Kythera Mechanism": {},
+  "Lacuna Entity": {
+    "Displacement": 0.7,
+    "Evasion": 0.8,
+    "Vanguard bodies": 0.48
+  },
+  "Lady Iseult": {
+    "Swarm bodies": 0.45
+  },
+  "Lake Afanc": {
+    "Evasion": 0.61,
+    "Removal / burn": 0.61,
+    "Vanguard bodies": 0.39
+  },
+  "Lance": {
+    "Avatar arms": 0.7,
+    "Charge / burst": 0.55,
+    "Removal / burn": 0.58
+  },
+  "Land Deed": {},
+  "Land Surveyor": {
+    "Card / Atlas engine": 0.69,
+    "Swarm bodies": 0.45
+  },
+  "Landmass": {
+    "Card / Atlas engine": 0.7,
+    "Terrain / site shaping": 0.7
+  },
+  "Lash": {
+    "Removal / burn": 0.63
+  },
+  "Lava Flow": {
+    "Charge / burst": 0.58,
+    "Removal / burn": 0.82,
+    "Site pressure": 0.76
+  },
+  "Lava Salamander": {
+    "Protection": 0.61,
+    "Spell engine": 0.63,
+    "Swarm bodies": 0.43
+  },
+  "Leadworks": {
+    "Disruption": 0.68,
+    "Lockdown / tax": 0.68
+  },
+  "Leap Attack": {
+    "Mobility / reach": 0.57
+  },
+  "Led Astray": {
+    "Mobility / reach": 0.6
+  },
+  "Legion of Gall": {
+    "Card / Atlas engine": 0.83,
+    "Evasion": 0.61,
+    "Fortification": 0.48,
+    "Vanguard bodies": 0.56
+  },
+  "Lesser Blood Demon": {
+    "Removal / burn": 0.47,
+    "Swarm bodies": 0.71,
+    "Vanguard bodies": 0.52
+  },
+  "Leyline Henge": {
+    "Card / Atlas engine": 0.81,
+    "Spell engine": 0.65
+  },
+  "Lifewish": {
+    "Protection": 0.62
+  },
+  "Lighthouse": {},
+  "Lightning Bolt": {
+    "Charge / burst": 0.62,
+    "Removal / burn": 0.65
+  },
+  "Lilith": {
+    "Vanguard bodies": 0.53
+  },
+  "Locusts of Illyria": {
+    "Evasion": 0.6
+  },
+  "Lone Tower": {
+    "Card / Atlas engine": 0.72
+  },
+  "Lookout": {
+    "Disruption": 0.69
+  },
+  "Lord of Destruction": {
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51,
+    "Removal / burn": 0.6
+  },
+  "Lord of Fear": {
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51,
+    "Lockdown / tax": 0.65
+  },
+  "Lord of Greed": {
+    "Displacement": 0.68,
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51
+  },
+  "Lord of Lies": {
+    "Displacement": 0.54,
+    "Finishers / inevitability": 0.71,
+    "Fortification": 0.53
+  },
+  "Lord of Unland": {
+    "Charge / burst": 0.58,
+    "Evasion": 0.61,
+    "Finishers / inevitability": 0.64,
+    "Vanguard bodies": 0.38
+  },
+  "Lord of the Void": {
+    "Evasion": 0.72,
+    "Finishers / inevitability": 0.64,
+    "Site pressure": 0.76,
+    "Terrain / site shaping": 0.66
+  },
+  "Love Potion": {
+    "Death value": 0.6,
+    "Displacement": 0.52,
+    "Disruption": 0.75
+  },
+  "Lucid Dreamers": {
+    "Evasion": 0.71,
+    "Swarm bodies": 0.56
+  },
+  "Lucky Charm": {},
+  "Lugbog Cat": {
+    "Swarm bodies": 0.37,
+    "Vanguard bodies": 0.76
+  },
+  "Lumbering Giant": {
+    "Lockdown / tax": 0.66,
+    "Vanguard bodies": 0.74
+  },
+  "Lure": {},
+  "Mad Dash": {
+    "Card / Atlas engine": 0.68,
+    "Mobility / reach": 0.6
+  },
+  "Maddening Bells": {
+    "Spell engine": 0.64
+  },
+  "Maelström": {
+    "Displacement": 0.7
+  },
+  "Mage Slayer": {
+    "Removal / burn": 0.61,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.33
+  },
+  "Magellan Globe": {},
+  "Magic Missiles": {
+    "Ranged / projectile": 0.78,
+    "Removal / burn": 0.64
+  },
+  "Magician": {
+    "Card / Atlas engine": 0.62,
+    "Site pressure": 0.5,
+    "Spell engine": 0.62
+  },
+  "Magnetic Muzzle": {
+    "Disruption": 0.63,
+    "Lockdown / tax": 0.63,
+    "Removal / burn": 0.79
+  },
+  "Maiden, Mother, Crone": {
+    "Card / Atlas engine": 0.85,
+    "Death value": 0.61,
+    "Protection": 0.65,
+    "Removal / burn": 0.48,
+    "Spell engine": 0.67,
+    "Vanguard bodies": 0.53
+  },
+  "Major City": {},
+  "Major Explosion": {
+    "Charge / burst": 0.58,
+    "Finishers / inevitability": 0.72,
+    "Removal / burn": 0.82
+  },
+  "Makeshift Barricade": {
+    "Fortification": 0.72,
+    "Protection": 0.67,
+    "Removal / burn": 0.48
+  },
+  "Malakhim": {
+    "Evasion": 0.6,
+    "Fortification": 0.47,
+    "Protection": 0.72
+  },
+  "Mandrake Jars": {
+    "Avatar arms": 0.71,
+    "Charge / burst": 0.56,
+    "Spell engine": 0.63
+  },
+  "Marine Voyage": {
+    "Mobility / reach": 0.76
+  },
+  "Mariner's Curse": {
+    "Displacement": 0.78,
+    "Lockdown / tax": 0.68,
+    "Removal / burn": 0.55,
+    "Terrain / site shaping": 0.76
+  },
+  "Martyrs of Tomorrow": {
+    "Death value": 0.61,
+    "Fortification": 0.45,
+    "Protection": 0.73,
+    "Swarm bodies": 0.33
+  },
+  "Mask of Mayhem": {
+    "Avatar arms": 0.71,
+    "Removal / burn": 0.59
+  },
+  "Master Necromancer": {
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.57,
+    "Token production": 0.83
+  },
+  "Master Tracker": {
+    "Evasion": 0.65,
+    "Lockdown / tax": 0.62,
+    "Swarm bodies": 0.54
+  },
+  "Mayor of Milborne": {
+    "Charge / burst": 0.56,
+    "Swarm bodies": 0.34
+  },
+  "Maze Minotaur": {
+    "Vanguard bodies": 0.72
+  },
+  "Meat Hook": {
+    "Avatar arms": 0.74,
+    "Displacement": 0.69,
+    "Ranged / projectile": 0.89,
+    "Removal / burn": 0.47
+  },
+  "Megalurker": {
+    "Displacement": 0.66,
+    "Evasion": 0.49,
+    "Finishers / inevitability": 0.66,
+    "Fortification": 0.5,
+    "Removal / burn": 0.59
+  },
+  "Megamoeba": {
+    "Charge / burst": 0.56
+  },
+  "Men of Leng": {
+    "Disruption": 0.68,
+    "Swarm bodies": 0.56
+  },
+  "Mephistopheles": {},
+  "Merlin": {
+    "Card / Atlas engine": 0.66,
+    "Spell engine": 0.88,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Merlin's Staff": {
+    "Avatar arms": 0.71,
+    "Charge / burst": 0.56,
+    "Spell engine": 0.85
+  },
+  "Merlin's Tower": {
+    "Spell engine": 0.66
+  },
+  "Mesmer Demon": {
+    "Lockdown / tax": 0.68,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Mesmerism": {
+    "Displacement": 0.54,
+    "Disruption": 0.78
+  },
+  "Mester Stoor Worm": {
+    "Evasion": 0.61,
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.56,
+    "Removal / burn": 0.82,
+    "Vanguard bodies": 0.41
+  },
+  "Meteor Shower": {
+    "Charge / burst": 0.56,
+    "Finishers / inevitability": 0.69,
+    "Removal / burn": 0.79,
+    "Site pressure": 0.73
+  },
+  "Midland Army": {
+    "Death value": 0.59,
+    "Finishers / inevitability": 0.72,
+    "Fortification": 0.58,
+    "Removal / burn": 0.81,
+    "Swarm bodies": 0.56,
+    "Token production": 0.83
+  },
+  "Midnight Rogue": {
+    "Evasion": 0.68,
+    "Ranged / projectile": 0.73,
+    "Swarm bodies": 0.33
+  },
+  "Mimic": {},
+  "Minecart Madness": {
+    "Mobility / reach": 0.75
+  },
+  "Minor Explosion": {
+    "Charge / burst": 0.62,
+    "Removal / burn": 0.87
+  },
+  "Miracle Workers": {
+    "Death value": 0.62,
+    "Recursion": 0.77,
+    "Swarm bodies": 0.43
+  },
+  "Mirage": {},
+  "Mirror Realm": {},
+  "Mismanaged Mortuary": {
+    "Death value": 0.61,
+    "Recursion": 0.77,
+    "Terrain / site shaping": 0.67
+  },
+  "Mix Aer": {
+    "Death value": 0.6,
+    "Disruption": 0.66
+  },
+  "Mix Aqua": {
+    "Card / Atlas engine": 0.72,
+    "Disruption": 0.66
+  },
+  "Mix Ignis": {
+    "Card / Atlas engine": 0.72,
+    "Disruption": 0.66
+  },
+  "Mix Terra": {
+    "Card / Atlas engine": 0.72,
+    "Disruption": 0.65
+  },
+  "Molten Maar": {
+    "Card / Atlas engine": 0.82,
+    "Disruption": 0.66
+  },
+  "Monastery Gargoyle": {
+    "Evasion": 0.58,
+    "Vanguard bodies": 0.35
+  },
+  "Monks of Kobalsa": {
+    "Vanguard bodies": 0.74
+  },
+  "Monster Hunter": {
+    "Removal / burn": 0.59,
+    "Swarm bodies": 0.34
+  },
+  "Monstermorphosis": {
+    "Card / Atlas engine": 0.8,
+    "Disruption": 0.64,
+    "Lockdown / tax": 0.64,
+    "Swarm bodies": 0.57,
+    "Token production": 0.77
+  },
+  "Monstrous Lion": {
+    "Charge / burst": 0.79,
+    "Lockdown / tax": 0.66,
+    "Mobility / reach": 0.38,
+    "Vanguard bodies": 0.74
+  },
+  "Moon Clan Werewolf": {
+    "Death value": 0.58,
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.5
+  },
+  "Moonsong Talagelum": {
+    "Charge / burst": 0.56,
+    "Displacement": 0.67,
+    "Evasion": 0.59,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "Mordric Druids": {
+    "Charge / burst": 0.62,
+    "Finishers / inevitability": 0.46,
+    "Spell engine": 0.64,
+    "Swarm bodies": 0.43
+  },
+  "Morgana le Fay": {
+    "Card / Atlas engine": 0.68,
+    "Evasion": 0.71,
+    "Spell engine": 0.68,
+    "Swarm bodies": 0.37,
+    "Vanguard bodies": 0.39
+  },
+  "Mortal Soil": {
+    "Charge / burst": 0.56,
+    "Disruption": 0.78,
+    "Protection": 0.61,
+    "Removal / burn": 0.59,
+    "Site pressure": 0.73,
+    "Terrain / site shaping": 0.66
+  },
+  "Mortality": {
+    "Removal / burn": 0.84
+  },
+  "Moss Troll": {
+    "Evasion": 0.68,
+    "Lockdown / tax": 0.65,
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.35
+  },
+  "Mother Nature": {
+    "Card / Atlas engine": 0.65,
+    "Mobility / reach": 0.47,
+    "Terrain / site shaping": 0.57,
+    "Vanguard bodies": 0.32
+  },
+  "Mount Ussar Sanctuary": {
+    "Charge / burst": 0.65,
+    "Finishers / inevitability": 0.65,
+    "Fortification": 0.73,
+    "Protection": 0.75
+  },
+  "Mountain Giant": {
+    "Finishers / inevitability": 0.73,
+    "Fortification": 0.58
+  },
+  "Mountain Pass": {
+    "Fortification": 0.71,
+    "Lockdown / tax": 0.65,
+    "Terrain / site shaping": 0.57
+  },
+  "Mountain Peaks": {},
+  "Mover of Mountains": {
+    "Displacement": 0.69,
+    "Spell engine": 0.66,
+    "Swarm bodies": 0.56
+  },
+  "Muck Lampreys": {
+    "Evasion": 0.79,
+    "Swarm bodies": 0.55
+  },
+  "Muddy Pigs": {
+    "Death value": 0.62,
+    "Protection": 0.65,
+    "Swarm bodies": 0.55
+  },
+  "Mudflow": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.56
+  },
+  "Mudslide": {
+    "Removal / burn": 0.79,
+    "Terrain / site shaping": 0.56
+  },
+  "Muirid Fomorians": {
+    "Evasion": 0.76,
+    "Finishers / inevitability": 0.66,
+    "Fortification": 0.5
+  },
+  "Murder of Crows": {
+    "Death value": 0.65,
+    "Disruption": 0.71,
+    "Recursion": 0.81,
+    "Removal / burn": 0.87,
+    "Spell engine": 0.71
+  },
+  "Myrrh's Trophy Room": {
+    "Death value": 0.59,
+    "Recursion": 0.74,
+    "Removal / burn": 0.82
+  },
+  "Màzuj Ifrit": {
+    "Evasion": 0.61,
+    "Removal / burn": 0.48,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.52
+  },
+  "Nadir Seed": {},
+  "Necromancer": {
+    "Card / Atlas engine": 0.64,
+    "Death value": 0.67,
+    "Lockdown / tax": 0.64,
+    "Recursion": 0.92,
+    "Swarm bodies": 0.56,
+    "Token production": 0.82
+  },
+  "Necronomiconcert": {
+    "Card / Atlas engine": 0.64
+  },
+  "Necropotence": {
+    "Avatar arms": 0.51,
+    "Charge / burst": 0.56
+  },
+  "Nelly Longarms": {
+    "Displacement": 0.7,
+    "Evasion": 0.61,
+    "Ranged / projectile": 0.92,
+    "Removal / burn": 0.48,
+    "Swarm bodies": 0.36
+  },
+  "Nightmare": {
+    "Displacement": 0.67,
+    "Finishers / inevitability": 0.67,
+    "Fortification": 0.5,
+    "Removal / burn": 0.8,
+    "Terrain / site shaping": 0.64
+  },
+  "Nightwatchmen": {
+    "Fortification": 0.46,
+    "Protection": 0.75,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Nimbus Jinn": {
+    "Disruption": 0.65,
+    "Evasion": 0.6,
+    "Removal / burn": 0.6
+  },
+  "No Man's Land": {
+    "Terrain / site shaping": 0.57
+  },
+  "Noisome Twosome": {
+    "Death value": 0.63,
+    "Swarm bodies": 0.6,
+    "Token production": 0.86
+  },
+  "Nommo Monitor": {
+    "Evasion": 0.78,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.37
+  },
+  "Nosferatu": {
+    "Death value": 0.6,
+    "Evasion": 0.8
+  },
+  "Novice Necromancer": {
+    "Spell engine": 0.67,
+    "Swarm bodies": 0.6,
+    "Token production": 0.85
+  },
+  "Noxious Corpse": {
+    "Removal / burn": 0.62,
+    "Swarm bodies": 0.55,
+    "Vanguard bodies": 0.59
+  },
+  "Oasis": {},
+  "Observatory": {
+    "Card / Atlas engine": 0.67
+  },
+  "Occult Ritual": {
+    "Card / Atlas engine": 0.63,
+    "Spell engine": 0.63
+  },
+  "Ogre Goons": {
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.5
+  },
+  "Old Mortimer's Den": {
+    "Removal / burn": 0.59,
+    "Terrain / site shaping": 0.63
+  },
+  "Old Salt Anchorman": {
+    "Swarm bodies": 0.56
+  },
+  "Ominous Owl": {
+    "Evasion": 0.62,
+    "Swarm bodies": 0.53
+  },
+  "One-shot Wizard": {
+    "Ranged / projectile": 0.91,
+    "Removal / burn": 0.63,
+    "Spell engine": 0.68,
+    "Swarm bodies": 0.54
+  },
+  "Onslaught": {
+    "Avatar arms": 0.52,
+    "Charge / burst": 0.79,
+    "Disruption": 0.66,
+    "Lockdown / tax": 0.66,
+    "Mobility / reach": 0.37
+  },
+  "Onyx Core": {
+    "Card / Atlas engine": 0.72
+  },
+  "Open Grave": {
+    "Lockdown / tax": 0.68,
+    "Swarm bodies": 0.6,
+    "Token production": 0.86
+  },
+  "Open Mausoleum": {
+    "Lockdown / tax": 0.68,
+    "Swarm bodies": 0.6,
+    "Token production": 0.86
+  },
+  "Ophanim": {
+    "Evasion": 0.79,
+    "Fortification": 0.48,
+    "Mobility / reach": 0.58,
+    "Protection": 0.74
+  },
+  "Orb of Ba'al Berith": {
+    "Spell engine": 0.87
+  },
+  "Order of the Pale Worm": {
+    "Fortification": 0.47,
+    "Protection": 0.72,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Order of the Sacred Oak": {
+    "Fortification": 0.48,
+    "Protection": 0.75,
+    "Removal / burn": 0.61,
+    "Site pressure": 0.77,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.53
+  },
+  "Order of the White Wing": {
+    "Fortification": 0.48,
+    "Protection": 0.74,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.53
+  },
+  "Orm Infestor": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.78,
+    "Finishers / inevitability": 0.63,
+    "Protection": 0.63,
+    "Removal / burn": 0.6,
+    "Site pressure": 0.75,
+    "Swarm bodies": 0.35
+  },
+  "Ormund Harpooneers": {
+    "Charge / burst": 0.55,
+    "Displacement": 0.65,
+    "Lockdown / tax": 0.62,
+    "Ranged / projectile": 0.7,
+    "Removal / burn": 0.58,
+    "Site pressure": 0.72,
+    "Swarm bodies": 0.54
+  },
+  "Orpheus' Crossing": {
+    "Charge / burst": 0.63,
+    "Finishers / inevitability": 0.63,
+    "Recursion": 0.75
+  },
+  "Outback Strider": {
+    "Mobility / reach": 0.56,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Overbearing Bailiff": {
+    "Charge / burst": 0.56
+  },
+  "Overflow": {
+    "Card / Atlas engine": 0.69
+  },
+  "Overpower": {
+    "Avatar arms": 0.51,
+    "Charge / burst": 0.59
+  },
+  "Pact with the Devil": {
+    "Card / Atlas engine": 0.66,
+    "Death value": 0.61
+  },
+  "Paladins of Bazia": {
+    "Fortification": 0.48,
+    "Protection": 0.74,
+    "Spell engine": 0.66,
+    "Vanguard bodies": 0.74
+  },
+  "Palliburrie Bats": {
+    "Evasion": 0.8,
+    "Swarm bodies": 0.55
+  },
+  "Panorama Manticore": {
+    "Card / Atlas engine": 0.66,
+    "Evasion": 0.61,
+    "Fortification": 0.48,
+    "Removal / burn": 0.61,
+    "Spell engine": 0.66,
+    "Vanguard bodies": 0.56
+  },
+  "Panpipes of Pnom": {},
+  "Pathfinder": {
+    "Card / Atlas engine": 0.89,
+    "Disruption": 0.57,
+    "Lockdown / tax": 0.57,
+    "Mobility / reach": 0.57,
+    "Site pressure": 0.52
+  },
+  "Payload Trebuchet": {
+    "Avatar arms": 0.71,
+    "Charge / burst": 0.56,
+    "Disruption": 0.63,
+    "Removal / burn": 0.79
+  },
+  "Peace Offering": {
+    "Evasion": 0.59,
+    "Lockdown / tax": 0.64
+  },
+  "Peacemaker Arbalest": {
+    "Avatar arms": 0.86,
+    "Ranged / projectile": 0.86,
+    "Removal / burn": 0.66
+  },
+  "Peasant Revolt": {
+    "Removal / burn": 0.6
+  },
+  "Pebbled Paths": {
+    "Charge / burst": 0.8,
+    "Mobility / reach": 0.58,
+    "Terrain / site shaping": 0.58
+  },
+  "Peculiar Port": {
+    "Card / Atlas engine": 0.82,
+    "Disruption": 0.66,
+    "Swarm bodies": 0.58,
+    "Token production": 0.79
+  },
+  "Pendragon Banner": {
+    "Charge / burst": 0.56,
+    "Displacement": 0.67
+  },
+  "Pendragon Legacy": {
+    "Card / Atlas engine": 0.66,
+    "Death value": 0.61,
+    "Displacement": 0.69,
+    "Recursion": 0.76
+  },
+  "Pendulum of Peril": {
+    "Finishers / inevitability": 0.69,
+    "Removal / burn": 0.81
+  },
+  "Penitent Knight": {
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Peregrine Apparition": {
+    "Evasion": 0.76,
+    "Mobility / reach": 0.76
+  },
+  "Perilous Bridge": {
+    "Evasion": 0.48,
+    "Fortification": 0.73,
+    "Lockdown / tax": 0.67,
+    "Terrain / site shaping": 0.58
+  },
+  "Persecutor": {
+    "Card / Atlas engine": 0.62,
+    "Mobility / reach": 0.35,
+    "Vanguard bodies": 0.4
+  },
+  "Petrosian Cavalry": {
+    "Charge / burst": 0.81,
+    "Mobility / reach": 0.37,
+    "Vanguard bodies": 0.52
+  },
+  "Phantasmal Shade": {
+    "Removal / burn": 0.59,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.72
+  },
+  "Phantom Steed": {
+    "Evasion": 0.7,
+    "Mobility / reach": 0.77,
+    "Swarm bodies": 0.35
+  },
+  "Phase Assassin": {
+    "Evasion": 0.79,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.38
+  },
+  "Philosopher's Stone": {},
+  "Pied Piper of Hameln": {
+    "Swarm bodies": 0.57
+  },
+  "Pigs of the Sounder": {
+    "Death value": 0.59,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Pile of Skulls": {
+    "Disruption": 0.78,
+    "Swarm bodies": 0.57,
+    "Token production": 0.82
+  },
+  "Pilgrim's Shrine": {
+    "Fortification": 0.71,
+    "Protection": 0.73
+  },
+  "Pillar of Zeiros": {
+    "Disruption": 0.78,
+    "Fortification": 0.74,
+    "Protection": 0.66,
+    "Removal / burn": 0.86
+  },
+  "Pirate Ship": {
+    "Fortification": 0.47,
+    "Vanguard bodies": 0.82
+  },
+  "Pit Vipers": {
+    "Evasion": 0.5,
+    "Removal / burn": 0.63,
+    "Swarm bodies": 0.54,
+    "Vanguard bodies": 0.4
+  },
+  "Pith Imp": {
+    "Evasion": 0.63,
+    "Swarm bodies": 0.44
+  },
+  "Plague Pits": {
+    "Recursion": 0.76
+  },
+  "Plague Rat": {
+    "Removal / burn": 0.62,
+    "Swarm bodies": 0.53,
+    "Vanguard bodies": 0.59
+  },
+  "Plague of Frogs": {
+    "Swarm bodies": 0.59,
+    "Token production": 0.88
+  },
+  "Planar Gate": {
+    "Displacement": 0.56,
+    "Evasion": 0.69,
+    "Terrain / site shaping": 0.63
+  },
+  "Plate of the Whale": {
+    "Avatar arms": 0.73,
+    "Lockdown / tax": 0.65,
+    "Protection": 0.63
+  },
+  "Plumed Pegasus": {
+    "Evasion": 0.62,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.36
+  },
+  "Pnakotic Manuscript": {
+    "Card / Atlas engine": 0.82,
+    "Spell engine": 0.42
+  },
+  "Poison Nova": {
+    "Removal / burn": 0.84
+  },
+  "Poisoned Well": {
+    "Charge / burst": 0.58,
+    "Removal / burn": 0.61
+  },
+  "Poisonous Dagger": {
+    "Avatar arms": 0.74,
+    "Removal / burn": 0.6
+  },
+  "Polar Bears": {
+    "Swarm bodies": 0.55
+  },
+  "Polar Explorers": {
+    "Swarm bodies": 0.57
+  },
+  "Pollimorph": {
+    "Swarm bodies": 0.59,
+    "Token production": 0.81
+  },
+  "Pond": {
+    "Disruption": 0.69
+  },
+  "Pookas": {
+    "Death value": 0.6,
+    "Disruption": 0.65,
+    "Swarm bodies": 0.35
+  },
+  "Porcupine Pufferfish": {
+    "Evasion": 0.63,
+    "Removal / burn": 0.63,
+    "Swarm bodies": 0.54,
+    "Vanguard bodies": 0.41
+  },
+  "Postern Gate": {
+    "Terrain / site shaping": 0.56
+  },
+  "Power of Flight": {
+    "Card / Atlas engine": 0.83,
+    "Evasion": 0.62,
+    "Spell engine": 0.67
+  },
+  "Powerwish": {
+    "Avatar arms": 0.52,
+    "Charge / burst": 0.57,
+    "Death value": 0.6,
+    "Finishers / inevitability": 0.71,
+    "Removal / burn": 0.83
+  },
+  "Primordial Spring": {
+    "Card / Atlas engine": 0.63
+  },
+  "Pristine Paradise": {
+    "Card / Atlas engine": 0.66,
+    "Disruption": 0.66,
+    "Site pressure": 0.76
+  },
+  "Profane Revenant": {
+    "Swarm bodies": 0.8,
+    "Vanguard bodies": 0.51
+  },
+  "Psionic Blast": {
+    "Lockdown / tax": 0.62,
+    "Removal / burn": 0.58
+  },
+  "Pudge Butcher": {
+    "Displacement": 0.7,
+    "Fortification": 0.48,
+    "Lockdown / tax": 0.67,
+    "Ranged / projectile": 0.9,
+    "Removal / burn": 0.48,
+    "Vanguard bodies": 0.81
+  },
+  "Puppet Master": {
+    "Displacement": 0.5,
+    "Disruption": 0.72,
+    "Evasion": 0.58,
+    "Removal / burn": 0.78
+  },
+  "Purgatory": {
+    "Charge / burst": 0.57,
+    "Death value": 0.6,
+    "Removal / burn": 0.47
+  },
+  "Purge Juggernaut": {
+    "Finishers / inevitability": 0.68,
+    "Lockdown / tax": 0.62,
+    "Removal / burn": 0.78
+  },
+  "Purple Knight": {
+    "Swarm bodies": 0.34
+  },
+  "Putrid Presence": {
+    "Evasion": 0.79
+  },
+  "Quagmire": {
+    "Fortification": 0.71,
+    "Lockdown / tax": 0.65,
+    "Terrain / site shaping": 0.57
+  },
+  "Quarrelsome Kobolds": {
+    "Swarm bodies": 0.36
+  },
+  "Queen Guinevere": {
+    "Lockdown / tax": 0.65
+  },
+  "Queen of Midland": {
+    "Card / Atlas engine": 0.65
+  },
+  "Questing Beast": {
+    "Evasion": 0.7,
+    "Fortification": 0.48,
+    "Mobility / reach": 0.58,
+    "Removal / burn": 0.61,
+    "Vanguard bodies": 0.57
+  },
+  "Raal Dromedary": {
+    "Swarm bodies": 0.68
+  },
+  "Rain of Arrows": {
+    "Ranged / projectile": 0.75,
+    "Removal / burn": 0.83
+  },
+  "Raise Dead": {
+    "Recursion": 0.75
+  },
+  "Raise Militia": {
+    "Swarm bodies": 0.6,
+    "Token production": 0.86
+  },
+  "Rat King": {
+    "Card / Atlas engine": 0.63,
+    "Death value": 0.59,
+    "Spell engine": 0.63,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Ravenous Werewolf": {
+    "Charge / burst": 0.79,
+    "Mobility / reach": 0.59,
+    "Vanguard bodies": 0.51
+  },
+  "Raze": {
+    "Removal / burn": 0.6,
+    "Site pressure": 0.76
+  },
+  "Realm-Eater": {
+    "Card / Atlas engine": 0.64,
+    "Lockdown / tax": 0.64,
+    "Removal / burn": 0.59,
+    "Site pressure": 0.92
+  },
+  "Rebecks": {
+    "Charge / burst": 0.81,
+    "Mobility / reach": 0.38,
+    "Vanguard bodies": 0.67
+  },
+  "Recall": {
+    "Mobility / reach": 0.76,
+    "Removal / burn": 0.79
+  },
+  "Reckless Squire": {
+    "Charge / burst": 0.79,
+    "Mobility / reach": 0.36
+  },
+  "Recurring Specter": {
+    "Death value": 0.59,
+    "Lockdown / tax": 0.64,
+    "Recursion": 0.74,
+    "Swarm bodies": 0.43
+  },
+  "Red Desert": {
+    "Charge / burst": 0.61,
+    "Removal / burn": 0.64,
+    "Site pressure": 0.8,
+    "Terrain / site shaping": 0.61
+  },
+  "Red Rock of Ravannis": {
+    "Displacement": 0.65,
+    "Finishers / inevitability": 0.6,
+    "Mobility / reach": 0.55
+  },
+  "Redbreast Robin": {
+    "Evasion": 0.63,
+    "Swarm bodies": 0.54
+  },
+  "Redcap Powries": {
+    "Charge / burst": 0.8,
+    "Mobility / reach": 0.38,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.53
+  },
+  "Redmane Hyena": {
+    "Charge / burst": 0.58,
+    "Swarm bodies": 0.57
+  },
+  "Regurgitator": {
+    "Ranged / projectile": 0.72,
+    "Recursion": 0.74,
+    "Removal / burn": 0.59,
+    "Vanguard bodies": 0.65
+  },
+  "Release the Hounds": {
+    "Card / Atlas engine": 0.8,
+    "Charge / burst": 0.77,
+    "Disruption": 0.64,
+    "Mobility / reach": 0.36
+  },
+  "Relentless Crowd": {
+    "Charge / burst": 0.58,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.54
+  },
+  "Remote Desert": {
+    "Charge / burst": 0.61,
+    "Removal / burn": 0.64,
+    "Site pressure": 0.8,
+    "Terrain / site shaping": 0.61
+  },
+  "Renatus Trueblood": {
+    "Evasion": 0.61,
+    "Protection": 0.64,
+    "Vanguard bodies": 0.47
+  },
+  "Replication": {
+    "Mobility / reach": 0.56
+  },
+  "Rescue": {
+    "Death value": 0.63,
+    "Recursion": 0.78
+  },
+  "Rest in Peace": {
+    "Displacement": 0.62,
+    "Recursion": 0.73,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.66
+  },
+  "Return to Nature": {
+    "Card / Atlas engine": 0.85,
+    "Death value": 0.63,
+    "Disruption": 0.47,
+    "Recursion": 0.79,
+    "Removal / burn": 0.6,
+    "Spell engine": 0.69
+  },
+  "Returned King": {
+    "Charge / burst": 0.57
+  },
+  "Revered Revenant": {
+    "Fortification": 0.47,
+    "Protection": 0.76,
+    "Swarm bodies": 0.82,
+    "Vanguard bodies": 0.52
+  },
+  "Rhitta Gawr of Snowdonia": {
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.51
+  },
+  "Rhongomyniad": {
+    "Avatar arms": 0.73,
+    "Ranged / projectile": 0.73,
+    "Removal / burn": 0.6
+  },
+  "Ribble Boggart": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.6,
+    "Ranged / projectile": 0.73,
+    "Removal / burn": 0.6,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.4
+  },
+  "Riddle Sphinx": {
+    "Card / Atlas engine": 0.63,
+    "Evasion": 0.59,
+    "Spell engine": 0.63
+  },
+  "Rift Valley": {
+    "Displacement": 0.7,
+    "Terrain / site shaping": 0.67
+  },
+  "Rimland Nomads": {
+    "Mobility / reach": 0.59,
+    "Protection": 0.64,
+    "Swarm bodies": 0.55
+  },
+  "Ring of Morrigan": {
+    "Avatar arms": 0.77,
+    "Card / Atlas engine": 0.69,
+    "Removal / burn": 0.62,
+    "Spell engine": 0.69
+  },
+  "Riptide": {
+    "Card / Atlas engine": 0.71,
+    "Displacement": 0.74
+  },
+  "River Rapids": {
+    "Displacement": 0.7,
+    "Terrain / site shaping": 0.58
+  },
+  "River of Blood": {
+    "Fortification": 0.73,
+    "Protection": 0.65,
+    "Terrain / site shaping": 0.59
+  },
+  "River of Flame": {
+    "Removal / burn": 0.61,
+    "Spell engine": 0.67,
+    "Terrain / site shaping": 0.58
+  },
+  "Road to Perdition": {
+    "Charge / burst": 0.57,
+    "Terrain / site shaping": 0.57
+  },
+  "Roaming Monster": {
+    "Mobility / reach": 0.79,
+    "Vanguard bodies": 0.67
+  },
+  "Rolling Boulder": {
+    "Displacement": 0.69,
+    "Mobility / reach": 0.58,
+    "Removal / burn": 0.61
+  },
+  "Root Spider": {
+    "Evasion": 0.52,
+    "Lockdown / tax": 0.68,
+    "Swarm bodies": 0.37
+  },
+  "Roots of Yggdrasil": {
+    "Removal / burn": 0.6,
+    "Terrain / site shaping": 0.66
+  },
+  "Rowdy Boys": {
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.5
+  },
+  "Royal Bodyguard": {
+    "Charge / burst": 0.58,
+    "Fortification": 0.74,
+    "Protection": 0.64,
+    "Removal / burn": 0.48,
+    "Vanguard bodies": 0.74
+  },
+  "Rubble": {
+    "Card / Atlas engine": 0.65,
+    "Terrain / site shaping": 0.65
+  },
+  "Ruby Core": {
+    "Card / Atlas engine": 0.72
+  },
+  "Ruins": {},
+  "Ruler of Thul": {
+    "Charge / burst": 0.83,
+    "Mobility / reach": 0.39,
+    "Vanguard bodies": 0.54
+  },
+  "Rustic Village": {
+    "Lockdown / tax": 0.68,
+    "Swarm bodies": 0.6,
+    "Token production": 0.86
+  },
+  "Sacred Scarabs": {
+    "Death value": 0.63,
+    "Evasion": 0.63,
+    "Removal / burn": 0.84,
+    "Swarm bodies": 0.44
+  },
+  "Sacred Stag": {
+    "Death value": 0.62,
+    "Fortification": 0.49,
+    "Protection": 0.76,
+    "Vanguard bodies": 0.76
+  },
+  "Saint of Redemption": {
+    "Fortification": 0.47,
+    "Protection": 0.74,
+    "Swarm bodies": 0.56
+  },
+  "Saintweald": {
+    "Death value": 0.59
+  },
+  "Salmon of Knowledge": {
+    "Card / Atlas engine": 0.8,
+    "Evasion": 0.59,
+    "Spell engine": 0.84
+  },
+  "Salt the Earth": {
+    "Removal / burn": 0.61,
+    "Site pressure": 0.76,
+    "Terrain / site shaping": 0.69
+  },
+  "Sand Worm": {
+    "Evasion": 0.49,
+    "Vanguard bodies": 0.5
+  },
+  "Sandstorm": {
+    "Disruption": 0.65,
+    "Evasion": 0.45,
+    "Terrain / site shaping": 0.68
+  },
+  "Saracen Raiders": {
+    "Charge / burst": 0.8,
+    "Mobility / reach": 0.8,
+    "Vanguard bodies": 0.53
+  },
+  "Saracen Scout": {
+    "Mobility / reach": 0.8,
+    "Swarm bodies": 0.55
+  },
+  "Satanic Panic": {
+    "Removal / burn": 0.6
+  },
+  "Savior": {
+    "Card / Atlas engine": 0.65,
+    "Fortification": 0.47,
+    "Protection": 0.73
+  },
+  "Sawbones": {
+    "Protection": 0.63,
+    "Swarm bodies": 0.67
+  },
+  "Scarecrow": {
+    "Evasion": 0.62,
+    "Fortification": 0.7,
+    "Lockdown / tax": 0.67,
+    "Removal / burn": 0.83
+  },
+  "Scatter": {
+    "Displacement": 0.69
+  },
+  "Scavenging Fiend": {},
+  "Scent Hounds": {
+    "Evasion": 0.72,
+    "Lockdown / tax": 0.69,
+    "Swarm bodies": 0.56
+  },
+  "Scorched Earth": {
+    "Removal / burn": 0.6,
+    "Site pressure": 0.74,
+    "Terrain / site shaping": 0.64
+  },
+  "Scourge Zombies": {
+    "Death value": 0.62,
+    "Recursion": 0.76
+  },
+  "Screamer": {
+    "Lockdown / tax": 0.69,
+    "Mobility / reach": 0.6,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Screaming Skull": {
+    "Removal / burn": 0.6
+  },
+  "Sea Raider": {
+    "Card / Atlas engine": 0.65,
+    "Disruption": 0.65,
+    "Removal / burn": 0.6,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Sea Serpent": {
+    "Evasion": 0.62,
+    "Vanguard bodies": 0.5
+  },
+  "Sea Witch": {
+    "Evasion": 0.62,
+    "Spell engine": 0.66,
+    "Swarm bodies": 0.55
+  },
+  "Sea of Ash": {
+    "Terrain / site shaping": 0.57
+  },
+  "Search Party": {
+    "Charge / burst": 0.58,
+    "Death value": 0.61,
+    "Recursion": 0.75,
+    "Swarm bodies": 0.33,
+    "Vanguard bodies": 0.5
+  },
+  "Searing Truth": {
+    "Card / Atlas engine": 0.67,
+    "Charge / burst": 0.58,
+    "Finishers / inevitability": 0.65,
+    "Removal / burn": 0.48
+  },
+  "Seasoned Sellsword": {
+    "Displacement": 0.51,
+    "Disruption": 0.74,
+    "Swarm bodies": 0.8,
+    "Vanguard bodies": 0.72
+  },
+  "Second Wind": {
+    "Death value": 0.62,
+    "Disruption": 0.67,
+    "Mobility / reach": 0.59,
+    "Recursion": 0.77,
+    "Spell engine": 0.67
+  },
+  "Secret Tunnel": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.55
+  },
+  "Sedge Crabs": {
+    "Swarm bodies": 0.81,
+    "Vanguard bodies": 0.51
+  },
+  "Seelie Court": {
+    "Card / Atlas engine": 0.79,
+    "Finishers / inevitability": 0.54,
+    "Fortification": 0.46,
+    "Spell engine": 0.63
+  },
+  "Seer": {
+    "Card / Atlas engine": 0.87
+  },
+  "Seirawan Hydra": {
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.51,
+    "Protection": 0.64,
+    "Removal / burn": 0.6
+  },
+  "Selfsame Simulacrum": {},
+  "Sensu of the Fang": {
+    "Avatar arms": 0.71,
+    "Charge / burst": 0.56,
+    "Spell engine": 0.63
+  },
+  "Sentinel Trap": {
+    "Finishers / inevitability": 0.61,
+    "Removal / burn": 0.79
+  },
+  "Seraphim": {
+    "Evasion": 0.59,
+    "Fortification": 0.46,
+    "Protection": 0.71
+  },
+  "Serava Townsfolk": {
+    "Swarm bodies": 0.69
+  },
+  "Seven-League Boots": {
+    "Avatar arms": 0.73,
+    "Mobility / reach": 0.8
+  },
+  "Sewer Rats": {
+    "Evasion": 0.8,
+    "Mobility / reach": 0.8,
+    "Swarm bodies": 0.53
+  },
+  "Shackled Demon": {
+    "Fortification": 0.47,
+    "Lockdown / tax": 0.65,
+    "Spell engine": 0.65,
+    "Vanguard bodies": 0.79
+  },
+  "Shallow Grave": {
+    "Disruption": 0.65
+  },
+  "Shameless Squire": {
+    "Mobility / reach": 0.59
+  },
+  "Shapeshift": {
+    "Card / Atlas engine": 0.66
+  },
+  "Shatter Strike": {
+    "Mobility / reach": 0.58,
+    "Removal / burn": 0.61
+  },
+  "Shellycoat": {
+    "Evasion": 0.63,
+    "Swarm bodies": 0.56
+  },
+  "Sherwood Huntress": {
+    "Ranged / projectile": 0.74,
+    "Swarm bodies": 0.55
+  },
+  "Shield Maidens": {
+    "Swarm bodies": 0.36
+  },
+  "Shield Wall": {
+    "Fortification": 0.65
+  },
+  "Shifting Sands": {},
+  "Shoggoth": {
+    "Evasion": 0.82,
+    "Finishers / inevitability": 0.47,
+    "Fortification": 0.47
+  },
+  "Shrike Orchard": {
+    "Removal / burn": 0.59
+  },
+  "Shrine of the Dragonlord": {
+    "Displacement": 0.69,
+    "Mobility / reach": 0.58
+  },
+  "Shrink": {},
+  "Siege Ballista": {
+    "Avatar arms": 0.71,
+    "Ranged / projectile": 0.71,
+    "Removal / burn": 0.59
+  },
+  "Siege Giant": {
+    "Vanguard bodies": 0.74
+  },
+  "Silence": {
+    "Disruption": 0.65,
+    "Lockdown / tax": 0.65,
+    "Terrain / site shaping": 0.68
+  },
+  "Silent Hills": {
+    "Disruption": 0.69,
+    "Lockdown / tax": 0.69,
+    "Terrain / site shaping": 0.6
+  },
+  "Silver Bullet": {
+    "Card / Atlas engine": 0.88
+  },
+  "Silver Valkyries": {
+    "Evasion": 0.59
+  },
+  "Simple Village": {
+    "Lockdown / tax": 0.69,
+    "Swarm bodies": 0.6,
+    "Token production": 0.87
+  },
+  "Sinister Pond": {},
+  "Sinkhole": {
+    "Removal / burn": 0.61,
+    "Site pressure": 0.9,
+    "Terrain / site shaping": 0.7
+  },
+  "Sinterfee": {
+    "Disruption": 0.66,
+    "Lockdown / tax": 0.66,
+    "Swarm bodies": 0.57
+  },
+  "Sir Agravaine": {
+    "Evasion": 0.69,
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.36
+  },
+  "Sir Balin": {
+    "Evasion": 0.5,
+    "Removal / burn": 0.6,
+    "Site pressure": 0.76,
+    "Vanguard bodies": 0.57
+  },
+  "Sir Bedivere": {
+    "Card / Atlas engine": 0.64,
+    "Mobility / reach": 0.57,
+    "Vanguard bodies": 0.57
+  },
+  "Sir Bors the Younger": {
+    "Evasion": 0.69,
+    "Lockdown / tax": 0.66,
+    "Ranged / projectile": 0.74,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.52
+  },
+  "Sir Gaheris": {
+    "Fortification": 0.47,
+    "Vanguard bodies": 0.63
+  },
+  "Sir Galahad": {
+    "Fortification": 0.52,
+    "Protection": 0.64,
+    "Vanguard bodies": 0.69
+  },
+  "Sir Gareth": {
+    "Vanguard bodies": 0.55
+  },
+  "Sir Gawain": {
+    "Card / Atlas engine": 0.65,
+    "Fortification": 0.47,
+    "Removal / burn": 0.47,
+    "Vanguard bodies": 0.63
+  },
+  "Sir Ironside": {
+    "Charge / burst": 0.57,
+    "Vanguard bodies": 0.73
+  },
+  "Sir Kay": {
+    "Vanguard bodies": 0.72
+  },
+  "Sir Lamorak": {
+    "Death value": 0.61,
+    "Vanguard bodies": 0.74
+  },
+  "Sir Lancelot": {
+    "Displacement": 0.52,
+    "Finishers / inevitability": 0.49,
+    "Fortification": 0.51
+  },
+  "Sir Mordred": {
+    "Death value": 0.6,
+    "Removal / burn": 0.6
+  },
+  "Sir Morien": {
+    "Fortification": 0.69,
+    "Lockdown / tax": 0.66,
+    "Ranged / projectile": 0.74,
+    "Removal / burn": 0.47,
+    "Swarm bodies": 0.57,
+    "Token production": 0.86,
+    "Vanguard bodies": 0.52
+  },
+  "Sir Pelleas": {
+    "Evasion": 0.61,
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.52
+  },
+  "Sir Pellinore": {
+    "Card / Atlas engine": 0.65,
+    "Charge / burst": 0.8,
+    "Finishers / inevitability": 0.55,
+    "Mobility / reach": 0.37,
+    "Removal / burn": 0.6
+  },
+  "Sir Perceval": {
+    "Card / Atlas engine": 0.66,
+    "Fortification": 0.47,
+    "Vanguard bodies": 0.74
+  },
+  "Sir Priamus": {
+    "Protection": 0.63,
+    "Removal / burn": 0.6,
+    "Vanguard bodies": 0.57
+  },
+  "Sir Tom Thumb": {
+    "Death value": 0.61,
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.57
+  },
+  "Sir Tristan": {
+    "Lockdown / tax": 0.64
+  },
+  "Sir Yvain": {
+    "Charge / burst": 0.56,
+    "Vanguard bodies": 0.56
+  },
+  "Sirian Templar": {
+    "Protection": 0.61,
+    "Recursion": 0.73,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Sirocco Scorpions": {
+    "Removal / burn": 0.62,
+    "Swarm bodies": 0.55,
+    "Vanguard bodies": 0.59
+  },
+  "Sister Stefánia": {
+    "Disruption": 0.66,
+    "Fortification": 0.48,
+    "Lockdown / tax": 0.66,
+    "Protection": 0.74,
+    "Swarm bodies": 0.57
+  },
+  "Sisters of Avalon": {
+    "Card / Atlas engine": 0.81,
+    "Disruption": 0.65,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.44
+  },
+  "Sisters of Silence": {
+    "Disruption": 0.65,
+    "Lockdown / tax": 0.65,
+    "Swarm bodies": 0.44
+  },
+  "Sjaelström": {
+    "Card / Atlas engine": 0.79,
+    "Spell engine": 0.63
+  },
+  "Skeleton Mage": {
+    "Death value": 0.6,
+    "Recursion": 0.75,
+    "Spell engine": 0.65,
+    "Swarm bodies": 0.57,
+    "Token production": 0.78
+  },
+  "Skirmishers of Mu": {
+    "Mobility / reach": 0.78,
+    "Ranged / projectile": 0.88,
+    "Vanguard bodies": 0.52
+  },
+  "Sky Baron": {
+    "Evasion": 0.59,
+    "Finishers / inevitability": 0.67,
+    "Fortification": 0.5,
+    "Lockdown / tax": 0.64,
+    "Removal / burn": 0.8
+  },
+  "Sleep": {
+    "Lockdown / tax": 0.69,
+    "Removal / burn": 0.48
+  },
+  "Slimy Mutants": {
+    "Evasion": 0.62,
+    "Vanguard bodies": 0.45
+  },
+  "Sling Pixies": {
+    "Evasion": 0.59,
+    "Protection": 0.62,
+    "Ranged / projectile": 0.72,
+    "Swarm bodies": 0.53
+  },
+  "Slobbermaw": {
+    "Death value": 0.6,
+    "Removal / burn": 0.6,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.73
+  },
+  "Slumbering Giantess": {
+    "Fortification": 0.47,
+    "Lockdown / tax": 0.65,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.79
+  },
+  "Sly Fox": {
+    "Evasion": 0.7,
+    "Swarm bodies": 0.53
+  },
+  "Smite": {
+    "Removal / burn": 0.64
+  },
+  "Smokestacks of Gnaak": {
+    "Terrain / site shaping": 0.58
+  },
+  "Snallygaster": {
+    "Mobility / reach": 0.6,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.52
+  },
+  "Sneak Thief": {
+    "Evasion": 0.66,
+    "Swarm bodies": 0.55
+  },
+  "Snow Leopard": {
+    "Swarm bodies": 0.68
+  },
+  "Snowball": {
+    "Mobility / reach": 0.58,
+    "Ranged / projectile": 0.74,
+    "Removal / burn": 0.48
+  },
+  "Sold-out Cemetery": {
+    "Death value": 0.6,
+    "Displacement": 0.68,
+    "Recursion": 0.75
+  },
+  "Sorcerer": {
+    "Card / Atlas engine": 0.89,
+    "Spell engine": 0.66
+  },
+  "Sow the Earth": {
+    "Card / Atlas engine": 0.66,
+    "Displacement": 0.57,
+    "Disruption": 0.66,
+    "Terrain / site shaping": 0.69
+  },
+  "Sparkmage": {
+    "Card / Atlas engine": 0.63,
+    "Charge / burst": 0.56,
+    "Removal / burn": 0.66
+  },
+  "Spear of Destiny": {
+    "Avatar arms": 0.7,
+    "Lockdown / tax": 0.62,
+    "Mobility / reach": 0.55,
+    "Removal / burn": 0.58
+  },
+  "Spearmarshal": {
+    "Swarm bodies": 0.56,
+    "Token production": 0.76,
+    "Vanguard bodies": 0.51
+  },
+  "Spectral Stalker": {
+    "Evasion": 0.74,
+    "Swarm bodies": 0.56
+  },
+  "Spellslinger": {
+    "Card / Atlas engine": 0.85,
+    "Spell engine": 0.95
+  },
+  "Sphere of Animosity": {
+    "Protection": 0.65
+  },
+  "Sphinx Sarcophagus": {
+    "Card / Atlas engine": 0.78,
+    "Spell engine": 0.62
+  },
+  "Spin Attack": {},
+  "Spire": {},
+  "Spire Lich": {
+    "Charge / burst": 0.56,
+    "Ranged / projectile": 0.71,
+    "Spell engine": 0.63
+  },
+  "Spore Spouts": {
+    "Mobility / reach": 0.82
+  },
+  "Spring River": {
+    "Card / Atlas engine": 0.69,
+    "Disruption": 0.69,
+    "Spell engine": 0.69,
+    "Terrain / site shaping": 0.61
+  },
+  "Squeakers": {
+    "Death value": 0.62,
+    "Swarm bodies": 0.53
+  },
+  "Squirming Mass": {
+    "Death value": 0.59
+  },
+  "Stagecoach": {
+    "Charge / burst": 0.78,
+    "Mobility / reach": 0.57,
+    "Swarm bodies": 0.35
+  },
+  "Standing Stones": {
+    "Spell engine": 0.64
+  },
+  "Star-seeds of Uhr": {
+    "Displacement": 0.56,
+    "Terrain / site shaping": 0.63
+  },
+  "Stargazer": {
+    "Card / Atlas engine": 0.8,
+    "Spell engine": 0.64,
+    "Terrain / site shaping": 0.64
+  },
+  "Static Servant": {
+    "Swarm bodies": 0.55
+  },
+  "Steppe": {},
+  "Stinging Kelp": {
+    "Charge / burst": 0.6,
+    "Removal / burn": 0.63,
+    "Site pressure": 0.78
+  },
+  "Stitched Abomination": {
+    "Removal / burn": 0.59
+  },
+  "Stone Rain": {
+    "Charge / burst": 0.56,
+    "Removal / burn": 0.59,
+    "Site pressure": 0.74
+  },
+  "Stone-gaze Gorgons": {
+    "Lockdown / tax": 0.65,
+    "Vanguard bodies": 0.52
+  },
+  "Stormy Seas": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48
+  },
+  "Stream": {},
+  "Sturmgeist": {
+    "Evasion": 0.61,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.38
+  },
+  "Stygian Archers": {
+    "Ranged / projectile": 0.74,
+    "Removal / burn": 0.6,
+    "Swarm bodies": 0.57,
+    "Token production": 0.84,
+    "Vanguard bodies": 0.52
+  },
+  "Sugarplum Pixies": {
+    "Evasion": 0.6,
+    "Swarm bodies": 0.56
+  },
+  "Summer River": {
+    "Card / Atlas engine": 0.69,
+    "Disruption": 0.69,
+    "Spell engine": 0.69,
+    "Terrain / site shaping": 0.6
+  },
+  "Summoning Sphere": {
+    "Mobility / reach": 0.48,
+    "Terrain / site shaping": 0.69,
+    "Vanguard bodies": 0.33
+  },
+  "Sunken Treasure": {
+    "Card / Atlas engine": 0.62,
+    "Death value": 0.58,
+    "Mobility / reach": 0.55,
+    "Terrain / site shaping": 0.62
+  },
+  "Survivors of Serava": {
+    "Evasion": 0.69,
+    "Swarm bodies": 0.55
+  },
+  "Swamp Buffalo": {
+    "Swarm bodies": 0.68
+  },
+  "Swan Maidens": {
+    "Evasion": 0.79,
+    "Swarm bodies": 0.55
+  },
+  "Swap": {
+    "Displacement": 0.71
+  },
+  "Swindler Troupe": {
+    "Evasion": 0.7,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.37
+  },
+  "Swiven Scout": {
+    "Mobility / reach": 0.77,
+    "Swarm bodies": 0.55
+  },
+  "Sword and Shield": {
+    "Avatar arms": 0.74,
+    "Charge / burst": 0.57
+  },
+  "Sylvan Splendor": {
+    "Card / Atlas engine": 0.81,
+    "Disruption": 0.65,
+    "Spell engine": 0.65,
+    "Terrain / site shaping": 0.68
+  },
+  "Symmetric Suffering": {
+    "Death value": 0.6
+  },
+  "Tabula Rasa": {
+    "Avatar arms": 0.7,
+    "Disruption": 0.62,
+    "Lockdown / tax": 0.62
+  },
+  "Tactical Move": {},
+  "Tadpole Pool": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48,
+    "Swarm bodies": 0.58,
+    "Terrain / site shaping": 0.58,
+    "Token production": 0.87
+  },
+  "Talamh Dreig": {
+    "Charge / burst": 0.57,
+    "Displacement": 0.68,
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51
+  },
+  "Tawny": {
+    "Evasion": 0.58,
+    "Lockdown / tax": 0.62,
+    "Spell engine": 0.62
+  },
+  "Tax Collector": {
+    "Lockdown / tax": 0.66,
+    "Swarm bodies": 0.34
+  },
+  "Telekinesis": {
+    "Displacement": 0.67,
+    "Mobility / reach": 0.56
+  },
+  "Teleport": {
+    "Mobility / reach": 0.61
+  },
+  "Templar": {
+    "Card / Atlas engine": 0.62
+  },
+  "Temple of Moloch": {
+    "Death value": 0.61,
+    "Removal / burn": 0.85
+  },
+  "Ten-tonne Slug": {
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.53
+  },
+  "Thankless Squire": {
+    "Lockdown / tax": 0.65
+  },
+  "The Apex of Babel": {
+    "Card / Atlas engine": 0.83,
+    "Spell engine": 0.65
+  },
+  "The Base of Babel": {
+    "Terrain / site shaping": 0.57
+  },
+  "The Black Plague": {
+    "Disruption": 0.68,
+    "Terrain / site shaping": 0.71
+  },
+  "The Colour Out of Space": {
+    "Card / Atlas engine": 0.68,
+    "Displacement": 0.59,
+    "Disruption": 0.68,
+    "Site pressure": 0.78,
+    "Terrain / site shaping": 0.68
+  },
+  "The Doom of Dilmun": {
+    "Evasion": 0.91,
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.52,
+    "Removal / burn": 0.61
+  },
+  "The Empyrean": {
+    "Card / Atlas engine": 0.63,
+    "Fortification": 0.69,
+    "Protection": 0.71
+  },
+  "The Faerie Queene": {
+    "Evasion": 0.59,
+    "Protection": 0.62,
+    "Spell engine": 0.64,
+    "Vanguard bodies": 0.36
+  },
+  "The Flood": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.64
+  },
+  "The Geistwood": {
+    "Death value": 0.6
+  },
+  "The Great Drowning of Men": {
+    "Displacement": 0.62,
+    "Disruption": 0.64,
+    "Removal / burn": 0.59,
+    "Site pressure": 0.74,
+    "Terrain / site shaping": 0.67
+  },
+  "The Great Famine": {
+    "Disruption": 0.68,
+    "Terrain / site shaping": 0.71
+  },
+  "The Green Knight": {
+    "Death value": 0.62,
+    "Finishers / inevitability": 0.45,
+    "Fortification": 0.57
+  },
+  "The Hexham Haunts": {
+    "Death value": 0.6,
+    "Evasion": 0.81,
+    "Recursion": 0.76,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.37
+  },
+  "The Immortal Throne": {
+    "Card / Atlas engine": 0.63,
+    "Disruption": 0.63
+  },
+  "The Inquisition": {
+    "Spell engine": 0.67,
+    "Vanguard bodies": 0.53
+  },
+  "The Lady of the Lake": {
+    "Card / Atlas engine": 0.67,
+    "Death value": 0.61,
+    "Evasion": 0.61,
+    "Recursion": 0.77,
+    "Spell engine": 0.67,
+    "Swarm bodies": 0.36,
+    "Vanguard bodies": 0.38
+  },
+  "The Malleus Maleficarum": {
+    "Card / Atlas engine": 0.82,
+    "Disruption": 0.64,
+    "Spell engine": 0.64
+  },
+  "The Manor at Daperyll Hill": {
+    "Charge / burst": 0.58,
+    "Fortification": 0.73,
+    "Protection": 0.65,
+    "Removal / burn": 0.61
+  },
+  "The Ninth Legion": {
+    "Death value": 0.6,
+    "Evasion": 0.71,
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51,
+    "Token production": 0.9
+  },
+  "The Pallid Bust": {
+    "Death value": 0.59,
+    "Recursion": 0.74,
+    "Removal / burn": 0.59
+  },
+  "The Rack": {
+    "Avatar arms": 0.74,
+    "Charge / burst": 0.58,
+    "Removal / burn": 0.48
+  },
+  "The Round Table": {
+    "Card / Atlas engine": 0.64
+  },
+  "The Void": {
+    "Displacement": 0.58,
+    "Terrain / site shaping": 0.66
+  },
+  "The Wild Hunt": {
+    "Charge / burst": 0.78,
+    "Evasion": 0.6,
+    "Finishers / inevitability": 0.55,
+    "Fortification": 0.47,
+    "Mobility / reach": 0.37
+  },
+  "Thieving Magpie": {
+    "Evasion": 0.62,
+    "Mobility / reach": 0.59,
+    "Swarm bodies": 0.53
+  },
+  "Thin Ice": {
+    "Displacement": 0.72,
+    "Lockdown / tax": 0.42,
+    "Removal / burn": 0.56,
+    "Terrain / site shaping": 0.78
+  },
+  "Thing in the Ice": {
+    "Evasion": 0.47,
+    "Fortification": 0.51,
+    "Lockdown / tax": 0.65,
+    "Protection": 0.63,
+    "Swarm bodies": 0.35,
+    "Vanguard bodies": 0.94
+  },
+  "Those Who Linger": {
+    "Card / Atlas engine": 0.79,
+    "Death value": 0.59,
+    "Swarm bodies": 0.56,
+    "Token production": 0.81
+  },
+  "Thumb Screws": {
+    "Charge / burst": 0.61,
+    "Finishers / inevitability": 0.46,
+    "Spell engine": 0.63
+  },
+  "Thundering Giant": {
+    "Charge / burst": 0.76,
+    "Mobility / reach": 0.56
+  },
+  "Thunderstorm": {
+    "Charge / burst": 0.57,
+    "Finishers / inevitability": 0.64,
+    "Removal / burn": 0.6,
+    "Site pressure": 0.76,
+    "Terrain / site shaping": 0.69
+  },
+  "Tide Naiads": {
+    "Evasion": 0.59,
+    "Swarm bodies": 0.55,
+    "Terrain / site shaping": 0.63
+  },
+  "Tintagel": {
+    "Card / Atlas engine": 0.67,
+    "Disruption": 0.67
+  },
+  "Tithe": {
+    "Card / Atlas engine": 0.67
+  },
+  "Tombstone Wardens": {
+    "Avatar arms": 0.73,
+    "Evasion": 0.6
+  },
+  "Toolbox": {
+    "Card / Atlas engine": 0.9
+  },
+  "Tooth Faeries": {
+    "Evasion": 0.6,
+    "Swarm bodies": 0.56
+  },
+  "Torch and Pitchfork": {
+    "Avatar arms": 0.75,
+    "Charge / burst": 0.59
+  },
+  "Torrid Omphalos": {
+    "Card / Atlas engine": 0.67,
+    "Spell engine": 0.67
+  },
+  "Torshammar Trinket": {
+    "Avatar arms": 0.76,
+    "Charge / burst": 0.59
+  },
+  "Tournament Grounds": {
+    "Disruption": 0.64
+  },
+  "Town": {},
+  "Town Priest": {
+    "Swarm bodies": 0.54
+  },
+  "Trade Encampment": {
+    "Card / Atlas engine": 0.79,
+    "Disruption": 0.63
+  },
+  "Tragedy Worrywart": {
+    "Protection": 0.62,
+    "Spell engine": 0.84
+  },
+  "Treetop Hideout": {
+    "Evasion": 0.71
+  },
+  "Trial by Fire": {
+    "Removal / burn": 0.62
+  },
+  "Trial by Water": {
+    "Displacement": 0.62,
+    "Removal / burn": 0.48
+  },
+  "Tringh Constrictor": {
+    "Lockdown / tax": 0.63,
+    "Mobility / reach": 0.76,
+    "Removal / burn": 0.59,
+    "Vanguard bodies": 0.51
+  },
+  "Troll Bridge": {
+    "Displacement": 0.58,
+    "Disruption": 0.68,
+    "Lockdown / tax": 0.55,
+    "Removal / burn": 0.48,
+    "Terrain / site shaping": 0.74
+  },
+  "Troubled Town": {
+    "Card / Atlas engine": 0.83,
+    "Disruption": 0.67
+  },
+  "Truesight Crossbow": {
+    "Avatar arms": 0.72,
+    "Evasion": 0.67,
+    "Ranged / projectile": 0.72
+  },
+  "Tufted Turtles": {
+    "Protection": 0.67,
+    "Removal / burn": 0.48,
+    "Swarm bodies": 0.36
+  },
+  "Tvinnax Berserker": {
+    "Lockdown / tax": 0.62,
+    "Removal / burn": 0.58,
+    "Vanguard bodies": 0.5
+  },
+  "Twilight Bloom": {
+    "Card / Atlas engine": 0.68
+  },
+  "Twist of Fate": {
+    "Charge / burst": 0.61,
+    "Finishers / inevitability": 0.46
+  },
+  "Ultimate Horror": {
+    "Evasion": 0.81,
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.52,
+    "Mobility / reach": 0.58,
+    "Recursion": 0.76,
+    "Removal / burn": 0.84
+  },
+  "Undead Ambush": {
+    "Swarm bodies": 0.57,
+    "Token production": 0.83
+  },
+  "Undertaker Engine": {
+    "Evasion": 0.48
+  },
+  "Undertow": {
+    "Displacement": 0.69,
+    "Terrain / site shaping": 0.58
+  },
+  "Undesirables": {
+    "Evasion": 0.48,
+    "Finishers / inevitability": 0.45,
+    "Fortification": 0.68,
+    "Lockdown / tax": 0.65
+  },
+  "Unland Angler": {
+    "Evasion": 0.58,
+    "Mobility / reach": 0.55,
+    "Removal / burn": 0.78,
+    "Vanguard bodies": 0.44
+  },
+  "Unland Eel": {
+    "Displacement": 0.67,
+    "Evasion": 0.59,
+    "Swarm bodies": 0.55
+  },
+  "Unlikely Alliance": {
+    "Card / Atlas engine": 0.63,
+    "Removal / burn": 0.79
+  },
+  "Unravel": {
+    "Disruption": 0.47,
+    "Recursion": 0.78,
+    "Removal / burn": 0.84
+  },
+  "Unseelie Court": {
+    "Disruption": 0.63,
+    "Finishers / inevitability": 0.54,
+    "Fortification": 0.46
+  },
+  "Updraft Ridge": {
+    "Evasion": 0.6,
+    "Mobility / reach": 0.57,
+    "Terrain / site shaping": 0.57
+  },
+  "Upwelling": {
+    "Removal / burn": 0.79
+  },
+  "Valley": {},
+  "Valley of Delight": {},
+  "Valor": {
+    "Avatar arms": 0.51,
+    "Charge / burst": 0.56
+  },
+  "Vampire Bats": {
+    "Evasion": 0.63,
+    "Protection": 0.66,
+    "Swarm bodies": 0.56
+  },
+  "Vandal Imp": {
+    "Removal / burn": 0.63,
+    "Swarm bodies": 0.44
+  },
+  "Vanguard Knights": {
+    "Charge / burst": 0.57,
+    "Swarm bodies": 0.35
+  },
+  "Vanishment": {
+    "Card / Atlas engine": 0.82,
+    "Evasion": 0.69,
+    "Removal / burn": 0.82,
+    "Spell engine": 0.66
+  },
+  "Vantage Hills": {
+    "Ranged / projectile": 0.71,
+    "Terrain / site shaping": 0.56
+  },
+  "Varistus the Evictor": {
+    "Evasion": 0.7,
+    "Removal / burn": 0.59,
+    "Swarm bodies": 0.34
+  },
+  "Varmint Warrens": {
+    "Evasion": 0.47,
+    "Protection": 0.63
+  },
+  "Vast Desert": {
+    "Charge / burst": 0.61,
+    "Removal / burn": 0.64,
+    "Site pressure": 0.8,
+    "Terrain / site shaping": 0.61
+  },
+  "Vatn Draconis": {
+    "Displacement": 0.68,
+    "Evasion": 0.6,
+    "Finishers / inevitability": 0.68,
+    "Fortification": 0.51
+  },
+  "Vaults of Zul": {
+    "Card / Atlas engine": 0.63,
+    "Disruption": 0.56,
+    "Lockdown / tax": 0.56
+  },
+  "Vengeful Heir": {
+    "Death value": 0.59,
+    "Removal / burn": 0.59
+  },
+  "Verdant Knight": {
+    "Swarm bodies": 0.35
+  },
+  "Vesper Swarm": {
+    "Evasion": 0.59,
+    "Mobility / reach": 0.56,
+    "Vanguard bodies": 0.45
+  },
+  "Vesuvius": {
+    "Death value": 0.61,
+    "Removal / burn": 0.85,
+    "Terrain / site shaping": 0.58
+  },
+  "Vikings": {
+    "Removal / burn": 0.81,
+    "Vanguard bodies": 0.66
+  },
+  "Vile Imp": {
+    "Removal / burn": 0.65,
+    "Swarm bodies": 0.58
+  },
+  "Vindictive Nation": {
+    "Removal / burn": 0.61,
+    "Site pressure": 0.77
+  },
+  "Virgin in Prayer": {
+    "Fortification": 0.47,
+    "Protection": 0.76,
+    "Swarm bodies": 0.44
+  },
+  "Vivien the Enchantress": {
+    "Spell engine": 0.65
+  },
+  "Vril Revenant": {
+    "Charge / burst": 0.57,
+    "Evasion": 0.71,
+    "Swarm bodies": 0.44
+  },
+  "Wall of Air": {
+    "Evasion": 0.62,
+    "Fortification": 0.69,
+    "Lockdown / tax": 0.66,
+    "Terrain / site shaping": 0.69
+  },
+  "Wall of Brambles": {
+    "Fortification": 0.69,
+    "Terrain / site shaping": 0.69
+  },
+  "Wall of Fire": {
+    "Fortification": 0.69,
+    "Terrain / site shaping": 0.69
+  },
+  "Wall of Ice": {
+    "Evasion": 0.46,
+    "Fortification": 0.7,
+    "Lockdown / tax": 0.67,
+    "Terrain / site shaping": 0.7
+  },
+  "War Horse": {
+    "Charge / burst": 0.8,
+    "Mobility / reach": 0.58,
+    "Swarm bodies": 0.57
+  },
+  "Warp Spasm": {
+    "Death value": 0.61,
+    "Removal / burn": 0.61
+  },
+  "Wasteland": {},
+  "Watchtower": {
+    "Evasion": 0.7,
+    "Lockdown / tax": 0.67,
+    "Terrain / site shaping": 0.58
+  },
+  "Watery Grave": {
+    "Displacement": 0.57,
+    "Removal / burn": 0.6,
+    "Swarm bodies": 0.57,
+    "Terrain / site shaping": 0.57,
+    "Token production": 0.86
+  },
+  "Wave of Eviction": {
+    "Mobility / reach": 0.55,
+    "Terrain / site shaping": 0.62
+  },
+  "Waveshaper": {
+    "Card / Atlas engine": 0.65,
+    "Displacement": 0.65,
+    "Evasion": 0.6,
+    "Lockdown / tax": 0.65,
+    "Terrain / site shaping": 0.65
+  },
+  "Wayfaring Pilgrim": {
+    "Card / Atlas engine": 0.64,
+    "Swarm bodies": 0.43
+  },
+  "Waypoint Portal": {
+    "Mobility / reach": 0.56
+  },
+  "Weathered Trunks": {
+    "Vanguard bodies": 0.74
+  },
+  "Wedding Hall": {
+    "Card / Atlas engine": 0.64
+  },
+  "Weightless Squire": {
+    "Evasion": 0.62
+  },
+  "Whirling Blades": {
+    "Charge / burst": 0.56,
+    "Mobility / reach": 0.78,
+    "Removal / burn": 0.66
+  },
+  "Whirlwind": {
+    "Displacement": 0.66,
+    "Disruption": 0.63,
+    "Removal / burn": 0.79
+  },
+  "White Hart": {
+    "Evasion": 0.48,
+    "Swarm bodies": 0.36
+  },
+  "White Knight": {
+    "Fortification": 0.46,
+    "Vanguard bodies": 0.61
+  },
+  "Wiccan Tools": {
+    "Card / Atlas engine": 0.84,
+    "Death value": 0.63,
+    "Disruption": 0.68,
+    "Spell engine": 0.68
+  },
+  "Wicked Witch": {
+    "Spell engine": 0.65
+  },
+  "Wicker Manikin": {
+    "Spell engine": 0.65
+  },
+  "Wild Boars": {
+    "Swarm bodies": 0.68
+  },
+  "Wild Fanatic": {
+    "Charge / burst": 0.82,
+    "Mobility / reach": 0.38,
+    "Swarm bodies": 0.57
+  },
+  "Wildfire": {
+    "Disruption": 0.65,
+    "Finishers / inevitability": 0.63,
+    "Removal / burn": 0.81,
+    "Terrain / site shaping": 0.68
+  },
+  "Willing Tribute": {
+    "Death value": 0.62,
+    "Swarm bodies": 0.55
+  },
+  "Wills-o'-the-Wisp": {
+    "Evasion": 0.69,
+    "Mobility / reach": 0.56,
+    "Swarm bodies": 0.53
+  },
+  "Wind Sylph": {
+    "Displacement": 0.66,
+    "Evasion": 0.59,
+    "Spell engine": 0.83,
+    "Swarm bodies": 0.43
+  },
+  "Windblast": {
+    "Displacement": 0.66
+  },
+  "Windmill": {},
+  "Wings of Invention": {
+    "Avatar arms": 0.7,
+    "Evasion": 0.58,
+    "Mobility / reach": 0.55
+  },
+  "Winter Nymph": {
+    "Evasion": 0.68,
+    "Swarm bodies": 0.56
+  },
+  "Winter River": {
+    "Card / Atlas engine": 0.68,
+    "Disruption": 0.68,
+    "Spell engine": 0.68,
+    "Terrain / site shaping": 0.6
+  },
+  "Witch": {
+    "Card / Atlas engine": 0.65,
+    "Charge / burst": 0.57,
+    "Disruption": 0.47,
+    "Removal / burn": 0.47
+  },
+  "Witching Hour": {
+    "Avatar arms": 0.52,
+    "Charge / burst": 0.57,
+    "Evasion": 0.6,
+    "Spell engine": 0.65
+  },
+  "Witherwing Hero": {
+    "Evasion": 0.6,
+    "Vanguard bodies": 0.51
+  },
+  "Wizard's Den": {
+    "Card / Atlas engine": 0.83,
+    "Disruption": 0.67,
+    "Spell engine": 0.67
+  },
+  "Wolpertinger": {
+    "Charge / burst": 0.56
+  },
+  "Wormelow Tump": {
+    "Death value": 0.61,
+    "Recursion": 0.76
+  },
+  "Wraetannis Titan": {
+    "Finishers / inevitability": 0.69,
+    "Fortification": 0.51
+  },
+  "Wrath of the Sea": {
+    "Displacement": 0.62,
+    "Finishers / inevitability": 0.69,
+    "Removal / burn": 0.79,
+    "Terrain / site shaping": 0.63
+  },
+  "Wreathed in Righteousness": {
+    "Charge / burst": 0.56,
+    "Fortification": 0.46,
+    "Protection": 0.71,
+    "Removal / burn": 0.79
+  },
+  "Wuthering Heights": {
+    "Terrain / site shaping": 0.59
+  },
+  "Wyvern": {
+    "Displacement": 0.67,
+    "Evasion": 0.59,
+    "Finishers / inevitability": 0.46,
+    "Fortification": 0.46
+  },
+  "Xeraphine Konrul": {
+    "Displacement": 0.66,
+    "Evasion": 0.59,
+    "Finishers / inevitability": 0.54,
+    "Fortification": 0.46,
+    "Recursion": 0.73
+  },
+  "Year of the Blaze": {
+    "Removal / burn": 0.6,
+    "Site pressure": 0.74,
+    "Terrain / site shaping": 0.67
+  },
+  "Yellow Knight": {
+    "Swarm bodies": 0.35
+  },
+  "Yog-Sothoth": {
+    "Finishers / inevitability": 0.88,
+    "Fortification": 0.68,
+    "Terrain / site shaping": 0.65
+  },
+  "Yokai Kappas": {
+    "Disruption": 0.62,
+    "Vanguard bodies": 0.5
+  },
+  "Young Master Damion": {
+    "Card / Atlas engine": 0.83,
+    "Token production": 0.85
+  },
+  "Yourke Crossbowmen": {
+    "Protection": 0.62,
+    "Ranged / projectile": 0.72,
+    "Swarm bodies": 0.34,
+    "Vanguard bodies": 0.51
+  },
+  "Zap!": {
+    "Removal / burn": 0.65
+  },
+  "Zephyranne Airship": {
+    "Evasion": 0.59,
+    "Mobility / reach": 0.76,
+    "Vanguard bodies": 0.36
+  },
+  "Zeppelin of Zealots": {
+    "Evasion": 0.59,
+    "Fortification": 0.46,
+    "Protection": 0.71,
+    "Vanguard bodies": 0.45
+  },
+  "Zombie Bruiser": {
+    "Death value": 0.59,
+    "Recursion": 0.74,
+    "Swarm bodies": 0.56,
+    "Token production": 0.77,
+    "Vanguard bodies": 0.72
+  },
+  "Zombie Horde": {
+    "Fortification": 0.45,
+    "Vanguard bodies": 0.79
+  },
+  "Älvalinne Dryads": {
+    "Swarm bodies": 0.42
+  }
+}

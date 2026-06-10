@@ -3,10 +3,10 @@
  *
  * Three overlapping grids:
  * 1. DRAWN GRID: 55×55px - visual grid lines (can be changed independently)
- * 2. PORTRAIT SNAP GRID: Same spacing, offset vertically by half grid height
- *    - Portrait cards snap their CENTER to intersections of this grid
- * 3. LANDSCAPE SNAP GRID: Same spacing, offset horizontally by half grid width
- *    - Landscape cards snap their CENTER to intersections of this grid
+ * 2. PORTRAIT SNAP GRID: Same spacing, offset so portrait cards sit centered
+ *    inside a 2×3 block of drawn grid cells
+ * 3. LANDSCAPE SNAP GRID: Same spacing, offset so site cards sit centered
+ *    inside a 3×2 block of drawn grid cells
  *
  * Cards are always drawn from their CENTER point at grid intersections.
  * This allows the drawn grid to be changed (even non-square) without affecting snapping.
@@ -31,9 +31,9 @@ export const SNAP_GRID = {
 } as const;
 
 /**
- * Snap grid offsets from drawn grid origin
- * - Portrait: offset down by half grid height (cards sit between horizontal lines)
- * - Landscape: offset right by half grid width (cards sit between vertical lines)
+ * Snap grid offsets from drawn grid origin.
+ * These are the repeated center positions for the visible 2×3 portrait and
+ * 3×2 landscape card blocks.
  */
 export const SNAP_GRID_OFFSET = {
   PORTRAIT: {
@@ -337,6 +337,14 @@ const THRESHOLD_GROUP_ORDER: ThresholdGroup[] = [
 ];
 
 const TYPE_ORDER: CardType[] = ["Minion", "Magic", "Aura", "Artifact", "Site"];
+const SHELF_TYPE_ROW_ORDER: CardType[] = [
+  "Avatar",
+  "Minion",
+  "Magic",
+  "Artifact",
+  "Aura",
+  "Site",
+];
 
 const TYPE_LABELS: Record<CardType, string> = {
   Avatar: "Avatars",
@@ -361,7 +369,7 @@ export interface LayoutCardInput {
 
 export interface LayoutConfig {
   cards: LayoutCardInput[];
-  mode?: "grouped" | "filteredFlat";
+  mode?: "grouped" | "filteredFlat" | "preserveFlat" | "typeRows";
   layoutVariant?: CollectionLayoutVariant;
 }
 
@@ -477,8 +485,23 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
     contentBottom = Math.max(contentBottom, bottom);
   };
 
-  if (config.mode === "filteredFlat") {
-    const flatCards = layoutFilteredCards(config.cards, updateBounds);
+  if (config.mode === "typeRows") {
+    const rowCards = layoutTypeRowsCards(config.cards, updateBounds);
+    const bounds: ContentBounds = {
+      left: contentLeft === Infinity ? 0 : contentLeft,
+      top: contentTop === Infinity ? 0 : contentTop,
+      right: contentRight === -Infinity ? 0 : contentRight,
+      bottom: contentBottom === -Infinity ? 0 : contentBottom,
+    };
+    return { cards: rowCards, headers: [], bounds };
+  }
+
+  if (config.mode === "filteredFlat" || config.mode === "preserveFlat") {
+    const flatCards = layoutFilteredCards(
+      config.cards,
+      updateBounds,
+      config.mode === "preserveFlat",
+    );
     const bounds: ContentBounds = {
       left: contentLeft === Infinity ? 0 : contentLeft,
       top: contentTop === Infinity ? 0 : contentTop,
@@ -755,6 +778,7 @@ function layoutFilteredCards(
     centerY: number,
     isLandscape: boolean,
   ) => void,
+  preserveOrder = false,
 ): CardLayoutInfo[] {
   const flatCards: CardLayoutInfo[] = [];
   const byCostThenName = (
@@ -764,12 +788,12 @@ function layoutFilteredCards(
     return compareLayoutCards(a, b);
   };
 
-  const portraitCards = [...inputCards.filter((c) => c.type !== "Site")].sort(
-    byCostThenName,
-  );
-  const siteCards = [...inputCards.filter((c) => c.type === "Site")].sort(
-    byCostThenName,
-  );
+  const portraitCards = [...inputCards.filter((c) => c.type !== "Site")];
+  const siteCards = [...inputCards.filter((c) => c.type === "Site")];
+  if (!preserveOrder) {
+    portraitCards.sort(byCostThenName);
+    siteCards.sort(byCostThenName);
+  }
 
   const portraitSpacing = getCardCellSpacing(false);
   const siteSpacing = getCardCellSpacing(true);
@@ -814,6 +838,48 @@ function layoutFilteredCards(
   }
 
   return flatCards;
+}
+
+function layoutTypeRowsCards(
+  inputCards: LayoutConfig["cards"],
+  updateBounds: BoundsUpdater,
+): CardLayoutInfo[] {
+  const rowCards: CardLayoutInfo[] = [];
+  let currentGridY = 0;
+
+  for (const type of SHELF_TYPE_ROW_ORDER) {
+    const typeCards = inputCards.filter((card) => card.type === type);
+    if (typeCards.length === 0) continue;
+
+    const isLandscape = type === "Site";
+    const cardsPerRow = isLandscape
+      ? CARDS_PER_ROW.SITE
+      : CARDS_PER_ROW.SPELL;
+    const spacing = getCardCellSpacing(isLandscape);
+
+    for (const [index, card] of typeCards.entries()) {
+      const col = index % cardsPerRow;
+      const row = Math.floor(index / cardsPerRow);
+      const gridX = col * spacing.x;
+      const gridY = currentGridY + row * spacing.y;
+      const position = snapGridToPixels(gridX, gridY, isLandscape);
+
+      rowCards.push({
+        name: card.name,
+        position,
+        isLandscape,
+        thresholdGroup: card.thresholdGroup,
+        type: card.type,
+        cost: card.cost,
+      });
+
+      updateBounds(position.x, position.y, isLandscape);
+    }
+
+    currentGridY += Math.ceil(typeCards.length / cardsPerRow) * spacing.y;
+  }
+
+  return rowCards;
 }
 
 function layoutPortraitArtifactsAndMultiNone({

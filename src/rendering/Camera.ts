@@ -3,9 +3,11 @@
  *
  * Uses pixi-viewport for smooth camera-style navigation.
  * Provides:
- * - Mouse drag to pan
- * - Scroll wheel to zoom
- * - Pinch-to-zoom on trackpad
+ * - Empty-space mouse drag to pan
+ * - Mouse wheel to zoom
+ * - Trackpad two-finger vertical scroll to zoom
+ * - Trackpad two-finger horizontal scroll to pan sideways
+ * - Trackpad/touch pinch to zoom
  * - Programmatic camera control
  */
 
@@ -22,6 +24,60 @@ export const CAMERA_DEFAULTS = {
   INITIAL_ZOOM: 0.1,
   DECELERATION: 0.92,
 } as const;
+
+const WHEEL_LINE_HEIGHT_PX = 16;
+const WHEEL_PAGE_HEIGHT_PX = 800;
+const TRACKPAD_WHEEL_MIN_PX = 0.5;
+const COARSE_MOUSE_WHEEL_PX = 80;
+const DOM_DELTA_LINE = 1;
+const DOM_DELTA_PAGE = 2;
+
+interface WheelDeltaLike {
+  deltaX: number;
+  deltaY: number;
+  deltaMode: number;
+  ctrlKey?: boolean;
+}
+
+export function normalizeWheelDeltaPixels(event: WheelDeltaLike): {
+  deltaX: number;
+  deltaY: number;
+} {
+  const multiplier =
+    event.deltaMode === DOM_DELTA_LINE
+      ? WHEEL_LINE_HEIGHT_PX
+      : event.deltaMode === DOM_DELTA_PAGE
+        ? WHEEL_PAGE_HEIGHT_PX
+        : 1;
+
+  return {
+    deltaX: event.deltaX * multiplier,
+    deltaY: event.deltaY * multiplier,
+  };
+}
+
+export function isTrackpadLikeWheel(event: WheelDeltaLike): boolean {
+  if (event.deltaMode !== 0) return false;
+
+  const { deltaX, deltaY } = normalizeWheelDeltaPixels(event);
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+
+  if (absX >= TRACKPAD_WHEEL_MIN_PX) return true;
+  if (absY <= 0) return false;
+  if (!Number.isInteger(deltaY)) return true;
+
+  return absY < COARSE_MOUSE_WHEEL_PX;
+}
+
+export function shouldPanSidewaysFromWheel(event: WheelDeltaLike): boolean {
+  if (event.ctrlKey) return false;
+
+  const { deltaX } = normalizeWheelDeltaPixels(event);
+  const absX = Math.abs(deltaX);
+
+  return absX >= TRACKPAD_WHEEL_MIN_PX && isTrackpadLikeWheel(event);
+}
 
 // ============================================================================
 // Types
@@ -51,11 +107,14 @@ export class Camera {
   private onZoomChange?: (zoom: number) => void;
   private onViewportChange?: () => void;
   private currentZoom: number = CAMERA_DEFAULTS.INITIAL_ZOOM;
+  private readonly wheelTarget?: HTMLCanvasElement;
   private readonly handleResizeBound = this.handleResize.bind(this);
+  private readonly handleWheelBound = this.handleWheel.bind(this);
 
   constructor(config: CameraConfig) {
     this.onZoomChange = config.onZoomChange;
     this.onViewportChange = config.onViewportChange;
+    this.wheelTarget = config.app.canvas;
 
     // Create viewport
     this.viewport = new Viewport({
@@ -91,6 +150,10 @@ export class Camera {
 
     // Handle window resize
     window.addEventListener('resize', this.handleResizeBound);
+    this.wheelTarget.addEventListener('wheel', this.handleWheelBound, {
+      capture: true,
+      passive: false,
+    });
   }
 
   // ============================================================================
@@ -151,6 +214,15 @@ export class Camera {
     }
   }
 
+  panByScreenDelta(deltaX: number, deltaY: number): void {
+    const corner = this.viewport.corner;
+    this.viewport.moveCorner(
+      corner.x + deltaX / this.viewport.scale.x,
+      corner.y + deltaY / this.viewport.scale.y,
+    );
+    this.viewport.emit('moved', { viewport: this.viewport, type: 'wheel' });
+  }
+
   fitToContent(bounds: CameraBounds, padding = 100, time = 800): void {
     const width = bounds.right - bounds.left + padding * 2;
     const height = bounds.bottom - bounds.top + padding * 2;
@@ -204,6 +276,9 @@ export class Camera {
 
   destroy(): void {
     window.removeEventListener('resize', this.handleResizeBound);
+    this.wheelTarget?.removeEventListener('wheel', this.handleWheelBound, {
+      capture: true,
+    });
     this.viewport.destroy();
   }
 
@@ -228,5 +303,12 @@ export class Camera {
   private handleResize(): void {
     this.resize(window.innerWidth, window.innerHeight);
     this.onViewportChange?.();
+  }
+
+  private handleWheel(event: WheelEvent): void {
+    if (!shouldPanSidewaysFromWheel(event)) return;
+
+    const { deltaX } = normalizeWheelDeltaPixels(event);
+    this.panByScreenDelta(deltaX, 0);
   }
 }

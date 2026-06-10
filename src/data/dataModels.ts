@@ -115,12 +115,8 @@ export interface CollectionItem {
 }
 
 // ============================================================================
-// Archetype + Canvas Types
+// Canvas Types
 // ============================================================================
-
-export type ArchetypeScoresData = Record<string, Record<string, number>> & {
-  __meta?: { categories: string[]; removedCategories?: string[] };
-};
 
 export interface CanvasLabel {
   id: string;
@@ -128,6 +124,8 @@ export interface CanvasLabel {
   x: number;
   y: number;
 }
+
+export type { CardCategoryData } from '@/data/cardCategories';
 
 // ============================================================================
 // User Data Types (stored in guest.json / username.json)
@@ -138,8 +136,9 @@ export interface UserData {
   id: string;
   decks: Deck[];
   collection: CollectionItem[];
-  selectedArchetype?: string | null;
-  archetypeScores?: ArchetypeScoresData;
+  selectedCardCategory?: string | null;
+  cardCategories?: import('@/data/cardCategories').CardCategoryData;
+  favouriteDeckIds?: string[];
   canvasLabels?: CanvasLabel[];
   canvasAreas?: import('@/canvas/canvasAreas').CanvasArea[];
 }
@@ -217,7 +216,8 @@ export function createGuestUserData(id: string): UserData {
     id,
     decks: [],
     collection: [],
-    selectedArchetype: null,
+    selectedCardCategory: null,
+    favouriteDeckIds: [],
     canvasLabels: [],
     canvasAreas: [],
   };

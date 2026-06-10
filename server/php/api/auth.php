@@ -37,10 +37,34 @@ function sorcery_empty_user_data(string $userId, string $username): array
         'id' => $userId,
         'decks' => [],
         'collection' => [],
-        'selectedArchetype' => null,
+        'selectedCardCategory' => null,
+        'favouriteDeckIds' => [],
         'canvasLabels' => [],
         'canvasAreas' => [],
     ];
+}
+
+function sorcery_sanitize_favourite_deck_ids($value): array
+{
+    if (!is_array($value)) {
+        return [];
+    }
+
+    $seen = [];
+    $ids = [];
+    foreach ($value as $entry) {
+        if (!is_string($entry)) {
+            continue;
+        }
+        $id = trim($entry);
+        if ($id === '' || isset($seen[$id])) {
+            continue;
+        }
+        $seen[$id] = true;
+        $ids[] = $id;
+    }
+
+    return $ids;
 }
 
 function sorcery_sanitize_canvas_labels($value): array
@@ -100,9 +124,9 @@ function sorcery_sanitize_canvas_areas($value): array
 
 function sorcery_sanitize_user_data(array $payload, string $userId, string $username): array
 {
-    $selectedArchetype = $payload['selectedArchetype'] ?? null;
-    if (!is_string($selectedArchetype) && $selectedArchetype !== null) {
-        $selectedArchetype = null;
+    $selectedCardCategory = $payload['selectedCardCategory'] ?? null;
+    if (!is_string($selectedCardCategory) && $selectedCardCategory !== null) {
+        $selectedCardCategory = null;
     }
 
     $result = [
@@ -110,13 +134,14 @@ function sorcery_sanitize_user_data(array $payload, string $userId, string $user
         'id' => $userId,
         'decks' => is_array($payload['decks'] ?? null) ? array_values($payload['decks']) : [],
         'collection' => is_array($payload['collection'] ?? null) ? array_values($payload['collection']) : [],
-        'selectedArchetype' => $selectedArchetype,
+        'selectedCardCategory' => $selectedCardCategory,
+        'favouriteDeckIds' => sorcery_sanitize_favourite_deck_ids($payload['favouriteDeckIds'] ?? null),
         'canvasLabels' => sorcery_sanitize_canvas_labels($payload['canvasLabels'] ?? null),
         'canvasAreas' => sorcery_sanitize_canvas_areas($payload['canvasAreas'] ?? null),
     ];
 
-    if (isset($payload['archetypeScores']) && is_array($payload['archetypeScores'])) {
-        $result['archetypeScores'] = $payload['archetypeScores'];
+    if (isset($payload['cardCategories']) && is_array($payload['cardCategories'])) {
+        $result['cardCategories'] = $payload['cardCategories'];
     }
 
     return $result;

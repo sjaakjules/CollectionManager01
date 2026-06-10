@@ -135,8 +135,8 @@ describe("CardSprite LOD display", () => {
   });
 });
 
-describe("CardSprite association display", () => {
-  it("stacks association scores vertically and dims inactive association cards", () => {
+describe("CardSprite metric display", () => {
+  it("shows decimal metric scores and dims inactive cards", () => {
     stubLODManager();
     const sprite = new CardSprite({
       name: "Shield Maidens",
@@ -145,29 +145,27 @@ describe("CardSprite association display", () => {
       y: 0,
     });
     const internals = sprite as unknown as {
-      associationMainScoreText: { x: number; y: number; visible: boolean };
-      associationCollectionScoreText: { x: number; y: number; visible: boolean };
+      scoreText: { text: string; visible: boolean; style: { fill: unknown } };
       alpha: number;
     };
 
-    sprite.setAssociationScores(12, 34, true);
+    sprite.setMetricScore(0.42, { color: 0x4aa8ff });
 
-    expect(internals.associationMainScoreText.visible).toBe(true);
-    expect(internals.associationCollectionScoreText.visible).toBe(true);
-    expect(internals.associationMainScoreText.x).toBe(
-      internals.associationCollectionScoreText.x,
-    );
-    expect(internals.associationMainScoreText.y).toBeLessThan(
-      internals.associationCollectionScoreText.y,
-    );
+    expect(internals.scoreText.visible).toBe(true);
+    expect(internals.scoreText.text).toBe("0.42");
     expect(sprite.alpha).toBe(1);
 
-    sprite.setAssociationScores(null, null, true);
+    sprite.setMetricScore(0, { dimInactive: true });
 
     expect(sprite.alpha).toBe(0.3);
+
+    sprite.setMetricScore(null);
+
+    expect(internals.scoreText.visible).toBe(false);
+    expect(sprite.alpha).toBe(1);
   });
 
-  it("shows cluster scores through the association score channel", () => {
+  it("can show metric colour without showing the decimal value", () => {
     stubLODManager();
     const sprite = new CardSprite({
       name: "Shield Maidens",
@@ -176,20 +174,19 @@ describe("CardSprite association display", () => {
       y: 0,
     });
     const internals = sprite as unknown as {
-      associationMainScoreText: { text: string; visible: boolean };
-      associationCollectionScoreText: { visible: boolean };
+      metricOutline: { visible: boolean };
+      scoreText: { visible: boolean };
       alpha: number;
     };
 
-    sprite.setAssociationClusterScore(87, true);
+    sprite.setMetricScore(0.64, {
+      color: 0x4aa8ff,
+      dimInactive: false,
+      showValue: false,
+    });
 
-    expect(internals.associationMainScoreText.text).toBe("87");
-    expect(internals.associationMainScoreText.visible).toBe(true);
-    expect(internals.associationCollectionScoreText.visible).toBe(false);
+    expect(internals.metricOutline.visible).toBe(true);
+    expect(internals.scoreText.visible).toBe(false);
     expect(sprite.alpha).toBe(1);
-
-    sprite.setAssociationClusterScore(null, true);
-
-    expect(sprite.alpha).toBe(0.3);
   });
 });

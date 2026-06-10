@@ -19,7 +19,7 @@ import type {
   ActiveBoard,
   CollectionItem,
   CanvasLabel,
-  ArchetypeScoresData,
+  CardCategoryData,
 } from '@/data/dataModels';
 import type { CanvasDeckVariant, CanvasArea, CanvasAreaKind } from '@/canvas/canvasAreas';
 import {
@@ -27,7 +27,8 @@ import {
   ensureCardFilterState,
   type CardFilterState,
 } from '@/data/cardFilters';
-import type { AssociationMode, AssociationSourceZone } from '@/data/cardAssociations';
+import type { DeckStyleAssociationMode } from '@/data/deckStyleAssociations';
+import { filterBlockedTokenCardNames, isBlockedTokenCardName } from '@/data/tokenCards';
 
 // ============================================================================
 // State Shape
@@ -66,17 +67,14 @@ export interface EditorState {
 export interface UIState {
   loginModalOpen: boolean;
   notifications: Notification[];
-  selectedArchetype: string | null;
+  selectedCardCategory: string | null;
   labelPlacementMode: boolean;
   cardFilters: CardFilterState;
   selectedCardNames: string[];
   associationsEnabled: boolean;
-  associationMode: AssociationMode;
-  associationSourceZone: AssociationSourceZone;
-  associationPanelView: 'clusters' | 'packages';
-  associationClusterGroupId: string | null;
-  associationClusterId: string | null;
-  associationPackageId: string | null;
+  associationMode: DeckStyleAssociationMode;
+  associationStyleId: string | null;
+  associationSubStyleId: string | null;
 }
 
 export interface Notification {
@@ -107,17 +105,14 @@ export const initialAppState: AppState = {
   ui: {
     loginModalOpen: false,
     notifications: [],
-    selectedArchetype: null,
+    selectedCardCategory: null,
     labelPlacementMode: false,
     cardFilters: createDefaultCardFilters(),
     selectedCardNames: [],
     associationsEnabled: false,
-    associationMode: 'balanced',
-    associationSourceZone: 'main',
-    associationPanelView: 'clusters',
-    associationClusterGroupId: null,
-    associationClusterId: null,
-    associationPackageId: null,
+    associationMode: 'primary',
+    associationStyleId: null,
+    associationSubStyleId: null,
   },
 };
 
@@ -138,23 +133,21 @@ export type AppAction =
   | { type: 'DELETE_DECK'; deckId: string }
   | { type: 'RENAME_DECK'; deckId: string; name: string }
   | { type: 'SET_COLLECTION'; collection: CollectionItem[] }
+  | { type: 'TOGGLE_FAVOURITE_DECK'; deckId: string }
   | { type: 'TOGGLE_LOGIN_MODAL' }
   | { type: 'ADD_NOTIFICATION'; notification: Omit<Notification, 'id' | 'timestamp'> }
   | { type: 'DISMISS_NOTIFICATION'; id: string }
-  | { type: 'SET_SELECTED_ARCHETYPE'; archetype: string | null }
+  | { type: 'SET_SELECTED_CARD_CATEGORY'; categoryId: string | null }
   | { type: 'SET_LABEL_PLACEMENT_MODE'; enabled: boolean }
   | { type: 'SET_CARD_FILTERS'; filters: CardFilterState }
   | { type: 'CLEAR_CARD_FILTERS' }
   | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
   | { type: 'SET_ASSOCIATIONS_ENABLED'; enabled: boolean }
-  | { type: 'SET_ASSOCIATION_MODE'; mode: AssociationMode }
-  | { type: 'SET_ASSOCIATION_SOURCE_ZONE'; sourceZone: AssociationSourceZone }
-  | { type: 'SET_ASSOCIATION_PANEL_VIEW'; panelView: 'clusters' | 'packages' }
-  | { type: 'SET_ASSOCIATION_CLUSTER_GROUP'; groupId: string | null }
-  | { type: 'SET_ASSOCIATION_CLUSTER'; clusterId: string | null }
-  | { type: 'SET_ASSOCIATION_PACKAGE'; packageId: string | null }
+  | { type: 'SET_ASSOCIATION_MODE'; mode: DeckStyleAssociationMode }
+  | { type: 'SET_ASSOCIATION_STYLE'; styleId: string | null }
+  | { type: 'SET_ASSOCIATION_SUB_STYLE'; subStyleId: string | null }
   | { type: 'SET_CANVAS_LABELS'; labels: CanvasLabel[] }
-  | { type: 'SET_ARCHETYPE_SCORES'; scores: ArchetypeScoresData }
+  | { type: 'SET_CARD_CATEGORIES'; data: CardCategoryData }
   | { type: 'SET_CANVAS_AREAS'; canvasAreas: CanvasArea[] };
 
 // ============================================================================
@@ -184,7 +177,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           userData: normalized,
           ui: {
             ...state.ui,
-            selectedArchetype: normalized.selectedArchetype ?? null,
+            selectedCardCategory: normalized.selectedCardCategory ?? null,
           },
         };
       }
@@ -206,6 +199,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'ADD_CARD_TO_DECK': {
       if (!state.userData || !state.editor.activeDeckId) return state;
+      if (isBlockedTokenCardName(action.cardName)) return state;
 
       const updatedDecks = state.userData.decks.map((deck) => {
         if (deck.id !== state.editor.activeDeckId) return deck;
@@ -235,12 +229,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'ADD_CARDS_TO_DECK_BY_ID': {
       if (!state.userData || action.cardNames.length === 0) return state;
       const targetBoard = action.board ?? 'mainboard';
+      const addableCardNames = filterBlockedTokenCardNames(action.cardNames);
+      if (addableCardNames.length === 0) return state;
 
       const updatedDecks = state.userData.decks.map((deck) => {
         if (deck.id !== action.deckId) return deck;
 
         const quantities = new Map<string, number>();
-        for (const cardName of action.cardNames) {
+        for (const cardName of addableCardNames) {
           const trimmed = cardName.trim();
           if (!trimmed) continue;
           quantities.set(trimmed, (quantities.get(trimmed) ?? 0) + 1);
@@ -348,6 +344,21 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
+    case 'TOGGLE_FAVOURITE_DECK': {
+      if (!state.userData) return state;
+      const deckId = action.deckId.trim();
+      if (!deckId) return state;
+      const currentIds = normalizeStringList(state.userData.favouriteDeckIds);
+      const favouriteDeckIds = currentIds.includes(deckId)
+        ? currentIds.filter((id) => id !== deckId)
+        : [...currentIds, deckId];
+
+      return {
+        ...state,
+        userData: { ...state.userData, favouriteDeckIds },
+      };
+    }
+
     case 'TOGGLE_LOGIN_MODAL':
       return {
         ...state,
@@ -378,18 +389,18 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         },
       };
 
-    case 'SET_SELECTED_ARCHETYPE': {
-      const nextArchetype =
-        state.ui.selectedArchetype === action.archetype ? null : action.archetype;
+    case 'SET_SELECTED_CARD_CATEGORY': {
+      const nextCategory =
+        state.ui.selectedCardCategory === action.categoryId ? null : action.categoryId;
       return {
         ...state,
         ui: {
           ...state.ui,
-          selectedArchetype: nextArchetype,
-          associationsEnabled: nextArchetype ? false : state.ui.associationsEnabled,
+          selectedCardCategory: nextCategory,
+          associationsEnabled: nextCategory ? false : state.ui.associationsEnabled,
         },
         userData: state.userData
-          ? { ...state.userData, selectedArchetype: nextArchetype }
+          ? { ...state.userData, selectedCardCategory: nextCategory }
           : state.userData,
       };
     }
@@ -424,16 +435,13 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ui: {
           ...state.ui,
           associationsEnabled: action.enabled,
-          associationSourceZone: action.enabled ? state.ui.associationSourceZone : 'main',
-          associationPanelView: action.enabled ? state.ui.associationPanelView : 'clusters',
-          associationClusterGroupId: action.enabled ? state.ui.associationClusterGroupId : null,
-          associationClusterId: action.enabled ? state.ui.associationClusterId : null,
-          associationPackageId: action.enabled ? state.ui.associationPackageId : null,
-          selectedArchetype: action.enabled ? null : state.ui.selectedArchetype,
+          associationStyleId: action.enabled ? state.ui.associationStyleId : null,
+          associationSubStyleId: action.enabled ? state.ui.associationSubStyleId : null,
+          selectedCardCategory: action.enabled ? null : state.ui.selectedCardCategory,
         },
         userData:
           action.enabled && state.userData
-            ? { ...state.userData, selectedArchetype: null }
+            ? { ...state.userData, selectedCardCategory: null }
             : state.userData,
       };
 
@@ -443,65 +451,26 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ui: {
           ...state.ui,
           associationMode: action.mode,
-          associationClusterGroupId: null,
-          associationClusterId: null,
-          associationPackageId: null,
+          associationSubStyleId: null,
         },
       };
 
-    case 'SET_ASSOCIATION_SOURCE_ZONE':
-      return {
-        ...state,
-        ui: { ...state.ui, associationSourceZone: action.sourceZone, associationClusterId: null },
-      };
-
-    case 'SET_ASSOCIATION_PANEL_VIEW':
+    case 'SET_ASSOCIATION_STYLE':
       return {
         ...state,
         ui: {
           ...state.ui,
-          associationPanelView: action.panelView,
-          associationClusterGroupId:
-            action.panelView === 'clusters' ? state.ui.associationClusterGroupId : null,
-          associationClusterId:
-            action.panelView === 'clusters' ? state.ui.associationClusterId : null,
-          associationPackageId:
-            action.panelView === 'packages' ? state.ui.associationPackageId : null,
+          associationStyleId: action.styleId,
+          associationSubStyleId: null,
         },
       };
 
-    case 'SET_ASSOCIATION_CLUSTER_GROUP':
+    case 'SET_ASSOCIATION_SUB_STYLE':
       return {
         ...state,
         ui: {
           ...state.ui,
-          associationPanelView: 'clusters',
-          associationClusterGroupId: action.groupId,
-          associationClusterId: null,
-          associationPackageId: null,
-        },
-      };
-
-    case 'SET_ASSOCIATION_CLUSTER':
-      return {
-        ...state,
-        ui: {
-          ...state.ui,
-          associationPanelView: 'clusters',
-          associationClusterId: action.clusterId,
-          associationPackageId: null,
-        },
-      };
-
-    case 'SET_ASSOCIATION_PACKAGE':
-      return {
-        ...state,
-        ui: {
-          ...state.ui,
-          associationPanelView: 'packages',
-          associationPackageId: action.packageId,
-          associationClusterGroupId: null,
-          associationClusterId: null,
+          associationSubStyleId: action.subStyleId,
         },
       };
 
@@ -512,11 +481,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         userData: { ...state.userData, canvasLabels: action.labels },
       };
 
-    case 'SET_ARCHETYPE_SCORES':
+    case 'SET_CARD_CATEGORIES':
       if (!state.userData) return state;
       return {
         ...state,
-        userData: { ...state.userData, archetypeScores: action.scores },
+        userData: { ...state.userData, cardCategories: action.data },
       };
 
     case 'SET_CANVAS_AREAS':
@@ -540,6 +509,14 @@ function parseFiniteNumber(value: unknown, fallback = 0): number {
 
 function parseString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
+}
+
+function normalizeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const entries = value
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter(Boolean);
+  return Array.from(new Set(entries));
 }
 
 function parseCanvasAreaKind(value: unknown): CanvasAreaKind | null {
@@ -644,6 +621,7 @@ function normalizeCanvasAreas(value: unknown): CanvasArea[] {
       },
       cards,
       deckId: parseString(areaRecord.deckId).trim() || undefined,
+      lookupDeckId: parseString(areaRecord.lookupDeckId).trim() || null,
       avatarCardName:
         typeof areaRecord.avatarCardName === 'string'
           ? areaRecord.avatarCardName
@@ -667,8 +645,9 @@ function normalizeUserData(userData: UserData): UserData {
     id: userData.id,
     decks: userData.decks,
     collection: userData.collection,
-    selectedArchetype: userData.selectedArchetype ?? null,
-    archetypeScores: userData.archetypeScores,
+    selectedCardCategory: userData.selectedCardCategory ?? null,
+    cardCategories: userData.cardCategories,
+    favouriteDeckIds: normalizeStringList(userData.favouriteDeckIds),
     canvasLabels: userData.canvasLabels ?? [],
     canvasAreas: normalizeCanvasAreas(userData.canvasAreas),
   };

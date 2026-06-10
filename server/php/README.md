@@ -6,7 +6,6 @@ This folder is copied into the deployed web root as `/api`. It preserves the sam
 - `POST /api/login`
 - `GET /api/user/{userId}/data`
 - `PUT /api/user/{userId}/data`
-- `GET/POST /api/archetype-scores`
 - `GET/POST /api/curiosa/*`
 - `GET/POST /api/sorcery/*`
 

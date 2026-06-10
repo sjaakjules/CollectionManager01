@@ -28,7 +28,7 @@ These are the scripts currently exposed through `package.json`:
 | `pnpm cards:thumbs+atlas` | `cards:thumbs` and `cards:atlas:all` | Generate standalone thumbnails and both atlas tiers. |
 | `pnpm curiosa:decks` | `scripts/fetch-curiosa-decks.mjs` | Download decklists from input files into an archive. |
 | `pnpm curiosa:search-decks` | `scripts/search-curiosa-decks.mjs` | Search Curiosa and archive matching decklists. |
-| `pnpm associations:build` | `scripts/build-card-associations.mjs` | Build the Associations tab data asset. |
+| `pnpm deck-styles:build` | `scripts/build-deck-style-associations.mjs` | Build the Deck Lookup and deck-style card score asset. |
 
 Helper scripts that are not package commands:
 
@@ -212,17 +212,17 @@ Validation behavior:
 - Invalid and failed decks are preserved in `<output>.skipped.json` with
   reason, attempts, source, hint, and deckinfo when available.
 
-## Card And Avatar Associations
+## Legacy Card And Avatar Associations
 
-### `pnpm associations:build`
+### `node scripts/build-card-associations.mjs`
 
-Builds the read-only card/avatar association index used by the Associations UI
-tab.
+Builds the old offline card/avatar association index. This no longer feeds the
+live UI; generated files are kept under `tmp/oldAssociations` for reference.
 
 Default command:
 
 ```sh
-pnpm associations:build
+node scripts/build-card-associations.mjs
 ```
 
 Defaults:
@@ -230,8 +230,8 @@ Defaults:
 ```txt
 Input archive:  offlineData/deckArchive.json
 Card data:      docs/Sorcery_CardInfo.json
-Output:         public/assets/sorcery_card_associations_balanced.json
-                public/assets/sorcery_card_associations_meta.json
+Output:         tmp/oldAssociations/sorcery_card_associations_balanced.json
+                tmp/oldAssociations/sorcery_card_associations_meta.json
 Top links:      60 per source node
 Threshold:      0.32
 Min evidence:   3
@@ -241,7 +241,7 @@ Filters:        Constructed full decks only by default
 Recommended command when including good skipped decks:
 
 ```sh
-pnpm associations:build --include-skipped --min-spells 50 --min-atlas 20
+node scripts/build-card-associations.mjs --include-skipped --min-spells 50 --min-atlas 20
 ```
 
 This loads:
@@ -263,7 +263,7 @@ Useful options:
 --min-spells <n>            Minimum skipped spellbook cards. Defaults to 50.
 --min-atlas <n>             Minimum skipped atlas cards. Defaults to 20.
 --card-data <file>          Card catalog. Defaults to docs/Sorcery_CardInfo.json.
---output-base <path>        Output prefix. Defaults to public/assets/sorcery_card_associations.
+--output-base <path>        Output prefix. Defaults to tmp/oldAssociations/sorcery_card_associations.
 --output <file>             Compatibility alias; writes both suffixed mode assets.
 --top-links <n>             Links per source node. Defaults to 60.
 --threshold <n>             Deck graph similarity threshold. Defaults to 0.32.
@@ -579,12 +579,12 @@ pnpm test scripts/build-card-associations.test.mjs
 
 ## Common Workflows
 
-### Update Deck Data And Associations
+### Update Deck Data And Deck Lookup
 
 ```sh
 pnpm curiosa:search-decks --query cornerstone --output offlineData/deckArchive.json --search-output offlineData/search.cornerstone.json --skip-processed
 pnpm curiosa:search-decks --query riptide --output offlineData/deckArchive.json --search-output offlineData/search.riptide.json --skip-processed
-pnpm associations:build --include-skipped --min-spells 50 --min-atlas 20
+pnpm deck-styles:build
 pnpm test
 pnpm typecheck
 pnpm build

@@ -30,8 +30,10 @@ describe('deck import/export', () => {
   const cards = [
     card('Avatar of Fire', 'Avatar', 'Unique'),
     card('Fireball', 'Magic'),
+    card('Frog', 'Minion'),
     card('Lone Tower', 'Site'),
     card('Relic', 'Artifact'),
+    card('Skeleton', 'Minion'),
   ];
 
   it('parses Curiosa-style text, routes avatars, and reports unknown cards', () => {
@@ -67,12 +69,32 @@ describe('deck import/export', () => {
     );
   });
 
+  it('skips token cards during deck import', () => {
+    const result = importDeckFromText(
+      ['1 Frog', '1 Skeleton', '1 Foot Soldier 1', '1 Fireball'].join('\n'),
+      'No Tokens',
+      cards,
+    );
+
+    expect(result.deck.boards.mainboard).toEqual([
+      { name: 'Fireball', quantity: 1 },
+    ]);
+    expect(result.warnings).toEqual([
+      'Token cards cannot be added to decks: Frog',
+      'Token cards cannot be added to decks: Skeleton',
+      'Token cards cannot be added to decks: Foot Soldier 1',
+    ]);
+  });
+
   it('keeps unknown Curiosa cards visible in import diagnostics', () => {
     const result = importFromCuriosaDeck(
       {
         name: 'Curiosa Deck',
         author: 'Tester',
-        mainboard: [{ name: 'Missing Card', quantity: 1 }],
+        mainboard: [
+          { name: 'Missing Card', quantity: 1 },
+          { name: 'Frog', quantity: 1 },
+        ],
         avatar: [{ name: 'Avatar of Fire', quantity: 1 }],
         sideboard: [],
         maybeboard: [],
@@ -83,5 +105,6 @@ describe('deck import/export', () => {
     expect(result.unknownCards).toEqual(['Missing Card']);
     expect(result.deck.boards.mainboard).toEqual([{ name: 'Missing Card', quantity: 1 }]);
     expect(result.deck.boards.avatar).toEqual([{ name: 'Avatar of Fire', quantity: 1 }]);
+    expect(result.warnings).toEqual(['Token cards cannot be added to decks: Frog']);
   });
 });

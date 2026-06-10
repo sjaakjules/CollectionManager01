@@ -21,6 +21,7 @@ import {
 import { cardNameToSlug } from "@/rendering/LODManager";
 import { useAppState } from "@/app/AppState";
 import type { CanvasArea } from "@/canvas/canvasAreas";
+import { ElementIcon } from "@/ui/ElementIcon";
 
 interface StacksPanelProps {
   canvasAreas: CanvasArea[];
@@ -41,15 +42,14 @@ const STACK_CARD_WIDTH_STEP = 20;
 
 const STACK_ELEMENT_FILTERS: Array<{
   id: ThresholdGroup;
-  icon: string;
   label: string;
 }> = [
-  { id: "air", icon: "/assets/buttons/air.png", label: "Air" },
-  { id: "earth", icon: "/assets/buttons/earth.png", label: "Earth" },
-  { id: "fire", icon: "/assets/buttons/fire.png", label: "Fire" },
-  { id: "water", icon: "/assets/buttons/water.png", label: "Water" },
-  { id: "multiple", icon: "/assets/buttons/multi.png", label: "Multiple" },
-  { id: "none", icon: "/assets/buttons/none.png", label: "None" },
+  { id: "air", label: "Air" },
+  { id: "earth", label: "Earth" },
+  { id: "fire", label: "Fire" },
+  { id: "water", label: "Water" },
+  { id: "multiple", label: "Multiple" },
+  { id: "none", label: "None" },
 ];
 
 /**
@@ -334,7 +334,7 @@ export function StacksPanel({
                       title={entry.label}
                       aria-label={`Filter ${entry.label}`}
                     >
-                      <img src={entry.icon} alt="" aria-hidden="true" />
+                      <ElementIcon element={entry.id} decorative />
                     </button>
                   ))}
                 </div>

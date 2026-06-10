@@ -61,12 +61,8 @@ export class CardSprite extends Container {
   private overlay: Container;
   private quantityText: Text;
   private selectionBorder: Graphics;
-  private archetypeOutline: Graphics;
-  private associationMainOutline: Graphics;
-  private associationCollectionOutline: Graphics;
+  private metricOutline: Graphics;
   private scoreText: Text;
-  private associationMainScoreText: Text;
-  private associationCollectionScoreText: Text;
   private displayWidth: number;
   private displayHeight: number;
   private currentLOD: LODLevel = lodManager.getStartupLOD();
@@ -118,18 +114,10 @@ export class CardSprite extends Container {
 
     this.addChild(this.sprite);
 
-    // Archetype score outline (drawn beneath selection border)
-    this.archetypeOutline = new Graphics();
-    this.archetypeOutline.visible = false;
-    this.addChild(this.archetypeOutline);
-
-    this.associationCollectionOutline = new Graphics();
-    this.associationCollectionOutline.visible = false;
-    this.addChild(this.associationCollectionOutline);
-
-    this.associationMainOutline = new Graphics();
-    this.associationMainOutline.visible = false;
-    this.addChild(this.associationMainOutline);
+    // Metric score outline (drawn beneath selection border)
+    this.metricOutline = new Graphics();
+    this.metricOutline.visible = false;
+    this.addChild(this.metricOutline);
 
     // Selection border
     this.selectionBorder = new Graphics();
@@ -158,7 +146,7 @@ export class CardSprite extends Container {
     this.overlay.visible = false;
     this.addChild(this.overlay);
 
-    // Archetype score text (centered on card)
+    // Metric score text (centered on card)
     const scoreFontSize = Math.round(Math.min(width, height) * 0.35);
     this.scoreText = new Text({
       text: "",
@@ -175,32 +163,6 @@ export class CardSprite extends Container {
     this.scoreText.y = height / 2;
     this.scoreText.visible = false;
     this.addChild(this.scoreText);
-
-    const associationFontSize = Math.round(Math.min(width, height) * 0.24);
-    const associationTextStyle = {
-      fontFamily: "Arial",
-      fontSize: associationFontSize,
-      fontWeight: "bold" as const,
-      fill: 0xffffff,
-      stroke: { color: 0x000000, width: 3 },
-    };
-    this.associationMainScoreText = new Text({
-      text: "",
-      style: { ...associationTextStyle, fill: 0x4aa8ff },
-    });
-    this.associationMainScoreText.anchor.set(0.5);
-    this.associationMainScoreText.y = height / 2;
-    this.associationMainScoreText.visible = false;
-    this.addChild(this.associationMainScoreText);
-
-    this.associationCollectionScoreText = new Text({
-      text: "",
-      style: { ...associationTextStyle, fill: 0xff9f2f },
-    });
-    this.associationCollectionScoreText.anchor.set(0.5);
-    this.associationCollectionScoreText.y = height / 2;
-    this.associationCollectionScoreText.visible = false;
-    this.addChild(this.associationCollectionScoreText);
 
     // Enable interactivity - events are handled by PixiStage
     this.eventMode = "static";
@@ -256,144 +218,51 @@ export class CardSprite extends Container {
   }
 
   /**
-   * Show a colored outline based on the card's archetype score.
-   * - Negative (-1 to -3): red with increasing opacity
-   * - Positive (+1 to +3): cyan with increasing opacity
-   * - +4 and above: green
-   * - 0 or null: no outline, card dimmed
+   * Show a metric outline, optional decimal value, and optional inactive dimming.
    */
-  setArchetypeScore(score: number | null): void {
+  setMetricScore(
+    score: number | null,
+    options: { color?: number; dimInactive?: boolean; showValue?: boolean } = {},
+  ): void {
+    const color = options.color ?? 0x00ddff;
+    const dimInactive = options.dimInactive ?? true;
+    const showValue = options.showValue ?? true;
     if (score === null) {
-      this.archetypeOutline.visible = false;
+      this.metricOutline.visible = false;
       this.scoreText.visible = false;
       this.alpha = 1;
       return;
     }
 
-    if (score === 0) {
-      this.archetypeOutline.visible = false;
+    if (score <= 0) {
+      this.metricOutline.visible = false;
       this.scoreText.visible = false;
-      this.alpha = 0.3;
+      this.alpha = dimInactive ? 0.3 : 1;
       return;
     }
 
     const w = this.displayWidth;
     const h = this.displayHeight;
 
-    let color: number;
-    let outlineAlpha: number;
     const borderWidth = 3;
-
-    if (score >= 4) {
-      color = 0x00ff66;
-      outlineAlpha = score >= 5 ? 1.0 : 0.8;
-    } else if (score > 0) {
-      color = 0x00ddff;
-      // score 1 -> 0.4, 2 -> 0.65, 3 -> 0.9
-      outlineAlpha = 0.15 + score * 0.25;
-    } else {
-      // negative
-      color = 0xff3333;
-      const absScore = Math.min(Math.abs(score), 3);
-      // -1 -> 0.4, -2 -> 0.65, -3 -> 0.9
-      outlineAlpha = 0.15 + absScore * 0.25;
-    }
+    const outlineAlpha = Math.min(1, 0.35 + score * 0.6);
 
     // Draw outline
-    this.archetypeOutline.clear();
-    this.archetypeOutline.rect(0, 0, w, h);
-    this.archetypeOutline.stroke({
+    this.metricOutline.clear();
+    this.metricOutline.rect(0, 0, w, h);
+    this.metricOutline.stroke({
       width: borderWidth,
       color,
       alpha: outlineAlpha,
     });
-    this.archetypeOutline.visible = true;
+    this.metricOutline.visible = true;
 
     // Draw score value
-    const sign = score > 0 ? "+" : "";
-    this.scoreText.text = `${sign}${score}`;
+    this.scoreText.text = score.toFixed(2);
     this.scoreText.style.fill = color;
-    this.scoreText.visible = true;
+    this.scoreText.visible = showValue;
 
     this.alpha = 1;
-  }
-
-  setAssociationScores(
-    mainScore: number | null,
-    collectionScore: number | null,
-    dimInactive = false,
-  ): void {
-    const hasMain = typeof mainScore === "number" && mainScore > 0;
-    const hasCollection =
-      typeof collectionScore === "number" && collectionScore > 0;
-    const w = this.displayWidth;
-    const h = this.displayHeight;
-
-    this.associationMainOutline.clear();
-    this.associationCollectionOutline.clear();
-
-    if (hasMain) {
-      this.associationMainOutline.rect(3, 3, w - 6, h - 6);
-      this.associationMainOutline.stroke({
-        width: 3,
-        color: 0x4aa8ff,
-        alpha: Math.min(1, 0.38 + mainScore / 130),
-      });
-    }
-    this.associationMainOutline.visible = hasMain;
-
-    if (hasCollection) {
-      this.associationCollectionOutline.rect(-4, -4, w + 8, h + 8);
-      this.associationCollectionOutline.stroke({
-        width: 3,
-        color: 0xff9f2f,
-        alpha: Math.min(1, 0.38 + collectionScore / 130),
-      });
-    }
-    this.associationCollectionOutline.visible = hasCollection;
-
-    if (hasMain) {
-      this.associationMainScoreText.text = String(mainScore);
-      this.associationMainScoreText.x = w / 2;
-      this.associationMainScoreText.y = hasCollection ? h * 0.42 : h / 2;
-    }
-    this.associationMainScoreText.visible = hasMain;
-
-    if (hasCollection) {
-      this.associationCollectionScoreText.text = String(collectionScore);
-      this.associationCollectionScoreText.x = w / 2;
-      this.associationCollectionScoreText.y = hasMain ? h * 0.58 : h / 2;
-    }
-    this.associationCollectionScoreText.visible = hasCollection;
-
-    this.alpha = hasMain || hasCollection || !dimInactive ? 1 : 0.3;
-  }
-
-  setAssociationClusterScore(score: number | null, dimInactive = false): void {
-    const hasScore = typeof score === "number" && score > 0;
-    const w = this.displayWidth;
-    const h = this.displayHeight;
-
-    this.associationMainOutline.clear();
-    this.associationCollectionOutline.clear();
-    this.associationCollectionOutline.visible = false;
-    this.associationCollectionScoreText.visible = false;
-
-    if (hasScore) {
-      this.associationMainOutline.rect(3, 3, w - 6, h - 6);
-      this.associationMainOutline.stroke({
-        width: 3,
-        color: 0x4aa8ff,
-        alpha: Math.min(1, 0.35 + score / 120),
-      });
-      this.associationMainScoreText.text = String(score);
-      this.associationMainScoreText.x = w / 2;
-      this.associationMainScoreText.y = h / 2;
-    }
-
-    this.associationMainOutline.visible = hasScore;
-    this.associationMainScoreText.visible = hasScore;
-    this.alpha = hasScore || !dimInactive ? 1 : 0.3;
   }
 
   updateLOD(zoom: number): void {

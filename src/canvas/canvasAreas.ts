@@ -59,6 +59,7 @@ export interface CanvasArea {
   bounds: CanvasAreaBounds;
   cards: CanvasCardInstance[];
   deckId?: string;
+  lookupDeckId?: string | null;
   avatarCardName?: string | null;
   deckAuthor?: string | null;
   deckVariants?: CanvasDeckVariant[];
@@ -163,17 +164,17 @@ export function createCanvasDeckVariantId(): string {
 }
 
 /**
- * Map a canvas area type to its fixed world quadrant.
+ * Map persisted canvas area types to the saved-area quadrant.
  *
  * Inputs:
  * - `type`: Canvas area type value.
  *
  * Outputs:
- * - Returns destination quadrant key.
+ * - Returns the top-left saved-area quadrant key.
  */
 export function getZoneQuadrant(type: CanvasAreaKind): ZoneQuadrant {
-  if (type === "deck") return "decks";
-  return "stacks";
+  void type;
+  return "decks";
 }
 
 /**
@@ -183,9 +184,11 @@ export function getZoneQuadrant(type: CanvasAreaKind): ZoneQuadrant {
  * - `zone`: Canvas area model.
  *
  * Outputs:
- * - Returns quadrant that should contain the canvas area.
+ * - Returns the lower-left lookup quadrant for temporary lookup decks,
+ *   otherwise the top-left saved-area quadrant.
  */
 export function getQuadrantByZoneId(zone: CanvasArea): ZoneQuadrant {
+  if (zone.lookupDeckId) return "stacks";
   return getZoneQuadrant(zone.type);
 }
 
@@ -720,6 +723,50 @@ export function createDeckZone(
     ],
     activeDeckVariantId: mainVariantId,
     cardFilters: createDefaultCardFilters(),
+  };
+}
+
+/**
+ * Build a temporary deck lookup canvas area in the lower-left quadrant.
+ *
+ * Inputs:
+ * - `deck`: Runtime deck selected from the deck-style lookup panel.
+ * - `cardInfoByName`: Card orientation/type metadata map.
+ * - `existingZones`: Existing canvas areas used for overlap-aware placement.
+ *
+ * Outputs:
+ * - Returns a pinned lookup-only deck area that is not tied to a saved deck id.
+ */
+export function createLookupDeckZone(
+  deck: Deck,
+  cardInfoByName: Map<string, CardOrientationInfo>,
+  existingZones: CanvasArea[] = [],
+): CanvasArea {
+  const base = createDeckZone(deck, cardInfoByName, 0, []);
+  const occupiedBounds = existingZones
+    .filter((zone) => zone.pinned)
+    .map((zone) => zone.bounds);
+  const bounds = createCanvasAreaBoundsForQuadrant(
+    "stacks",
+    { width: base.bounds.width, height: base.bounds.height },
+    0,
+    occupiedBounds,
+  );
+  const dx = bounds.x - base.bounds.x;
+  const dy = bounds.y - base.bounds.y;
+
+  return {
+    ...base,
+    id: `lookup-deck-${deck.id}`,
+    deckId: undefined,
+    lookupDeckId: deck.id,
+    name: sanitizeDeckZoneName(deck.name),
+    bounds,
+    cards: base.cards.map((card) => ({
+      ...card,
+      x: card.x + dx,
+      y: card.y + dy,
+    })),
   };
 }
 

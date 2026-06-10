@@ -80,7 +80,8 @@ export function LoginModal() {
         id: session.userId,
         decks: [],
         collection: [],
-        selectedArchetype: null,
+        selectedCardCategory: null,
+        favouriteDeckIds: [],
         canvasLabels: [],
         canvasAreas: [],
       };
@@ -214,7 +215,7 @@ export function LoginModal() {
           {state.session.isGuest ? (
             <>
               <p className="modal-info">
-                Create an account or log in to sync your decks, stacks, archetypes, and canvas labels.
+                Create an account or log in to sync your decks, stacks, card categories, and canvas labels.
               </p>
 
               <div className="auth-mode-row">

@@ -13,6 +13,7 @@
 import type { Card, Deck, DeckCard, DeckBoards } from './dataModels';
 import { createEmptyDeck } from './dataModels';
 import { generateUUID } from '@/utils/uuid';
+import { isBlockedTokenCardName } from '@/data/tokenCards';
 
 // ============================================================================
 // Export
@@ -186,6 +187,10 @@ export function importDeckFromText(
       warnings.push(`Invalid quantity for ${name}`);
       return;
     }
+    if (isBlockedTokenCardName(name)) {
+      warnings.push(`Token cards cannot be added to decks: ${name}`);
+      return;
+    }
 
     const normalizedName = name.toLowerCase();
     if (!cardNames.has(normalizedName)) {
@@ -272,6 +277,10 @@ export function importFromCuriosaDeck(
 
   function validateAndAdd(cards: DeckCard[], board: keyof DeckBoards) {
     for (const card of cards) {
+      if (isBlockedTokenCardName(card.name)) {
+        warnings.push(`Token cards cannot be added to decks: ${card.name}`);
+        continue;
+      }
       const normalizedName = card.name.toLowerCase();
       if (!cardNames.has(normalizedName)) {
         unknownCards.push(card.name);

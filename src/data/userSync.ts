@@ -21,6 +21,21 @@ const SYNC_DEBOUNCE_MS = 2000;
 let pendingSync: UserData | null = null;
 let syncInProgress = false;
 
+function mergeStringLists(serverValue: unknown, localValue: unknown): string[] {
+  const ids = new Set<string>();
+  const addIds = (value: unknown) => {
+    if (!Array.isArray(value)) return;
+    for (const entry of value) {
+      if (typeof entry !== 'string') continue;
+      const trimmed = entry.trim();
+      if (trimmed) ids.add(trimmed);
+    }
+  };
+  addIds(serverValue);
+  addIds(localValue);
+  return Array.from(ids);
+}
+
 /**
  * Queue user data for debounced backend sync.
  *
@@ -169,9 +184,10 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
       name,
       quantity,
     })),
-    selectedArchetype:
-      server.selectedArchetype ?? local.selectedArchetype ?? null,
-    archetypeScores: server.archetypeScores ?? local.archetypeScores,
+    selectedCardCategory:
+      server.selectedCardCategory ?? local.selectedCardCategory ?? null,
+    cardCategories: server.cardCategories ?? local.cardCategories,
+    favouriteDeckIds: mergeStringLists(server.favouriteDeckIds, local.favouriteDeckIds),
     canvasLabels: Array.from(labelsById.values()),
     canvasAreas: Array.from(canvasAreasById.values()),
   };

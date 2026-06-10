@@ -27,9 +27,10 @@ describe('userStorage', () => {
       'canvasLabels',
       'collection',
       'decks',
+      'favouriteDeckIds',
       'id',
       'name',
-      'selectedArchetype',
+      'selectedCardCategory',
     ]);
   });
 
