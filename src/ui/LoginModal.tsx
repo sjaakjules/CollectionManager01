@@ -8,7 +8,7 @@
 import { useState, useCallback } from 'react';
 import { useAppState } from '@/app/AppState';
 import { login, logout, signup } from '@/auth/authService';
-import { loadUserData, saveUserData } from '@/data/userStorage';
+import { loadUserDataResult, saveUserData } from '@/data/userStorage';
 import {
   pullUserData,
   mergeUserData,
@@ -162,10 +162,15 @@ export function LoginModal() {
 
       logout();
 
-      let guestData = await loadUserData(null);
+      const guestResult = await loadUserDataResult(null);
+      let guestData = guestResult.data;
       if (!guestData) {
         guestData = createGuestUserData(generateUUID());
-        await saveUserData(guestData);
+        // When the read failed, existing guest data may still be in storage —
+        // don't overwrite it with an empty snapshot.
+        if (!guestResult.readFailed) {
+          await saveUserData(guestData);
+        }
       }
 
       dispatch({ type: 'SET_USER_DATA', userData: guestData });

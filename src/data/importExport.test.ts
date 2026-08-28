@@ -107,4 +107,34 @@ describe('deck import/export', () => {
     expect(result.deck.boards.avatar).toEqual([{ name: 'Avatar of Fire', quantity: 1 }]);
     expect(result.warnings).toEqual(['Token cards cannot be added to decks: Frog']);
   });
+
+  it('parses "4x Card Name" quantity lines', () => {
+    const result = importDeckFromText('4x Fireball\n2X Relic', 'Test', cards);
+
+    expect(result.unknownCards).toEqual([]);
+    expect(result.deck.boards.mainboard).toEqual([
+      { name: 'Fireball', quantity: 4 },
+      { name: 'Relic', quantity: 2 },
+    ]);
+  });
+
+  it('keeps a provided Curiosa deck id and canonicalizes card spellings', () => {
+    const result = importFromCuriosaDeck(
+      {
+        id: 'curiosa-abc123',
+        name: 'Curiosa Deck',
+        author: '',
+        mainboard: [{ name: 'fireball', quantity: 2 }],
+        avatar: [],
+        sideboard: [],
+        maybeboard: [],
+      },
+      cards,
+    );
+
+    expect(result.deck.id).toBe('curiosa-abc123');
+    expect(result.deck.author).toBeUndefined();
+    expect(result.unknownCards).toEqual([]);
+    expect(result.deck.boards.mainboard).toEqual([{ name: 'Fireball', quantity: 2 }]);
+  });
 });

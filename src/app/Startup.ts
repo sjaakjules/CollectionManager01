@@ -17,7 +17,8 @@
 import type { AppAction } from './AppState';
 import type { Card, UserData } from '@/data/dataModels';
 import { createGuestUserData } from '@/data/dataModels';
-import { loadUserData, saveUserData } from '@/data/userStorage';
+import { loadUserDataResult, saveUserData } from '@/data/userStorage';
+import { fetchGuestSeedDecks, mergeSeedDecks } from '@/data/seedDecks';
 import { fetchCards } from '@/data/cardService';
 import { getStoredSession, type StoredSession } from '@/auth/session';
 import { generateUUID } from '@/utils/uuid';
@@ -105,9 +106,12 @@ async function loadOrCreateUserData(
 ): Promise<StartupResult> {
   try {
     let userData: UserData | null = null;
+    let readFailed = false;
 
     if (session) {
-      const localData = await loadUserData(session.userId);
+      const localResult = await loadUserDataResult(session.userId);
+      const localData = localResult.data;
+      readFailed = localResult.readFailed;
       let serverData: UserData | null = null;
 
       try {
@@ -135,11 +139,15 @@ async function loadOrCreateUserData(
         };
       }
     } else {
-      userData = await loadUserData(null);
+      const guestResult = await loadUserDataResult(null);
+      userData = guestResult.data;
+      readFailed = guestResult.readFailed;
       if (!userData) {
         const guestId = generateUUID();
         userData = createGuestUserData(guestId);
       }
+
+      userData = await applyGuestSeedDecks(dispatch, userData);
 
       dispatch({
         type: 'SET_SESSION',
@@ -152,12 +160,68 @@ async function loadOrCreateUserData(
       });
     }
 
-    await saveUserData(userData);
+    if (readFailed) {
+      // A storage read threw, so existing data may be present but unreadable.
+      // Persisting now could overwrite it with fresh defaults — stay in
+      // memory only and let the user know.
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        notification: {
+          type: 'error',
+          message:
+            'Saved data could not be read from browser storage, so it was left untouched. Changes made now may not persist — try reloading.',
+        },
+      });
+    } else {
+      try {
+        await saveUserData(userData);
+      } catch (error) {
+        console.warn('Failed to persist user data during startup:', error);
+      }
+    }
+
     dispatch({ type: 'SET_USER_DATA', userData });
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load user data';
     console.error('Failed to load user data:', error);
     return { success: false, error: message };
+  }
+}
+
+/**
+ * Merge bundled seed decks into guest data (first boot only per deck id).
+ *
+ * Inputs:
+ * - `dispatch`: App reducer dispatch (for the one-time "decks added" notice).
+ * - `userData`: Guest snapshot to extend.
+ *
+ * Outputs:
+ * - Resolves to the (possibly extended) guest snapshot; never throws.
+ */
+async function applyGuestSeedDecks(
+  dispatch: React.Dispatch<AppAction>,
+  userData: UserData
+): Promise<UserData> {
+  try {
+    const seedDecks = await fetchGuestSeedDecks();
+    if (seedDecks.length === 0) return userData;
+
+    const { userData: seeded, addedDeckNames } = mergeSeedDecks(userData, seedDecks);
+    if (addedDeckNames.length > 0) {
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        notification: {
+          type: 'info',
+          message: `Added ${addedDeckNames.length} downloaded ${
+            addedDeckNames.length === 1 ? 'deck' : 'decks'
+          }: ${addedDeckNames.join(', ')}`,
+        },
+      });
+    }
+    return seeded;
+  } catch (error) {
+    console.warn('Failed to apply guest seed decks:', error);
+    return userData;
   }
 }

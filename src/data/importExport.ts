@@ -159,8 +159,10 @@ export function importDeckFromText(
       continue;
     }
 
-    // Parse "quantity name" format
-    const match = line.match(/^(\d+)\s+(.+)$/);
+    // Parse "quantity name" format, accepting an "x" attached to the digits
+    // ("4x Fireball"). The x must be attached so card names beginning with a
+    // standalone "X" are not misparsed.
+    const match = line.match(/^(\d+)[xX]\s+(.+)$/) ?? line.match(/^(\d+)\s+(.+)$/);
     if (!match) {
       // Try "name x quantity" format
       const altMatch = line.match(/^(.+)\s+x\s*(\d+)$/i);
@@ -244,6 +246,8 @@ export function importDeckFromText(
  * Board payload returned by the Curiosa import service.
  */
 export interface CuriosaDeckData {
+  /** Stable deck id to keep (e.g. `curiosa-<id>`); a UUID is generated when omitted. */
+  id?: string;
   name: string;
   author: string;
   mainboard: DeckCard[];
@@ -266,8 +270,10 @@ export function importFromCuriosaDeck(
   data: CuriosaDeckData,
   cardDatabase: Card[]
 ): ImportResult {
-  const deck = createEmptyDeck(data.name, generateUUID());
-  deck.author = data.author;
+  const deck = createEmptyDeck(data.name, data.id ?? generateUUID());
+  if (data.author) {
+    deck.author = data.author;
+  }
 
   const unknownCards: string[] = [];
   const warnings: string[] = [];

@@ -297,16 +297,21 @@ export function BottomPanel({
   const openFilterTab = useCallback(() => {
     dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
     if (isPhone) {
-      if (!phoneExpanded) {
-        setActiveToolTab("filter");
-        setActiveActionPanel(null);
-      } else {
+      if (phoneExpanded && displayedToolTab === "filter") {
         setActiveToolTab(null);
         setActiveActionPanel(null);
         setFilterPanelMode(null);
         setFilterDetailIndex(null);
+        onPhoneTabToggle?.();
+        return;
       }
-      onPhoneTabToggle?.();
+
+      setActiveToolTab("filter");
+      setActiveActionPanel(null);
+      setCategoryRemoveMode(false);
+      setFilterDetailIndex(null);
+      setFilterPanelMode("settings");
+      if (!phoneExpanded) onPhoneTabToggle?.();
       return;
     }
     setActiveActionPanel(null);
@@ -319,7 +324,7 @@ export function BottomPanel({
       }
       return next;
     });
-  }, [dispatch, isPhone, onPhoneTabToggle, phoneExpanded]);
+  }, [dispatch, displayedToolTab, isPhone, onPhoneTabToggle, phoneExpanded]);
 
   const openCategoriesTab = useCallback(() => {
     dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
@@ -335,10 +340,17 @@ export function BottomPanel({
     setFilterPanelMode(null);
     setFilterDetailIndex(null);
     setCategoryRemoveMode(false);
+    if (isPhone && phoneExpanded && displayedToolTab === "associations") {
+      setActiveToolTab(null);
+      onPhoneTabToggle?.();
+      return;
+    }
+
     dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: true });
     dispatch({ type: "SET_SELECTED_CARD_CATEGORY", categoryId: null });
     setActiveToolTab("associations");
-  }, [dispatch]);
+    if (isPhone && !phoneExpanded) onPhoneTabToggle?.();
+  }, [dispatch, displayedToolTab, isPhone, onPhoneTabToggle, phoneExpanded]);
 
   const handleDeckLookupDoubleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {

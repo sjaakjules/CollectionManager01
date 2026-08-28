@@ -1,0 +1,1154 @@
+{
+  "generatedAt": "2026-07-24T05:41:10.756Z",
+  "decks": [
+    {
+      "id": "curiosa-cmppimy4s005804l1m8zu23qi",
+      "name": "Not Another Druid List",
+      "boards": {
+        "mainboard": [
+          {
+            "name": "Daperyll Vampire",
+            "quantity": 2
+          },
+          {
+            "name": "Grandmaster Wizard",
+            "quantity": 1
+          },
+          {
+            "name": "Highland Princess",
+            "quantity": 1
+          },
+          {
+            "name": "Hounds of Ondaros",
+            "quantity": 2
+          },
+          {
+            "name": "Grapple Shot",
+            "quantity": 2
+          },
+          {
+            "name": "Lightning Bolt",
+            "quantity": 1
+          },
+          {
+            "name": "Whirling Blades",
+            "quantity": 2
+          },
+          {
+            "name": "Fey Changeling",
+            "quantity": 2
+          },
+          {
+            "name": "Polar Explorers",
+            "quantity": 2
+          },
+          {
+            "name": "Ruler of Thul",
+            "quantity": 1
+          },
+          {
+            "name": "Selfsame Simulacrum",
+            "quantity": 1
+          },
+          {
+            "name": "Plague of Frogs",
+            "quantity": 1
+          },
+          {
+            "name": "Pollimorph",
+            "quantity": 2
+          },
+          {
+            "name": "Riptide",
+            "quantity": 2
+          },
+          {
+            "name": "Atlantean Fate",
+            "quantity": 1
+          },
+          {
+            "name": "Drums of Doom",
+            "quantity": 1
+          },
+          {
+            "name": "Torshammar Trinket",
+            "quantity": 1
+          },
+          {
+            "name": "Coy Nixie",
+            "quantity": 3
+          },
+          {
+            "name": "Horn of Caerleon",
+            "quantity": 1
+          },
+          {
+            "name": "Lugbog Cat",
+            "quantity": 3
+          },
+          {
+            "name": "Mesmerism",
+            "quantity": 1
+          },
+          {
+            "name": "Questing Beast",
+            "quantity": 1
+          },
+          {
+            "name": "Ring of Morrigan",
+            "quantity": 1
+          },
+          {
+            "name": "Sir Pelleas",
+            "quantity": 1
+          },
+          {
+            "name": "Sir Tom Thumb",
+            "quantity": 1
+          },
+          {
+            "name": "The Black Plague",
+            "quantity": 1
+          },
+          {
+            "name": "The Green Knight",
+            "quantity": 1
+          },
+          {
+            "name": "Swap",
+            "quantity": 2
+          },
+          {
+            "name": "Abaddon Succubus",
+            "quantity": 2
+          },
+          {
+            "name": "Archangel Raphael",
+            "quantity": 1
+          },
+          {
+            "name": "Bane of Aventis",
+            "quantity": 1
+          },
+          {
+            "name": "Call of the Sea",
+            "quantity": 1
+          },
+          {
+            "name": "Legion of Gall",
+            "quantity": 2
+          },
+          {
+            "name": "Lord of Lies",
+            "quantity": 2
+          },
+          {
+            "name": "Order of the Sacred Oak",
+            "quantity": 3
+          },
+          {
+            "name": "Pied Piper of Hameln",
+            "quantity": 1
+          },
+          {
+            "name": "Sacred Stag",
+            "quantity": 2
+          },
+          {
+            "name": "Scatter",
+            "quantity": 1
+          },
+          {
+            "name": "The Rack",
+            "quantity": 1
+          },
+          {
+            "name": "Toolbox",
+            "quantity": 2
+          },
+          {
+            "name": "Dark Tower",
+            "quantity": 1
+          },
+          {
+            "name": "Gothic Tower",
+            "quantity": 1
+          },
+          {
+            "name": "Lone Tower",
+            "quantity": 1
+          },
+          {
+            "name": "Floodplain",
+            "quantity": 3
+          },
+          {
+            "name": "Lighthouse",
+            "quantity": 3
+          },
+          {
+            "name": "Joyous Garde",
+            "quantity": 1
+          },
+          {
+            "name": "Troll Bridge",
+            "quantity": 3
+          },
+          {
+            "name": "Bureau of Occult Control",
+            "quantity": 1
+          },
+          {
+            "name": "Den of Evil",
+            "quantity": 3
+          },
+          {
+            "name": "Innsmouth Dock",
+            "quantity": 1
+          },
+          {
+            "name": "Mismanaged Mortuary",
+            "quantity": 2
+          },
+          {
+            "name": "Mountain Peaks",
+            "quantity": 3
+          },
+          {
+            "name": "River Rapids",
+            "quantity": 2
+          },
+          {
+            "name": "Thin Ice",
+            "quantity": 3
+          },
+          {
+            "name": "Wuthering Heights",
+            "quantity": 2
+          }
+        ],
+        "sideboard": [
+          {
+            "name": "Blink",
+            "quantity": 1
+          },
+          {
+            "name": "Disenchant",
+            "quantity": 1
+          },
+          {
+            "name": "Grapple Shot",
+            "quantity": 1
+          },
+          {
+            "name": "Lightning Bolt",
+            "quantity": 1
+          },
+          {
+            "name": "Drown",
+            "quantity": 1
+          },
+          {
+            "name": "Riptide",
+            "quantity": 1
+          },
+          {
+            "name": "Tactical Move",
+            "quantity": 1
+          },
+          {
+            "name": "Displace",
+            "quantity": 1
+          },
+          {
+            "name": "Lure",
+            "quantity": 1
+          },
+          {
+            "name": "Zap!",
+            "quantity": 1
+          }
+        ],
+        "avatar": [
+          {
+            "name": "Druid",
+            "quantity": 1
+          }
+        ],
+        "maybeboard": []
+      },
+      "createdAt": "2026-05-28T13:15:26.655Z",
+      "updatedAt": "2026-06-28T18:19:02.823Z",
+      "author": "OhBaby1"
+    },
+    {
+      "id": "curiosa-cmpuea7lu00j204l5bvepfisb",
+      "name": "Water Pathfinder Grand Contest Top 8",
+      "boards": {
+        "mainboard": [
+          {
+            "name": "Adept Illusionist",
+            "quantity": 2
+          },
+          {
+            "name": "Captain Baldassare",
+            "quantity": 1
+          },
+          {
+            "name": "Lord of Unland",
+            "quantity": 1
+          },
+          {
+            "name": "Ruler of Thul",
+            "quantity": 1
+          },
+          {
+            "name": "Selfsame Simulacrum",
+            "quantity": 2
+          },
+          {
+            "name": "Tufted Turtles",
+            "quantity": 3
+          },
+          {
+            "name": "Plague of Frogs",
+            "quantity": 1
+          },
+          {
+            "name": "Pollimorph",
+            "quantity": 1
+          },
+          {
+            "name": "Riptide",
+            "quantity": 4
+          },
+          {
+            "name": "Atlantean Fate",
+            "quantity": 1
+          },
+          {
+            "name": "Aquamarine Core",
+            "quantity": 1
+          },
+          {
+            "name": "Mix Aqua",
+            "quantity": 2
+          },
+          {
+            "name": "Torshammar Trinket",
+            "quantity": 1
+          },
+          {
+            "name": "Coy Nixie",
+            "quantity": 2
+          },
+          {
+            "name": "Lugbog Cat",
+            "quantity": 3
+          },
+          {
+            "name": "Mesmerism",
+            "quantity": 1
+          },
+          {
+            "name": "Mester Stoor Worm",
+            "quantity": 2
+          },
+          {
+            "name": "Nelly Longarms",
+            "quantity": 1
+          },
+          {
+            "name": "Questing Beast",
+            "quantity": 1
+          },
+          {
+            "name": "Ring of Morrigan",
+            "quantity": 1
+          },
+          {
+            "name": "Snowball",
+            "quantity": 1
+          },
+          {
+            "name": "The Green Knight",
+            "quantity": 1
+          },
+          {
+            "name": "The Lady of the Lake",
+            "quantity": 1
+          },
+          {
+            "name": "Swap",
+            "quantity": 3
+          },
+          {
+            "name": "Abaddon Succubus",
+            "quantity": 2
+          },
+          {
+            "name": "Aino",
+            "quantity": 1
+          },
+          {
+            "name": "Algor Omphalos",
+            "quantity": 1
+          },
+          {
+            "name": "Archangel Raphael",
+            "quantity": 1
+          },
+          {
+            "name": "Call of the Sea",
+            "quantity": 1
+          },
+          {
+            "name": "Dank Omphalos",
+            "quantity": 1
+          },
+          {
+            "name": "Into the Abyss",
+            "quantity": 2
+          },
+          {
+            "name": "Lacuna Entity",
+            "quantity": 1
+          },
+          {
+            "name": "Lilith",
+            "quantity": 1
+          },
+          {
+            "name": "Lord of Lies",
+            "quantity": 2
+          },
+          {
+            "name": "Maiden, Mother, Crone",
+            "quantity": 1
+          },
+          {
+            "name": "Order of the Sacred Oak",
+            "quantity": 3
+          },
+          {
+            "name": "Pied Piper of Hameln",
+            "quantity": 1
+          },
+          {
+            "name": "Sacred Stag",
+            "quantity": 2
+          },
+          {
+            "name": "Silver Bullet",
+            "quantity": 2
+          },
+          {
+            "name": "Gothic Tower",
+            "quantity": 1
+          },
+          {
+            "name": "Pillar of Zeiros",
+            "quantity": 1
+          },
+          {
+            "name": "Autumn River",
+            "quantity": 1
+          },
+          {
+            "name": "Floodplain",
+            "quantity": 1
+          },
+          {
+            "name": "Island Leviathan",
+            "quantity": 1
+          },
+          {
+            "name": "Maelström",
+            "quantity": 1
+          },
+          {
+            "name": "Spring River",
+            "quantity": 1
+          },
+          {
+            "name": "Summer River",
+            "quantity": 1
+          },
+          {
+            "name": "Tadpole Pool",
+            "quantity": 1
+          },
+          {
+            "name": "Undertow",
+            "quantity": 1
+          },
+          {
+            "name": "Mirror Realm",
+            "quantity": 1
+          },
+          {
+            "name": "Sinkhole",
+            "quantity": 1
+          },
+          {
+            "name": "Babbling Brook",
+            "quantity": 1
+          },
+          {
+            "name": "Bog",
+            "quantity": 1
+          },
+          {
+            "name": "Kelp Cavern",
+            "quantity": 1
+          },
+          {
+            "name": "Pond",
+            "quantity": 1
+          },
+          {
+            "name": "Troll Bridge",
+            "quantity": 1
+          },
+          {
+            "name": "Baba Yaga's Hut",
+            "quantity": 1
+          },
+          {
+            "name": "Blessed Well",
+            "quantity": 1
+          },
+          {
+            "name": "Croaking Swamp",
+            "quantity": 1
+          },
+          {
+            "name": "Deep Sea",
+            "quantity": 1
+          },
+          {
+            "name": "Elder Ruins",
+            "quantity": 1
+          },
+          {
+            "name": "Gilman House",
+            "quantity": 1
+          },
+          {
+            "name": "Innsmouth Dock",
+            "quantity": 1
+          },
+          {
+            "name": "Mismanaged Mortuary",
+            "quantity": 1
+          },
+          {
+            "name": "Peculiar Port",
+            "quantity": 1
+          },
+          {
+            "name": "River Rapids",
+            "quantity": 1
+          },
+          {
+            "name": "Stinging Kelp",
+            "quantity": 1
+          },
+          {
+            "name": "Thin Ice",
+            "quantity": 1
+          },
+          {
+            "name": "Watery Grave",
+            "quantity": 1
+          }
+        ],
+        "sideboard": [
+          {
+            "name": "Font of Life",
+            "quantity": 1
+          },
+          {
+            "name": "Geyser",
+            "quantity": 1
+          },
+          {
+            "name": "Mariner's Curse",
+            "quantity": 1
+          },
+          {
+            "name": "Rolling Boulder",
+            "quantity": 1
+          },
+          {
+            "name": "Snowball",
+            "quantity": 1
+          },
+          {
+            "name": "Dredge",
+            "quantity": 1
+          },
+          {
+            "name": "Horrible Hybrids",
+            "quantity": 3
+          },
+          {
+            "name": "Mimic",
+            "quantity": 1
+          }
+        ],
+        "avatar": [
+          {
+            "name": "Pathfinder",
+            "quantity": 1
+          }
+        ],
+        "maybeboard": []
+      },
+      "createdAt": "2026-05-31T23:12:24.821Z",
+      "updatedAt": "2026-05-31T23:29:03.903Z",
+      "author": "Pathfinder"
+    },
+    {
+      "id": "curiosa-cmm45q5mu00dh04l7mzhl477o",
+      "name": "Heavier than a Duck - 2nd place SCGCon DC Grand Contest",
+      "boards": {
+        "mainboard": [
+          {
+            "name": "Colicky Dragonettes",
+            "quantity": 3
+          },
+          {
+            "name": "Vile Imp",
+            "quantity": 4
+          },
+          {
+            "name": "Poison Nova",
+            "quantity": 2
+          },
+          {
+            "name": "Polar Explorers",
+            "quantity": 2
+          },
+          {
+            "name": "Ruler of Thul",
+            "quantity": 1
+          },
+          {
+            "name": "Plague of Frogs",
+            "quantity": 1
+          },
+          {
+            "name": "Pollimorph",
+            "quantity": 2
+          },
+          {
+            "name": "Atlantean Fate",
+            "quantity": 1
+          },
+          {
+            "name": "Torshammar Trinket",
+            "quantity": 2
+          },
+          {
+            "name": "Boudicca",
+            "quantity": 1
+          },
+          {
+            "name": "Firebreathing",
+            "quantity": 2
+          },
+          {
+            "name": "Lava Flow",
+            "quantity": 3
+          },
+          {
+            "name": "Love Potion",
+            "quantity": 1
+          },
+          {
+            "name": "Lugbog Cat",
+            "quantity": 3
+          },
+          {
+            "name": "Mesmerism",
+            "quantity": 1
+          },
+          {
+            "name": "Morgana le Fay",
+            "quantity": 1
+          },
+          {
+            "name": "Ring of Morrigan",
+            "quantity": 1
+          },
+          {
+            "name": "Sir Agravaine",
+            "quantity": 1
+          },
+          {
+            "name": "The Great Famine",
+            "quantity": 1
+          },
+          {
+            "name": "Swap",
+            "quantity": 2
+          },
+          {
+            "name": "Aino",
+            "quantity": 1
+          },
+          {
+            "name": "Balor of the Evil Eye",
+            "quantity": 1
+          },
+          {
+            "name": "Begone!",
+            "quantity": 3
+          },
+          {
+            "name": "Blaze of Glory",
+            "quantity": 1
+          },
+          {
+            "name": "Failed Mutation",
+            "quantity": 3
+          },
+          {
+            "name": "Hyperparasite",
+            "quantity": 2
+          },
+          {
+            "name": "Key to the City",
+            "quantity": 1
+          },
+          {
+            "name": "Lilith",
+            "quantity": 1
+          },
+          {
+            "name": "Lord of Lies",
+            "quantity": 2
+          },
+          {
+            "name": "Màzuj Ifrit",
+            "quantity": 2
+          },
+          {
+            "name": "Peacemaker Arbalest",
+            "quantity": 2
+          },
+          {
+            "name": "Sacred Stag",
+            "quantity": 2
+          },
+          {
+            "name": "The Inquisition",
+            "quantity": 1
+          },
+          {
+            "name": "The Rack",
+            "quantity": 1
+          },
+          {
+            "name": "Toolbox",
+            "quantity": 2
+          },
+          {
+            "name": "Arid Desert",
+            "quantity": 4
+          },
+          {
+            "name": "Floodplain",
+            "quantity": 3
+          },
+          {
+            "name": "Oasis",
+            "quantity": 3
+          },
+          {
+            "name": "The Colour Out of Space",
+            "quantity": 1
+          },
+          {
+            "name": "Caerleon-Upon-Usk",
+            "quantity": 1
+          },
+          {
+            "name": "Fields of Camlann",
+            "quantity": 1
+          },
+          {
+            "name": "Joyous Garde",
+            "quantity": 1
+          },
+          {
+            "name": "River of Blood",
+            "quantity": 2
+          },
+          {
+            "name": "Active Volcano",
+            "quantity": 3
+          },
+          {
+            "name": "Bureau of Occult Control",
+            "quantity": 2
+          },
+          {
+            "name": "Garden of Eden",
+            "quantity": 1
+          },
+          {
+            "name": "Innsmouth Dock",
+            "quantity": 1
+          },
+          {
+            "name": "Mismanaged Mortuary",
+            "quantity": 2
+          },
+          {
+            "name": "Peculiar Port",
+            "quantity": 3
+          },
+          {
+            "name": "River Rapids",
+            "quantity": 2
+          }
+        ],
+        "sideboard": [
+          {
+            "name": "Boil",
+            "quantity": 1
+          },
+          {
+            "name": "Firebolts",
+            "quantity": 1
+          },
+          {
+            "name": "Minor Explosion",
+            "quantity": 1
+          },
+          {
+            "name": "Drown",
+            "quantity": 1
+          },
+          {
+            "name": "Extinguish",
+            "quantity": 1
+          },
+          {
+            "name": "Flame Strike",
+            "quantity": 1
+          },
+          {
+            "name": "Flayer",
+            "quantity": 1
+          },
+          {
+            "name": "Horrible Hybrids",
+            "quantity": 2
+          },
+          {
+            "name": "Vandal Imp",
+            "quantity": 1
+          }
+        ],
+        "avatar": [
+          {
+            "name": "Persecutor",
+            "quantity": 1
+          }
+        ],
+        "maybeboard": []
+      },
+      "createdAt": "2026-02-27T00:31:44.629Z",
+      "updatedAt": "2026-06-08T13:37:12.850Z",
+      "author": "emperorigor"
+    },
+    {
+      "id": "curiosa-cmpuo4dea00px04lg9a7d1vty",
+      "name": "Gas",
+      "boards": {
+        "mainboard": [
+          {
+            "name": "Gyre Hippogriffs",
+            "quantity": 3
+          },
+          {
+            "name": "Highland Falconer",
+            "quantity": 2
+          },
+          {
+            "name": "Phase Assassin",
+            "quantity": 3
+          },
+          {
+            "name": "Skirmishers of Mu",
+            "quantity": 3
+          },
+          {
+            "name": "Blink",
+            "quantity": 4
+          },
+          {
+            "name": "Grapple Shot",
+            "quantity": 4
+          },
+          {
+            "name": "Lightning Bolt",
+            "quantity": 2
+          },
+          {
+            "name": "Whirling Blades",
+            "quantity": 3
+          },
+          {
+            "name": "Rolling Boulder",
+            "quantity": 3
+          },
+          {
+            "name": "Arc Lightning",
+            "quantity": 2
+          },
+          {
+            "name": "Band of Thieves",
+            "quantity": 2
+          },
+          {
+            "name": "Vanishment",
+            "quantity": 2
+          },
+          {
+            "name": "Bane of Aventis",
+            "quantity": 1
+          },
+          {
+            "name": "Bitter Departed",
+            "quantity": 3
+          },
+          {
+            "name": "Cage of Sidrak",
+            "quantity": 1
+          },
+          {
+            "name": "Dank Omphalos",
+            "quantity": 1
+          },
+          {
+            "name": "Gibbous Nightgaunts",
+            "quantity": 3
+          },
+          {
+            "name": "Gift of the Raven",
+            "quantity": 2
+          },
+          {
+            "name": "Gossamer Ghost",
+            "quantity": 2
+          },
+          {
+            "name": "Jack the Ripper",
+            "quantity": 1
+          },
+          {
+            "name": "Legion of Gall",
+            "quantity": 2
+          },
+          {
+            "name": "Murder of Crows",
+            "quantity": 3
+          },
+          {
+            "name": "Order of the Pale Worm",
+            "quantity": 3
+          },
+          {
+            "name": "Screamer",
+            "quantity": 4
+          },
+          {
+            "name": "Stagecoach",
+            "quantity": 2
+          },
+          {
+            "name": "Sturmgeist",
+            "quantity": 2
+          },
+          {
+            "name": "Toolbox",
+            "quantity": 3
+          },
+          {
+            "name": "Vampire Bats",
+            "quantity": 2
+          },
+          {
+            "name": "Cloud City",
+            "quantity": 1
+          },
+          {
+            "name": "Dark Tower",
+            "quantity": 2
+          },
+          {
+            "name": "Gothic Tower",
+            "quantity": 2
+          },
+          {
+            "name": "Lone Tower",
+            "quantity": 2
+          },
+          {
+            "name": "Mountain Pass",
+            "quantity": 1
+          },
+          {
+            "name": "Observatory",
+            "quantity": 2
+          },
+          {
+            "name": "Updraft Ridge",
+            "quantity": 1
+          },
+          {
+            "name": "Watchtower",
+            "quantity": 1
+          },
+          {
+            "name": "Bottomless Pit",
+            "quantity": 2
+          },
+          {
+            "name": "Great Wall",
+            "quantity": 1
+          },
+          {
+            "name": "Mirror Realm",
+            "quantity": 1
+          },
+          {
+            "name": "Beacon",
+            "quantity": 1
+          },
+          {
+            "name": "Lookout",
+            "quantity": 2
+          },
+          {
+            "name": "Treetop Hideout",
+            "quantity": 2
+          },
+          {
+            "name": "Troll Bridge",
+            "quantity": 1
+          },
+          {
+            "name": "Wizard's Den",
+            "quantity": 2
+          },
+          {
+            "name": "Fields of Phyxis",
+            "quantity": 1
+          },
+          {
+            "name": "Baba Yaga's Hut",
+            "quantity": 1
+          },
+          {
+            "name": "City of Glass",
+            "quantity": 1
+          },
+          {
+            "name": "Dark Alley",
+            "quantity": 2
+          },
+          {
+            "name": "Den of Evil",
+            "quantity": 1
+          },
+          {
+            "name": "Dread Thicket",
+            "quantity": 2
+          },
+          {
+            "name": "Ghost Town",
+            "quantity": 2
+          },
+          {
+            "name": "Old Mortimer's Den",
+            "quantity": 1
+          },
+          {
+            "name": "River Rapids",
+            "quantity": 1
+          },
+          {
+            "name": "The Manor at Daperyll Hill",
+            "quantity": 1
+          },
+          {
+            "name": "The Void",
+            "quantity": 1
+          },
+          {
+            "name": "Wuthering Heights",
+            "quantity": 2
+          }
+        ],
+        "sideboard": [
+          {
+            "name": "Disenchant",
+            "quantity": 1
+          },
+          {
+            "name": "Lightning Bolt",
+            "quantity": 1
+          },
+          {
+            "name": "Arc Lightning",
+            "quantity": 1
+          },
+          {
+            "name": "Murder of Crows",
+            "quantity": 1
+          },
+          {
+            "name": "Zap!",
+            "quantity": 1
+          }
+        ],
+        "avatar": [
+          {
+            "name": "Avatar of Air",
+            "quantity": 1
+          }
+        ],
+        "maybeboard": [
+          {
+            "name": "Fade",
+            "quantity": 1
+          },
+          {
+            "name": "Mortality",
+            "quantity": 1
+          },
+          {
+            "name": "Psionic Blast",
+            "quantity": 1
+          },
+          {
+            "name": "Defiler Spire",
+            "quantity": 1
+          },
+          {
+            "name": "Skeleton Mage",
+            "quantity": 1
+          }
+        ]
+      },
+      "createdAt": "2026-06-01T03:47:48.549Z",
+      "updatedAt": "2026-06-01T04:41:04.769Z",
+      "author": "sjaak"
+    }
+  ]
+}

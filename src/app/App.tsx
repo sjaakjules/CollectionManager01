@@ -35,7 +35,7 @@ import { DeckFilterPopover } from '@/ui/DeckFilterPopover';
 import { StacksPanel } from '@/ui/StacksPanel';
 import { DecksPanel } from '@/ui/DecksPanel';
 import { useResponsiveUiMode } from '@/ui/useResponsiveUiMode';
-import { saveUserData } from '@/data/userStorage';
+import { mirrorUserDataToLocalStorage, saveUserData } from '@/data/userStorage';
 import { queueSync, flushSync } from '@/data/userSync';
 import type { Deck } from '@/data/dataModels';
 import type { ActiveBoard } from '@/data/dataModels';
@@ -57,12 +57,18 @@ import { createLocalDeck } from '@/data/deckCreation';
 import { AVATAR_SHORT_NAMES, getAvatarShortName, type AvatarName } from '@/ui/deckDisplay';
 import { BOARD_CHOICE_OPTIONS, type DeckAddBoard } from '@/ui/boardChoice';
 import { filterBlockedTokenCardNames, isBlockedTokenCardName } from '@/data/tokenCards';
-import { togglePhoneTab, type PhoneTabId } from '@/ui/phoneTabs';
+import {
+  getPhoneSideSwipeTarget,
+  togglePhoneTab,
+  type PhoneTabId,
+} from '@/ui/phoneTabs';
 import { CARD_SIZE, DRAWN_GRID } from '@/rendering/Grid';
 import '@/styles/ui.css';
 
 type StartupState = 'waiting' | 'loading' | 'ready' | 'error';
 type SplashPhase = 'full' | 'transparent' | 'fading' | 'done';
+
+const SAVE_ERROR_NOTIFY_INTERVAL_MS = 30_000;
 
 interface PendingDeckAddRequest {
   id: number;
@@ -144,9 +150,15 @@ export function App() {
   const [pendingDeckAdd, setPendingDeckAdd] = useState<PendingDeckAddRequest | null>(null);
   const [lookupDeckArea, setLookupDeckArea] = useState<CanvasArea | null>(null);
   const pendingDeckAddIdRef = useRef(0);
+  const lastSaveErrorNotifiedAtRef = useRef(0);
   const viewportCenterRef = useRef<{ x: number; y: number } | null>(null);
   const splashTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const startupRunIdRef = useRef(0);
+  const phoneSwipeStartRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const canvasAreas = useMemo(
     () => state.userData?.canvasAreas ?? [],
     [state.userData?.canvasAreas],
@@ -674,6 +686,63 @@ export function App() {
   }, [uiMode]);
 
   useEffect(() => {
+    if (uiMode !== 'phone') {
+      phoneSwipeStartRef.current = null;
+      return;
+    }
+
+    const blocksPhoneSwipe = (target: EventTarget | null) =>
+      target instanceof HTMLElement &&
+      !!target.closest(
+        'input, textarea, select, .modal, .bottom-folder-shell, .deck-filter-popover, .touch-action-sheet',
+      );
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!event.isPrimary || event.pointerType === 'mouse') return;
+      if (blocksPhoneSwipe(event.target)) return;
+      phoneSwipeStartRef.current = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+      };
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      const start = phoneSwipeStartRef.current;
+      phoneSwipeStartRef.current = null;
+      if (!start || start.pointerId !== event.pointerId) return;
+
+      const target = getPhoneSideSwipeTarget({
+        current: activePhoneTab,
+        startX: start.x,
+        startY: start.y,
+        endX: event.clientX,
+        endY: event.clientY,
+        viewportWidth: window.innerWidth,
+      });
+
+      if (target !== undefined) {
+        setActivePhoneTab(target);
+      }
+    };
+
+    const handlePointerCancel = (event: PointerEvent) => {
+      if (phoneSwipeStartRef.current?.pointerId === event.pointerId) {
+        phoneSwipeStartRef.current = null;
+      }
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown, true);
+    window.addEventListener('pointerup', handlePointerUp, true);
+    window.addEventListener('pointercancel', handlePointerCancel, true);
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown, true);
+      window.removeEventListener('pointerup', handlePointerUp, true);
+      window.removeEventListener('pointercancel', handlePointerCancel, true);
+    };
+  }, [activePhoneTab, uiMode]);
+
+  useEffect(() => {
     setLookupDeckArea(null);
   }, [
     state.ui.associationMode,
@@ -688,6 +757,17 @@ export function App() {
     // Always keep a local copy for offline use/recovery.
     saveUserData(state.userData).catch((error) => {
       console.error('Failed to save local user data:', error);
+      const now = Date.now();
+      if (now - lastSaveErrorNotifiedAtRef.current > SAVE_ERROR_NOTIFY_INTERVAL_MS) {
+        lastSaveErrorNotifiedAtRef.current = now;
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          notification: {
+            type: 'error',
+            message: 'Your changes could not be saved to browser storage.',
+          },
+        });
+      }
     });
 
     // Logged-in users additionally sync to backend.
@@ -702,33 +782,41 @@ export function App() {
   }, [state.userData, state.session.isGuest, state.session.token, state.session.userId]);
 
   useEffect(() => {
-    const canFlush =
-      !!state.userData &&
+    const userData = state.userData;
+    if (!userData) return;
+
+    const remoteToken =
       !state.session.isGuest &&
-      !!state.session.token &&
-      !!state.session.userId &&
-      state.userData.id === state.session.userId;
+      state.session.token &&
+      state.session.userId &&
+      userData.id === state.session.userId
+        ? state.session.token
+        : null;
 
-    if (!canFlush) return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && state.userData && state.session.token) {
-        void flushSync(state.userData, state.session.token);
+    const flush = () => {
+      // Synchronous localStorage mirror survives tab close even when an
+      // in-flight IndexedDB transaction would be aborted.
+      mirrorUserDataToLocalStorage(userData);
+      saveUserData(userData).catch(() => {
+        // Mirror above already captured the snapshot.
+      });
+      if (remoteToken) {
+        void flushSync(userData, remoteToken);
       }
     };
 
-    const handleBeforeUnload = () => {
-      if (state.userData && state.session.token) {
-        void flushSync(state.userData, state.session.token);
-      }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flush();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flush);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', flush);
     };
   }, [
     state.userData,

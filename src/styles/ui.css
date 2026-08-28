@@ -2690,7 +2690,8 @@ body {
 }
 
 .deck-create-field input,
-.deck-create-field select {
+.deck-create-field select,
+.deck-create-field textarea {
   min-height: 32px;
   padding: 6px 8px;
   border: 1px solid #4a4a8a;
@@ -2698,6 +2699,13 @@ body {
   background: #202039;
   color: #e0e0e0;
   font-size: 0.78rem;
+}
+
+.deck-create-field textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 1.4;
 }
 
 .deck-create-actions,
@@ -2959,23 +2967,34 @@ body {
 }
 
 .ui-phone .bottom-folder-shell {
-  left: 206px;
+  left: 8px;
   right: 8px;
-  bottom: 0;
+  bottom: env(safe-area-inset-bottom);
   z-index: 134;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .ui-phone .bottom-folder-tabs {
+  order: 0;
   transform: translateY(0);
-  max-width: calc(100vw - 214px);
-  overflow: visible;
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
+  overflow-y: visible;
+  gap: 6px;
+  margin-bottom: -1px;
+}
+
+.ui-phone .bottom-folder-shell.tabs-expanded .bottom-folder-tabs {
+  transform: translateY(0);
 }
 
 .ui-phone .bottom-folder-tab {
-  min-width: 92px;
+  min-width: 112px;
   min-height: 48px;
   border-radius: 10px 10px 0 0;
   background: rgba(22, 22, 38, 0.98);
+  transform: translateY(0);
 }
 
 .ui-phone .bottom-folder-shell:not(.tabs-expanded) .bottom-folder-tab {
@@ -2983,13 +3002,38 @@ body {
 }
 
 .ui-phone .bottom-folder-panel {
-  position: fixed;
-  left: 8px;
-  right: 8px;
-  bottom: 50px;
-  width: auto;
-  max-height: min(58dvh, 420px);
-  border-radius: 10px;
+  order: 1;
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  max-height: 0;
+  padding: 0 12px;
+  border-radius: 0 10px 10px 10px;
+  transform: translateY(14px);
+  overflow: hidden;
+  transition:
+    transform 0.22s ease,
+    opacity 0.18s ease,
+    max-height 0.22s ease,
+    padding 0.22s ease;
+}
+
+.ui-phone .bottom-folder-panel.open {
+  max-height: min(58dvh, 480px);
+  padding: 12px;
+  transform: translateY(0);
+  overflow: auto;
+}
+
+.ui-phone .cards-tools-drawer.open,
+.ui-phone .cards-action-drawer.open {
+  max-height: none;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  overflow: visible;
 }
 
 .ui-phone .cards-panel-toolbar {
@@ -3002,44 +3046,45 @@ body {
 
 .ui-phone .stacks-shell,
 .ui-phone .decks-shell {
-  top: auto;
-  bottom: 0;
-  height: 54px;
-  width: auto;
+  top: max(8px, env(safe-area-inset-top));
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  height: auto;
+  width: 0;
   z-index: 135;
 }
 
 .ui-phone .stacks-shell {
-  left: 8px;
+  left: 0;
 }
 
 .ui-phone .decks-shell {
-  left: 106px;
-  right: auto;
+  right: 0;
+  left: auto;
 }
 
 .ui-phone .stacks-tabs,
 .ui-phone .decks-tabs {
-  position: fixed;
-  top: auto;
-  bottom: 0;
+  position: absolute;
+  top: 8px;
+  bottom: auto;
   left: auto;
   right: auto;
-  flex-direction: row;
-  align-items: flex-end;
-  max-width: calc(100vw - 16px);
-  overflow-x: auto;
-  overflow-y: visible;
+  flex-direction: column;
+  max-height: calc(100dvh - 124px);
+  overflow-x: visible;
+  overflow-y: auto;
   gap: 6px;
-  padding: 0 0 2px;
+  padding: 0;
 }
 
 .ui-phone .stacks-tabs {
-  left: 8px;
+  left: 0;
+  align-items: flex-start;
 }
 
 .ui-phone .decks-tabs {
-  left: 106px;
+  right: 0;
+  align-items: flex-end;
 }
 
 .ui-phone .stacks-shell.tabs-expanded .stacks-tabs,
@@ -3050,9 +3095,7 @@ body {
 .ui-phone .stack-tabs-label,
 .ui-phone .deck-tabs-label,
 .ui-phone .stack-tab,
-.ui-phone .deck-tab,
-.ui-phone .bottom-folder-tab,
-.ui-phone .filter-add-tab {
+.ui-phone .deck-tab {
   min-height: 48px;
   border: 1px solid #3a3a5a;
   border-bottom: none;
@@ -3063,16 +3106,47 @@ body {
 
 .ui-phone .stack-tabs-label,
 .ui-phone .deck-tabs-label {
-  min-width: 92px;
-  max-width: 92px;
-  padding: 11px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  min-height: 96px;
+  max-width: 44px;
+  padding: 10px 6px;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.04em;
   text-align: center;
+  transform: translateX(0);
+}
+
+.ui-phone .stack-tabs-label,
+.ui-phone .stack-tab {
+  border: 1px solid #3a3a5a;
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+}
+
+.ui-phone .deck-tabs-label,
+.ui-phone .deck-tab {
+  border: 1px solid #3a3a5a;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
 }
 
 .ui-phone .stack-tab,
 .ui-phone .deck-tab {
+  min-height: 44px;
   max-width: 150px;
-  transform: translateY(120%);
+  transform: translateX(0);
+}
+
+.ui-phone .stack-tab {
+  padding: 10px 14px 10px 12px;
+}
+
+.ui-phone .deck-tab {
+  padding: 9px 12px 9px 14px;
 }
 
 .ui-phone .stacks-shell:not(.tabs-expanded) .stack-tab,
@@ -3094,18 +3168,9 @@ body {
 
 .ui-phone .stacks-shell.tabs-expanded .stack-tab,
 .ui-phone .decks-shell.tabs-expanded .deck-tab,
-.ui-phone .stack-tab.active,
-.ui-phone .deck-tab.active,
 .ui-phone .stacks-shell.tabs-expanded .stack-tabs-label,
 .ui-phone .decks-shell.tabs-expanded .deck-tabs-label {
-  transform: translateY(0);
-}
-
-.ui-phone .stacks-shell.tabs-expanded .stack-tab,
-.ui-phone .decks-shell.tabs-expanded .deck-tab,
-.ui-phone .stack-tab.active,
-.ui-phone .deck-tab.active {
-  transform: translateY(-54px);
+  transform: translateX(0);
 }
 
 .ui-phone .stack-tab-add,
@@ -3123,22 +3188,38 @@ body {
 .ui-phone .stacks-panel,
 .ui-phone .decks-panel {
   position: fixed;
-  left: 8px;
-  right: 8px;
-  bottom: 56px;
-  top: auto;
-  width: auto;
-  max-width: none;
-  max-height: min(58dvh, 420px);
+  top: max(8px, env(safe-area-inset-top));
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  width: min(86vw, 380px);
+  max-width: calc(100vw - 48px);
+  max-height: none;
   border: 1px solid #3a3a5a;
-  border-radius: 10px;
-  transform: translateY(18px);
-  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.26);
+  box-shadow: 0 0 22px rgba(0, 0, 0, 0.32);
 }
 
-.ui-phone .stacks-panel.open,
+.ui-phone .stacks-panel {
+  left: 0;
+  right: auto;
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  transform: translateX(-100%);
+}
+
+.ui-phone .decks-panel {
+  right: 0;
+  left: auto;
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  transform: translateX(100%);
+  overflow-y: auto;
+}
+
+.ui-phone .stacks-panel.open {
+  transform: translateX(0);
+}
+
 .ui-phone .decks-panel.open {
-  transform: translateY(0);
+  transform: translateX(0);
 }
 
 /* ============================================================================

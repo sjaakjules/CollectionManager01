@@ -72,7 +72,11 @@ export async function pullUserData(
   try {
     const serverData = await fetchUserData(userId, token);
     if (serverData) {
-      await saveUserData(serverData);
+      try {
+        await saveUserData(serverData);
+      } catch (error) {
+        console.warn('Failed to mirror server data locally:', error);
+      }
     }
     return serverData;
   } catch (error) {

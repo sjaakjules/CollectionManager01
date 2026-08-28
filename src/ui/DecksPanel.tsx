@@ -5,6 +5,12 @@ import { createLocalDeck } from "@/data/deckCreation";
 import type { Deck } from "@/data/dataModels";
 import { fetchCuriosaDeck } from "@/data/curiosaService";
 import {
+  downloadTextFile,
+  exportDeckToText,
+  importDeckFromText,
+  importFromCuriosaDeck,
+} from "@/data/importExport";
+import {
   AVATAR_SHORT_NAMES,
   getAvatarShortName,
   getDeckDisplayName,
@@ -13,7 +19,7 @@ import {
 } from "@/ui/deckDisplay";
 import { ElementIcon } from "@/ui/ElementIcon";
 
-type DeckCreateMode = "menu" | "local" | "import" | null;
+type DeckCreateMode = "menu" | "local" | "import" | "text" | null;
 type DeckEntry =
   | { id: string; kind: "deck"; deck: Deck; area: CanvasArea | null }
   | { id: string; kind: "area"; deck: null; area: CanvasArea };
@@ -37,21 +43,6 @@ interface DecksPanelProps {
   onFocusCanvasArea: (canvasAreaId: string) => void;
 }
 
-function findUnknownDeckCardNames(deck: Deck, knownCardNames: Set<string>): string[] {
-  if (knownCardNames.size === 0) return [];
-
-  const unknown = new Set<string>();
-  for (const board of Object.values(deck.boards)) {
-    for (const card of board) {
-      if (!knownCardNames.has(card.name.toLowerCase())) {
-        unknown.add(card.name);
-      }
-    }
-  }
-
-  return [...unknown].sort((left, right) => left.localeCompare(right));
-}
-
 export function DecksPanel({
   canvasAreas,
   isPhone = false,
@@ -73,6 +64,8 @@ export function DecksPanel({
     `${getAvatarShortName("Animist")} Deck`,
   );
   const [deckUrlInput, setDeckUrlInput] = useState("");
+  const [deckTextInput, setDeckTextInput] = useState("");
+  const [textDeckName, setTextDeckName] = useState("");
   const [isLoadingDeck, setIsLoadingDeck] = useState(false);
   const [deckError, setDeckError] = useState<string | null>(null);
   const [deckImportNotice, setDeckImportNotice] = useState<string | null>(null);
@@ -89,10 +82,6 @@ export function DecksPanel({
     }
     return map;
   }, [deckAreas]);
-  const knownCardNames = useMemo(
-    () => new Set(state.cards.map((card) => card.name.toLowerCase())),
-    [state.cards],
-  );
   const entries = useMemo<DeckEntry[]>(() => {
     const deckEntries: DeckEntry[] = (state.userData?.decks ?? []).map((deck) => ({
       id: deck.id,
@@ -216,7 +205,7 @@ export function DecksPanel({
     }, 1000);
 
     try {
-      const deck = await fetchCuriosaDeck(trimmed, {
+      const fetched = await fetchCuriosaDeck(trimmed, {
         signal: controller.signal,
         onDelay: (delay) => {
           if (delay.delayMs >= 1000) {
@@ -225,7 +214,23 @@ export function DecksPanel({
         },
       });
       if (controller.signal.aborted || deckImportAbortRef.current !== controller) return;
-      const unknownCards = findUnknownDeckCardNames(deck, knownCardNames);
+      // Canonicalize card names against the local database and filter token
+      // cards; keeps the Curiosa deck id so re-imports resolve to the same
+      // deck instead of duplicating it.
+      const importResult = importFromCuriosaDeck(
+        {
+          id: fetched.id,
+          name: fetched.name,
+          author: fetched.author ?? "",
+          mainboard: fetched.boards.mainboard,
+          avatar: fetched.boards.avatar,
+          sideboard: fetched.boards.sideboard,
+          maybeboard: fetched.boards.maybeboard,
+        },
+        state.cards,
+      );
+      const deck = importResult.deck;
+      const unknownCards = state.cards.length > 0 ? importResult.unknownCards : [];
       const canvasAreaId = onCreateDeckZone(deck);
       if (!canvasAreaId) return;
       onFocusCanvasArea(canvasAreaId);
@@ -243,6 +248,15 @@ export function DecksPanel({
             message: `Imported deck contains ${unknownCards.length} unknown card ${
               unknownCards.length === 1 ? "name" : "names"
             }: ${preview}${suffix}`,
+          },
+        });
+      }
+      if (importResult.warnings.length > 0) {
+        dispatch({
+          type: "ADD_NOTIFICATION",
+          notification: {
+            type: "warning",
+            message: importResult.warnings.slice(0, 3).join(" · "),
           },
         });
       }
@@ -266,9 +280,9 @@ export function DecksPanel({
     deckUrlInput,
     dispatch,
     isLoadingDeck,
-    knownCardNames,
     onCreateDeckZone,
     onFocusCanvasArea,
+    state.cards,
   ]);
 
   const handleDeckImportSubmit = useCallback(
@@ -278,6 +292,69 @@ export function DecksPanel({
     },
     [handleCreateDeckZone],
   );
+
+  const handleTextImportSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const text = deckTextInput.trim();
+      if (!text) return;
+
+      const name = textDeckName.trim() || "Imported Deck";
+      const result = importDeckFromText(text, name, state.cards);
+      const hasCards = Object.values(result.deck.boards).some(
+        (board) => board.length > 0,
+      );
+      if (!hasCards) {
+        setDeckError("No cards found in the pasted text");
+        return;
+      }
+
+      const canvasAreaId = onCreateDeckZone(result.deck);
+      if (canvasAreaId) onFocusCanvasArea(canvasAreaId);
+      setActiveDeckId(result.deck.id);
+      setCreateMode(null);
+      setDeckTextInput("");
+      setTextDeckName("");
+      setDeckError(null);
+
+      const unknownCards = state.cards.length > 0 ? result.unknownCards : [];
+      if (unknownCards.length > 0) {
+        const preview = unknownCards.slice(0, 4).join(", ");
+        const suffix = unknownCards.length > 4 ? `, +${unknownCards.length - 4} more` : "";
+        dispatch({
+          type: "ADD_NOTIFICATION",
+          notification: {
+            type: "warning",
+            message: `Imported deck contains ${unknownCards.length} unknown card ${
+              unknownCards.length === 1 ? "name" : "names"
+            }: ${preview}${suffix}`,
+          },
+        });
+      }
+      if (result.warnings.length > 0) {
+        dispatch({
+          type: "ADD_NOTIFICATION",
+          notification: {
+            type: "warning",
+            message: result.warnings.slice(0, 3).join(" · "),
+          },
+        });
+      }
+    },
+    [
+      deckTextInput,
+      dispatch,
+      onCreateDeckZone,
+      onFocusCanvasArea,
+      state.cards,
+      textDeckName,
+    ],
+  );
+
+  const handleExportDeck = useCallback((deck: Deck) => {
+    const safeName = deck.name.trim().replace(/[\\/:*?"<>|]+/g, "-") || "deck";
+    downloadTextFile(`${safeName}.txt`, exportDeckToText(deck));
+  }, []);
 
   const tabsExpanded = isPhone
     ? phoneExpanded
@@ -372,6 +449,9 @@ export function DecksPanel({
             <button type="button" className="deck-create-choice" onClick={() => setCreateMode("import")}>
               Import Curiosa URL
             </button>
+            <button type="button" className="deck-create-choice" onClick={() => setCreateMode("text")}>
+              Paste deck text
+            </button>
           </div>
         )}
 
@@ -453,6 +533,47 @@ export function DecksPanel({
           </form>
         )}
 
+        {createMode === "text" && (
+          <form className="deck-create-form" onSubmit={handleTextImportSubmit}>
+            <label className="deck-create-field">
+              <span>Name</span>
+              <input
+                type="text"
+                value={textDeckName}
+                onChange={(event) => setTextDeckName(event.target.value)}
+                placeholder="Imported Deck"
+              />
+            </label>
+            <label className="deck-create-field">
+              <span>Deck list</span>
+              <textarea
+                value={deckTextInput}
+                onChange={(event) => {
+                  setDeckTextInput(event.target.value);
+                  setDeckError(null);
+                }}
+                placeholder={"2 Lightning Bolt\n// Sideboard\n1 Riptide"}
+                spellCheck={false}
+              />
+            </label>
+            <div className="deck-create-actions">
+              <button type="submit" disabled={!deckTextInput.trim()}>
+                Import
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateMode("menu");
+                  setDeckError(null);
+                }}
+              >
+                Back
+              </button>
+            </div>
+            {deckError && <p className="deck-create-note error">{deckError}</p>}
+          </form>
+        )}
+
         {activeEntry && createMode === null && (
           <div className="deck-active-panel">
             <div>
@@ -496,23 +617,37 @@ export function DecksPanel({
                 })}
               </div>
             )}
-            {activeArea && (
+            {(activeEntry.deck || activeArea) && (
               <div className="deck-active-actions">
-                <button
-                  type="button"
-                  onClick={() => onFocusCanvasArea(activeArea.id)}
-                >
-                  Center
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onDeleteCanvasArea(activeArea.id);
-                    setActiveDeckId(null);
-                  }}
-                >
-                  Hide
-                </button>
+                {activeEntry.deck && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeEntry.deck) handleExportDeck(activeEntry.deck);
+                    }}
+                  >
+                    Export .txt
+                  </button>
+                )}
+                {activeArea && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onFocusCanvasArea(activeArea.id)}
+                    >
+                      Center
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDeleteCanvasArea(activeArea.id);
+                        setActiveDeckId(null);
+                      }}
+                    >
+                      Hide
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
