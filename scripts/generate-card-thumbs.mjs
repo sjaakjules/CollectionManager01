@@ -257,8 +257,15 @@ async function main() {
       const inStat = await fs.stat(inputFile);
       inputBytes += inStat.size;
 
-      await sharp(inputFile, { failOn: 'none' })
-        .rotate()
+      const metadata = await sharp(inputFile, { failOn: 'none' }).metadata();
+      const image = sharp(inputFile, { failOn: 'none' });
+      if ((metadata.width ?? 0) > (metadata.height ?? 0)) {
+        image.rotate(270);
+      } else {
+        image.rotate();
+      }
+
+      await image
         .resize({
           width: options.size,
           height: options.size,

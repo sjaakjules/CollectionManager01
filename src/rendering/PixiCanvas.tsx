@@ -25,6 +25,7 @@ import {
   type QuickTransferCreateTargetPayload,
 } from "./PixiStage";
 import { cardNameToSlug } from "./LODManager";
+import { shouldRotateCardImage } from "./cardOrientation";
 import { shouldUseFullCardHoverPreview } from "./deviceProfile";
 import {
   loadCardCategorySeed,
@@ -111,6 +112,8 @@ export function PixiCanvas({
     total: number;
   } | null>(null);
   const [hoveredCardName, setHoveredCardName] = useState<string | null>(null);
+  const [hoveredCardPreviewNeedsRotation, setHoveredCardPreviewNeedsRotation] =
+    useState(true);
   const [isPointerOverOverlayUi, setIsPointerOverOverlayUi] = useState(false);
   const [useFullCardHoverPreview, setUseFullCardHoverPreview] = useState(
     shouldUseFullCardHoverPreview,
@@ -421,6 +424,10 @@ export function PixiCanvas({
     return card?.guardian?.type === "Site";
   }, [hoveredCardName, state.cards]);
 
+  useEffect(() => {
+    setHoveredCardPreviewNeedsRotation(hoveredCardIsLandscape);
+  }, [hoveredCardIsLandscape, hoveredCardPreviewSrc]);
+
   return (
     <div
       ref={containerRef}
@@ -445,11 +452,21 @@ export function PixiCanvas({
           aria-hidden="true"
         >
           <img
-            className={hoveredCardIsLandscape ? "landscape" : ""}
+            className={[
+              hoveredCardIsLandscape ? "landscape" : "",
+              hoveredCardPreviewNeedsRotation ? "rotate-source" : "",
+            ].filter(Boolean).join(" ")}
             src={hoveredCardPreviewSrc}
             alt={hoveredCardName ?? "Card preview"}
             decoding="async"
             loading="lazy"
+            onLoad={(event) => {
+              setHoveredCardPreviewNeedsRotation(shouldRotateCardImage(
+                hoveredCardIsLandscape,
+                event.currentTarget.naturalWidth,
+                event.currentTarget.naturalHeight,
+              ));
+            }}
           />
         </div>
       )}

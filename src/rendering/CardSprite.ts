@@ -26,6 +26,7 @@ import {
   type LODLevel,
   cardNameToSlug,
 } from "./LODManager";
+import { shouldRotateCardImage } from "./cardOrientation";
 
 // ============================================================================
 // Types
@@ -412,15 +413,25 @@ export class CardSprite extends Container {
   private applyTexture(texture: Texture, lod: LODLevel): void {
     const targetWidth = this.displayWidth;
     const targetHeight = this.displayHeight;
+    const rotateTexture = shouldRotateCardImage(
+      this.isLandscape,
+      texture.frame.width,
+      texture.frame.height,
+    );
 
     this.sprite.texture = texture;
     this.displayedLOD = lod;
 
-    if (this.isLandscape) {
-      // For landscape, swap dimensions due to rotation
+    if (rotateTexture) {
+      this.sprite.rotation = Math.PI / 2;
+      this.sprite.x = targetWidth;
+      this.sprite.y = 0;
       this.sprite.width = targetHeight;
       this.sprite.height = targetWidth;
     } else {
+      this.sprite.rotation = 0;
+      this.sprite.x = 0;
+      this.sprite.y = 0;
       this.sprite.width = targetWidth;
       this.sprite.height = targetHeight;
     }

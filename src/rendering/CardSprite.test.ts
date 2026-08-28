@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Texture, type FederatedPointerEvent } from "pixi.js";
 import { CardSprite } from "./CardSprite";
+import { shouldRotateCardImage } from "./cardOrientation";
 import { LOD_LEVELS, lodManager, type LODLevel } from "./LODManager";
 
 function stubLODManager() {
@@ -43,6 +44,12 @@ afterEach(() => {
 });
 
 describe("CardSprite LOD display", () => {
+  it("rotates legacy portrait Site textures but preserves upright landscape sources", () => {
+    expect(shouldRotateCardImage(true, 275, 384)).toBe(true);
+    expect(shouldRotateCardImage(true, 1039, 744)).toBe(false);
+    expect(shouldRotateCardImage(false, 275, 384)).toBe(false);
+  });
+
   it("keeps a loaded full texture visible after hover ends while normal LOD is medium", () => {
     stubLODManager();
     const pointerEvent = {} as FederatedPointerEvent;

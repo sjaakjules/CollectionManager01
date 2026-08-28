@@ -22,6 +22,10 @@ import { isBlockedTokenCardName } from "@/data/tokenCards";
 // - PROD: Apache routes this through the same-origin PHP proxy.
 const API_URL = "/api/sorcery/cards";
 
+// Bundled snapshot for offline-first runs (no network, no cache yet).
+// Regenerate with `pnpm cards:snapshot` after updating docs/Sorcery_CardInfo.json.
+const LOCAL_SNAPSHOT_URL = "/assets/sorcery_cards.json";
+
 const FETCH_TIMEOUT_MS = 20_000;
 const RETRY_COUNT = 2;
 
@@ -70,7 +74,26 @@ export async function fetchCards(): Promise<Card[]> {
       return filterPlayableCards(cached.cards);
     }
 
+    // Last resort: the bundled snapshot, so a first-ever run still works
+    // fully offline. Not cached, so the next online run fetches fresh data.
+    const bundled = await fetchBundledCards();
+    if (bundled) {
+      console.log("Using bundled card snapshot (offline fallback)");
+      return bundled;
+    }
+
     throw error;
+  }
+}
+
+async function fetchBundledCards(): Promise<Card[] | null> {
+  try {
+    const response = await fetch(LOCAL_SNAPSHOT_URL);
+    if (!response.ok) return null;
+    return filterPlayableCards((await response.json()) as Card[]);
+  } catch (error) {
+    console.warn("Bundled card snapshot unavailable:", error);
+    return null;
   }
 }
 

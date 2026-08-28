@@ -412,16 +412,16 @@ async function getImageEntries(files, forcedSize) {
   const entries = [];
   await runPool(files, 16, async (filePath, idx) => {
     const slug = path.basename(filePath, path.extname(filePath));
+    const meta = await sharp(filePath).metadata();
+    if (!meta.width || !meta.height) {
+      throw new Error(`Unable to read dimensions for ${filePath}`);
+    }
     let width;
     let height;
     if (forcedSize) {
       width = forcedSize.width;
       height = forcedSize.height;
     } else {
-      const meta = await sharp(filePath).metadata();
-      if (!meta.width || !meta.height) {
-        throw new Error(`Unable to read dimensions for ${filePath}`);
-      }
       width = meta.width;
       height = meta.height;
     }
@@ -430,6 +430,7 @@ async function getImageEntries(files, forcedSize) {
       filePath,
       width,
       height,
+      rotateToPortrait: meta.width > meta.height,
     };
   });
 
@@ -605,8 +606,14 @@ async function writeAtlasImage(
       continue;
     }
 
-    const buffer = await sharp(placement.filePath)
-      .rotate()
+    const image = sharp(placement.filePath);
+    if (placement.rotateToPortrait) {
+      image.rotate(270);
+    } else {
+      image.rotate();
+    }
+
+    const buffer = await image
       .resize({
         width: cardSize.width,
         height: cardSize.height,

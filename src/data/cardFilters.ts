@@ -317,7 +317,7 @@ export function normalizeFilterCriteria(
 ): CardFilterCriteria {
   return {
     ...criteria,
-    searchText: criteria.searchText.trim(),
+    searchText: criteria.searchText.trim().toLowerCase(),
     sets: normalizeTokens(criteria.sets),
     types: normalizeTokens(criteria.types),
     rarities: normalizeTokens(criteria.rarities),
