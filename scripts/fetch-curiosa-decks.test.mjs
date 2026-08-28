@@ -9,6 +9,7 @@ import {
   formatCuriosaHealthLine,
   formatDashboardLines,
   formatProgressLine,
+  mergeCompetitiveAnnotation,
   mergeDeckIntoArchive,
   prioritizeDeckInputs,
   runArchive,
@@ -253,6 +254,76 @@ describe('Curiosa archive merging', () => {
 });
 
 describe('Curiosa archive queueing and processed skips', () => {
+  it('refreshes competitive metadata without changing the online deck revision', async () => {
+    const fetchDeck = vi.fn();
+    const competitive = {
+      isCompetitive: true,
+      confidence: 'high',
+      events: ['Grand Contest'],
+      locations: ['Melbourne'],
+      resultTags: ['winner'],
+      placements: [1],
+      topCuts: [],
+      records: ['5-0'],
+      seasons: [2026],
+      matchedQueries: ['Grand Contest'],
+      matchedSignals: ['event:grand-contest'],
+      likes: 10,
+      views: 100,
+    };
+    const merged = mergeCompetitiveAnnotation(
+      { id: 'deck-a', name: 'Existing' },
+      { competitive },
+    );
+    expect(merged).toEqual({
+      changed: true,
+      deckinfo: { id: 'deck-a', name: 'Existing', competitive },
+    });
+
+    const result = await runArchive(
+      {
+        inputs: [],
+        output: 'archive.json',
+        skippedOutput: 'archive.skipped.json',
+        log: 'archive.log',
+        cardData: 'cards.json',
+        limitPerFile: 0,
+        skipProcessed: false,
+      },
+      {
+        inputs: [{
+          id: 'deck-a',
+          raw: 'deck-a',
+          hint: {
+            id: 'deck-a',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+            competitive,
+          },
+        }],
+        archive: {
+          'deck-a': {
+            deckinfo: {
+              id: 'deck-a',
+              name: 'Existing',
+              updatedAt: '2026-01-01T00:00:00.000Z',
+              cardCount: { spellbook: 60, atlas: 30, collection: 0, maybe: 0 },
+            },
+          },
+        },
+        skippedArchive: {},
+        cardData: [],
+        fetchDeck,
+        liveDashboard: false,
+        writeJsonFile: async () => undefined,
+        writeTextFile: async () => undefined,
+      },
+    );
+
+    expect(fetchDeck).not.toHaveBeenCalled();
+    expect(result.summary).toMatchObject({ annotated: 1, skippedUpToDate: 1 });
+    expect(result.archive['deck-a'].deckinfo.competitive).toEqual(competitive);
+  });
+
   it('orders new decks first, archived decks second, and skipped decks last', () => {
     const inputs = [
       { id: 'skipped-deck' },
@@ -504,7 +575,7 @@ describe('Curiosa archive progress output', () => {
         },
       },
     })).toBe(
-      'progress 2/5 elapsed=2m00s eta=3m00s added=1 updated=1 skipped-up-to-date=0 skipped-invalid=0 skipped-processed=0 failed=0 last="Deck \\"Two\\"" spellbook=60 atlas=30 collection=10 maybe=2',
+      'progress 2/5 elapsed=2m00s eta=3m00s added=1 updated=1 annotated=0 skipped-up-to-date=0 skipped-invalid=0 skipped-processed=0 failed=0 last="Deck \\"Two\\"" spellbook=60 atlas=30 collection=10 maybe=2',
     );
   });
 
@@ -578,7 +649,7 @@ describe('Curiosa archive progress output', () => {
         message: 'minimum-spellbook expected>=60 actual=50',
       },
     })).toEqual([
-      'Progress\t79/378\telapsed=7m40s\teta=29m01s\tadded=16\tupdated=0\tskipped-up-to-date=4\tskipped-invalid=59\tskipped-processed=0\tfailed=0',
+      'Progress\t79/378\telapsed=7m40s\teta=29m01s\tadded=16\tupdated=0\tannotated=0\tskipped-up-to-date=4\tskipped-invalid=59\tskipped-processed=0\tfailed=0',
       'Waiting\ton curiosa\tdeck=cme5x329q00k9jo04ouuycsek\t2s..\treason=local-spacing',
       'Curiosa\trequest=deck-page\tstatus=200\tok=true\trate-limit=n/a\treset=n/a\tretry-after=none\tproxy-delay=none',
       'Last\tcmgy3144l00lkjp04d2mv3bvq\t"Top8 SCG Con Houston Crossroads 2025 by Chris Florczak"',

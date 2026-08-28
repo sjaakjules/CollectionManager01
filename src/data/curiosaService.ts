@@ -14,7 +14,6 @@
  */
 
 import type { Deck, DeckCard } from "./dataModels";
-import { generateUUID } from "../utils/uuid.ts";
 
 const PROXY_PREFIX = "/api/curiosa";
 const CURIOSA_HOSTS = new Set(["curiosa.io", "www.curiosa.io"]);
@@ -42,6 +41,7 @@ export interface CuriosaDeckSearchSummary {
   updatedAt?: string;
   name?: string;
   format?: string;
+  primer?: string | null;
   hotscore?: number;
   user?: { id?: string; username?: string };
   elements?: string[];
@@ -600,6 +600,7 @@ function parseSearchSummary(entry: unknown): CuriosaDeckSearchSummary | null {
     updatedAt: readString(record.updatedAt),
     name: readString(record.name),
     format: readString(record.format),
+    primer: record.primer === null ? null : readString(record.primer),
     hotscore: readNumber(record.hotscore),
     user: normalizeSearchUser(record.user),
     elements,
@@ -713,6 +714,17 @@ export function extractDeckId(urlOrId: string): string {
   return /^[a-zA-Z0-9_-]+$/.test(candidate) ? candidate : "";
 }
 
+/**
+ * Deterministic app deck id for a Curiosa deck.
+ *
+ * Re-importing the same Curiosa URL (or seeding the same deck via
+ * `scripts/build-guest-seed-decks.mjs`, which uses the same convention)
+ * resolves to the same deck instead of creating a duplicate.
+ */
+export function buildCuriosaDeckId(deckId: string): string {
+  return `curiosa-${deckId}`;
+}
+
 async function fetchCuriosaTrpcJson(
   procedure: string,
   input: Record<string, unknown>,
@@ -822,7 +834,7 @@ export async function fetchCuriosaDeck(
 
   const now = new Date().toISOString();
   return {
-    id: generateUUID(),
+    id: buildCuriosaDeckId(deckId),
     name,
     author,
     boards: {

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   deckStyleSourceDeckToDeck,
+  getCompetitiveDeckLookupDecks,
+  getCompetitiveDeckLookupFacets,
   getDeckStyleAvatarLookupGroups,
   getFavouriteDeckStyleLookupDecks,
   getDeckStyleProfilesForDeck,
@@ -22,6 +24,22 @@ const sourceDeck = {
   },
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-02T00:00:00.000Z",
+  format: "Constructed",
+  competitive: {
+    isCompetitive: true,
+    confidence: "high",
+    seasons: [2026],
+    events: ["Grand Contest"],
+    locations: ["Melbourne"],
+    resultTags: ["winner", "placed", "record"],
+    placements: [1],
+    topCuts: [],
+    records: ["5-0"],
+    matchedQueries: ["Grand Contest"],
+    matchedSignals: ["event:grand-contest"],
+    likes: 12,
+    views: 200,
+  },
 } satisfies DeckStyleAssociationData["decks"][string];
 
 const airSourceDeck = {
@@ -30,6 +48,7 @@ const airSourceDeck = {
   name: "Air Lookup Deck",
   avatar: "Air Avatar",
   elements: ["air"],
+  competitive: undefined,
 } satisfies DeckStyleAssociationData["decks"][string];
 
 const data: DeckStyleAssociationData = {
@@ -181,6 +200,38 @@ describe("deck style lookup helpers", () => {
         score: null,
       },
     ]);
+  });
+
+  it("builds competitive facets and filters newest reference decks", () => {
+    expect(getCompetitiveDeckLookupFacets(data)).toEqual({
+      seasons: [{ value: 2026, label: "2026", count: 1 }],
+      events: [{ value: "Grand Contest", label: "Grand Contest", count: 1 }],
+      locations: [{ value: "Melbourne", label: "Melbourne", count: 1 }],
+      results: [
+        { value: "placed", label: "Placed", count: 1 },
+        { value: "record", label: "Record", count: 1 },
+        { value: "winner", label: "Winner", count: 1 },
+      ],
+    });
+
+    expect(getCompetitiveDeckLookupDecks(data, {
+      season: 2026,
+      event: "Grand Contest",
+      location: "Melbourne",
+      result: "winner",
+    })).toEqual([
+      {
+        deck: deckStyleSourceDeckToDeck(sourceDeck),
+        source: sourceDeck,
+        score: null,
+      },
+    ]);
+    expect(getCompetitiveDeckLookupDecks(data, {
+      season: 2025,
+      event: null,
+      location: null,
+      result: null,
+    })).toEqual([]);
   });
 
   it("returns deck style profiles for a selected lookup deck", () => {

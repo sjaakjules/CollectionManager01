@@ -8,12 +8,18 @@ import {
 } from '../src/data/curiosaService.ts';
 import {
   buildCuriosaTrpcUrl,
+  classifySearchDecks,
   collectCuriosaDeckSearch,
   deckSummariesToArchiveInputs,
   filterSearchDecks,
+  mergeSearchDeck,
   parseArgs,
   runSearchToArchive,
 } from './search-curiosa-decks.mjs';
+import {
+  classifyCompetitiveDeck,
+  stripPrimerHtml,
+} from './lib/competitive-decks.mjs';
 
 const SEARCH_PAGE = [
   {
@@ -22,6 +28,7 @@ const SEARCH_PAGE = [
     updatedAt: '2026-01-02T00:00:00.000Z',
     name: 'Deck A',
     format: 'Constructed',
+    primer: '<p>1st Place Cornerstone Melbourne 2026, undefeated 5-0.</p>',
     hotscore: 5,
     user: { id: 'user-a', username: 'Alice' },
     elements: ['Fire'],
@@ -83,6 +90,7 @@ describe('Curiosa deck search helpers', () => {
         updatedAt: '2026-01-02T00:00:00.000Z',
         name: 'Deck A',
         format: 'Constructed',
+        primer: '<p>1st Place Cornerstone Melbourne 2026, undefeated 5-0.</p>',
         hotscore: 5,
         user: { id: 'user-a', username: 'Alice' },
         elements: ['Fire'],
@@ -95,6 +103,7 @@ describe('Curiosa deck search helpers', () => {
         updatedAt: undefined,
         name: 'Deck B',
         format: undefined,
+        primer: undefined,
         hotscore: undefined,
         user: undefined,
         elements: undefined,
@@ -129,7 +138,9 @@ describe('Curiosa deck search collection', () => {
         { id: 'deck-c', views: 200, likes: 20 },
       ],
       { minViews: 100, minLikes: 5, maxDecks: 1 },
-    )).toEqual([{ id: 'deck-a', views: 100, likes: 10 }]);
+    )).toEqual([
+      expect.objectContaining({ id: 'deck-a', views: 100, likes: 10, included: true }),
+    ]);
   });
 
   it('paginates search results and writes the search snapshot as pages arrive', async () => {
@@ -169,7 +180,7 @@ describe('Curiosa deck search collection', () => {
     expect(fetchSearchPage.mock.calls.map(([arg]) => arg.cursor)).toEqual([0, 2]);
     expect(result.totalFound).toBe(3);
     expect(result.filteredDecks.map((deck) => deck.id)).toEqual(['deck-a', 'deck-c']);
-    expect(writes).toHaveLength(3);
+    expect(writes).toHaveLength(4);
     expect(writes.at(-1).value).toMatchObject({
       query: 'cornerstone',
       count: 3,
@@ -283,6 +294,251 @@ describe('Curiosa deck search collection', () => {
       minLikes: 2,
       maxDecks: 5,
       skipProcessed: true,
+    });
+  });
+
+  it('applies the competitive preset while allowing extra queries', () => {
+    const options = parseArgs([
+      '--preset',
+      'competitive-2026',
+      '--query',
+      'Local 2K',
+      '--output',
+      'offlineData/deckArchive.json',
+      '--rebuild-lookup',
+    ]);
+
+    expect(options).toMatchObject({
+      preset: 'competitive-2026',
+      sort: 'latest',
+      since: '2026-01-01',
+      format: 'Constructed',
+      season: 2026,
+      competitiveOnly: true,
+      rebuildLookup: true,
+    });
+    expect(options.queries).toContain('Grand Contest');
+    expect(options.queries).toContain('Local 2K');
+  });
+
+  it('deduplicates multiple query pages and keeps newest metadata and peak counts', async () => {
+    const result = await collectCuriosaDeckSearch(
+      {
+        queries: ['Grand Contest', 'Cornerstone'],
+        output: 'archive.json',
+        searchOutput: 'search.json',
+        curiosaBaseUrl: 'https://curiosa.io',
+        sort: 'latest',
+        format: 'all',
+        competitiveOnly: false,
+        minViews: 0,
+        minLikes: 0,
+        maxDecks: 0,
+        pageSize: 30,
+      },
+      {
+        fetchSearchCount: async () => ({ count: 1, raw: { count: 1 } }),
+        fetchSearchPage: async ({ query, cursor }) => ({
+          cursor,
+          raw: { query },
+          decks: [{
+            id: 'same-deck',
+            name: query === 'Cornerstone' ? 'New name' : 'Old name',
+            updatedAt: query === 'Cornerstone'
+              ? '2026-02-01T00:00:00.000Z'
+              : '2026-01-01T00:00:00.000Z',
+            likes: query === 'Cornerstone' ? 2 : 9,
+            views: query === 'Cornerstone' ? 200 : 100,
+          }],
+        }),
+        writeJsonFile: async () => undefined,
+      },
+    );
+
+    expect(result.totalFound).toBe(1);
+    expect(result.decks[0]).toMatchObject({
+      id: 'same-deck',
+      name: 'New name',
+      likes: 9,
+      views: 200,
+      matchedQueries: ['Grand Contest', 'Cornerstone'],
+    });
+    expect(result.queries).toHaveLength(2);
+  });
+});
+
+describe('competitive deck classification', () => {
+  it('extracts event, location, result, top-cut, undefeated, and record signals', () => {
+    const result = classifyCompetitiveDeck({
+      name: '1st Place Grand Contest Melbourne 2026 Top 8',
+      primer: '<p>Finished undefeated at 9-0 &amp; won the finals.</p>',
+      updatedAt: '2026-08-01T00:00:00.000Z',
+      likes: 12,
+      views: 345,
+      matchedQueries: ['Grand Contest', 'Winner'],
+    }, { season: 2026 });
+
+    expect(stripPrimerHtml('<p>A &amp; B</p>')).toBe('A & B');
+    expect(result).toMatchObject({
+      isCompetitive: true,
+      confidence: 'high',
+      seasons: [2026],
+      events: ['Grand Contest'],
+      locations: ['Melbourne'],
+      placements: [1],
+      topCuts: [8],
+      records: ['9-0'],
+      likes: 12,
+      views: 345,
+    });
+    expect(result.resultTags).toEqual(['winner', 'placed', 'top-cut', 'undefeated', 'record']);
+  });
+
+  it('rejects broad false positives unless another competition signal is present', () => {
+    for (const name of ['GC deck', 'My 2026 deck', 'Eternal Champions']) {
+      expect(classifyCompetitiveDeck({ name }).isCompetitive).toBe(false);
+    }
+
+    expect(classifyCompetitiveDeck({
+      name: '1st Place Melbourne 2026',
+    }).isCompetitive).toBe(true);
+  });
+
+  it('recognizes official location shorthand and live regional wording', () => {
+    expect(classifyCompetitiveDeck({
+      name: 'Tsunami (AKL GC deck)',
+    })).toMatchObject({
+      isCompetitive: true,
+      locations: ['Auckland'],
+    });
+
+    expect(classifyCompetitiveDeck({
+      name: 'Lil Dru [Akl_GC_3-3]',
+    })).toMatchObject({
+      isCompetitive: true,
+      locations: ['Auckland'],
+      records: ['3-3'],
+    });
+
+    expect(classifyCompetitiveDeck({
+      name: 'Tumatarau whakataetae o Aotearoa 2026 - 1st - Antony V',
+    })).toMatchObject({
+      isCompetitive: true,
+      locations: ['New Zealand'],
+      placements: [1],
+    });
+
+    expect(classifyCompetitiveDeck({
+      name: 'Ring Combo | Tournament Grounds Montreal 2026',
+    })).toMatchObject({
+      isCompetitive: true,
+      locations: ['Montreal'],
+    });
+  });
+
+  it('recognizes narrow event families without promoting vague result terms', () => {
+    expect(classifyCompetitiveDeck({
+      name: 'Summit S5 Top 8 - New Court Who Dis?',
+      updatedAt: '2026-07-24T00:00:00.000Z',
+    })).toMatchObject({
+      isCompetitive: true,
+      events: ['Sorcerers Summit'],
+      topCuts: [8],
+    });
+
+    expect(classifyCompetitiveDeck({
+      name: 'Control Persecutor (5:th place Lincon 2026)',
+    })).toMatchObject({
+      isCompetitive: true,
+      events: ['Lincon'],
+      placements: [5],
+    });
+
+    expect(classifyCompetitiveDeck({
+      name: 'dromai? - POG Cornerstore May 2026 - Top 8',
+    })).toMatchObject({
+      isCompetitive: true,
+      events: ['Cornerstone'],
+      topCuts: [8],
+    });
+
+    expect(classifyCompetitiveDeck({
+      name: '1st Place Forja Hobby Store Sorcery 1K',
+    }).isCompetitive).toBe(true);
+
+    expect(classifyCompetitiveDeck({
+      name: 'Saturday tournament',
+    }).isCompetitive).toBe(false);
+  });
+
+  it('prioritizes title signals over supporting primer history', () => {
+    expect(classifyCompetitiveDeck({
+      name: '5th Place GenCon 2026',
+      primer: '<p>Previously finished 3rd at the Melbourne Grand Contest.</p>',
+    })).toMatchObject({
+      events: ['Gen Con', 'Grand Contest'],
+      locations: ['Melbourne'],
+      placements: [5, 3],
+    });
+  });
+
+  it('does not treat routine game wins or contractions as event wins', () => {
+    expect(classifyCompetitiveDeck({
+      name: '20th Place Grand Contest Melbourne 2026',
+      primer: '<p>I won every game with this site, and they won\'t have time to recover.</p>',
+    })).toMatchObject({
+      isCompetitive: true,
+      resultTags: ['placed'],
+      placements: [20],
+    });
+
+    expect(classifyCompetitiveDeck({
+      name: 'Grand Contest Melbourne 2026',
+      primer: '<p>I won the finals.</p>',
+    }).resultTags).toContain('winner');
+  });
+
+  it('filters old seasons and non-constructed formats while retaining audit metadata', () => {
+    const classified = classifySearchDecks([
+      {
+        id: 'old',
+        name: 'Cornerstone Winner 2025',
+        format: 'Constructed',
+        updatedAt: '2026-02-01T00:00:00.000Z',
+        likes: 0,
+        views: 0,
+      },
+      {
+        id: 'limited',
+        name: 'GenCon Grand Contest 2026',
+        format: 'Draft',
+        updatedAt: '2026-08-01T00:00:00.000Z',
+        likes: 0,
+        views: 0,
+      },
+    ], {
+      sort: 'latest',
+      since: '2026-01-01',
+      season: 2026,
+      format: 'Constructed',
+      competitiveOnly: true,
+    });
+
+    expect(classified.find((deck) => deck.id === 'limited')?.exclusionReasons).toContain('format:Draft');
+    expect(classified.find((deck) => deck.id === 'old')?.exclusionReasons).toContain('season-before:2026');
+  });
+
+  it('merges duplicate helpers without losing query provenance', () => {
+    expect(mergeSearchDeck(
+      { id: 'deck', updatedAt: '2026-01-01', likes: 7, views: 5, matchedQueries: ['GC'] },
+      { id: 'deck', updatedAt: '2026-02-01', name: 'Latest', likes: 2, views: 20 },
+      'Grand Contest',
+    )).toMatchObject({
+      id: 'deck',
+      name: 'Latest',
+      likes: 7,
+      views: 20,
+      matchedQueries: ['GC', 'Grand Contest'],
     });
   });
 });

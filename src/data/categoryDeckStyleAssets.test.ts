@@ -209,10 +209,15 @@ describe("runtime deck-style association asset", () => {
     const cards = cardCatalogNames();
     const validElements = new Set(["air", "earth", "fire", "water"]);
 
-    expect(Object.keys(associations.decks)).toHaveLength(Object.keys(styleScores).length);
+    expect(Object.keys(associations.decks).sort()).toEqual(Object.keys(archive).sort());
+    for (const deckId of Object.keys(styleScores)) {
+      expect(
+        associations.decks[deckId],
+        `${deckId} has style scores but is not available as a source deck`,
+      ).toBeDefined();
+    }
 
     for (const [deckId, deck] of Object.entries(associations.decks)) {
-      expect(styleScores[deckId], `${deckId} is not in style scores`).toBeDefined();
       expect(archive[deckId], `${deckId} is not in deckArchive`).toBeDefined();
       expect(deck.id).toBe(deckId);
       expect(deck.name.trim()).not.toBe("");

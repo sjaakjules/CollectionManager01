@@ -228,11 +228,11 @@
     "id": "cmfs8kpe300fyl704pkslpwhu",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-06-09T10:51:35.113Z",
-    "attempts": 1,
+    "skippedAt": "2026-08-27T17:34:03.534Z",
+    "attempts": 3,
     "source": {
-      "path": "tmp/Search_SCG.json",
-      "index": 7,
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 369,
       "raw": "cmfs8kpe300fyl704pkslpwhu"
     },
     "hint": {
@@ -241,13 +241,46 @@
       "updatedAt": "2026-01-05T21:08:20.322Z",
       "name": "A Song of Ice & Fire (Top 8 SCGCon Baltimore)",
       "format": "Constructed",
-      "primer": null,
       "hotscore": 1,
       "user": {
         "id": "clvcuyje20000av43mrel2d0c",
         "username": "JESTER"
       },
-      "elements": []
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [
+          "Baltimore"
+        ],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          8
+        ],
+        "records": [],
+        "matchedQueries": [
+          "GC",
+          "SCGCon",
+          "Top 8"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "location:baltimore",
+          "result:top-cut"
+        ],
+        "likes": 3,
+        "views": 364
+      }
     },
     "deckinfo": {
       "id": "cmfs8kpe300fyl704pkslpwhu",
@@ -331,6 +364,39 @@
           "Siege Giant": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [
+          "Baltimore"
+        ],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          8
+        ],
+        "records": [],
+        "matchedQueries": [
+          "GC",
+          "SCGCon",
+          "Top 8"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "location:baltimore",
+          "result:top-cut"
+        ],
+        "likes": 3,
+        "views": 364
       }
     },
     "errors": [
@@ -16058,11 +16124,11 @@
     "id": "cmdwatpjh00ocla04qivqgjsj",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-06-09T14:55:37.390Z",
-    "attempts": 1,
+    "skippedAt": "2026-08-27T17:33:57.505Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 3,
+      "index": 306,
       "raw": "cmdwatpjh00ocla04qivqgjsj"
     },
     "hint": {
@@ -16071,12 +16137,45 @@
       "updatedAt": "2026-02-24T12:41:31.244Z",
       "name": "1st Place Cornerstone Winner ENCHANTRESS Topdeck Games 8-3-25",
       "format": "Constructed",
-      "hotscore": 38,
+      "hotscore": 20,
       "user": {
         "id": "clnrp8e1i0000me08qdiuon7p",
         "username": "DurdleMagus"
       },
-      "elements": []
+      "elements": [],
+      "primer": "<p>I'm not much for writing down my thoughts but you can see me talk about them here!</p><p><br></p><p>https://youtu.be/dhzJiaJKsmc</p>",
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone",
+          "1st Place",
+          "Winner"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 48,
+        "views": 4113
+      }
     },
     "deckinfo": {
       "id": "cmdwatpjh00ocla04qivqgjsj",
@@ -16085,7 +16184,7 @@
       "name": "1st Place Cornerstone Winner ENCHANTRESS Topdeck Games 8-3-25",
       "format": "Constructed",
       "primer": "<p>I'm not much for writing down my thoughts but you can see me talk about them here!</p><p><br></p><p>https://youtu.be/dhzJiaJKsmc</p>",
-      "hotscore": 38,
+      "hotscore": 20,
       "user": {
         "id": "clnrp8e1i0000me08qdiuon7p",
         "username": "DurdleMagus"
@@ -16158,6 +16257,38 @@
           "Pillar of Zeiros": 1,
           "Remote Desert": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone",
+          "1st Place",
+          "Winner"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 48,
+        "views": 4113
       }
     },
     "errors": [
@@ -24755,11 +24886,11 @@
     "id": "cmp3chrer001404lerxhufy4f",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-06-09T15:08:00.152Z",
-    "attempts": 1,
+    "skippedAt": "2026-08-27T17:33:45.697Z",
+    "attempts": 2,
     "source": {
-      "path": "offlineData/deckArchive.search.place.json",
-      "index": 19,
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 246,
       "raw": "cmp3chrer001404lerxhufy4f"
     },
     "hint": {
@@ -24768,12 +24899,43 @@
       "updatedAt": "2026-05-21T12:20:19.021Z",
       "name": "1st Place Mono Fire Pathfinder Poorcery 50/30/10",
       "format": "Constructed",
-      "hotscore": 33,
+      "hotscore": 6,
       "user": {
         "id": "cm30oegds009d9tpfpiurn5xi",
         "username": "Bad@Game"
       },
-      "elements": []
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Poorcery"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "1st Place"
+        ],
+        "matchedSignals": [
+          "event:poorcery",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 5,
+        "views": 494
+      }
     },
     "deckinfo": {
       "id": "cmp3chrer001404lerxhufy4f",
@@ -24782,7 +24944,7 @@
       "name": "1st Place Mono Fire Pathfinder Poorcery 50/30/10",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 33,
+      "hotscore": 6,
       "user": {
         "id": "cm30oegds009d9tpfpiurn5xi",
         "username": "Bad@Game"
@@ -24866,6 +25028,36 @@
           "Hellhounds": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Poorcery"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "1st Place"
+        ],
+        "matchedSignals": [
+          "event:poorcery",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 5,
+        "views": 494
       }
     },
     "errors": [
@@ -24977,11 +25169,11 @@
     "id": "cmnxmxuer00ie04ji1k1m96re",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-06-09T15:08:57.365Z",
-    "attempts": 1,
+    "skippedAt": "2026-08-27T17:33:51.574Z",
+    "attempts": 2,
     "source": {
-      "path": "offlineData/deckArchive.search.place.json",
-      "index": 30,
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 268,
       "raw": "cmnxmxuer00ie04ji1k1m96re"
     },
     "hint": {
@@ -24990,12 +25182,46 @@
       "updatedAt": "2026-05-03T17:40:38.884Z",
       "name": "Poorcery Sorcerer 1st Place London",
       "format": "Constructed",
-      "hotscore": 18,
+      "hotscore": 7,
       "user": {
         "id": "clk1dbtbw0000k008gda20bxt",
         "username": "Cuckworthy"
       },
-      "elements": []
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Poorcery"
+        ],
+        "locations": [
+          "London"
+        ],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "1st Place"
+        ],
+        "matchedSignals": [
+          "event:poorcery",
+          "location:london",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 6,
+        "views": 448
+      }
     },
     "deckinfo": {
       "id": "cmnxmxuer00ie04ji1k1m96re",
@@ -25004,7 +25230,7 @@
       "name": "Poorcery Sorcerer 1st Place London",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 18,
+      "hotscore": 7,
       "user": {
         "id": "clk1dbtbw0000k008gda20bxt",
         "username": "Cuckworthy"
@@ -25069,6 +25295,39 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Poorcery"
+        ],
+        "locations": [
+          "London"
+        ],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "1st Place"
+        ],
+        "matchedSignals": [
+          "event:poorcery",
+          "location:london",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 6,
+        "views": 448
       }
     },
     "errors": [
@@ -25190,34 +25449,64 @@
     "id": "cmgclcwpl0061jo041ity4zpa",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=36; minimum-atlas expected>=30 actual=16",
-    "skippedAt": "2026-06-09T15:09:21.385Z",
-    "attempts": 1,
+    "skippedAt": "2026-08-27T17:33:03.630Z",
+    "attempts": 3,
     "source": {
-      "path": "offlineData/deckArchive.search.place.json",
-      "index": 34,
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 49,
       "raw": "cmgclcwpl0061jo041ity4zpa"
     },
     "hint": {
       "id": "cmgclcwpl0061jo041ity4zpa",
       "createdAt": "2025-10-04T18:13:15.799Z",
-      "updatedAt": "2026-04-16T11:24:19.370Z",
+      "updatedAt": "2026-08-17T00:55:40.518Z",
       "name": "Air / Fire. 36/16 1st place at Pará de Minas tournament.",
       "format": "Constructed",
-      "hotscore": 2,
+      "hotscore": 8,
       "user": {
         "id": "cmgclam6b003kjo04tfxdqlkb",
         "username": "Joaogalo93"
       },
-      "elements": []
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "1st Place",
+          "Tournament"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 3,
+        "views": 748
+      }
     },
     "deckinfo": {
       "id": "cmgclcwpl0061jo041ity4zpa",
       "createdAt": "2025-10-04T18:13:15.799Z",
-      "updatedAt": "2026-04-16T11:24:19.370Z",
+      "updatedAt": "2026-08-17T00:55:40.518Z",
       "name": "Air / Fire. 36/16 1st place at Pará de Minas tournament.",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 2,
+      "hotscore": 8,
       "user": {
         "id": "cmgclam6b003kjo04tfxdqlkb",
         "username": "Joaogalo93"
@@ -25244,7 +25533,7 @@
           "Panorama Manticore": 2,
           "Sacred Scarabs": 3,
           "Vile Imp": 2,
-          "Torshammar Trinket": 1,
+          "Iron Shackles": 1,
           "Magic Missiles": 1,
           "Saracen Raiders": 3,
           "Siege Giant": 1,
@@ -25275,6 +25564,35 @@
           "Hellhounds": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "1st Place",
+          "Tournament"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 3,
+        "views": 748
       }
     },
     "errors": [
@@ -42148,6 +42466,1349 @@
         "type": "ATLAS_TOO_SMALL",
         "count": 26,
         "message": "minimum-atlas expected>=30 actual=26"
+      }
+    ]
+  },
+  "cmt51wrny009904l7xx22dd02": {
+    "id": "cmt51wrny009904l7xx22dd02",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=39; minimum-atlas expected>=30 actual=21",
+    "skippedAt": "2026-08-27T17:32:57.431Z",
+    "attempts": 2,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 32,
+      "raw": "cmt51wrny009904l7xx22dd02"
+    },
+    "hint": {
+      "id": "cmt51wrny009904l7xx22dd02",
+      "createdAt": "2026-08-23T00:10:37.184Z",
+      "updatedAt": "2026-08-23T02:24:19.593Z",
+      "name": "Boston Cornerstone List",
+      "format": "Constructed",
+      "hotscore": 12,
+      "user": {
+        "id": "cmoyk5u1n00fo04jr7kngqjqw",
+        "username": "NPRoss"
+      },
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone"
+        ],
+        "likes": 0,
+        "views": 12
+      }
+    },
+    "deckinfo": {
+      "id": "cmt51wrny009904l7xx22dd02",
+      "createdAt": "2026-08-23T00:10:37.184Z",
+      "updatedAt": "2026-08-23T02:24:19.593Z",
+      "name": "Boston Cornerstone List",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 12,
+      "user": {
+        "id": "cmoyk5u1n00fo04jr7kngqjqw",
+        "username": "NPRoss"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 39,
+        "atlas": 21,
+        "collection": 0,
+        "maybe": 0
+      },
+      "avatar": "Magician",
+      "cards": {
+        "spellbook": {
+          "Grandmaster Wizard": 2,
+          "Nightmare": 1,
+          "Chaos Twister": 2,
+          "Lightning Bolt": 4,
+          "Raise Dead": 3,
+          "Conqueror Worm": 1,
+          "Fey Changeling": 3,
+          "Great Old One": 1,
+          "Pollimorph": 2,
+          "Pnakotic Manuscript": 1,
+          "Salmon of Knowledge": 2,
+          "Sisters of Avalon": 3,
+          "Adtonitum": 1,
+          "Shrine of the Dragonlord": 1,
+          "Cemetery Rats": 4,
+          "Clairvoyant": 2,
+          "Lilith": 1,
+          "Pith Imp": 4,
+          "The Doom of Dilmun": 1
+        },
+        "atlas": {
+          "Aqueduct": 3,
+          "Lighthouse": 3,
+          "Boneyard": 1,
+          "Lookout": 1,
+          "Tintagel": 1,
+          "Troll Bridge": 3,
+          "Wizard's Den": 2,
+          "Forgotten Tomb": 2,
+          "Garden of Eden": 1,
+          "Mountain Peaks": 3,
+          "Shallow Grave": 1
+        },
+        "collection": {},
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone"
+        ],
+        "likes": 0,
+        "views": 12
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 39,
+        "message": "minimum-spellbook expected>=60 actual=39"
+      },
+      {
+        "type": "ATLAS_TOO_SMALL",
+        "count": 21,
+        "message": "minimum-atlas expected>=30 actual=21"
+      }
+    ]
+  },
+  "cmnt1f9p9006q04l7y98ldn8w": {
+    "id": "cmnt1f9p9006q04l7y98ldn8w",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=58",
+    "skippedAt": "2026-08-27T17:33:09.872Z",
+    "attempts": 2,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 54,
+      "raw": "cmnt1f9p9006q04l7y98ldn8w"
+    },
+    "hint": {
+      "id": "cmnt1f9p9006q04l7y98ldn8w",
+      "createdAt": "2026-04-10T15:05:14.961Z",
+      "updatedAt": "2026-08-14T00:05:16.304Z",
+      "name": "Enchantress? Never heard of her (top 8 SCG Vegas)",
+      "format": "Constructed",
+      "hotscore": 7,
+      "user": {
+        "id": "cm2o57p7h0000qexp26v04v93",
+        "username": "Rackhir"
+      },
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [
+          "Las Vegas"
+        ],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          8
+        ],
+        "records": [],
+        "matchedQueries": [
+          "Top 8"
+        ],
+        "matchedSignals": [
+          "location:las-vegas",
+          "result:top-cut"
+        ],
+        "likes": 9,
+        "views": 694
+      }
+    },
+    "deckinfo": {
+      "id": "cmnt1f9p9006q04l7y98ldn8w",
+      "createdAt": "2026-04-10T15:05:14.961Z",
+      "updatedAt": "2026-08-14T00:05:16.304Z",
+      "name": "Enchantress? Never heard of her (top 8 SCG Vegas)",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 7,
+      "user": {
+        "id": "cm2o57p7h0000qexp26v04v93",
+        "username": "Rackhir"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 58,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Imposter",
+      "cards": {
+        "spellbook": {
+          "Quarrelsome Kobolds": 3,
+          "Vile Imp": 4,
+          "Disintegrate": 2,
+          "Poison Nova": 3,
+          "Wildfire": 3,
+          "Fey Changeling": 1,
+          "Ruler of Thul": 1,
+          "Selfsame Simulacrum": 1,
+          "Atlantean Fate": 1,
+          "Torshammar Trinket": 1,
+          "Boudicca": 1,
+          "Coy Nixie": 3,
+          "Lugbog Cat": 3,
+          "Mesmerism": 1,
+          "Morgana le Fay": 1,
+          "Ring of Morrigan": 1,
+          "Snowball": 2,
+          "The Great Famine": 1,
+          "Swap": 3,
+          "Abaddon Succubus": 2,
+          "Acid Rain": 2,
+          "Archangel Raphael": 1,
+          "Balor of the Evil Eye": 1,
+          "Betrayal": 1,
+          "Failed Mutation": 3,
+          "Gift of the Serpent": 2,
+          "Hyperparasite": 1,
+          "Key to the City": 1,
+          "Lilith": 1,
+          "Order of the Sacred Oak": 2,
+          "Sacred Stag": 2,
+          "Salt the Earth": 1,
+          "Sinterfee": 2
+        },
+        "atlas": {
+          "River of Flame": 1,
+          "Smokestacks of Gnaak": 1,
+          "Floodplain": 3,
+          "Oasis": 3,
+          "Mirror Realm": 1,
+          "Babbling Brook": 3,
+          "Funeral Pyre": 2,
+          "Troll Bridge": 3,
+          "Active Volcano": 3,
+          "Garden of Eden": 1,
+          "Heirloom Lost": 1,
+          "River Rapids": 2,
+          "Thin Ice": 3,
+          "Vindictive Nation": 1,
+          "Mobbed Court": 2
+        },
+        "collection": {
+          "Elementalist": 1,
+          "Enchantress": 1,
+          "Pathfinder": 1,
+          "Sorcerer": 1,
+          "Flamecaller": 1,
+          "Archimago": 1,
+          "Witch": 1,
+          "Interrogator": 1,
+          "Ironclad": 1,
+          "Necromancer": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [
+          "Las Vegas"
+        ],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          8
+        ],
+        "records": [],
+        "matchedQueries": [
+          "Top 8"
+        ],
+        "matchedSignals": [
+          "location:las-vegas",
+          "result:top-cut"
+        ],
+        "likes": 9,
+        "views": 694
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 58,
+        "message": "minimum-spellbook expected>=60 actual=58"
+      }
+    ]
+  },
+  "cmsjbav6200060aklz23ov03v": {
+    "id": "cmsjbav6200060aklz23ov03v",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=58",
+    "skippedAt": "2026-08-27T17:33:15.632Z",
+    "attempts": 2,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 67,
+      "raw": "cmsjbav6200060aklz23ov03v"
+    },
+    "hint": {
+      "id": "cmsjbav6200060aklz23ov03v",
+      "createdAt": "2026-08-07T19:02:35.552Z",
+      "updatedAt": "2026-08-07T19:03:06.809Z",
+      "name": "12th Place Enchatress SCGCON DC",
+      "format": "Constructed",
+      "hotscore": 10,
+      "user": {
+        "id": "clnrp8e1i0000me08qdiuon7p",
+        "username": "DurdleMagus"
+      },
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [
+          "Washington, DC"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          12
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "GC",
+          "SCGCon"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "location:washington-dc",
+          "result:placed"
+        ],
+        "likes": 1,
+        "views": 47
+      }
+    },
+    "deckinfo": {
+      "id": "cmsjbav6200060aklz23ov03v",
+      "createdAt": "2026-08-07T19:02:35.552Z",
+      "updatedAt": "2026-08-07T19:03:06.809Z",
+      "name": "12th Place Enchatress SCGCON DC",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 10,
+      "user": {
+        "id": "clnrp8e1i0000me08qdiuon7p",
+        "username": "DurdleMagus"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 58,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Enchantress",
+      "cards": {
+        "spellbook": {
+          "Daperyll Vampire": 3,
+          "Hounds of Ondaros": 2,
+          "Witherwing Hero": 1,
+          "Browse": 1,
+          "Grapple Shot": 4,
+          "Whirling Blades": 3,
+          "Thunderstorm": 3,
+          "Colicky Dragonettes": 3,
+          "Death Dealer": 1,
+          "Quarrelsome Kobolds": 3,
+          "Infiltrate": 2,
+          "Warp Spasm": 1,
+          "Drought": 3,
+          "Wildfire": 3,
+          "Torshammar Trinket": 2,
+          "Four Waters of Paradise": 1,
+          "Monstrous Lion": 2,
+          "Morgana le Fay": 1,
+          "Redcap Powries": 3,
+          "Ring of Morrigan": 1,
+          "Sir Lamorak": 1,
+          "The Black Plague": 1,
+          "The Great Famine": 1,
+          "Angry Mob": 1,
+          "Balor of the Evil Eye": 1,
+          "Bane of Aventis": 1,
+          "Betrayal": 2,
+          "Blaze of Glory": 1,
+          "Char Omphalos": 1,
+          "Màzuj Ifrit": 2,
+          "Salt the Earth": 1,
+          "Sturmgeist": 2
+        },
+        "atlas": {
+          "Dark Tower": 2,
+          "Gothic Tower": 2,
+          "Lone Tower": 2,
+          "River of Flame": 1,
+          "Ruins": 3,
+          "Fields of Camlann": 1,
+          "Forge": 4,
+          "Glastonbury Tor": 1,
+          "Joyous Garde": 1,
+          "Merlin's Tower": 1,
+          "Active Volcano": 3,
+          "Mountain Peaks": 3,
+          "Sea of Ash": 1,
+          "Vast Desert": 3,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Blink": 1,
+          "Disenchant": 1,
+          "Firebolts": 1,
+          "Angry Mob": 1,
+          "Detonate": 1,
+          "Displace": 1,
+          "Gift of the Raven": 1,
+          "Makeshift Barricade": 1,
+          "Toolbox": 1,
+          "Zap!": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [
+          "Washington, DC"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          12
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "GC",
+          "SCGCon"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "location:washington-dc",
+          "result:placed"
+        ],
+        "likes": 1,
+        "views": 47
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 58,
+        "message": "minimum-spellbook expected>=60 actual=58"
+      }
+    ]
+  },
+  "cmr7ref3c006c04jojcuaen2c": {
+    "id": "cmr7ref3c006c04jojcuaen2c",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=24; minimum-atlas expected>=30 actual=12",
+    "skippedAt": "2026-08-27T17:33:21.608Z",
+    "attempts": 2,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 160,
+      "raw": "cmr7ref3c006c04jojcuaen2c"
+    },
+    "hint": {
+      "id": "cmr7ref3c006c04jojcuaen2c",
+      "createdAt": "2026-07-05T12:20:18.778Z",
+      "updatedAt": "2026-07-05T12:28:19.825Z",
+      "name": "Casual Gothic Draft (SorceryFest 2026)",
+      "format": "Constructed",
+      "hotscore": 1,
+      "user": {
+        "id": "clqhsnemb0000y6z175f694w3",
+        "username": "lm"
+      },
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SorceryFest"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "SorceryFest",
+          "2026"
+        ],
+        "matchedSignals": [
+          "event:sorceryfest",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 4
+      }
+    },
+    "deckinfo": {
+      "id": "cmr7ref3c006c04jojcuaen2c",
+      "createdAt": "2026-07-05T12:20:18.778Z",
+      "updatedAt": "2026-07-05T12:28:19.825Z",
+      "name": "Casual Gothic Draft (SorceryFest 2026)",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 1,
+      "user": {
+        "id": "clqhsnemb0000y6z175f694w3",
+        "username": "lm"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 24,
+        "atlas": 12,
+        "collection": 1,
+        "maybe": 0
+      },
+      "avatar": "Harbinger",
+      "cards": {
+        "spellbook": {
+          "Barrow Wight": 1,
+          "Bone Jumble": 1,
+          "Bone Spear": 1,
+          "Crawler": 1,
+          "Death Knight": 1,
+          "Fowl Bones": 1,
+          "Ghoul": 2,
+          "Kiss of Death": 1,
+          "Necropotence": 1,
+          "Noisome Twosome": 1,
+          "Raise Militia": 1,
+          "Skeleton Mage": 1,
+          "Smite": 1,
+          "Snallygaster": 2,
+          "Undead Ambush": 1,
+          "Undesirables": 4,
+          "Vampire Bats": 1,
+          "Zap!": 1,
+          "Zombie Horde": 1
+        },
+        "atlas": {
+          "Spire": 3,
+          "Valley": 3,
+          "Accursed Tower": 1,
+          "Autumn Bloom": 1,
+          "Blessed Village": 1,
+          "Dread Thicket": 1,
+          "Elder Ruins": 1,
+          "Open Mausoleum": 1
+        },
+        "collection": {
+          "Shoggoth": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SorceryFest"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "SorceryFest",
+          "2026"
+        ],
+        "matchedSignals": [
+          "event:sorceryfest",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 4
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 24,
+        "message": "minimum-spellbook expected>=60 actual=24"
+      },
+      {
+        "type": "ATLAS_TOO_SMALL",
+        "count": 12,
+        "message": "minimum-atlas expected>=30 actual=12"
+      }
+    ]
+  },
+  "cmqyjtv6j01x104jx57vx2k7b": {
+    "id": "cmqyjtv6j01x104jx57vx2k7b",
+    "status": "skipped-invalid",
+    "reason": "minimum-atlas expected>=30 actual=28",
+    "skippedAt": "2026-08-27T17:33:28.335Z",
+    "attempts": 2,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 180,
+      "raw": "cmqyjtv6j01x104jx57vx2k7b"
+    },
+    "hint": {
+      "id": "cmqyjtv6j01x104jx57vx2k7b",
+      "createdAt": "2026-06-29T01:38:26.957Z",
+      "updatedAt": "2026-06-29T01:45:33.939Z",
+      "name": "Hella Mentalist SCG con top 8 by Michael",
+      "format": "Constructed",
+      "hotscore": 1,
+      "user": {
+        "id": "clczbmaa1006kv5ugepx9ko43",
+        "username": "Goldeneagle1833"
+      },
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          8
+        ],
+        "records": [],
+        "matchedQueries": [
+          "SCG CON",
+          "Top 8"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "result:top-cut"
+        ],
+        "likes": 4,
+        "views": 101
+      }
+    },
+    "deckinfo": {
+      "id": "cmqyjtv6j01x104jx57vx2k7b",
+      "createdAt": "2026-06-29T01:38:26.957Z",
+      "updatedAt": "2026-06-29T01:45:33.939Z",
+      "name": "Hella Mentalist SCG con top 8 by Michael",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 1,
+      "user": {
+        "id": "clczbmaa1006kv5ugepx9ko43",
+        "username": "Goldeneagle1833"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 61,
+        "atlas": 28,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Elementalist",
+      "cards": {
+        "spellbook": {
+          "Daperyll Vampire": 3,
+          "Blink": 2,
+          "Grapple Shot": 3,
+          "Whirling Blades": 2,
+          "Autumn Unicorn": 3,
+          "Bosk Troll": 4,
+          "Pudge Butcher": 3,
+          "Quarrelsome Kobolds": 3,
+          "Geyser": 2,
+          "Atlantean Fate": 1,
+          "Torshammar Trinket": 2,
+          "King Arthur": 1,
+          "Lady Iseult": 1,
+          "Ring of Morrigan": 1,
+          "Sir Bors the Younger": 1,
+          "Sir Gawain": 1,
+          "Sir Lamorak": 1,
+          "Sir Perceval": 1,
+          "Sir Tom Thumb": 1,
+          "The Black Plague": 1,
+          "War Horse": 3,
+          "Apply Alkahest": 2,
+          "Arjaro Exorcist": 2,
+          "Book of the Dead": 1,
+          "Doctor Demetrius": 1,
+          "Gargantula": 2,
+          "Gift of the Frog": 4,
+          "Lord of Lies": 2,
+          "Onslaught": 2,
+          "Silver Bullet": 2,
+          "Sinterfee": 3
+        },
+        "atlas": {
+          "Dark Tower": 1,
+          "Gothic Tower": 1,
+          "Lone Tower": 1,
+          "Kingdom of Agartha": 1,
+          "Rustic Village": 2,
+          "Simple Village": 1,
+          "Lighthouse": 1,
+          "The Colour Out of Space": 1,
+          "Windmill": 1,
+          "Sinkhole": 2,
+          "Common Village": 4,
+          "Merlin's Tower": 1,
+          "Tintagel": 1,
+          "Wizard's Den": 2,
+          "City of Glass": 1,
+          "City of Souls": 1,
+          "City of Traitors": 1,
+          "Forlorn Keep": 1,
+          "Garden of Eden": 1,
+          "Peculiar Port": 3
+        },
+        "collection": {
+          "Flanking Maneuver": 1,
+          "Whirling Blades": 1,
+          "Poison Nova": 1,
+          "Geyser": 1,
+          "Torshammar Trinket": 1,
+          "Stone Rain": 1,
+          "Swap": 1,
+          "Horrible Hybrids": 1,
+          "Onslaught": 1,
+          "Penitent Knight": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          8
+        ],
+        "records": [],
+        "matchedQueries": [
+          "SCG CON",
+          "Top 8"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "result:top-cut"
+        ],
+        "likes": 4,
+        "views": 101
+      }
+    },
+    "errors": [
+      {
+        "type": "ATLAS_TOO_SMALL",
+        "count": 28,
+        "message": "minimum-atlas expected>=30 actual=28"
+      }
+    ]
+  },
+  "cmpsro7uu001j04la2b30xmn3": {
+    "id": "cmpsro7uu001j04la2b30xmn3",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=59",
+    "skippedAt": "2026-08-27T17:33:33.826Z",
+    "attempts": 2,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 226,
+      "raw": "cmpsro7uu001j04la2b30xmn3"
+    },
+    "hint": {
+      "id": "cmpsro7uu001j04la2b30xmn3",
+      "createdAt": "2026-05-30T19:51:40.988Z",
+      "updatedAt": "2026-05-30T20:07:24.423Z",
+      "name": "TopCut Sorcerers Summit Gothic S2 by Sole Ferric",
+      "format": "Constructed",
+      "hotscore": 1,
+      "user": {
+        "id": "clpy96t18000063gzpk4itf45",
+        "username": "rata"
+      },
+      "elements": [],
+      "primer": "<p><a href=\"https://sorcererssummit.com/deck-rec/cmmm1irjb00ay04kzx9ty9amc\" rel=\"noopener noreferrer\" target=\"_blank\">Screaming Thunder</a> by Sole Ferric, Top Cut Sorcerers Summit Gothic Season 2, 2026.</p>",
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Sorcerers Summit"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "event:sorcerers-summit",
+          "season:2026"
+        ],
+        "likes": 4,
+        "views": 43
+      }
+    },
+    "deckinfo": {
+      "id": "cmpsro7uu001j04la2b30xmn3",
+      "createdAt": "2026-05-30T19:51:40.988Z",
+      "updatedAt": "2026-05-30T20:07:24.423Z",
+      "name": "TopCut Sorcerers Summit Gothic S2 by Sole Ferric",
+      "format": "Constructed",
+      "primer": "<p><a href=\"https://sorcererssummit.com/deck-rec/cmmm1irjb00ay04kzx9ty9amc\" rel=\"noopener noreferrer\" target=\"_blank\">Screaming Thunder</a> by Sole Ferric, Top Cut Sorcerers Summit Gothic Season 2, 2026.</p>",
+      "hotscore": 1,
+      "user": {
+        "id": "clpy96t18000063gzpk4itf45",
+        "username": "rata"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 59,
+        "atlas": 30,
+        "collection": 9,
+        "maybe": 0
+      },
+      "avatar": "Avatar of Air",
+      "cards": {
+        "spellbook": {
+          "Daperyll Vampire": 2,
+          "Gyre Hippogriffs": 3,
+          "Headless Haunt": 3,
+          "Highland Princess": 1,
+          "Hounds of Ondaros": 2,
+          "Phase Assassin": 3,
+          "Skirmishers of Mu": 3,
+          "Witherwing Hero": 1,
+          "Browse": 1,
+          "Grapple Shot": 2,
+          "Lightning Bolt": 1,
+          "Whirling Blades": 3,
+          "Iron Shackles": 1,
+          "Mix Aer": 1,
+          "Rolling Boulder": 3,
+          "Torshammar Trinket": 2,
+          "Arcane Barrage": 2,
+          "Ball Lightning": 1,
+          "Ring of Morrigan": 1,
+          "The Black Plague": 1,
+          "Thundering Giant": 2,
+          "Avenging Angel": 2,
+          "Bane of Aventis": 1,
+          "Gibbous Nightgaunts": 3,
+          "Legion of Gall": 2,
+          "Screamer": 3,
+          "Sphere of Animosity": 1,
+          "Sturmgeist": 2,
+          "Stygian Archers": 3,
+          "Toolbox": 3
+        },
+        "atlas": {
+          "Cloud City": 1,
+          "Dark Tower": 2,
+          "Gothic Tower": 2,
+          "Lone Tower": 2,
+          "Watchtower": 2,
+          "Bottomless Pit": 2,
+          "Sinkhole": 2,
+          "Beacon": 2,
+          "Perilous Bridge": 2,
+          "Treetop Hideout": 2,
+          "Fields of Phyxis": 3,
+          "Dark Alley": 3,
+          "Garden of Eden": 1,
+          "The Manor at Daperyll Hill": 1,
+          "The Void": 1,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Palliburrie Bats": 1,
+          "Disenchant": 1,
+          "Grapple Shot": 1,
+          "Lightning Bolt": 1,
+          "Magic Missiles": 1,
+          "Tactical Move": 1,
+          "Displace": 1,
+          "Murder of Crows": 1,
+          "Screamer": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Sorcerers Summit"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "event:sorcerers-summit",
+          "season:2026"
+        ],
+        "likes": 4,
+        "views": 43
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 59,
+        "message": "minimum-spellbook expected>=60 actual=59"
+      }
+    ]
+  },
+  "cmpiq4txt001804kzpqdcafaz": {
+    "id": "cmpiq4txt001804kzpqdcafaz",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=59",
+    "skippedAt": "2026-08-27T17:33:40.913Z",
+    "attempts": 2,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 242,
+      "raw": "cmpiq4txt001804kzpqdcafaz"
+    },
+    "hint": {
+      "id": "cmpiq4txt001804kzpqdcafaz",
+      "createdAt": "2026-05-23T19:10:55.107Z",
+      "updatedAt": "2026-05-25T23:06:04.554Z",
+      "name": "ARCHIMAGO AOTR",
+      "format": "Constructed",
+      "hotscore": 1,
+      "user": {
+        "id": "clnrp8e1i0000me08qdiuon7p",
+        "username": "DurdleMagus"
+      },
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Avatar of the Realm"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "AotR"
+        ],
+        "matchedSignals": [
+          "event:avatar-of-the-realm"
+        ],
+        "likes": 1,
+        "views": 63
+      }
+    },
+    "deckinfo": {
+      "id": "cmpiq4txt001804kzpqdcafaz",
+      "createdAt": "2026-05-23T19:10:55.107Z",
+      "updatedAt": "2026-05-25T23:06:04.554Z",
+      "name": "ARCHIMAGO AOTR",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 1,
+      "user": {
+        "id": "clnrp8e1i0000me08qdiuon7p",
+        "username": "DurdleMagus"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 59,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 1
+      },
+      "avatar": "Archimago",
+      "cards": {
+        "spellbook": {
+          "King of the Realm": 1,
+          "Root Spider": 3,
+          "Assorted Animals": 2,
+          "Border Militia": 4,
+          "Bury": 2,
+          "Cave-In": 2,
+          "Common Sense": 4,
+          "Craterize": 2,
+          "Dispel": 1,
+          "Divine Healing": 2,
+          "Earthquake": 2,
+          "Death Dealer": 1,
+          "Firebolts": 1,
+          "Major Explosion": 2,
+          "Poison Nova": 3,
+          "Kettletop Leprechaun": 4,
+          "Pendragon Legacy": 1,
+          "Rhitta Gawr of Snowdonia": 1,
+          "Ring of Morrigan": 1,
+          "Tithe": 1,
+          "Archangel Michael": 1,
+          "Cemetery Rats": 1,
+          "Gargantula": 2,
+          "Gift of the Wolf": 4,
+          "Landmass": 4,
+          "Onslaught": 2,
+          "Powerwish": 1,
+          "Saint of Redemption": 1,
+          "Sister Stefánia": 1,
+          "Smite": 1,
+          "Torrid Omphalos": 1
+        },
+        "atlas": {
+          "Gnome Hollows": 3,
+          "Rift Valley": 2,
+          "Mirage": 2,
+          "River of Flame": 1,
+          "Steppe": 3,
+          "Imperial Road": 2,
+          "Mirror Realm": 1,
+          "Sinkhole": 2,
+          "Valley of Delight": 2,
+          "Active Volcano": 2,
+          "Boulevard of Bones": 2,
+          "Fertile Earth": 3,
+          "Heirloom Lost": 2,
+          "Shallow Grave": 3
+        },
+        "collection": {
+          "Cave-In": 1,
+          "Drought": 1,
+          "Lava Flow": 1,
+          "Consecrate": 1,
+          "Consecrated Ground": 3,
+          "Onslaught": 1,
+          "Raze": 1,
+          "Searing Truth": 1
+        },
+        "maybe": {
+          "Mover of Mountains": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Avatar of the Realm"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "AotR"
+        ],
+        "matchedSignals": [
+          "event:avatar-of-the-realm"
+        ],
+        "likes": 1,
+        "views": 63
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 59,
+        "message": "minimum-spellbook expected>=60 actual=59"
+      }
+    ]
+  },
+  "cmlzwpz5o014004l4iv6xyge7": {
+    "id": "cmlzwpz5o014004l4iv6xyge7",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=42; minimum-atlas expected>=30 actual=18",
+    "skippedAt": "2026-08-27T17:32:00.438Z",
+    "attempts": 1,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 322,
+      "raw": "cmlzwpz5o014004l4iv6xyge7"
+    },
+    "hint": {
+      "id": "cmlzwpz5o014004l4iv6xyge7",
+      "createdAt": "2026-02-24T01:08:34.942Z",
+      "updatedAt": "2026-02-24T01:08:34.942Z",
+      "name": "Tūmatarau whakataetae o Aotearoa 2026 - 19th - Sean B",
+      "format": "Constructed",
+      "hotscore": 1,
+      "user": {
+        "id": "cls6jfjxr0000ugwfx6p5xgeq",
+        "username": "FTW Events"
+      },
+      "elements": [],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Tumatarau Whakataetae"
+        ],
+        "locations": [
+          "New Zealand"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          19
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Tumatarau",
+          "2026"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "event:tumatarau",
+          "location:new-zealand",
+          "result:placed",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 21
+      }
+    },
+    "deckinfo": {
+      "id": "cmlzwpz5o014004l4iv6xyge7",
+      "createdAt": "2026-02-24T01:08:34.942Z",
+      "updatedAt": "2026-02-24T01:08:34.942Z",
+      "name": "Tūmatarau whakataetae o Aotearoa 2026 - 19th - Sean B",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 1,
+      "user": {
+        "id": "cls6jfjxr0000ugwfx6p5xgeq",
+        "username": "FTW Events"
+      },
+      "elements": [],
+      "cardCount": {
+        "spellbook": 42,
+        "atlas": 18,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Magician",
+      "cards": {
+        "spellbook": {
+          "Cerberus in Chains": 1,
+          "Vile Imp": 3,
+          "Infiltrate": 2,
+          "Fey Changeling": 2,
+          "Selfsame Simulacrum": 2,
+          "Plague of Frogs": 1,
+          "Pollimorph": 2,
+          "Atlantean Fate": 1,
+          "Philosopher's Stone": 1,
+          "Pnakotic Manuscript": 1,
+          "Ruby Core": 1,
+          "Torshammar Trinket": 1,
+          "Coy Nixie": 3,
+          "Lugbog Cat": 3,
+          "Sir Agravaine": 1,
+          "Sir Gaheris": 1,
+          "The Great Famine": 1,
+          "Swap": 2,
+          "Barging Barghest": 3,
+          "Failed Mutation": 2,
+          "Return to Nature": 2,
+          "Searing Truth": 2,
+          "Shackled Demon": 2,
+          "Silver Bullet": 2
+        },
+        "atlas": {
+          "Red Desert": 3,
+          "Oasis": 3,
+          "Annual Fair": 1,
+          "Babbling Brook": 2,
+          "Caerleon-Upon-Usk": 1,
+          "Kelp Cavern": 2,
+          "Active Volcano": 2,
+          "Deep Sea": 1,
+          "Thin Ice": 3
+        },
+        "collection": {
+          "Hillock Basilisk": 1,
+          "Poison Nova": 1,
+          "Drought": 1,
+          "Mariner's Curse": 1,
+          "Torshammar Trinket": 1,
+          "Swap": 1,
+          "Begone!": 1,
+          "Ferryman's Coin": 1,
+          "Mimic": 1,
+          "Searing Truth": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Tumatarau Whakataetae"
+        ],
+        "locations": [
+          "New Zealand"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          19
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Tumatarau",
+          "2026"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "event:tumatarau",
+          "location:new-zealand",
+          "result:placed",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 21
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 42,
+        "message": "minimum-spellbook expected>=60 actual=42"
+      },
+      {
+        "type": "ATLAS_TOO_SMALL",
+        "count": 18,
+        "message": "minimum-atlas expected>=30 actual=18"
       }
     ]
   }

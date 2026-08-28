@@ -119,6 +119,30 @@ const archive = {
     spellbook: { Common: 4 },
     atlas: { Site: 1 },
   }),
+  d4: {
+    deckinfo: {
+      ...deck("d4", {
+        avatar: "Avatar A",
+        spellbook: { "Air Spell": 4 },
+      }).deckinfo,
+      format: "Constructed",
+      competitive: {
+        isCompetitive: true,
+        confidence: "high",
+        seasons: [2026],
+        events: ["Grand Contest"],
+        locations: ["Melbourne"],
+        resultTags: ["winner"],
+        placements: [1],
+        topCuts: [],
+        records: ["5-0"],
+        matchedQueries: ["Grand Contest"],
+        matchedSignals: ["event:grand-contest"],
+        likes: 5,
+        views: 50,
+      },
+    },
+  },
 };
 
 const cards = [
@@ -243,6 +267,30 @@ describe("deck-style association builder", () => {
     );
     expect(output.decks.d1.elements).toEqual(["fire", "water"]);
     expect(output.decks.d3.elements).toEqual(["fire"]);
+  });
+
+  it("includes unscored archive decks and preserves competitive lookup metadata", () => {
+    const output = buildDeckStyleAssociations({
+      styleScores,
+      taxonomy,
+      archive,
+      cards,
+      alpha: 1,
+    });
+
+    expect(output.version).toBe("sorcery-deck-style-associations-v2");
+    expect(output.decks.d4).toMatchObject({
+      id: "d4",
+      format: "Constructed",
+      competitive: {
+        isCompetitive: true,
+        events: ["Grand Contest"],
+        placements: [1],
+      },
+    });
+    expect(output.modes.primary.styles.vanguard.decks).not.toContainEqual(
+      expect.objectContaining({ deckId: "d4" }),
+    );
   });
 
   it("sorts output cards by score, then card name", () => {

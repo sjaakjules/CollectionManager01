@@ -31,15 +31,41 @@ export interface DeckStyleDeckRef {
   score: number;
 }
 
+export type CompetitiveDeckConfidence = "low" | "medium" | "high";
+export type CompetitiveDeckResultTag =
+  | "winner"
+  | "placed"
+  | "top-cut"
+  | "undefeated"
+  | "record";
+
+export interface CompetitiveDeckMetadata {
+  isCompetitive: boolean;
+  confidence: CompetitiveDeckConfidence;
+  seasons: number[];
+  events: string[];
+  locations: string[];
+  resultTags: CompetitiveDeckResultTag[];
+  placements: number[];
+  topCuts: number[];
+  records: string[];
+  matchedQueries: string[];
+  matchedSignals: string[];
+  likes: number;
+  views: number;
+}
+
 export interface DeckStyleSourceDeck {
   id: string;
   name: string;
   author?: string;
   avatar: string | null;
+  format?: string;
   elements: DeckStyleLookupElement[];
   boards: DeckBoards;
   createdAt: string;
   updatedAt: string;
+  competitive?: CompetitiveDeckMetadata;
 }
 
 export interface DeckStyleLookupDeck {
@@ -52,6 +78,36 @@ export interface DeckStyleAvatarLookupGroup {
   avatar: string;
   decks: DeckStyleLookupDeck[];
 }
+
+export interface CompetitiveDeckLookupFilters {
+  season: number | null;
+  event: string | null;
+  location: string | null;
+  result: CompetitiveDeckResultTag | null;
+}
+
+export interface CompetitiveDeckLookupFacetOption<T extends string | number> {
+  value: T;
+  label: string;
+  count: number;
+}
+
+export interface CompetitiveDeckLookupFacets {
+  seasons: CompetitiveDeckLookupFacetOption<number>[];
+  events: CompetitiveDeckLookupFacetOption<string>[];
+  locations: CompetitiveDeckLookupFacetOption<string>[];
+  results: CompetitiveDeckLookupFacetOption<CompetitiveDeckResultTag>[];
+}
+
+export const COMPETITIVE_UNSPECIFIED_VALUE = "__unspecified__";
+
+const COMPETITIVE_RESULT_LABELS: Record<CompetitiveDeckResultTag, string> = {
+  winner: "Winner",
+  placed: "Placed",
+  "top-cut": "Top cut",
+  undefeated: "Undefeated",
+  record: "Record",
+};
 
 export interface DeckStyleDeckSubStyleProfile {
   id: string;
@@ -192,6 +248,105 @@ export function getAllDeckStyleLookupDecks(
       score: null,
     }))
     .sort(compareLookupDecks);
+}
+
+function incrementCount<T>(counts: Map<T, number>, value: T): void {
+  counts.set(value, (counts.get(value) ?? 0) + 1);
+}
+
+function stringFacetOptions(
+  counts: Map<string, number>,
+  unspecifiedLabel: string,
+): CompetitiveDeckLookupFacetOption<string>[] {
+  return [...counts.entries()]
+    .map(([value, count]) => ({
+      value,
+      label: value === COMPETITIVE_UNSPECIFIED_VALUE ? unspecifiedLabel : value,
+      count,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label));
+}
+
+export function getCompetitiveDeckLookupFacets(
+  data: DeckStyleAssociationData | null,
+): CompetitiveDeckLookupFacets {
+  const seasons = new Map<number, number>();
+  const events = new Map<string, number>();
+  const locations = new Map<string, number>();
+  const results = new Map<CompetitiveDeckResultTag, number>();
+
+  for (const source of Object.values(data?.decks ?? {})) {
+    const competitive = source.competitive;
+    if (!competitive?.isCompetitive) continue;
+    for (const season of competitive.seasons) incrementCount(seasons, season);
+    for (const result of competitive.resultTags) incrementCount(results, result);
+    if (competitive.events.length === 0) {
+      incrementCount(events, COMPETITIVE_UNSPECIFIED_VALUE);
+    } else {
+      for (const event of competitive.events) incrementCount(events, event);
+    }
+    if (competitive.locations.length === 0) {
+      incrementCount(locations, COMPETITIVE_UNSPECIFIED_VALUE);
+    } else {
+      for (const location of competitive.locations) incrementCount(locations, location);
+    }
+  }
+
+  return {
+    seasons: [...seasons.entries()]
+      .map(([value, count]) => ({ value, label: String(value), count }))
+      .sort((left, right) => right.value - left.value),
+    events: stringFacetOptions(events, "Other competition"),
+    locations: stringFacetOptions(locations, "Unspecified"),
+    results: [...results.entries()]
+      .map(([value, count]) => ({
+        value,
+        label: COMPETITIVE_RESULT_LABELS[value],
+        count,
+      }))
+      .sort((left, right) => left.label.localeCompare(right.label)),
+  };
+}
+
+function matchesStringFacet(values: readonly string[], selected: string | null): boolean {
+  if (selected === null) return true;
+  if (selected === COMPETITIVE_UNSPECIFIED_VALUE) return values.length === 0;
+  return values.includes(selected);
+}
+
+export function getCompetitiveDeckLookupDecks(
+  data: DeckStyleAssociationData | null,
+  filters: CompetitiveDeckLookupFilters,
+): DeckStyleLookupDeck[] {
+  if (!data) return [];
+
+  return Object.values(data.decks)
+    .filter((source) => {
+      const competitive = source.competitive;
+      if (!competitive?.isCompetitive) return false;
+      if (filters.season !== null && !competitive.seasons.includes(filters.season)) {
+        return false;
+      }
+      if (!matchesStringFacet(competitive.events, filters.event)) return false;
+      if (!matchesStringFacet(competitive.locations, filters.location)) return false;
+      if (filters.result !== null && !competitive.resultTags.includes(filters.result)) {
+        return false;
+      }
+      return true;
+    })
+    .map((source) => ({
+      deck: deckStyleSourceDeckToDeck(source),
+      source,
+      score: null,
+    }))
+    .sort((left, right) => {
+      const dateDelta = Date.parse(right.source.updatedAt) - Date.parse(left.source.updatedAt);
+      if (Number.isFinite(dateDelta) && dateDelta !== 0) return dateDelta;
+      const leftPlacement = Math.min(...(left.source.competitive?.placements ?? []), 999);
+      const rightPlacement = Math.min(...(right.source.competitive?.placements ?? []), 999);
+      if (leftPlacement !== rightPlacement) return leftPlacement - rightPlacement;
+      return left.source.name.localeCompare(right.source.name);
+    });
 }
 
 export function getFavouriteDeckStyleLookupDecks(

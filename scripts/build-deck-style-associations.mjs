@@ -169,12 +169,20 @@ function archiveDeckToRuntimeDeck(deckId, archiveEntry, cardByName) {
     typeof deckinfo.updatedAt === "string" && deckinfo.updatedAt.trim()
       ? deckinfo.updatedAt
       : createdAt;
+  const format =
+    typeof deckinfo.format === "string" && deckinfo.format.trim()
+      ? deckinfo.format.trim()
+      : "Unknown";
+  const competitive = isRecord(deckinfo.competitive)
+    ? deckinfo.competitive
+    : undefined;
 
   return {
     id,
     name,
     ...(author ? { author } : {}),
     avatar: avatarName,
+    format,
     elements: deckElementsFromCards(
       [boardEntries(cards.spellbook), boardEntries(cards.collection)],
       cardByName,
@@ -182,6 +190,7 @@ function archiveDeckToRuntimeDeck(deckId, archiveEntry, cardByName) {
     boards,
     createdAt,
     updatedAt,
+    ...(competitive ? { competitive } : {}),
   };
 }
 
@@ -361,7 +370,7 @@ export function buildDeckStyleAssociations({
   const rarityByCard = buildRarityByCard(cards);
   const cardByName = buildCardByName(cards);
   const runtimeDecks = {};
-  for (const deckId of Object.keys(styleScores).sort()) {
+  for (const deckId of Object.keys(archive).sort()) {
     const deck = archiveDeckToRuntimeDeck(deckId, archive[deckId], cardByName);
     if (deck) {
       runtimeDecks[deckId] = deck;
@@ -430,7 +439,7 @@ export function buildDeckStyleAssociations({
   }
 
   return {
-    version: "sorcery-deck-style-associations-v1",
+    version: "sorcery-deck-style-associations-v2",
     generatedAt: new Date().toISOString(),
     alpha,
     styles,
@@ -480,9 +489,12 @@ async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, "utf8"));
 }
 
-async function main() {
+export async function runDeckStyleAssociationBuild(overrides = {}) {
   const root = path.dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
-  const options = parseArgs(process.argv.slice(2));
+  const options = {
+    ...parseArgs([]),
+    ...overrides,
+  };
   const [styleScores, taxonomy, archive, cards] = await Promise.all([
     readJson(path.resolve(root, options.styleScoresPath)),
     readJson(path.resolve(root, options.taxonomyPath)),
@@ -499,6 +511,12 @@ async function main() {
   const outputPath = path.resolve(root, options.outputPath);
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, `${JSON.stringify(output)}\n`);
+  return { output, outputPath };
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+  await runDeckStyleAssociationBuild(options);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

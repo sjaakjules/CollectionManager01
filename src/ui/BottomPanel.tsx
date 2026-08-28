@@ -24,6 +24,8 @@ import {
   type CardCategoryDefinition,
 } from "@/data/cardCategories";
 import {
+  getCompetitiveDeckLookupDecks,
+  getCompetitiveDeckLookupFacets,
   getDeckStyleAvatarLookupGroups,
   getDeckStyleProfilesForDeck,
   getFavouriteDeckStyleLookupDecks,
@@ -31,6 +33,7 @@ import {
   loadDeckStyleAssociations,
   type DeckStyleAssociationData,
   type DeckStyleLookupDeck,
+  type CompetitiveDeckResultTag,
 } from "@/data/deckStyleAssociations";
 import type { Deck } from "@/data/dataModels";
 import { applyCardFilters, ensureCardFilterState } from "@/data/cardFilters";
@@ -47,11 +50,20 @@ type ToolTab = "filter" | "categories" | "associations" | null;
 type ActionPanel = "label" | null;
 type FilterPanelMode = "details" | "settings" | null;
 type CategoryDialogMode = "add" | "edit" | null;
-type DeckLookupTab = "styles" | "avatars" | "favourites";
+type DeckLookupTab = "styles" | "avatars" | "competitive" | "favourites";
 
 const BOTTOM_EDGE_TRIGGER_PX = 92;
 const EMPTY_ASSOCIATION_STYLES: DeckStyleAssociationData["styles"] = [];
 const EMPTY_FAVOURITE_DECK_IDS: string[] = [];
+
+function formatPlacement(value: number): string {
+  const mod100 = value % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${value}th`;
+  if (value % 10 === 1) return `${value}st`;
+  if (value % 10 === 2) return `${value}nd`;
+  if (value % 10 === 3) return `${value}rd`;
+  return `${value}th`;
+}
 
 interface BottomPanelProps {
   isPhone?: boolean;
@@ -77,6 +89,11 @@ export function BottomPanel({
   const [deckLookupTab, setDeckLookupTab] = useState<DeckLookupTab>("styles");
   const [selectedLookupAvatar, setSelectedLookupAvatar] = useState<string | null>(null);
   const [selectedAvatarDeckId, setSelectedAvatarDeckId] = useState<string | null>(null);
+  const [competitiveSeason, setCompetitiveSeason] = useState<number | null>(2026);
+  const [competitiveEvent, setCompetitiveEvent] = useState<string | null>(null);
+  const [competitiveLocation, setCompetitiveLocation] = useState<string | null>(null);
+  const [competitiveResult, setCompetitiveResult] =
+    useState<CompetitiveDeckResultTag | null>(null);
   const [filterPanelMode, setFilterPanelMode] = useState<FilterPanelMode>(null);
   const [filterDetailIndex, setFilterDetailIndex] = useState<number | null>(null);
   const [edgeNear, setEdgeNear] = useState(false);
@@ -249,6 +266,25 @@ export function BottomPanel({
   const favouriteLookupDecks = useMemo(
     () => getFavouriteDeckStyleLookupDecks(deckStyleData, favouriteDeckIds),
     [deckStyleData, favouriteDeckIds],
+  );
+  const competitiveFacets = useMemo(
+    () => getCompetitiveDeckLookupFacets(deckStyleData),
+    [deckStyleData],
+  );
+  const competitiveLookupDecks = useMemo(
+    () => getCompetitiveDeckLookupDecks(deckStyleData, {
+      season: competitiveSeason,
+      event: competitiveEvent,
+      location: competitiveLocation,
+      result: competitiveResult,
+    }),
+    [
+      competitiveEvent,
+      competitiveLocation,
+      competitiveResult,
+      competitiveSeason,
+      deckStyleData,
+    ],
   );
   const selectedAvatarDeck =
     selectedAvatarGroup?.decks.find((entry) => entry.source.id === selectedAvatarDeckId) ??
@@ -542,6 +578,7 @@ export function BottomPanel({
       options: {
         selectedDeckId?: string | null;
         onSelectDeck?: (deckId: string) => void;
+        showCompetitiveMetadata?: boolean;
       } = {},
     ) => {
       if (decks.length === 0) {
@@ -554,6 +591,23 @@ export function BottomPanel({
             const isFavourite = favouriteDeckIdSet.has(source.id);
             const isSelected = options.selectedDeckId === source.id;
             const avatarName = getAvatarShortName(source.avatar ?? deck.name);
+            const competitive = source.competitive;
+            const bestPlacement = competitive?.placements[0];
+            const competitiveBadges = options.showCompetitiveMetadata && competitive
+              ? [
+                  bestPlacement !== undefined
+                    ? formatPlacement(bestPlacement)
+                    : competitive.resultTags.includes("winner")
+                      ? "Winner"
+                      : competitive.topCuts[0] !== undefined
+                        ? `Top ${competitive.topCuts[0]}`
+                        : competitive.resultTags.includes("undefeated")
+                          ? "Undefeated"
+                          : competitive.records[0] ?? null,
+                  competitive.events[0] ?? null,
+                  competitive.locations[0] ?? null,
+                ].filter((value): value is string => value !== null)
+              : [];
             return (
               <div
                 key={source.id}
@@ -561,7 +615,9 @@ export function BottomPanel({
                 tabIndex={0}
                 className={`association-deck-chip ${
                   isFavourite ? "favourite" : ""
-                } ${isSelected ? "selected" : ""}`}
+                } ${isSelected ? "selected" : ""} ${
+                  options.showCompetitiveMetadata ? "competitive" : ""
+                }`}
                 onClick={() => {
                   options.onSelectDeck?.(source.id);
                   onLoadLookupDeck?.(deck);
@@ -588,6 +644,15 @@ export function BottomPanel({
                 </span>
                 {typeof score === "number" && (
                   <span className="association-deck-score">{score.toFixed(2)}</span>
+                )}
+                {competitiveBadges.length > 0 && (
+                  <span className="association-deck-competitive-meta">
+                    {competitiveBadges.map((badge) => (
+                      <span key={badge} className="association-deck-competitive-badge">
+                        {badge}
+                      </span>
+                    ))}
+                  </span>
                 )}
                 <button
                   type="button"
@@ -821,6 +886,15 @@ export function BottomPanel({
                     onClick={() => setDeckLookupTab("avatars")}
                   >
                     Avatars
+                  </button>
+                  <button
+                    type="button"
+                    className={`tool-button ${
+                      deckLookupTab === "competitive" ? "active" : ""
+                    }`}
+                    onClick={() => setDeckLookupTab("competitive")}
+                  >
+                    Competitive
                   </button>
                   <button
                     type="button"
@@ -1061,6 +1135,90 @@ export function BottomPanel({
                       <p className="bottom-tools-note">No deck avatars available.</p>
                     )}
                   </>
+                )}
+
+                {deckLookupTab === "competitive" && (
+                  <div className="association-deck-lookup competitive-deck-lookup">
+                    <div className="competitive-deck-filters">
+                      <label>
+                        <span>Season</span>
+                        <select
+                          aria-label="Competitive deck season"
+                          value={competitiveSeason ?? ""}
+                          onChange={(event) => {
+                            setCompetitiveSeason(
+                              event.target.value ? Number(event.target.value) : null,
+                            );
+                          }}
+                        >
+                          <option value="">All</option>
+                          {competitiveFacets.seasons.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label} ({option.count})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Event</span>
+                        <select
+                          aria-label="Competitive deck event"
+                          value={competitiveEvent ?? ""}
+                          onChange={(event) => setCompetitiveEvent(event.target.value || null)}
+                        >
+                          <option value="">All</option>
+                          {competitiveFacets.events.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label} ({option.count})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Location</span>
+                        <select
+                          aria-label="Competitive deck location"
+                          value={competitiveLocation ?? ""}
+                          onChange={(event) => setCompetitiveLocation(event.target.value || null)}
+                        >
+                          <option value="">All</option>
+                          {competitiveFacets.locations.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label} ({option.count})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Result</span>
+                        <select
+                          aria-label="Competitive deck result"
+                          value={competitiveResult ?? ""}
+                          onChange={(event) => {
+                            setCompetitiveResult(
+                              (event.target.value || null) as CompetitiveDeckResultTag | null,
+                            );
+                          }}
+                        >
+                          <option value="">All</option>
+                          {competitiveFacets.results.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label} ({option.count})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="association-deck-lookup-heading">
+                      Competitive
+                      <span>{competitiveLookupDecks.length}</span>
+                    </div>
+                    {renderLookupDeckList(
+                      competitiveLookupDecks,
+                      "No competitive decks match these filters.",
+                      { showCompetitiveMetadata: true },
+                    )}
+                  </div>
                 )}
 
                 {deckLookupTab === "favourites" && (

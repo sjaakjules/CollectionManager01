@@ -199,6 +199,7 @@ export function extractDeckInputs(inputJson, sourcePath, options = {}) {
           hotscore: readNumber(deck.hotscore),
           user: isRecord(deck.user) ? deck.user : undefined,
           elements: Array.isArray(deck.elements) ? deck.elements.filter((v) => typeof v === 'string') : undefined,
+          competitive: isRecord(deck.competitive) ? deck.competitive : undefined,
         },
       });
     }
@@ -374,7 +375,26 @@ export function buildArchiveDeck(fetchedDeck, sourceHint, cardTypeLookup) {
       cardCount: splitBoards.cardCount,
       avatar: fetchedDeck.boards.avatar?.[0]?.name ?? '',
       cards: splitBoards.cards,
+      ...(isRecord(metadata.competitive) ? { competitive: metadata.competitive } : {}),
     },
+  };
+}
+
+export function mergeCompetitiveAnnotation(deckinfo, sourceHint) {
+  if (!isRecord(deckinfo) || !isRecord(sourceHint?.competitive)) {
+    return { deckinfo, changed: false };
+  }
+
+  if (JSON.stringify(deckinfo.competitive) === JSON.stringify(sourceHint.competitive)) {
+    return { deckinfo, changed: false };
+  }
+
+  return {
+    deckinfo: {
+      ...deckinfo,
+      competitive: sourceHint.competitive,
+    },
+    changed: true,
   };
 }
 
@@ -1166,6 +1186,7 @@ export function formatProgressLine({
     `eta=${formatDuration(etaMs)}`,
     `added=${summary.added}`,
     `updated=${summary.updated}`,
+    `annotated=${summary.annotated ?? 0}`,
     `skipped-up-to-date=${summary.skippedUpToDate}`,
     `skipped-invalid=${summary.skippedInvalid}`,
     `skipped-processed=${summary.skippedProcessed ?? 0}`,
@@ -1187,6 +1208,7 @@ function formatDashboardProgress({ processed, total, summary, elapsedMs }) {
     `eta=${formatDuration(etaMs)}`,
     `added=${summary.added}`,
     `updated=${summary.updated}`,
+    `annotated=${summary.annotated ?? 0}`,
     `skipped-up-to-date=${summary.skippedUpToDate}`,
     `skipped-invalid=${summary.skippedInvalid}`,
     `skipped-processed=${summary.skippedProcessed ?? 0}`,
@@ -1356,6 +1378,7 @@ export async function runArchive(options, dependencies = {}) {
   const summary = {
     added: 0,
     updated: 0,
+    annotated: 0,
     skippedUpToDate: 0,
     skippedInvalid: 0,
     skippedProcessed: 0,
@@ -1498,7 +1521,20 @@ export async function runArchive(options, dependencies = {}) {
       continue;
     }
 
-    const existing = archive[input.id]?.deckinfo;
+    let existing = archive[input.id]?.deckinfo;
+    let annotationChanged = false;
+    if (existing) {
+      const annotation = mergeCompetitiveAnnotation(existing, input.hint);
+      if (annotation.changed) {
+        existing = annotation.deckinfo;
+        archive = {
+          ...archive,
+          [input.id]: { deckinfo: existing },
+        };
+        annotationChanged = true;
+        summary.annotated += 1;
+      }
+    }
     if (
       existing &&
       input.hint.updatedAt &&
@@ -1513,7 +1549,9 @@ export async function runArchive(options, dependencies = {}) {
       }
       dashboardState.result = {
         status: 'skipped-up-to-date',
-        message: 'source updatedAt is not newer',
+        message: annotationChanged
+          ? 'competitive metadata refreshed; source updatedAt is not newer'
+          : 'source updatedAt is not newer',
       };
       emitProgress({
         id: input.id,
@@ -1650,7 +1688,7 @@ async function main() {
 
   const result = await runArchive(options, { handleSignals: true });
   console.log(
-    `Done: added=${result.summary.added} updated=${result.summary.updated} skipped-up-to-date=${result.summary.skippedUpToDate} skipped-invalid=${result.summary.skippedInvalid} skipped-processed=${result.summary.skippedProcessed} failed=${result.summary.failed}`,
+    `Done: added=${result.summary.added} updated=${result.summary.updated} annotated=${result.summary.annotated} skipped-up-to-date=${result.summary.skippedUpToDate} skipped-invalid=${result.summary.skippedInvalid} skipped-processed=${result.summary.skippedProcessed} failed=${result.summary.failed}`,
   );
   console.log(`Wrote ${options.output}`);
   console.log(`Wrote ${options.skippedOutput}`);
