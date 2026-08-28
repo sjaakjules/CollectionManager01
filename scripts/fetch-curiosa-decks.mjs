@@ -14,6 +14,7 @@ const LOW_REMAINING_THRESHOLD = 2;
 const SAFE_REMAINING_TARGET = 5;
 
 const DEFAULT_CARD_DATA_PATH = 'docs/Sorcery_CardInfo.json';
+const DEFAULT_APP_ARCHIVE_PATH = 'offlineData/deckArchive.json';
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -953,6 +954,8 @@ Options:
       --curiosa-base-url <url> Defaults to ${CURIOSA_ORIGIN}.
       --limit-per-file <n>    Process only the first n entries from each input file.
       --skip-processed        Skip IDs already in the output or skipped-output archives.
+      --rebuild-lookup        Rebuild the app deck lookup after archiving.
+      --no-rebuild-lookup     Skip the automatic rebuild for offlineData/deckArchive.json.
   -h, --help                  Show this help.
 `);
 }
@@ -967,8 +970,10 @@ export function parseArgs(argv) {
     curiosaBaseUrl: CURIOSA_ORIGIN,
     limitPerFile: 0,
     skipProcessed: false,
+    rebuildLookup: false,
     help: false,
   };
+  let rebuildLookupOverride = null;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -981,6 +986,16 @@ export function parseArgs(argv) {
 
     if (arg === '--skip-processed') {
       options.skipProcessed = true;
+      continue;
+    }
+
+    if (arg === '--rebuild-lookup') {
+      rebuildLookupOverride = true;
+      continue;
+    }
+
+    if (arg === '--no-rebuild-lookup') {
+      rebuildLookupOverride = false;
       continue;
     }
 
@@ -1044,6 +1059,11 @@ export function parseArgs(argv) {
   if (!options.skippedOutput && options.output) {
     options.skippedOutput = `${options.output}.skipped.json`;
   }
+
+  const targetsAppArchive = options.output
+    ? path.resolve(options.output) === path.resolve(DEFAULT_APP_ARCHIVE_PATH)
+    : false;
+  options.rebuildLookup = rebuildLookupOverride ?? targetsAppArchive;
 
   return options;
 }
@@ -1687,12 +1707,23 @@ async function main() {
   }
 
   const result = await runArchive(options, { handleSignals: true });
+  let lookupResult = null;
+  if (options.rebuildLookup) {
+    const module = await import('./build-deck-style-associations.mjs');
+    lookupResult = await module.runDeckStyleAssociationBuild({ archivePath: options.output });
+  }
   console.log(
     `Done: added=${result.summary.added} updated=${result.summary.updated} annotated=${result.summary.annotated} skipped-up-to-date=${result.summary.skippedUpToDate} skipped-invalid=${result.summary.skippedInvalid} skipped-processed=${result.summary.skippedProcessed} failed=${result.summary.failed}`,
   );
   console.log(`Wrote ${options.output}`);
   console.log(`Wrote ${options.skippedOutput}`);
   console.log(`Wrote ${options.log}`);
+  if (lookupResult) {
+    const scoring = lookupResult.output.styleScoring;
+    console.log(
+      `Rebuilt public/assets/sorcery_deck_style_associations.json: source=${scoring.sourceDeckCount} inferred=${scoring.inferredDeckCount} unscored=${scoring.unscoredDeckCount}`,
+    );
+  }
 }
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';

@@ -4,6 +4,7 @@ import {
   buildDeckStyleAssociations,
   canonicalizeId,
   copySaturation,
+  inferMissingDeckStyleScores,
   parseArgs,
 } from "./build-deck-style-associations.mjs";
 
@@ -179,6 +180,7 @@ describe("deck-style association builder", () => {
       archive,
       cards,
       alpha: 1,
+      inferMissingStyles: false,
     });
     const primaryVanguard = output.modes.primary.styles.vanguard;
     const fractionalVanguard = output.modes.fractional.styles.vanguard;
@@ -205,6 +207,7 @@ describe("deck-style association builder", () => {
       archive,
       cards,
       alpha: 1,
+      inferMissingStyles: false,
     });
     const primaryBurn = output.modes.primary.styles.vanguard.subStyles.burn;
     const fractionalBurn = output.modes.fractional.styles.vanguard.subStyles.burn;
@@ -226,6 +229,7 @@ describe("deck-style association builder", () => {
       archive,
       cards,
       alpha: 1,
+      inferMissingStyles: false,
     });
     const primaryVanguard = output.modes.primary.styles.vanguard;
     const primaryBurn = primaryVanguard.subStyles.burn;
@@ -250,6 +254,7 @@ describe("deck-style association builder", () => {
       archive,
       cards,
       alpha: 1,
+      inferMissingStyles: false,
     });
 
     expect(output.decks.d3.boards.mainboard).toEqual([
@@ -276,6 +281,7 @@ describe("deck-style association builder", () => {
       archive,
       cards,
       alpha: 1,
+      inferMissingStyles: false,
     });
 
     expect(output.version).toBe("sorcery-deck-style-associations-v2");
@@ -293,6 +299,44 @@ describe("deck-style association builder", () => {
     );
   });
 
+  it("infers missing deck styles from similar scored decklists", () => {
+    const inference = inferMissingDeckStyleScores({
+      styleScores,
+      taxonomy,
+      archive,
+      cards,
+    });
+
+    expect(inference.summary).toMatchObject({
+      sourceDeckCount: 3,
+      inferredDeckCount: 1,
+      unscoredDeckCount: 0,
+    });
+    expect(inference.styleScores.d4).toMatchObject({
+      style: "Vanguard",
+      subStyle: "Burn",
+      inferred: {
+        method: "tfidf-nearest-decks-v1",
+        closestDeckId: "d1",
+      },
+    });
+
+    const output = buildDeckStyleAssociations({
+      styleScores,
+      taxonomy,
+      archive,
+      cards,
+      alpha: 1,
+    });
+    expect(output.styleScoring).toMatchObject({
+      inferredDeckCount: 1,
+      unscoredDeckCount: 0,
+    });
+    expect(output.modes.primary.styles.vanguard.decks).toContainEqual(
+      expect.objectContaining({ deckId: "d4" }),
+    );
+  });
+
   it("sorts output cards by score, then card name", () => {
     const output = buildDeckStyleAssociations({
       styleScores,
@@ -300,6 +344,7 @@ describe("deck-style association builder", () => {
       archive,
       cards,
       alpha: 1,
+      inferMissingStyles: false,
     });
 
     expect(Object.keys(output.modes.primary.styles.vanguard.cards).slice(0, 3)).toEqual([

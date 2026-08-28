@@ -8,6 +8,14 @@ const DEFAULT_ARCHIVE_PATH = "offlineData/deckArchive.json";
 const DEFAULT_CARD_DATA_PATH = "docs/Sorcery_CardInfo.json";
 const DEFAULT_OUTPUT_PATH = "public/assets/sorcery_deck_style_associations.json";
 const DEFAULT_ALPHA = 1;
+const DEFAULT_STYLE_INFERENCE_NEIGHBORS = 8;
+const STYLE_INFERENCE_METHOD = "tfidf-nearest-decks-v1";
+const STYLE_VECTOR_BOARD_WEIGHTS = {
+  avatar: 1.4,
+  spellbook: 1,
+  atlas: 0.3,
+  collection: 0.45,
+};
 const ELEMENT_KEYS = ["air", "earth", "fire", "water"];
 
 export const RARITY_LIMITS = {
@@ -242,6 +250,270 @@ function normalizeDeckCards(deckinfo, rarityByCard) {
   return normalized;
 }
 
+function setMaxVectorValue(vector, key, value) {
+  if (!Number.isFinite(value) || value <= 0) return;
+  vector.set(key, Math.max(vector.get(key) ?? 0, value));
+}
+
+function buildStyleInferenceVector(deckinfo, rarityByCard) {
+  if (!isRecord(deckinfo)) return new Map();
+  const cards = isRecord(deckinfo.cards) ? deckinfo.cards : {};
+  const vector = new Map();
+
+  const addBoard = (boardName, board, weight, kind = "card") => {
+    for (const [name, quantity] of sortedEntries(board)) {
+      if (isBlockedTokenCardName(name)) continue;
+      const limit = kind === "avatar" ? 1 : rarityLimit(name, rarityByCard, quantity);
+      setMaxVectorValue(
+        vector,
+        `${boardName}:${name}`,
+        copySaturation(quantity, limit) * weight,
+      );
+    }
+  };
+
+  if (
+    typeof deckinfo.avatar === "string" &&
+    deckinfo.avatar.trim() &&
+    !isBlockedTokenCardName(deckinfo.avatar)
+  ) {
+    setMaxVectorValue(
+      vector,
+      `avatar:${deckinfo.avatar.trim()}`,
+      STYLE_VECTOR_BOARD_WEIGHTS.avatar,
+    );
+  }
+  addBoard("avatar", cards.avatar, STYLE_VECTOR_BOARD_WEIGHTS.avatar, "avatar");
+  addBoard("spellbook", cards.spellbook, STYLE_VECTOR_BOARD_WEIGHTS.spellbook);
+  addBoard("atlas", cards.atlas, STYLE_VECTOR_BOARD_WEIGHTS.atlas);
+  addBoard("collection", cards.collection, STYLE_VECTOR_BOARD_WEIGHTS.collection);
+  return vector;
+}
+
+function buildInverseDocumentFrequency(vectors) {
+  const documentFrequency = new Map();
+  for (const vector of vectors.values()) {
+    for (const key of vector.keys()) {
+      documentFrequency.set(key, (documentFrequency.get(key) ?? 0) + 1);
+    }
+  }
+
+  const documentCount = Math.max(1, vectors.size);
+  return new Map(
+    [...documentFrequency.entries()].map(([key, count]) => [
+      key,
+      Math.log((documentCount + 1) / (count + 1)) + 1,
+    ]),
+  );
+}
+
+function vectorNorm(vector, inverseDocumentFrequency) {
+  let squared = 0;
+  for (const [key, value] of vector) {
+    const weighted = value * (inverseDocumentFrequency.get(key) ?? 1);
+    squared += weighted * weighted;
+  }
+  return Math.sqrt(squared);
+}
+
+function vectorSimilarity(left, right, inverseDocumentFrequency, leftNorm, rightNorm) {
+  if (leftNorm <= 0 || rightNorm <= 0) return 0;
+  const [smaller, larger] = left.size <= right.size ? [left, right] : [right, left];
+  let dot = 0;
+  for (const [key, value] of smaller) {
+    const other = larger.get(key);
+    if (!other) continue;
+    const idf = inverseDocumentFrequency.get(key) ?? 1;
+    dot += value * other * idf * idf;
+  }
+  return dot / (leftNorm * rightNorm);
+}
+
+function scoreValue(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? clampScore(parsed) : 0;
+}
+
+function styleScoreValue(score, styleName) {
+  if (isRecord(score?.fractionalStyles)) {
+    const fractional = scoreValue(score.fractionalStyles[styleName]);
+    if (fractional > 0) return fractional;
+  }
+  return score?.style === styleName ? 1 : 0;
+}
+
+function subStyleScoreValue(score, styleName, subStyleName) {
+  const styleScores = isRecord(score?.fractionalSubStyles?.[styleName])
+    ? score.fractionalSubStyles[styleName]
+    : {};
+  const fractional = scoreValue(styleScores[subStyleName]);
+  if (fractional > 0) return fractional;
+  return score?.style === styleName && score?.subStyle === subStyleName ? 1 : 0;
+}
+
+function aggregateNeighborScore(neighbors, getScore) {
+  let weightedScore = 0;
+  let totalWeight = 0;
+  for (const neighbor of neighbors) {
+    const weight = neighbor.similarity ** 3;
+    weightedScore += getScore(neighbor.score) * weight;
+    totalWeight += weight;
+  }
+  return totalWeight > 0 ? clampScore(weightedScore / totalWeight) : 0;
+}
+
+function inferDeckStyleScore(deckId, deckinfo, neighbors, styleDefinitions) {
+  const fractionalStyles = Object.fromEntries(
+    styleDefinitions.map((style) => [
+      style.name,
+      aggregateNeighborScore(neighbors, (score) => styleScoreValue(score, style.name)),
+    ]),
+  );
+  const primaryStyle = styleDefinitions
+    .map((style) => ({ name: style.name, score: fractionalStyles[style.name] ?? 0 }))
+    .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))[0];
+  if (!primaryStyle || primaryStyle.score <= 0) return null;
+
+  const fractionalSubStyles = Object.fromEntries(
+    styleDefinitions.map((style) => [
+      style.name,
+      Object.fromEntries(
+        style.subStyles.map((subStyle) => [
+          subStyle.name,
+          aggregateNeighborScore(
+            neighbors,
+            (score) => subStyleScoreValue(score, style.name, subStyle.name),
+          ),
+        ]),
+      ),
+    ]),
+  );
+  const primarySubStyle = styleDefinitions
+    .find((style) => style.name === primaryStyle.name)
+    ?.subStyles.map((subStyle) => ({
+      name: subStyle.name,
+      score: fractionalSubStyles[primaryStyle.name]?.[subStyle.name] ?? 0,
+    }))
+    .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name))[0];
+  const topSubStyles = styleDefinitions
+    .flatMap((style) => style.subStyles.map((subStyle) => ({
+      style: style.name,
+      subStyle: subStyle.name,
+      score: fractionalSubStyles[style.name]?.[subStyle.name] ?? 0,
+    })))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => (
+      right.score - left.score ||
+      left.style.localeCompare(right.style) ||
+      left.subStyle.localeCompare(right.subStyle)
+    ))
+    .slice(0, 6);
+  const closest = neighbors[0];
+
+  return {
+    avatar: typeof deckinfo.avatar === "string" ? deckinfo.avatar : "",
+    deckName: typeof deckinfo.name === "string" ? deckinfo.name : deckId,
+    style: primaryStyle.name,
+    subStyle: primarySubStyle?.name ?? "",
+    subStyleScore: primarySubStyle?.score ?? 0,
+    fractionalStyles,
+    fractionalSubStyles,
+    topSubStyles,
+    inferred: {
+      method: STYLE_INFERENCE_METHOD,
+      neighborCount: neighbors.length,
+      closestDeckId: closest.deckId,
+      closestSimilarity: Math.round(closest.similarity * 10000) / 10000,
+    },
+    notes: `Automatically inferred from ${neighbors.length} similar scored decklists; closest source deck ${closest.deckId}.`,
+  };
+}
+
+export function inferMissingDeckStyleScores({
+  styleScores,
+  taxonomy,
+  archive,
+  cards,
+  neighborCount = DEFAULT_STYLE_INFERENCE_NEIGHBORS,
+}) {
+  const rarityByCard = buildRarityByCard(cards);
+  const styleDefinitions = buildStyleDefinitions(taxonomy);
+  const vectors = new Map();
+  for (const [deckId, archiveEntry] of Object.entries(archive)) {
+    const vector = buildStyleInferenceVector(archiveEntry?.deckinfo, rarityByCard);
+    if (vector.size > 0) vectors.set(deckId, vector);
+  }
+
+  const inverseDocumentFrequency = buildInverseDocumentFrequency(vectors);
+  const norms = new Map(
+    [...vectors.entries()].map(([deckId, vector]) => [
+      deckId,
+      vectorNorm(vector, inverseDocumentFrequency),
+    ]),
+  );
+  const seedDecks = Object.entries(styleScores)
+    .filter(([deckId, score]) => vectors.has(deckId) && isRecord(score))
+    .map(([deckId, score]) => ({ deckId, score, vector: vectors.get(deckId) }))
+    .sort((left, right) => left.deckId.localeCompare(right.deckId));
+  const combinedStyleScores = { ...styleScores };
+  const inferredDeckIds = [];
+  const unscoredDeckIds = [];
+
+  for (const [deckId, archiveEntry] of Object.entries(archive).sort(([left], [right]) => (
+    left.localeCompare(right)
+  ))) {
+    if (isRecord(combinedStyleScores[deckId])) continue;
+    const vector = vectors.get(deckId);
+    const norm = norms.get(deckId) ?? 0;
+    if (!vector || norm <= 0) {
+      unscoredDeckIds.push(deckId);
+      continue;
+    }
+
+    const candidates = seedDecks
+      .map((seed) => ({
+        deckId: seed.deckId,
+        score: seed.score,
+        similarity: vectorSimilarity(
+          vector,
+          seed.vector,
+          inverseDocumentFrequency,
+          norm,
+          norms.get(seed.deckId) ?? 0,
+        ),
+      }))
+      .filter((neighbor) => neighbor.similarity > 0)
+      .sort((left, right) => (
+        right.similarity - left.similarity || left.deckId.localeCompare(right.deckId)
+      ));
+    const bestSimilarity = candidates[0]?.similarity ?? 0;
+    const neighbors = candidates
+      .filter((candidate) => candidate.similarity >= bestSimilarity * 0.45)
+      .slice(0, Math.max(1, neighborCount));
+    const inferred = neighbors.length > 0
+      ? inferDeckStyleScore(deckId, archiveEntry?.deckinfo ?? {}, neighbors, styleDefinitions)
+      : null;
+    if (!inferred) {
+      unscoredDeckIds.push(deckId);
+      continue;
+    }
+    combinedStyleScores[deckId] = inferred;
+    inferredDeckIds.push(deckId);
+  }
+
+  return {
+    styleScores: combinedStyleScores,
+    summary: {
+      method: STYLE_INFERENCE_METHOD,
+      sourceDeckCount: seedDecks.length,
+      inferredDeckCount: inferredDeckIds.length,
+      unscoredDeckCount: unscoredDeckIds.length,
+      inferredDeckIds,
+      unscoredDeckIds,
+    },
+  };
+}
+
 function buildStyleDefinitions(taxonomy) {
   const styleEntries = taxonomy.deckStyles ?? {};
   const order = Array.isArray(taxonomy.displayOrder?.deckStyles)
@@ -366,7 +638,29 @@ export function buildDeckStyleAssociations({
   archive,
   cards,
   alpha = DEFAULT_ALPHA,
+  inferMissingStyles = true,
+  inferenceNeighborCount = DEFAULT_STYLE_INFERENCE_NEIGHBORS,
 }) {
+  const inference = inferMissingStyles
+    ? inferMissingDeckStyleScores({
+        styleScores,
+        taxonomy,
+        archive,
+        cards,
+        neighborCount: inferenceNeighborCount,
+      })
+    : {
+        styleScores,
+        summary: {
+          method: "source-only",
+          sourceDeckCount: Object.keys(styleScores).filter((deckId) => deckId in archive).length,
+          inferredDeckCount: 0,
+          unscoredDeckCount: Object.keys(archive).filter((deckId) => !(deckId in styleScores)).length,
+          inferredDeckIds: [],
+          unscoredDeckIds: Object.keys(archive).filter((deckId) => !(deckId in styleScores)),
+        },
+      };
+  const effectiveStyleScores = inference.styleScores;
   const rarityByCard = buildRarityByCard(cards);
   const cardByName = buildCardByName(cards);
   const runtimeDecks = {};
@@ -384,10 +678,10 @@ export function buildDeckStyleAssociations({
 
   for (const mode of Object.keys(modes)) {
     for (const style of styles) {
-      const styleDeckIds = getStyleClusterDeckIds(styleScores, style.name, mode);
+      const styleDeckIds = getStyleClusterDeckIds(effectiveStyleScores, style.name, mode);
       const styleCards = buildCardsForDeckIds({
         deckIds: styleDeckIds,
-        styleScores,
+        styleScores: effectiveStyleScores,
         archive,
         rarityByCard,
         alpha,
@@ -395,21 +689,21 @@ export function buildDeckStyleAssociations({
       });
       const styleDecks = serializeDeckRefs({
         deckIds: styleDeckIds,
-        styleScores,
+        styleScores: effectiveStyleScores,
         runtimeDecks,
         scoreForDeck: (score) => score?.fractionalStyles?.[style.name] ?? 0,
       });
       const subStyles = {};
       for (const subStyle of style.subStyles) {
         const subDeckIds = getSubStyleClusterDeckIds(
-          styleScores,
+          effectiveStyleScores,
           style.name,
           subStyle.name,
           mode,
         );
         const subCards = buildCardsForDeckIds({
           deckIds: subDeckIds,
-          styleScores,
+          styleScores: effectiveStyleScores,
           archive,
           rarityByCard,
           alpha,
@@ -417,7 +711,7 @@ export function buildDeckStyleAssociations({
         });
         const subDecks = serializeDeckRefs({
           deckIds: subDeckIds,
-          styleScores,
+          styleScores: effectiveStyleScores,
           runtimeDecks,
           scoreForDeck: (score) => score?.fractionalSubStyles?.[style.name]?.[subStyle.name] ?? 0,
         });
@@ -442,6 +736,12 @@ export function buildDeckStyleAssociations({
     version: "sorcery-deck-style-associations-v2",
     generatedAt: new Date().toISOString(),
     alpha,
+    styleScoring: {
+      method: inference.summary.method,
+      sourceDeckCount: inference.summary.sourceDeckCount,
+      inferredDeckCount: inference.summary.inferredDeckCount,
+      unscoredDeckCount: inference.summary.unscoredDeckCount,
+    },
     styles,
     decks: runtimeDecks,
     modes,
@@ -516,7 +816,11 @@ export async function runDeckStyleAssociationBuild(overrides = {}) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  await runDeckStyleAssociationBuild(options);
+  const result = await runDeckStyleAssociationBuild(options);
+  const scoring = result.output.styleScoring;
+  console.log(
+    `Wrote ${result.outputPath}: source=${scoring.sourceDeckCount} inferred=${scoring.inferredDeckCount} unscored=${scoring.unscoredDeckCount}`,
+  );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

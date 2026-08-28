@@ -63,6 +63,12 @@ interface DeckStyleModeData {
 }
 
 interface DeckStyleAssociationAsset {
+  styleScoring: {
+    method: string;
+    sourceDeckCount: number;
+    inferredDeckCount: number;
+    unscoredDeckCount: number;
+  };
   styles: Array<{
     id: string;
     name: string;
@@ -208,8 +214,21 @@ describe("runtime deck-style association asset", () => {
     const archive = readJson<Record<string, unknown>>("offlineData/deckArchive.json");
     const cards = cardCatalogNames();
     const validElements = new Set(["air", "earth", "fire", "water"]);
+    const primaryScoredDeckIds = new Set(
+      Object.values(associations.modes.primary.styles)
+        .flatMap((style) => style.decks.map((deck) => deck.deckId)),
+    );
 
     expect(Object.keys(associations.decks).sort()).toEqual(Object.keys(archive).sort());
+    expect(associations.styleScoring).toMatchObject({
+      method: "tfidf-nearest-decks-v1",
+      unscoredDeckCount: 0,
+    });
+    expect(
+      associations.styleScoring.sourceDeckCount +
+        associations.styleScoring.inferredDeckCount,
+    ).toBe(Object.keys(archive).length);
+    expect([...primaryScoredDeckIds].sort()).toEqual(Object.keys(archive).sort());
     for (const deckId of Object.keys(styleScores)) {
       expect(
         associations.decks[deckId],

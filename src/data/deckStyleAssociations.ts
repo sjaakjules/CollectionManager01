@@ -147,6 +147,12 @@ export interface DeckStyleAssociationData {
   version: string;
   generatedAt: string;
   alpha: number;
+  styleScoring?: {
+    method: string;
+    sourceDeckCount: number;
+    inferredDeckCount: number;
+    unscoredDeckCount: number;
+  };
   styles: DeckStyleDefinition[];
   decks: Record<string, DeckStyleSourceDeck>;
   modes: Record<DeckStyleAssociationMode, DeckStyleModeData>;
@@ -314,6 +320,13 @@ function matchesStringFacet(values: readonly string[], selected: string | null):
   return values.includes(selected);
 }
 
+function competitionPlacement(source: DeckStyleSourceDeck): number {
+  const placements = (source.competitive?.placements ?? [])
+    .filter((placement) => Number.isFinite(placement) && placement > 0);
+  if (placements.length > 0) return Math.min(...placements);
+  return source.competitive?.resultTags.includes("winner") ? 1 : Number.POSITIVE_INFINITY;
+}
+
 export function getCompetitiveDeckLookupDecks(
   data: DeckStyleAssociationData | null,
   filters: CompetitiveDeckLookupFilters,
@@ -340,11 +353,16 @@ export function getCompetitiveDeckLookupDecks(
       score: null,
     }))
     .sort((left, right) => {
+      const leftPlacement = competitionPlacement(left.source);
+      const rightPlacement = competitionPlacement(right.source);
+      if (filters.event !== null && leftPlacement !== rightPlacement) {
+        return leftPlacement - rightPlacement;
+      }
       const dateDelta = Date.parse(right.source.updatedAt) - Date.parse(left.source.updatedAt);
       if (Number.isFinite(dateDelta) && dateDelta !== 0) return dateDelta;
-      const leftPlacement = Math.min(...(left.source.competitive?.placements ?? []), 999);
-      const rightPlacement = Math.min(...(right.source.competitive?.placements ?? []), 999);
-      if (leftPlacement !== rightPlacement) return leftPlacement - rightPlacement;
+      if (filters.event === null && leftPlacement !== rightPlacement) {
+        return leftPlacement - rightPlacement;
+      }
       return left.source.name.localeCompare(right.source.name);
     });
 }

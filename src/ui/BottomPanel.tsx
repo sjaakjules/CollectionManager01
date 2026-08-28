@@ -894,7 +894,7 @@ export function BottomPanel({
                     }`}
                     onClick={() => setDeckLookupTab("competitive")}
                   >
-                    Competitive
+                    Competitions
                   </button>
                   <button
                     type="button"
@@ -1143,7 +1143,7 @@ export function BottomPanel({
                       <label>
                         <span>Season</span>
                         <select
-                          aria-label="Competitive deck season"
+                          aria-label="Competition deck season"
                           value={competitiveSeason ?? ""}
                           onChange={(event) => {
                             setCompetitiveSeason(
@@ -1162,7 +1162,7 @@ export function BottomPanel({
                       <label>
                         <span>Event</span>
                         <select
-                          aria-label="Competitive deck event"
+                          aria-label="Competition deck event"
                           value={competitiveEvent ?? ""}
                           onChange={(event) => setCompetitiveEvent(event.target.value || null)}
                         >
@@ -1177,7 +1177,7 @@ export function BottomPanel({
                       <label>
                         <span>Location</span>
                         <select
-                          aria-label="Competitive deck location"
+                          aria-label="Competition deck location"
                           value={competitiveLocation ?? ""}
                           onChange={(event) => setCompetitiveLocation(event.target.value || null)}
                         >
@@ -1192,7 +1192,7 @@ export function BottomPanel({
                       <label>
                         <span>Result</span>
                         <select
-                          aria-label="Competitive deck result"
+                          aria-label="Competition deck result"
                           value={competitiveResult ?? ""}
                           onChange={(event) => {
                             setCompetitiveResult(
@@ -1210,12 +1210,12 @@ export function BottomPanel({
                       </label>
                     </div>
                     <div className="association-deck-lookup-heading">
-                      Competitive
+                      Competitions
                       <span>{competitiveLookupDecks.length}</span>
                     </div>
                     {renderLookupDeckList(
                       competitiveLookupDecks,
-                      "No competitive decks match these filters.",
+                      "No competition decks match these filters.",
                       { showCompetitiveMetadata: true },
                     )}
                   </div>

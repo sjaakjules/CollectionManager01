@@ -305,7 +305,6 @@ describe('Curiosa deck search collection', () => {
       'Local 2K',
       '--output',
       'offlineData/deckArchive.json',
-      '--rebuild-lookup',
     ]);
 
     expect(options).toMatchObject({
@@ -319,6 +318,13 @@ describe('Curiosa deck search collection', () => {
     });
     expect(options.queries).toContain('Grand Contest');
     expect(options.queries).toContain('Local 2K');
+    expect(parseArgs([
+      '--preset',
+      'competitive-2026',
+      '--output',
+      'offlineData/deckArchive.json',
+      '--no-rebuild-lookup',
+    ]).rebuildLookup).toBe(false);
   });
 
   it('deduplicates multiple query pages and keeps newest metadata and peak counts', async () => {

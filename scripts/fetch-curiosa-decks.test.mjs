@@ -11,12 +11,37 @@ import {
   formatProgressLine,
   mergeCompetitiveAnnotation,
   mergeDeckIntoArchive,
+  parseArgs,
   prioritizeDeckInputs,
   runArchive,
   splitDeckBoards,
 } from './fetch-curiosa-decks.mjs';
 
 const DECK_ID = 'cmkczpwgh00f304js9feygkpr';
+
+describe('Curiosa archive CLI options', () => {
+  it('automatically rebuilds styles for the app archive and allows an override', () => {
+    expect(parseArgs([
+      '--input',
+      'tmp/decks.json',
+      '--output',
+      'offlineData/deckArchive.json',
+    ]).rebuildLookup).toBe(true);
+    expect(parseArgs([
+      '--input',
+      'tmp/decks.json',
+      '--output',
+      'offlineData/deckArchive.json',
+      '--no-rebuild-lookup',
+    ]).rebuildLookup).toBe(false);
+    expect(parseArgs([
+      '--input',
+      'tmp/decks.json',
+      '--output',
+      'tmp/test-archive.json',
+    ]).rebuildLookup).toBe(false);
+  });
+});
 
 function response(body, init = {}) {
   return new Response(body, {

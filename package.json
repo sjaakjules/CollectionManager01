@@ -23,7 +23,7 @@
     "curiosa:decks": "node scripts/fetch-curiosa-decks.mjs",
     "curiosa:seed-decks": "node scripts/build-guest-seed-decks.mjs",
     "curiosa:search-decks": "node scripts/search-curiosa-decks.mjs",
-    "curiosa:competitive-decks": "node scripts/search-curiosa-decks.mjs --preset competitive-2026 --output offlineData/deckArchive.json --rebuild-lookup",
+    "curiosa:competitive-decks": "node scripts/search-curiosa-decks.mjs --preset competitive-2026 --output offlineData/deckArchive.json",
     "deck-styles:build": "node scripts/build-deck-style-associations.mjs"
   },
   "dependencies": {

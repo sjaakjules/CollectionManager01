@@ -7,6 +7,7 @@ export const COMPETITIVE_PRESETS = {
     since: '2026-01-01',
     sort: 'latest',
     format: 'Constructed',
+    rebuildLookup: true,
     queries: [
       'Grand Contest',
       'GC',

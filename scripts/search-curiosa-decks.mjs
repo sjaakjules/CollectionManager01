@@ -500,7 +500,7 @@ function printHelp() {
 
 Usage:
   node scripts/search-curiosa-decks.mjs --query cornerstone --output tmp/cornerstone-decks.json --min-views 100 --min-likes 5
-  node scripts/search-curiosa-decks.mjs --preset competitive-2026 --output offlineData/deckArchive.json --rebuild-lookup
+  node scripts/search-curiosa-decks.mjs --preset competitive-2026 --output offlineData/deckArchive.json
 
 Options:
   -q, --query <term>             Search term. Can be repeated.
@@ -521,6 +521,7 @@ Options:
       --page-size <n>            Search page size. Defaults to ${DEFAULT_PAGE_SIZE}.
       --skip-processed           Skip IDs already in output or skipped-output.
       --rebuild-lookup           Rebuild the app deck lookup after archiving.
+      --no-rebuild-lookup        Do not rebuild a lookup requested by a preset.
   -h, --help                     Show this help.
 `);
 }
@@ -550,6 +551,7 @@ export function parseArgs(argv) {
     rebuildLookup: false,
     help: false,
   };
+  let rebuildLookupOverride = null;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -567,7 +569,11 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg === '--rebuild-lookup') {
-      options.rebuildLookup = true;
+      rebuildLookupOverride = true;
+      continue;
+    }
+    if (arg === '--no-rebuild-lookup') {
+      rebuildLookupOverride = false;
       continue;
     }
 
@@ -601,6 +607,7 @@ export function parseArgs(argv) {
   options.format = options.format || preset?.format || 'all';
   options.season = preset?.season ?? null;
   options.competitiveOnly = Boolean(preset) && !options.includeUnclassified;
+  options.rebuildLookup = rebuildLookupOverride ?? Boolean(preset?.rebuildLookup);
 
   if (!['relevance', 'latest'].includes(options.sort)) {
     throw new Error('--sort must be relevance or latest');
@@ -688,7 +695,12 @@ async function main() {
   console.log(`Search done: found=${result.search.totalFound} eligible=${result.search.totalEligible} downloaded=${result.search.totalFiltered}`);
   console.log(`Wrote ${options.searchOutput}`);
   console.log(`Wrote ${options.output}`);
-  if (options.rebuildLookup) console.log('Rebuilt public/assets/sorcery_deck_style_associations.json');
+  if (result.lookupResult) {
+    const scoring = result.lookupResult.output.styleScoring;
+    console.log(
+      `Rebuilt public/assets/sorcery_deck_style_associations.json: source=${scoring.sourceDeckCount} inferred=${scoring.inferredDeckCount} unscored=${scoring.unscoredDeckCount}`,
+    );
+  }
 }
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';

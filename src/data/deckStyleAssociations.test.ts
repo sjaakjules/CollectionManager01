@@ -234,6 +234,43 @@ describe("deck style lookup helpers", () => {
     })).toEqual([]);
   });
 
+  it("sorts a selected competition by placement before recency", () => {
+    const fourthPlaceDeck = {
+      ...sourceDeck,
+      id: "deck-3",
+      name: "Fourth Place Deck",
+      createdAt: "2026-02-01T00:00:00.000Z",
+      updatedAt: "2026-02-02T00:00:00.000Z",
+      competitive: {
+        ...sourceDeck.competitive,
+        resultTags: ["placed"],
+        placements: [4],
+        records: [],
+      },
+    } satisfies DeckStyleAssociationData["decks"][string];
+    const competitionData: DeckStyleAssociationData = {
+      ...data,
+      decks: {
+        ...data.decks,
+        "deck-3": fourthPlaceDeck,
+      },
+    };
+
+    expect(getCompetitiveDeckLookupDecks(competitionData, {
+      season: 2026,
+      event: "Grand Contest",
+      location: null,
+      result: null,
+    }).map((entry) => entry.source.id)).toEqual(["deck-1", "deck-3"]);
+
+    expect(getCompetitiveDeckLookupDecks(competitionData, {
+      season: 2026,
+      event: null,
+      location: null,
+      result: null,
+    }).map((entry) => entry.source.id)).toEqual(["deck-3", "deck-1"]);
+  });
+
   it("returns deck style profiles for a selected lookup deck", () => {
     expect(getDeckStyleProfilesForDeck(data, "deck-1")).toEqual([
       {
