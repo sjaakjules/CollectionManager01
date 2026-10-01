@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Texture, type FederatedPointerEvent } from "pixi.js";
+import { Sprite, Text, Texture, type FederatedPointerEvent } from "pixi.js";
 import { CardSprite } from "./CardSprite";
 import { shouldRotateCardImage } from "./cardOrientation";
 import { LOD_LEVELS, lodManager, type LODLevel } from "./LODManager";
@@ -43,7 +43,118 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function deferredTexture() {
+  let resolve: (texture: Texture) => void = () => {};
+  const promise = new Promise<Texture>((complete) => { resolve = complete; });
+  return { promise, resolve };
+}
+
+function delayedCardTextures() {
+  stubLODManager();
+  const pending = {
+    thumbnail: deferredTexture(),
+    medium: deferredTexture(),
+    full: deferredTexture(),
+  };
+  vi.mocked(lodManager.getTextureMatchSync).mockReturnValue(null);
+  vi.mocked(lodManager.hasExactTexture).mockReturnValue(false);
+  vi.mocked(lodManager.getTexture).mockImplementation((_slug, lod) => pending[lod].promise);
+  const sprite = new CardSprite({
+    name: 'Lightning Bolt', isLandscape: false, x: 0, y: 0,
+    displaySize: { width: 100, height: 140 },
+  });
+  sprite.loadInitialTexture();
+  return { sprite, pending };
+}
+
 describe("CardSprite LOD display", () => {
+  it('keeps full detail when earlier medium and thumbnail downloads finish later', async () => {
+    const { sprite, pending } = delayedCardTextures();
+    sprite.updateLOD(1);
+    sprite.updateLOD(2);
+    pending.full.resolve(Texture.EMPTY);
+    await pending.full.promise;
+    expect(sprite.currentTextureLOD).toBe(LOD_LEVELS.FULL);
+
+    for (const lod of [LOD_LEVELS.MEDIUM, LOD_LEVELS.THUMBNAIL]) {
+      pending[lod].resolve(Texture.EMPTY);
+      await pending[lod].promise;
+      expect(sprite.currentTextureLOD).toBe(LOD_LEVELS.FULL);
+    }
+    sprite.destroy({ children: true });
+  });
+
+  it('shows each useful fallback immediately while sharper detail is still downloading', async () => {
+    const { sprite, pending } = delayedCardTextures();
+    sprite.updateLOD(1);
+    sprite.updateLOD(2);
+    for (const lod of [LOD_LEVELS.THUMBNAIL, LOD_LEVELS.MEDIUM, LOD_LEVELS.FULL]) {
+      pending[lod].resolve(Texture.EMPTY);
+      await pending[lod].promise;
+      expect(sprite.currentTextureLOD).toBe(lod);
+      expect(sprite.isTextureReady).toBe(true);
+    }
+    sprite.destroy({ children: true });
+  });
+
+  it('does not replace the small texture with a late full image after zooming out', async () => {
+    const { sprite, pending } = delayedCardTextures();
+    pending.thumbnail.resolve(Texture.EMPTY);
+    await pending.thumbnail.promise;
+    sprite.updateLOD(2);
+    sprite.updateLOD(0.2);
+    await pending.thumbnail.promise;
+    pending.full.resolve(Texture.EMPTY);
+    await pending.full.promise;
+    expect(sprite.currentTextureLOD).toBe(LOD_LEVELS.THUMBNAIL);
+    sprite.destroy({ children: true });
+  });
+
+  it('leaves a destroyed sprite alone when its pending image arrives', async () => {
+    const { sprite, pending } = delayedCardTextures();
+    sprite.destroy({ children: true });
+    pending.thumbnail.resolve(Texture.EMPTY);
+    await pending.thumbnail.promise;
+    await sprite.textureReady;
+    expect(sprite.currentTextureLOD).toBeNull();
+  });
+
+  it('reuses cached detail immediately without downloading on selection or repeated zoom updates', () => {
+    stubLODManager();
+    const sprite = new CardSprite({ name: 'Lightning Bolt', isLandscape: false, x: 0, y: 0, displaySize: { width: 100, height: 140 } });
+    sprite.loadInitialTexture();
+    sprite.updateLOD(2);
+    sprite.setSelected(true);
+    sprite.updateLOD(2.1);
+    sprite.refreshCurrentLOD();
+    expect(sprite.currentTextureLOD).toBe(LOD_LEVELS.FULL);
+    expect(lodManager.getTexture).not.toHaveBeenCalled();
+    sprite.destroy({ children: true });
+  });
+
+  it.each([false, true])('keeps cards with missing artwork visible and lets startup finish (landscape: %s)', async (isLandscape) => {
+    stubLODManager();
+    vi.mocked(lodManager.getTextureMatchSync).mockReturnValue(null);
+    // The loader returns WHITE after a missing file (including cached failures).
+    vi.mocked(lodManager.getTexture).mockResolvedValue(Texture.WHITE);
+    const card = new CardSprite({ name: 'Preview Card', isLandscape, x: 0, y: 0 });
+    card.updateLOD(1);
+    await card.textureReady;
+    const artwork = card.children.find((child) => child instanceof Sprite);
+    expect(artwork?.visible).toBe(true);
+    expect(artwork?.rotation).toBe(0);
+    const label = card.children.find((child) => child instanceof Text);
+    expect(label?.text).toContain('Preview Card');
+    expect(label?.text).toContain('Artwork unavailable');
+
+    // An available image on a later LOD request replaces the placeholder.
+    vi.mocked(lodManager.getTextureMatchSync).mockReturnValue({ lod: LOD_LEVELS.FULL, texture: Texture.EMPTY });
+    card.emit('pointerover', {} as FederatedPointerEvent);
+    expect(card.currentTextureLOD).toBe(LOD_LEVELS.FULL);
+    expect(card.children).not.toContain(label);
+    card.destroy({ children: true });
+  });
+
   it("rotates legacy portrait Site textures but preserves upright landscape sources", () => {
     expect(shouldRotateCardImage(true, 275, 384)).toBe(true);
     expect(shouldRotateCardImage(true, 1039, 744)).toBe(false);

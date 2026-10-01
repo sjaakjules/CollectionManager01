@@ -27,6 +27,7 @@ import {
   cardNameToSlug,
 } from "./LODManager";
 import { shouldRotateCardImage } from "./cardOrientation";
+import { drawMangaOutline, MANGA_PALETTE, type EffectBounds } from './mangaStyle';
 
 // ============================================================================
 // Types
@@ -46,6 +47,12 @@ export interface CardSpriteState {
   isHighlighted: boolean;
 }
 
+const LOD_RANK: Record<LODLevel, number> = {
+  [LOD_LEVELS.THUMBNAIL]: 0,
+  [LOD_LEVELS.MEDIUM]: 1,
+  [LOD_LEVELS.FULL]: 2,
+};
+
 // ============================================================================
 // CardSprite Class
 // ============================================================================
@@ -62,11 +69,18 @@ export class CardSprite extends Container {
   private overlay: Container;
   private quantityText: Text;
   private selectionBorder: Graphics;
+  private newCardBorder: Graphics;
+  private outlineZoom = 1;
+  private selectionEnvelope: EffectBounds | null | undefined;
+  private isNewlyAdded = false;
   private metricOutline: Graphics;
   private scoreText: Text;
+  private missingArtworkLabel: Text | null = null;
   private displayWidth: number;
   private displayHeight: number;
   private currentLOD: LODLevel = lodManager.getStartupLOD();
+  private requestedLOD: LODLevel = this.currentLOD;
+  private textureRequestId = 0;
   private displayedLOD: LODLevel | null = null;
   private _isSelected = false;
   private _textureLoaded = false;
@@ -121,9 +135,12 @@ export class CardSprite extends Container {
     this.addChild(this.metricOutline);
 
     // Selection border
+    this.newCardBorder = new Graphics();
+    this.newCardBorder.label = 'new-card-outline';
+    this.newCardBorder.visible = false;
+    this.addChild(this.newCardBorder);
     this.selectionBorder = new Graphics();
-    this.selectionBorder.rect(0, 0, width, height);
-    this.selectionBorder.stroke({ width: 2, color: 0xffcc00 });
+    this.selectionBorder.label = 'selection-outline';
     this.selectionBorder.visible = false;
     this.addChild(this.selectionBorder);
 
@@ -201,7 +218,28 @@ export class CardSprite extends Container {
 
   setSelected(selected: boolean): void {
     this._isSelected = selected;
-    this.selectionBorder.visible = selected;
+    if (!selected) this.selectionEnvelope = undefined;
+    this.selectionBorder.visible = selected && this.selectionEnvelope !== null;
+    if (selected) this.redrawOutlines();
+  }
+
+  /** A selected stack has one outer rim; an individual selection keeps its own. */
+  setSelectionOutline(bounds?: EffectBounds | null): void {
+    this.selectionEnvelope = bounds;
+    this.selectionBorder.visible = this._isSelected && bounds !== null;
+    if (this.selectionBorder.visible) this.redrawOutlines();
+  }
+
+  setNewlyAdded(added: boolean): void {
+    this.isNewlyAdded = added;
+    this.newCardBorder.visible = added;
+    if (added) this.redrawOutlines();
+  }
+
+  private redrawOutlines(): void {
+    const bounds = { left: 0, top: 0, right: this.displayWidth, bottom: this.displayHeight };
+    if (this._isSelected && this.selectionEnvelope !== null) drawMangaOutline(this.selectionBorder, this.selectionEnvelope ?? bounds, this.outlineZoom);
+    if (this.isNewlyAdded) drawMangaOutline(this.newCardBorder, bounds, this.outlineZoom, true);
   }
 
   updateState(state: CardSpriteState): void {
@@ -225,7 +263,7 @@ export class CardSprite extends Container {
     score: number | null,
     options: { color?: number; dimInactive?: boolean; showValue?: boolean } = {},
   ): void {
-    const color = options.color ?? 0x00ddff;
+    const color = options.color ?? MANGA_PALETTE.gold;
     const dimInactive = options.dimInactive ?? true;
     const showValue = options.showValue ?? true;
     if (score === null) {
@@ -267,6 +305,10 @@ export class CardSprite extends Container {
   }
 
   updateLOD(zoom: number): void {
+    if (this.outlineZoom !== zoom) {
+      this.outlineZoom = Math.max(0.01, zoom);
+      if (this._isSelected || this.isNewlyAdded) this.redrawOutlines();
+    }
     const newLOD = lodManager.getLODForCardDisplay(zoom, this.displayHeight);
     if (newLOD !== this.currentLOD) {
       this.currentLOD = newLOD;
@@ -357,7 +399,10 @@ export class CardSprite extends Container {
   }
 
   private async loadTexture(lod: LODLevel): Promise<void> {
+    if (this.destroyed) return;
     const effectiveLOD = lodManager.resolveLOD(lod);
+    const requestId = ++this.textureRequestId;
+    this.requestedLOD = effectiveLOD;
     if (this.shouldKeepDisplayedFullTexture(effectiveLOD)) {
       return;
     }
@@ -383,13 +428,62 @@ export class CardSprite extends Container {
 
       // Load async
       const texture = await lodManager.getTexture(this.imageSlug, lod);
+      if (this.destroyed) {
+        this.markTextureLoaded();
+        return;
+      }
       if (texture && texture !== Texture.WHITE) {
+        if (!this.canApplyLoadedTexture(effectiveLOD, requestId) || texture.destroyed) return;
         this.applyTexture(texture, effectiveLOD);
+      } else {
+        this.showMissingArtwork();
       }
       this.markTextureLoaded();
     } catch {
-      // Texture load failed - still mark as "loaded" so animation can proceed with placeholder
+      this.showMissingArtwork();
+      // A preview without local artwork must not hold up startup.
       this.markTextureLoaded();
+    }
+  }
+
+  private canApplyLoadedTexture(lod: LODLevel, requestId: number): boolean {
+    if (this.destroyed || this.shouldKeepDisplayedFullTexture(lod)) return false;
+    if (requestId === this.textureRequestId) return true;
+
+    // Requests can finish out of order while zooming or hovering. An older
+    // result may fill in a missing image or improve a fallback while the wanted
+    // detail is loading, but must never blur a sharper image or undo zoom-out.
+    return (
+      LOD_RANK[lod] <= LOD_RANK[this.requestedLOD] &&
+      (this.displayedLOD === null || LOD_RANK[lod] > LOD_RANK[this.displayedLOD])
+    );
+  }
+
+  private showMissingArtwork(): void {
+    // Keep any successfully loaded LOD when a sharper image is unavailable.
+    if (this.destroyed || this.displayedLOD !== null) return;
+    this.sprite.rotation = 0;
+    this.sprite.position.set(0, 0);
+    this.sprite.width = this.displayWidth;
+    this.sprite.height = this.displayHeight;
+    this.sprite.visible = true;
+
+    if (!this.missingArtworkLabel) {
+      this.missingArtworkLabel = new Text({
+        text: `${this.cardName}\n\nArtwork unavailable`,
+        style: {
+          fontFamily: 'Arial',
+          fontSize: Math.round(Math.min(this.displayWidth, this.displayHeight) * 0.09),
+          fill: 0xdddded,
+          align: 'center',
+          wordWrap: true,
+          breakWords: true,
+          wordWrapWidth: this.displayWidth * 0.85,
+        },
+      });
+      this.missingArtworkLabel.anchor.set(0.5);
+      this.missingArtworkLabel.position.set(this.displayWidth / 2, this.displayHeight / 2);
+      this.addChildAt(this.missingArtworkLabel, 1);
     }
   }
 
@@ -411,6 +505,8 @@ export class CardSprite extends Container {
   }
 
   private applyTexture(texture: Texture, lod: LODLevel): void {
+    this.missingArtworkLabel?.destroy();
+    this.missingArtworkLabel = null;
     const targetWidth = this.displayWidth;
     const targetHeight = this.displayHeight;
     const rotateTexture = shouldRotateCardImage(
