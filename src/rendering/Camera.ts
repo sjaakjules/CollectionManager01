@@ -3,10 +3,9 @@
  *
  * Uses pixi-viewport for smooth camera-style navigation.
  * Provides:
- * - Empty-space mouse drag to pan
+ * - Middle/right mouse drag or Space + left drag to pan
  * - Mouse wheel to zoom
- * - Trackpad two-finger vertical scroll to zoom
- * - Trackpad two-finger horizontal scroll to pan sideways
+ * - Trackpad vertical scroll to zoom, horizontal scroll to pan sideways
  * - Trackpad/touch pinch to zoom
  * - Programmatic camera control
  */
@@ -27,8 +26,6 @@ export const CAMERA_DEFAULTS = {
 
 const WHEEL_LINE_HEIGHT_PX = 16;
 const WHEEL_PAGE_HEIGHT_PX = 800;
-const TRACKPAD_WHEEL_MIN_PX = 0.5;
-const COARSE_MOUSE_WHEEL_PX = 80;
 const DOM_DELTA_LINE = 1;
 const DOM_DELTA_PAGE = 2;
 
@@ -36,7 +33,6 @@ interface WheelDeltaLike {
   deltaX: number;
   deltaY: number;
   deltaMode: number;
-  ctrlKey?: boolean;
 }
 
 export function normalizeWheelDeltaPixels(event: WheelDeltaLike): {
@@ -54,29 +50,6 @@ export function normalizeWheelDeltaPixels(event: WheelDeltaLike): {
     deltaX: event.deltaX * multiplier,
     deltaY: event.deltaY * multiplier,
   };
-}
-
-export function isTrackpadLikeWheel(event: WheelDeltaLike): boolean {
-  if (event.deltaMode !== 0) return false;
-
-  const { deltaX, deltaY } = normalizeWheelDeltaPixels(event);
-  const absX = Math.abs(deltaX);
-  const absY = Math.abs(deltaY);
-
-  if (absX >= TRACKPAD_WHEEL_MIN_PX) return true;
-  if (absY <= 0) return false;
-  if (!Number.isInteger(deltaY)) return true;
-
-  return absY < COARSE_MOUSE_WHEEL_PX;
-}
-
-export function shouldPanSidewaysFromWheel(event: WheelDeltaLike): boolean {
-  if (event.ctrlKey) return false;
-
-  const { deltaX } = normalizeWheelDeltaPixels(event);
-  const absX = Math.abs(deltaX);
-
-  return absX >= TRACKPAD_WHEEL_MIN_PX && isTrackpadLikeWheel(event);
 }
 
 // ============================================================================
@@ -123,6 +96,9 @@ export class Camera {
       worldWidth: config.worldWidth,
       worldHeight: config.worldHeight,
       events: config.app.renderer.events,
+      // Consume canvas wheel/pinch events so the browser does not also scroll
+      // or zoom the page. Panels outside the canvas retain normal scrolling.
+      passiveWheel: false,
     });
 
     // Add viewport to stage
@@ -130,7 +106,7 @@ export class Camera {
 
     // Enable interactions
     this.viewport
-      .drag()
+      .drag({ wheel: false })
       .pinch()
       .wheel()
       .decelerate({ friction: CAMERA_DEFAULTS.DECELERATION })
@@ -199,6 +175,8 @@ export class Camera {
       });
     } else {
       this.viewport.setZoom(scale, true);
+      // pixi-viewport's direct setZoom does not emit a zoomed event.
+      this.handleZoomChange();
     }
   }
 
@@ -223,17 +201,18 @@ export class Camera {
     this.viewport.emit('moved', { viewport: this.viewport, type: 'wheel' });
   }
 
-  fitToContent(bounds: CameraBounds, padding = 100, time = 800): void {
+  fitToContent(bounds: CameraBounds, padding = 100, time = 800, bottomInset = 0): void {
     const width = bounds.right - bounds.left + padding * 2;
     const height = bounds.bottom - bounds.top + padding * 2;
 
     const scaleX = this.viewport.screenWidth / width;
-    const scaleY = this.viewport.screenHeight / height;
+    const inset = Math.max(0, Math.min(bottomInset, this.viewport.screenHeight - 100));
+    const scaleY = (this.viewport.screenHeight - inset) / height;
     const scale = Math.min(scaleX, scaleY, CAMERA_DEFAULTS.MAX_ZOOM);
     const clampedScale = Math.max(scale, CAMERA_DEFAULTS.MIN_ZOOM);
 
     const centerX = (bounds.left + bounds.right) / 2;
-    const centerY = (bounds.top + bounds.bottom) / 2;
+    const centerY = (bounds.top + bounds.bottom) / 2 + inset / (2 * clampedScale);
 
     // Update current zoom tracking
     this.currentZoom = clampedScale;
@@ -306,9 +285,13 @@ export class Camera {
   }
 
   private handleWheel(event: WheelEvent): void {
-    if (!shouldPanSidewaysFromWheel(event)) return;
-
+    // Every vertical wheel delta belongs to the viewport's cursor-anchored
+    // zoom, including small/fractional mouse wheels and diagonal trackpad
+    // gestures. Delta size cannot reliably identify the physical device.
+    if (event.ctrlKey || event.deltaY !== 0 || event.deltaX === 0) return;
     const { deltaX } = normalizeWheelDeltaPixels(event);
+    event.preventDefault();
+    event.stopImmediatePropagation();
     this.panByScreenDelta(deltaX, 0);
   }
 }
