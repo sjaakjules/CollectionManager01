@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Container } from 'pixi.js';
 import { PixiStage } from './PixiStage';
+import type { CanvasArea } from '@/canvas/canvasAreas';
 
 const created = vi.hoisted(() => vi.fn());
 vi.mock('./DeletionPoof', () => ({
@@ -23,15 +24,20 @@ interface StageHarness {
   initialize(container: HTMLElement): Promise<void>;
   camera: { container: Container; zoom: number } | null;
   deletionPuffs: Array<{ effect: Effect; start: number }>;
+  canvasAreas: CanvasArea[];
+  zoneCardSprites: Map<string, typeof card & { sprite: Container }>;
   removeCanvasCardInstance: ReturnType<typeof vi.fn>;
   emitCanvasAreasChange: ReturnType<typeof vi.fn>;
   drawZoneDeleteOverlay: ReturnType<typeof vi.fn>;
   showDeletionPuff(bounds: Bounds): void;
   handleZoneCardDelete(card: { key: string; zoneId: string; instanceId: string; bounds: Bounds }, x: number, y: number): void;
+  populateTouchActions(panel: HTMLElement, target: typeof touchTarget, x: number, y: number): void;
+  handleTouchTap(target: typeof touchTarget, world: { x: number; y: number }, screen: { x: number; y: number }, doubleTap: boolean): void;
   update(): void;
 }
 const bounds = { left: 20, top: 40, right: 180, bottom: 260 };
 const card = { key: 'deck:a', zoneId: 'deck', instanceId: 'a', bounds };
+const touchTarget = { kind: 'zone-card', zoneId: 'deck', instanceId: 'a', zoneCardKey: card.key } as const;
 let stage: PixiStage;
 let harness: StageHarness;
 let cameraRoot: Container;
@@ -65,11 +71,7 @@ afterEach(() => {
 });
 
 describe('card deletion poof integration', () => {
-  it('plays only after confirmation and removes the card immediately', () => {
-    harness.handleZoneCardDelete(card, 0, 0);
-    expect(created).not.toHaveBeenCalled();
-    expect(harness.removeCanvasCardInstance).not.toHaveBeenCalled();
-
+  it('plays on the first click and removes the card immediately', () => {
     harness.handleZoneCardDelete(card, 0, 0);
     expect(created).toHaveBeenCalledExactlyOnceWith(bounds, 0.5);
     expect(firstPuff().effect.root.parent?.label).toBe('manga-effects');
@@ -81,10 +83,29 @@ describe('card deletion poof integration', () => {
   it('honors reduced motion without delaying or preventing deletion', () => {
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true })));
     harness.handleZoneCardDelete(card, 0, 0);
-    harness.handleZoneCardDelete(card, 0, 0);
     expect(created).not.toHaveBeenCalled();
     expect(harness.deletionPuffs).toHaveLength(0);
     expect(harness.removeCanvasCardInstance).toHaveBeenCalledExactlyOnceWith('deck', 'a');
+  });
+
+  it('removes from the touch menu on its first activation', () => {
+    harness.canvasAreas = [{ id: 'deck', type: 'deck', name: 'Deck', pinned: true,
+      bounds: { x: 0, y: 0, width: 600, height: 600 }, cards: [] }];
+    harness.zoneCardSprites.set(card.key, { ...card, sprite: new Container() });
+    const panel = document.createElement('div');
+    harness.populateTouchActions(panel, touchTarget, 100, 100);
+    const remove = [...panel.querySelectorAll('button')].find(button => button.textContent === 'Remove from deck canvas');
+    expect(remove).toBeDefined();
+    remove?.click();
+    expect(harness.removeCanvasCardInstance).toHaveBeenCalledExactlyOnceWith('deck', 'a');
+    expect(created).toHaveBeenCalledOnce();
+  });
+
+  it('removes with one tap on the canvas X without requiring a double-tap', () => {
+    harness.zoneCardSprites.set(card.key, { ...card, sprite: new Container() });
+    harness.handleTouchTap(touchTarget, { x: bounds.right - 10, y: bounds.top + 10 }, { x: 100, y: 100 }, false);
+    expect(harness.removeCanvasCardInstance).toHaveBeenCalledExactlyOnceWith('deck', 'a');
+    expect(created).toHaveBeenCalledOnce();
   });
 
   it('safely skips an effect when the canvas camera is unavailable', () => {

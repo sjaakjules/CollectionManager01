@@ -2,12 +2,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Graphics, Text } from 'pixi.js';
 import { DeletionPoof } from './DeletionPoof';
-import { POOF_DURATION_MS } from './deletionPoofTimeline';
+import { POOF_DURATION_MS, POOF_VISUAL_DURATION_MS, POOF_WORD_START_MS } from './deletionPoofTimeline';
 
 const bounds = { left: 0, top: 20, right: 160, bottom: 240 };
 const effects: DeletionPoof[] = [];
-function createEffect(zoom = 1) {
-  const effect = new DeletionPoof(bounds, zoom, 12345);
+function createEffect(zoom = 1, lettering: 'both' | 'english' | 'none' = 'both') {
+  const effect = new DeletionPoof(bounds, zoom, 12345, lettering);
   effects.push(effect);
   return effect;
 }
@@ -45,9 +45,9 @@ describe('deletion poof renderer', () => {
     const children = [...effect.root.children];
     const clear = vi.spyOn(Graphics.prototype, 'clear');
     effect.update(16);
-    effect.update(40);
+    effect.update(33);
     expect(clear).not.toHaveBeenCalled();
-    effect.update(42);
+    effect.update(34);
     expect(clear).toHaveBeenCalled();
     clear.mockClear();
     effect.update(50);
@@ -61,7 +61,7 @@ describe('deletion poof renderer', () => {
     const { japanese, english } = words(effect);
     expect(japanese.visible).toBe(false);
     expect(english.visible).toBe(false);
-    effect.update(500);
+    effect.update(POOF_WORD_START_MS);
     expect(japanese.visible).toBe(true);
     expect(english.visible).toBe(true);
     expect(japanese.alpha).toBeGreaterThan(0);
@@ -76,6 +76,38 @@ describe('deletion poof renderer', () => {
     effect.update(POOF_DURATION_MS - 1);
     expect(japanese.alpha).toBeCloseTo(0);
     expect(english.alpha).toBeCloseTo(0);
+  });
+
+  it('lets text linger after clearing the visual tail without redrawing finished graphics', () => {
+    const effect = createEffect();
+    const { japanese, english } = words(effect);
+    const graphics = effect.root.children.filter((child): child is Graphics => child instanceof Graphics);
+    const clear = vi.spyOn(Graphics.prototype, 'clear');
+    expect(effect.update(POOF_VISUAL_DURATION_MS)).toBe(true);
+    expect(clear).toHaveBeenCalledTimes(graphics.length);
+    expect(graphics.every((graphic) => graphic.context.instructions.length === 0)).toBe(true);
+    expect(japanese.alpha).toBe(1);
+    expect(english.alpha).toBe(1);
+    const startX = english.x;
+    clear.mockClear();
+    expect(effect.update(2200)).toBe(true);
+    expect(clear).not.toHaveBeenCalled();
+    expect(english.x).toBeGreaterThan(startX);
+    expect(english.alpha).toBeGreaterThan(0);
+    expect(english.alpha).toBeLessThan(1);
+    expect(effect.root.destroyed).toBe(false);
+    expect(effect.update(POOF_DURATION_MS)).toBe(false);
+    expect(effect.root.destroyed).toBe(true);
+  });
+
+  it('ends at the visual tail when lettering is disabled', () => {
+    const effect = createEffect(1, 'none');
+    const { japanese, english } = words(effect);
+    expect(effect.update(POOF_VISUAL_DURATION_MS - 1)).toBe(true);
+    expect(japanese.visible).toBe(false);
+    expect(english.visible).toBe(false);
+    expect(effect.update(POOF_VISUAL_DURATION_MS)).toBe(false);
+    expect(effect.root.destroyed).toBe(true);
   });
 
   it('disposes all graphics and captions once even after a background time jump', () => {

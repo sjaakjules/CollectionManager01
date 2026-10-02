@@ -1,11 +1,23 @@
-/** Held drawings at 24 fps; the rest of the canvas keeps its normal frame rate. */
+/** Drawings authored at 24 fps, with separate visual and lettering clocks. */
 export const POOF_FPS = 24;
 export const POOF_FRAME_COUNT = 42;
-export const POOF_DURATION_MS = POOF_FRAME_COUNT * 1000 / POOF_FPS;
 export const POOF_POP_FRAME = 12;
+export const POOF_VISUAL_SPEED = 1.25;
+export const POOF_WORD_SPEED = 0.5;
+export const POOF_VISUAL_DURATION_MS = POOF_FRAME_COUNT * 1000 / (POOF_FPS * POOF_VISUAL_SPEED);
+export const POOF_WORD_START_MS = POOF_POP_FRAME * 1000 / (POOF_FPS * POOF_VISUAL_SPEED);
+export const POOF_WORD_FRAME_COUNT = POOF_FRAME_COUNT - POOF_POP_FRAME;
+export const POOF_WORD_DURATION_MS = POOF_WORD_FRAME_COUNT * 1000 / (POOF_FPS * POOF_WORD_SPEED);
+export const POOF_DURATION_MS = POOF_WORD_START_MS + POOF_WORD_DURATION_MS;
 
 export function getPoofFrame(elapsedMs: number): number {
-  return Math.min(POOF_FRAME_COUNT, Math.max(0, Math.floor(elapsedMs * POOF_FPS / 1000)));
+  return Math.min(POOF_FRAME_COUNT, Math.max(0, Math.floor(elapsedMs * POOF_FPS * POOF_VISUAL_SPEED / 1000)));
+}
+
+/** Lettering starts with the faster pop, then plays at half its original speed. */
+export function getPoofWordFrame(elapsedMs: number): number {
+  if (elapsedMs < POOF_WORD_START_MS) return -1;
+  return Math.min(POOF_WORD_FRAME_COUNT, Math.floor((elapsedMs - POOF_WORD_START_MS) * POOF_FPS * POOF_WORD_SPEED / 1000));
 }
 
 export function getPoofPhase(frame: number): 'cloud' | 'pop' | 'sparkles' | 'finished' {

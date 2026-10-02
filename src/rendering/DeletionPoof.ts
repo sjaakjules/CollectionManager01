@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import { getPixiTextResolution } from './deviceProfile';
-import { createPoofStars, getPoofFrame, getPoofPhase, POOF_FRAME_COUNT, POOF_POP_FRAME, type PoofStar } from './deletionPoofTimeline';
+import { createPoofStars, getPoofFrame, getPoofPhase, getPoofWordFrame, POOF_FRAME_COUNT, POOF_POP_FRAME, POOF_WORD_FRAME_COUNT, type PoofStar } from './deletionPoofTimeline';
 
 const INK = 0x17131d;
 const PAPER = 0xfffcf1;
@@ -13,7 +13,8 @@ interface PoofBounds { left: number; top: number; right: number; bottom: number 
 /**
  * Transparent, code-native in-betweens inspired by tmp/GraphicIdeas/pufu-01…06.
  * The cloud compresses, a ring snaps outward, then staggered stars and lettering
- * linger. Only an active effect redraws, and only when its 24 fps frame changes.
+ * linger. Visuals and lettering redraw only when their independent held frames
+ * change, so lingering words never keep rebuilding the finished cloud.
  */
 export class DeletionPoof {
   readonly root = new Container();
@@ -25,6 +26,7 @@ export class DeletionPoof {
   private readonly english: Text;
   private readonly stars: PoofStar[];
   private frame = -1;
+  private wordFrame = -2;
   private disposed = false;
 
   constructor(bounds: PoofBounds, zoom = 1, seed = Math.random() * 0x100000000, private readonly lettering: 'both' | 'english' | 'none' = 'both') {
@@ -63,18 +65,26 @@ export class DeletionPoof {
   update(elapsedMs: number): boolean {
     if (this.disposed) return false;
     const frame = getPoofFrame(elapsedMs);
-    if (frame >= POOF_FRAME_COUNT) { this.destroy(); return false; }
-    if (frame === this.frame) return true;
-    this.frame = frame;
-    this.speedLines.clear();
-    this.cloud.clear();
-    this.burst.clear();
-    this.sparkles.clear();
-    const phase = getPoofPhase(frame);
-    if (phase === 'cloud') this.drawCloud(frame);
-    if (phase === 'pop') this.drawBurst(frame - POOF_POP_FRAME);
-    this.drawStars(frame);
-    this.drawWords(frame);
+    const wordFrame = getPoofWordFrame(elapsedMs);
+    if (frame >= POOF_FRAME_COUNT && (this.lettering === 'none' || wordFrame >= POOF_WORD_FRAME_COUNT)) {
+      this.destroy();
+      return false;
+    }
+    if (frame !== this.frame) {
+      this.frame = frame;
+      this.speedLines.clear();
+      this.cloud.clear();
+      this.burst.clear();
+      this.sparkles.clear();
+      const phase = getPoofPhase(frame);
+      if (phase === 'cloud') this.drawCloud(frame);
+      if (phase === 'pop') this.drawBurst(frame - POOF_POP_FRAME);
+      if (phase !== 'finished') this.drawStars(frame);
+    }
+    if (wordFrame !== this.wordFrame) {
+      this.wordFrame = wordFrame;
+      this.drawWords(wordFrame);
+    }
     return true;
   }
 
@@ -192,12 +202,11 @@ export class DeletionPoof {
     }
   }
 
-  private drawWords(frame: number): void {
-    const age = frame - POOF_POP_FRAME;
+  private drawWords(age: number): void {
     this.japanese.visible = age >= 0 && this.lettering === 'both';
     this.english.visible = age >= 0 && this.lettering !== 'none';
     if (age < 0) return;
-    const progress = age / (POOF_FRAME_COUNT - POOF_POP_FRAME - 1);
+    const progress = age / (POOF_WORD_FRAME_COUNT - 1);
     const enter = Math.min(1, (age + 1) / 3);
     const fade = 1 - clamp01((progress - 0.55) / 0.45);
     const kick = Math.sin(Math.min(1, age / 5) * Math.PI) * 0.1;

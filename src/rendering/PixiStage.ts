@@ -677,7 +677,6 @@ export class PixiStage {
   private zoneDropPreviewSignature: string | null = null;
   private quickTransferOverlay: Graphics | null = null;
   private quickTransferOverlayTexts: Text[] = [];
-  private armedDelete: { key: string; expires: number } | null = null;
   private labelRegionGraphics: Map<string, Graphics> = new Map();
   private dragFeedbackGraphic: Graphics | null = null;
   private dragFeedbackText: Text | null = null;
@@ -766,7 +765,6 @@ export class PixiStage {
     }
     if (event.code === 'Escape' && !(event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable], [role='dialog']"))) {
       this.closeInspection();
-      this.armedDelete = null;
       this.cancelDesktopInteraction();
       this.drawZoneDeleteOverlay();
       return;
@@ -2649,10 +2647,6 @@ export class PixiStage {
     this.onCanvasAreasChange?.(this.cloneCanvasAreas(this.canvasAreas));
   }
 
-  private closeDeckCardDeletePrompt(): void {
-    this.armedDelete = null;
-  }
-
   private closeTouchActionSheet(): void {
     if (this.touchActionSheetPointerHandler) {
       window.removeEventListener("pointerdown", this.touchActionSheetPointerHandler, true);
@@ -2695,7 +2689,6 @@ export class PixiStage {
     if (target.kind === "empty") return;
 
     this.closeTouchActionSheet();
-    if (target.kind !== 'zone-card' || this.armedDelete?.key !== target.zoneCardKey) this.closeDeckCardDeletePrompt();
 
     const panel = document.createElement("div");
     panel.className = "touch-action-sheet";
@@ -2801,7 +2794,7 @@ export class PixiStage {
 
       this.addTouchActionButton(
         panel,
-        this.armedDelete?.key === target.zoneCardKey && Date.now() <= this.armedDelete.expires ? 'Confirm remove card' : zone?.type === "deck" ? "Remove from deck canvas" : "Remove from stack",
+        zone?.type === "deck" ? "Remove from deck canvas" : "Remove from stack",
         () => {
           const zoneCard = this.zoneCardSprites.get(target.zoneCardKey);
           if (!zoneCard) return;
@@ -2853,14 +2846,8 @@ export class PixiStage {
     _clientX: number,
     _clientY: number,
   ): void {
-    const now = Date.now();
-    if (this.armedDelete?.key !== zoneCard.key || now > this.armedDelete.expires) {
-      this.armedDelete = { key: zoneCard.key, expires: now + 5000 };
-      this.hoveredZoneCardKey = zoneCard.key;
-      this.drawZoneDeleteOverlay();
-      return;
-    }
-    this.armedDelete = null;
+    // The card's X and touch Remove action both remove immediately; undo retains
+    // the exact instance and its label/variant memberships for recovery.
     this.showDeletionPuff(zoneCard.bounds);
     this.removeCanvasCardInstance(zoneCard.zoneId, zoneCard.instanceId);
     this.emitCanvasAreasChange();
@@ -4732,15 +4719,8 @@ export class PixiStage {
     const centerY = (bounds.top + bounds.bottom) / 2;
     const radius = (bounds.right - bounds.left) / 2;
 
-    const armed = this.armedDelete?.key === data.key && Date.now() <= this.armedDelete.expires;
-    if (armed) {
-      this.zoneDeleteOverlay.circle(centerX, centerY, radius + 7);
-      this.zoneDeleteOverlay.fill({ color: MANGA_PALETTE.danger, alpha: 0.3 });
-      this.zoneDeleteOverlay.rect(data.bounds.left - 3, data.bounds.top - 3, data.displaySize.width + 6, data.displaySize.height + 6);
-      this.zoneDeleteOverlay.stroke({ width: 3, color: MANGA_PALETTE.danger, alpha: 0.95 });
-    }
     this.zoneDeleteOverlay.circle(centerX, centerY, radius);
-    this.zoneDeleteOverlay.fill({ color: armed ? 0xdb263e : MANGA_PALETTE.ink, alpha: 0.94 });
+    this.zoneDeleteOverlay.fill({ color: MANGA_PALETTE.ink, alpha: 0.94 });
     this.zoneDeleteOverlay.stroke({ width: 1.5, color: MANGA_PALETTE.paper, alpha: 0.8 });
     this.zoneDeleteOverlay.moveTo(bounds.left + 4, bounds.top + 4);
     this.zoneDeleteOverlay.lineTo(bounds.right - 4, bounds.bottom - 4);
@@ -5210,7 +5190,6 @@ export class PixiStage {
       }
     }
 
-    this.armedDelete = null;
     const clickedLabel = this.getLabelAtPosition(worldPos);
 
     // Label placement mode: next left-click places a label.
@@ -5451,8 +5430,7 @@ export class PixiStage {
     // Handle double-right-click for remove from deck
     const isRightClick = event.button === 2;
     if (isRightClick) {
-      this.armedDelete = null;
-    const clickedLabel = this.getLabelAtPosition(worldPos);
+      const clickedLabel = this.getLabelAtPosition(worldPos);
       const now = Date.now();
 
       if (
@@ -7359,7 +7337,6 @@ export class PixiStage {
     }
     this.clearZoneDropPreview();
     this.deactivateQuickTransfer();
-    this.closeDeckCardDeletePrompt();
     this.rebuildZoneVisuals();
     if (canAnimate) {
       const previousIds = new Set(previous.flatMap(area => area.cards.map(card => card.id)));
@@ -7854,7 +7831,6 @@ export class PixiStage {
     this.closeLabelEditor?.();
     this.closeLabelEditor = null;
     this.closeDeckVariantDialog();
-    this.closeDeckCardDeletePrompt();
     this.closeTouchActionSheet();
     this.deactivateQuickTransfer();
     this.clearZoneCardDragFeedback();
@@ -9878,10 +9854,6 @@ export class PixiStage {
     if ((this.mangaEffects?.length ?? 0) || this.deletionPuffs.length) this.getMangaEffectLayer();
     this.mangaEffects = (this.mangaEffects ?? []).filter(entry => entry.effect.update(nowMs - entry.start, this.camera?.zoom ?? 1,
       entry.follow ? this.getCardsEffectBounds(entry.follow) : undefined));
-    if (this.armedDelete && Date.now() > this.armedDelete.expires) {
-      this.armedDelete = null;
-      this.drawZoneDeleteOverlay();
-    }
     if (this.dragFeedbackGraphic && this.dragFeedbackBounds) {
       this.dragFeedbackGraphic.alpha = this.motionEnabled() ? 0.75 + Math.sin(nowMs / 220) * 0.12 : 0.85;
     }

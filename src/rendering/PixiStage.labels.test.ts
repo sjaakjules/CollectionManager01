@@ -9,7 +9,6 @@ type Point = { x: number; y: number };
 interface Harness {
   canvasAreas: CanvasArea[];
   canvasLabels: CanvasLabel[];
-  armedDelete: { key: string; expires: number } | null;
   dragDetached: boolean;
   getLabelTarget: ReturnType<typeof vi.fn>;
   emitCanvasAreasChange: ReturnType<typeof vi.fn>;
@@ -86,21 +85,18 @@ describe('deck label interactions', () => {
   });
 });
 
-describe('two-click card deletion', () => {
-  it('arms the exact card and removes only on its second click', () => {
+describe('single-click card deletion', () => {
+  it('removes the exact card on the first click and saves immediately', () => {
     const card = { key: 'deck:a', zoneId: 'deck', instanceId: 'a', bounds: { left: 0, top: 0, right: 100, bottom: 150 } };
     stage.handleZoneCardDelete(card, 0, 0);
-    expect(stage.armedDelete?.key).toBe('deck:a');
-    expect(stage.removeCanvasCardInstance).not.toHaveBeenCalled();
-    stage.handleZoneCardDelete(card, 0, 0);
-    expect(stage.removeCanvasCardInstance).toHaveBeenCalledWith('deck', 'a');
+    expect(stage.removeCanvasCardInstance).toHaveBeenCalledExactlyOnceWith('deck', 'a');
     expect(stage.emitCanvasAreasChange).toHaveBeenCalledOnce();
   });
-  it('expired confirmation or a different card requires a new first click', () => {
+  it('removes each independently clicked card without an arming state', () => {
     const card = { key: 'deck:a', zoneId: 'deck', instanceId: 'a', bounds: { left: 0, top: 0, right: 100, bottom: 150 } };
-    stage.armedDelete = { key: card.key, expires: Date.now() - 1 };
     stage.handleZoneCardDelete(card, 0, 0);
     stage.handleZoneCardDelete({ ...card, key: 'deck:b', instanceId: 'b' }, 0, 0);
-    expect(stage.removeCanvasCardInstance).not.toHaveBeenCalled();
+    expect(stage.removeCanvasCardInstance.mock.calls).toEqual([['deck', 'a'], ['deck', 'b']]);
+    expect(stage.emitCanvasAreasChange).toHaveBeenCalledTimes(2);
   });
 });
