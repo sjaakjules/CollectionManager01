@@ -27,6 +27,8 @@ import {
 } from "pixi.js";
 import { Camera, type CameraBounds } from "./Camera";
 import { DeletionPoof } from "./DeletionPoof";
+import { ArrivalPop } from './ArrivalPop';
+import { getArrivalCardPose } from './arrivalPopTimeline';
 import { MangaEffect, type EffectBounds } from './MangaEffect';
 import { drawMangaOutline, MANGA_PALETTE, unionEffectBounds } from './mangaStyle';
 import { DEFAULT_INTERACTION_EFFECTS, ensureInteractionEffects, MangaEffectGate, MAX_MANGA_EFFECTS, type InteractionEffectsSettings, type MangaEffectKind, type CanvasGestureCommand } from '@/data/interactionEffects';
@@ -690,6 +692,8 @@ export class PixiStage {
   private labelDragLastPos: { x: number; y: number } | null = null;
   private deletionPuffs: Array<{ effect: DeletionPoof; start: number }> = [];
   private mangaEffects: Array<{ effect: MangaEffect; start: number; follow?: string[] }> = [];
+  private arrivalPops: Array<{ effect: ArrivalPop; start: number; zoneId: string; follow: string[]; cardKey?: string }> = [];
+  private arrivalStackHistory: Array<{ zoneId: string; members: Set<string> }> = [];
   private mangaEffectLayer: Container | null = null;
   private effectSettings = { ...DEFAULT_INTERACTION_EFFECTS };
   private effectGate = new MangaEffectGate();
@@ -1625,7 +1629,6 @@ export class PixiStage {
           }
         } else {
           this.duplicateCanvasCardInstance(target.zoneId, target.instanceId);
-          this.rebuildZoneVisuals();
           this.emitCanvasAreasChange();
         }
       }
@@ -2787,7 +2790,6 @@ export class PixiStage {
         });
         this.addTouchActionButton(panel, "Duplicate", () => {
           this.duplicateCanvasCardInstance(target.zoneId, target.instanceId);
-          this.rebuildZoneVisuals();
           this.emitCanvasAreasChange();
         });
       }
@@ -2881,6 +2883,7 @@ export class PixiStage {
     this.effectGate = new MangaEffectGate();
     this.lastFullPoof = -Infinity;
     this.lastSelectionEffect = '';
+    this.arrivalStackHistory = [];
     this.setInteractionEffects(this.effectSettings);
     this.closeInspection();
     if (this.focusEffectTimer) clearTimeout(this.focusEffectTimer);
@@ -2889,6 +2892,7 @@ export class PixiStage {
 
   setInteractionEffects(settings: InteractionEffectsSettings): void {
     this.effectSettings = ensureInteractionEffects(settings);
+    this.clearArrivalPops();
     for (const { effect } of this.mangaEffects) effect.destroy();
     this.mangaEffects = [];
     for (const { effect } of this.deletionPuffs) effect.destroy();
@@ -2940,6 +2944,75 @@ export class PixiStage {
     if (!area || !instance) return [];
     const stack = this.getZoneCardStackKey(area, instance);
     return area.cards.filter(card => this.getZoneCardStackKey(area, card) === stack).map(card => `${zoneId}:${card.id}`);
+  }
+
+  private clearArrivalPops(keys?: ReadonlySet<string>): void {
+    this.arrivalPops = (this.arrivalPops ?? []).filter(entry => {
+      if (keys && !entry.follow.some(key => keys.has(key))) return true;
+      if (entry.cardKey) this.zoneCardSprites.get(entry.cardKey)?.sprite.setArrivalPose?.(null);
+      entry.effect.destroy();
+      return false;
+    });
+  }
+
+  private playArrivalPop(zoneId: string, instanceId: string): void {
+    if (!this.camera?.container || !this.motionEnabled()) return;
+    const follow = this.getZoneStackEffectKeys(zoneId, instanceId);
+    const bounds = this.getCardsEffectBounds(follow);
+    if (!bounds) return;
+    const visible = this.camera.getVisibleBounds?.();
+    if (visible && !this.boundsIntersect(bounds, visible)) return;
+    const now = performance.now();
+    this.arrivalStackHistory ??= [];
+    this.arrivalPops ??= [];
+    // Member IDs keep repeated presses attached to the same stack even after it
+    // moves, grows, or loses its original card. This history is session-only.
+    const history = this.arrivalStackHistory.find(entry => entry.zoneId === zoneId && follow.some(key => entry.members.has(key)));
+    if (history) for (const key of follow) history.members.add(key);
+    else {
+      this.arrivalStackHistory.push({ zoneId, members: new Set(follow) });
+      if (this.arrivalStackHistory.length > 128) this.arrivalStackHistory.shift();
+    }
+    const existing = this.arrivalPops.find(entry => entry.zoneId === zoneId && entry.follow.some(key => follow.includes(key)));
+    if (existing) {
+      existing.follow = follow;
+      existing.effect.refreshWords(now - existing.start);
+      this.updateArrivalPops(now);
+      return;
+    }
+    if (history && this.effectSettings.lettering === 'none') return;
+    if (this.arrivalPops.length >= MAX_MANGA_EFFECTS) {
+      const oldest = this.arrivalPops.shift();
+      if (oldest?.cardKey) this.zoneCardSprites.get(oldest.cardKey)?.sprite.setArrivalPose?.(null);
+      oldest?.effect.destroy();
+    }
+    const effect = new ArrivalPop(bounds, this.camera.zoom, this.effectSettings, !history);
+    if (effect.root.destroyed) return;
+    this.getMangaEffectLayer()?.addChild(effect.root);
+    this.arrivalPops.push({ effect, start: now, zoneId, follow,
+      cardKey: history ? undefined : `${zoneId}:${instanceId}` });
+    this.updateArrivalPops(now);
+  }
+
+  private updateArrivalPops(now: number): void {
+    if (!this.motionEnabled()) { this.clearArrivalPops(); return; }
+    this.arrivalPops = (this.arrivalPops ?? []).filter(entry => {
+      const follow = entry.follow;
+      const bounds = this.getCardsEffectBounds(follow);
+      const elapsed = now - entry.start;
+      if (!bounds || (this.zoneCardDragState.isDragging && follow.some(key => this.zoneCardDragState.cards.has(key)))) {
+        if (entry.cardKey) this.zoneCardSprites.get(entry.cardKey)?.sprite.setArrivalPose?.(null);
+        entry.effect.destroy();
+        return false;
+      }
+      const alive = entry.effect.update(elapsed, this.camera?.zoom ?? 1, bounds);
+      if (entry.cardKey) {
+        const card = this.zoneCardSprites.get(entry.cardKey);
+        if (card) card.sprite.setArrivalPose?.(alive && follow.includes(entry.cardKey)
+          ? getArrivalCardPose(elapsed, this.effectSettings.intensity) : null);
+      }
+      return alive;
+    });
   }
 
   private playMangaEffect(kind: MangaEffectKind, bounds?: EffectBounds, follow?: string[]): void {
@@ -5170,7 +5243,6 @@ export class PixiStage {
             clickedZoneCard.zoneId,
             clickedZoneCard.instanceId,
           );
-          this.rebuildZoneVisuals();
           this.emitCanvasAreasChange();
           this.updateHoveredFromWorldPos(worldPos);
           return;
@@ -6425,6 +6497,7 @@ export class PixiStage {
       isDragging: true, key: zoneCard.key, zoneId: zone.id, instanceId: anchor.id,
       startWorldPos: { ...worldPos }, startCardPos: { x: anchor.x, y: anchor.y }, cards,
     };
+    this.clearArrivalPops(new Set(cards.keys()));
     this.playCardsEffect('pickup', cards.keys(), true);
     this.prepareZoneCardDragFeedback(worldPos);
     this.zoneContainer.sortChildren();
@@ -6645,6 +6718,7 @@ export class PixiStage {
     const index = zone.cards.findIndex(card => card.id === instanceId);
     const card = zone.cards[index];
     if (!card) return;
+    this.clearArrivalPops(new Set([`${zoneId}:${instanceId}`]));
     this.removedCardHistory ??= [];
     this.removedCardHistory.push({ areaId: zoneId, card: { ...card }, index,
       variants: zone.deckVariants?.filter(variant => variant.activeCardIds.includes(instanceId)).map(variant => variant.id) ?? [] });
@@ -6684,8 +6758,9 @@ export class PixiStage {
     if (zone.type === "deck" && sourceBoard) {
       this.syncDeckVariantForBoardChange(zone, duplicate.id, sourceBoard);
     }
-    this.playCardsEffect('stack', this.getZoneStackEffectKeys(zoneId, instanceId));
     this.reconcileCanvasAreaBounds(zone.id, { anchorBoard: sourceBoard });
+    this.rebuildZoneVisuals();
+    this.playArrivalPop(zone.id, duplicate.id);
   }
 
   private getDeckBoardForPosition(
@@ -7019,7 +7094,8 @@ export class PixiStage {
 
     this.reconcileCanvasAreaBounds(zone.id, { anchorBoard });
     this.rebuildZoneVisuals();
-    this.playCardsEffect('arrive', additions.flatMap(card => this.getZoneStackEffectKeys(zone.id, card.id)));
+    if (additions.length === 1 && additions[0]) this.playArrivalPop(zone.id, additions[0].id);
+    else this.playCardsEffect('arrive', additions.flatMap(card => this.getZoneStackEffectKeys(zone.id, card.id)));
     this.emitCanvasAreasChange();
   }
 
@@ -7345,7 +7421,8 @@ export class PixiStage {
         const old = previous.find(entry => entry.id === area.id);
         if (!old?.pinned) { this.playAreaEffect('reveal', area); continue; }
         const added = area.cards.filter(card => !previousIds.has(card.id));
-        if (added.length) this.playCardsEffect(area.type === 'stack' ? 'stack' : 'arrive',
+        if (added.length === 1 && added[0] && area.type !== 'stack') this.playArrivalPop(area.id, added[0].id);
+        else if (added.length) this.playCardsEffect(area.type === 'stack' ? 'stack' : 'arrive',
           added.flatMap(card => this.getZoneStackEffectKeys(area.id, card.id)));
       }
       for (const old of previous) if (old.pinned && !this.canvasAreas.some(area => area.id === old.id && area.pinned)) this.playAreaEffect('hide', old);
@@ -7799,6 +7876,8 @@ export class PixiStage {
   }
 
   destroy(): void {
+    this.clearArrivalPops();
+    this.arrivalStackHistory = [];
     window.removeEventListener('resize', this.handleInspectionResize);
     if (this.isInitialized) this.app.canvas.removeEventListener('wheel', this.handleInspectionWheel, true);
     if (this.focusEffectTimer) clearTimeout(this.focusEffectTimer);
@@ -8244,12 +8323,14 @@ export class PixiStage {
     this.applyCardCategoryHighlighting();
   }
 
-  private clearZoneVisuals(): void {
+  private clearZoneVisuals(preserveArrivals = false): void {
+    if (!preserveArrivals) this.clearArrivalPops();
     this.clearZoneDropPreview();
     this.destroyDeckGraphHoverTooltip();
     this.deactivateQuickTransfer();
     this.closeTouchActionSheet();
     for (const data of this.zoneCardSprites.values()) {
+      data.sprite.setArrivalPose?.(null);
       data.sprite.destroy();
     }
     this.zoneCardSprites.clear();
@@ -8828,7 +8909,7 @@ export class PixiStage {
   }
 
   private rebuildZoneVisuals(): void {
-    this.clearZoneVisuals();
+    this.clearZoneVisuals(true);
     if (!this.camera) return;
 
     let layoutChanged = false;
@@ -8940,6 +9021,19 @@ export class PixiStage {
     this.applyActiveMetricHighlighting();
     this.drawZoneDeleteOverlay();
     this.rebuildLabelSprites();
+    const survivingKeys = new Set(this.canvasAreas.flatMap(area => area.cards.map(card => `${area.id}:${card.id}`)));
+    this.arrivalStackHistory = (this.arrivalStackHistory ?? []).filter(entry => {
+      entry.members = new Set([...entry.members].filter(key => survivingKeys.has(key)));
+      return entry.members.size > 0;
+    });
+    // Membership can change only with a layout/model rebuild. Animation frames
+    // visit these small stacks instead of rescanning every card in a deck.
+    for (const entry of this.arrivalPops ?? []) {
+      const area = this.canvasAreas.find(zone => zone.id === entry.zoneId && zone.pinned);
+      const anchor = area?.cards.find(card => entry.follow.includes(`${area.id}:${card.id}`));
+      entry.follow = area && anchor ? this.getZoneStackEffectKeys(area.id, anchor.id) : [];
+    }
+    this.updateArrivalPops(performance.now());
     if (layoutChanged) this.emitCanvasAreasChange();
   }
 
@@ -9846,12 +9940,14 @@ export class PixiStage {
   private update(): void {
     const nowMs = performance.now();
     if (!this.motionEnabled()) {
+      this.clearArrivalPops();
       for (const entry of this.mangaEffects ?? []) entry.effect.destroy();
       this.mangaEffects = [];
       for (const entry of this.deletionPuffs) entry.effect.destroy();
       this.deletionPuffs = [];
     }
-    if ((this.mangaEffects?.length ?? 0) || this.deletionPuffs.length) this.getMangaEffectLayer();
+    if ((this.mangaEffects?.length ?? 0) || this.deletionPuffs.length || this.arrivalPops?.length) this.getMangaEffectLayer();
+    this.updateArrivalPops(nowMs);
     this.mangaEffects = (this.mangaEffects ?? []).filter(entry => entry.effect.update(nowMs - entry.start, this.camera?.zoom ?? 1,
       entry.follow ? this.getCardsEffectBounds(entry.follow) : undefined));
     if (this.dragFeedbackGraphic && this.dragFeedbackBounds) {

@@ -169,7 +169,7 @@ All of the modules above include top-of-file headers and exported function docs 
 | Touch swipe / pinch / hold then drag | Pan / zoom / move card |
 | Double left/right-click in the catalogue | Add to Main / remove from the active deck |
 | Alt + double-click in a deck | Toggle inclusion in the current variant |
-| Click a card's X twice | Arm removal in red, then remove that card; Escape cancels |
+| Click a card's X | Remove that card immediately; Cmd/Ctrl+Z restores it |
 | Drop a card on a label name | Join that label's group |
 | Shake a card while dragging | Detach it from its label group |
 
@@ -217,13 +217,21 @@ group. Empty labels have no region and can leave their deck without expanding
 it. Double-click a label to rename it; saving an empty name removes the label
 while keeping its cards. Touch users can also detach through the card menu.
 
-Card removal uses two clicks on the same X within five seconds. Expressive manga
+Card removal uses one click on the X or one tap on the touch Remove action. Expressive manga
 gestures use paper rims, ink keylines and gold accents, sized to the actual card
 or stack, including landscape sites. Routine actions use marks without words;
-occasional actions share a caption cooldown. All sequences use held drawings at
-24 fps and respect reduced motion. Deletion uses the 1.75-second cloud →
-contraction → pop → twinkles / “pooft” / “ボフッ” sequence; rapid repeat deletions
-use a compact puff. Removal happens immediately.
+occasional actions share a caption cooldown. Effects use held drawings and respect
+reduced motion. Deletion uses a 1.4-second cloud →
+contraction → pop → twinkles sequence, with “pooft” / “ボフッ” lettering playing
+at half speed and lingering until 2.9 seconds. Rapid repeat deletions use a
+compact puff. Removal happens immediately.
+
+Adding a card plays an outward gold burst, a small settling wobble, and staggered
+twinkles. The effect follows the current stack envelope, including portrait
+spells and landscape sites as copies are added. Further additions to the same
+stack refresh only the “POP!” / “ポンッ” words, shown for about 0.94 seconds;
+they never replay the burst or wobble. Stack membership and positions stay
+unchanged by animation, and repeat history clears when switching sessions.
 
 Layout contains catalogue grouping and sorting controls. Research panels and
 animation previews are local artifacts under `tmp/GraphicIdeas/`; they are never

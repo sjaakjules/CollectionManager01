@@ -18,7 +18,7 @@
  * This class only reports pointer events and updates visuals.
  */
 
-import { Container, Sprite, Graphics, Text, Texture } from "pixi.js";
+import { Container, Sprite, Graphics, Text, Texture, Rectangle } from "pixi.js";
 import { CARD_SIZE } from "./Grid";
 import {
   lodManager,
@@ -76,6 +76,7 @@ export class CardSprite extends Container {
   private metricOutline: Graphics;
   private scoreText: Text;
   private missingArtworkLabel: Text | null = null;
+  private arrivalVisual: Container | null = null;
   private displayWidth: number;
   private displayHeight: number;
   private currentLOD: LODLevel = lodManager.getStartupLOD();
@@ -234,6 +235,29 @@ export class CardSprite extends Container {
     this.isNewlyAdded = added;
     this.newCardBorder.visible = added;
     if (added) this.redrawOutlines();
+  }
+
+  /** Animate artwork around its centre without moving the stack or its hit area. */
+  setArrivalPose(pose: { scale: number; rotation: number; offsetY: number } | null): void {
+    if (this.destroyed || (!pose && !this.arrivalVisual)) return;
+    if (!this.arrivalVisual) {
+      // Only arriving cards need this extra container. Keep the stack's shared
+      // selection envelope and overlays outside the transient artwork transform.
+      this.arrivalVisual = new Container();
+      this.arrivalVisual.label = 'arrival-artwork';
+      this.arrivalVisual.eventMode = 'none';
+      this.arrivalVisual.interactiveChildren = false;
+      this.addChildAt(this.arrivalVisual, 0);
+      this.arrivalVisual.addChild(this.sprite);
+      if (this.missingArtworkLabel) this.arrivalVisual.addChild(this.missingArtworkLabel);
+      this.arrivalVisual.addChild(this.newCardBorder);
+      this.arrivalVisual.pivot.set(this.displayWidth / 2, this.displayHeight / 2);
+      this.hitArea = new Rectangle(0, 0, this.displayWidth, this.displayHeight);
+    }
+    this.arrivalVisual.position.set(this.displayWidth / 2,
+      this.displayHeight / 2 + (pose?.offsetY ?? 0) * this.displayHeight);
+    this.arrivalVisual.scale.set(pose?.scale ?? 1);
+    this.arrivalVisual.rotation = pose?.rotation ?? 0;
   }
 
   private redrawOutlines(): void {
@@ -483,7 +507,7 @@ export class CardSprite extends Container {
       });
       this.missingArtworkLabel.anchor.set(0.5);
       this.missingArtworkLabel.position.set(this.displayWidth / 2, this.displayHeight / 2);
-      this.addChildAt(this.missingArtworkLabel, 1);
+      (this.arrivalVisual ?? this).addChildAt(this.missingArtworkLabel, 1);
     }
   }
 

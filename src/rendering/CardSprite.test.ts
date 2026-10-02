@@ -308,3 +308,59 @@ describe("CardSprite metric display", () => {
     expect(sprite.alpha).toBe(1);
   });
 });
+
+describe('arrival artwork transforms', () => {
+  it.each([false, true])('keeps stack bounds, selection and hit targets stable while the artwork wobbles (landscape: %s)', (isLandscape) => {
+    stubLODManager();
+    const width = isLandscape ? 140 : 100;
+    const height = isLandscape ? 100 : 140;
+    const card = new CardSprite({ name: 'Arrival', isLandscape, x: 700, y: 900, displaySize: { width, height } });
+    const before = card.getWorldBounds();
+    const center = card.getCenter();
+    card.setSelected(true);
+    card.setNewlyAdded(true);
+    const outline = card.getChildByLabel('selection-outline');
+    card.setArrivalPose({ scale: 1.08, rotation: 0.04, offsetY: -.025 });
+    const visual = card.getChildByLabel('arrival-artwork');
+    expect(visual?.pivot.x).toBe(width / 2);
+    expect(visual?.pivot.y).toBe(height / 2);
+    expect(visual?.position.y).toBe(height * .475);
+    expect(visual?.rotation).toBe(.04);
+    expect(card.getWorldBounds()).toEqual(before);
+    expect(card.getCenter()).toEqual(center);
+    expect(card.hitArea?.contains(1, 1)).toBe(true);
+    expect(card.hitArea?.contains(width + 1, height)).toBe(false);
+    expect(outline?.parent).toBe(card);
+    expect(card.rotation).toBe(0);
+
+    // A sharper image arriving mid-wobble must retain its own orientation.
+    card.loadInitialTexture();
+    const artwork = visual?.children.find((child): child is Sprite => child instanceof Sprite);
+    expect(artwork?.rotation).toBe(isLandscape ? Math.PI / 2 : 0);
+    card.setArrivalPose(null);
+    expect(visual?.scale.x).toBe(1);
+    expect(visual?.rotation).toBe(0);
+    expect(visual?.position.y).toBe(height / 2);
+    expect(card.getWorldBounds()).toEqual(before);
+    card.destroy({ children: true });
+    expect(() => card.setArrivalPose(null)).not.toThrow();
+  });
+
+  it('keeps missing artwork inside the arrival transform and replaces it when detail arrives', async () => {
+    stubLODManager();
+    vi.mocked(lodManager.getTextureMatchSync).mockReturnValue(null);
+    vi.mocked(lodManager.getTexture).mockResolvedValue(Texture.WHITE);
+    const card = new CardSprite({ name: 'Missing Site', isLandscape: true, x: 0, y: 0 });
+    card.setArrivalPose({ scale: .9, rotation: -.03, offsetY: 0 });
+    card.loadInitialTexture();
+    await card.textureReady;
+    const visual = card.getChildByLabel('arrival-artwork');
+    const label = visual?.children.find((child): child is Text => child instanceof Text);
+    expect(label?.text).toContain('Artwork unavailable');
+    vi.mocked(lodManager.getTextureMatchSync).mockReturnValue({ lod: LOD_LEVELS.FULL, texture: Texture.EMPTY });
+    card.emit('pointerover', {} as FederatedPointerEvent);
+    expect(visual?.children).not.toContain(label);
+    expect(visual?.rotation).toBe(-.03);
+    card.destroy({ children: true });
+  });
+});
