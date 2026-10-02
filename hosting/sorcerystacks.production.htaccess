@@ -5,6 +5,9 @@ Options -Indexes
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Research artifacts are local files, never published application pages.
+  RewriteRule ^manga-effects-references\.html$ - [G,L]
+
   # Canonical production domain.
   RewriteCond %{HTTP_HOST} ^sorcerystacks\.julianrutten\.com$ [NC,OR]
   RewriteCond %{HTTP_HOST} ^sorcerystacks\.com\.julianrutten\.com$ [NC,OR]
@@ -19,6 +22,7 @@ Options -Indexes
   RewriteRule ^api/signup$ api/auth.php?action=signup [QSA,L]
   RewriteRule ^api/login$ api/auth.php?action=login [QSA,L]
   RewriteRule ^api/user/(.*)$ api/auth.php?action=user&path=$1 [QSA,L]
+  RewriteRule ^api/decks/(.*)$ api/proxy-curiosa.php?path=$1 [QSA,L]
   RewriteRule ^api/curiosa/(.*)$ api/proxy-curiosa.php?path=$1 [QSA,L]
   RewriteRule ^api/sorcery/(.*)$ api/proxy-sorcery.php?path=$1 [QSA,L]
 

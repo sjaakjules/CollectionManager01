@@ -5,6 +5,9 @@ Options -Indexes
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Research artifacts are local files, never published application pages.
+  RewriteRule ^manga-effects-references\.html$ - [G,L]
+
   # Staging must remain independently testable.
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP_HOST} ^staging\.sorcerystacks\.com$ [NC]
@@ -14,6 +17,7 @@ Options -Indexes
   RewriteRule ^api/signup$ api/auth.php?action=signup [QSA,L]
   RewriteRule ^api/login$ api/auth.php?action=login [QSA,L]
   RewriteRule ^api/user/(.*)$ api/auth.php?action=user&path=$1 [QSA,L]
+  RewriteRule ^api/decks/(.*)$ api/proxy-curiosa.php?path=$1 [QSA,L]
   RewriteRule ^api/curiosa/(.*)$ api/proxy-curiosa.php?path=$1 [QSA,L]
   RewriteRule ^api/sorcery/(.*)$ api/proxy-sorcery.php?path=$1 [QSA,L]
 

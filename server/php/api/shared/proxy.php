@@ -58,7 +58,9 @@ function sorcery_proxy_retry_after_ms(?string $value, int $nowMs): ?int
     }
     $trimmed = trim($value);
     if (is_numeric($trimmed)) {
-        return max(0, (int)ceil(((float)$trimmed) * 1000));
+        $milliseconds = ((float)$trimmed) * 1000;
+        return is_finite($milliseconds) && $milliseconds >= 0 && $milliseconds <= PHP_INT_MAX
+            ? (int)ceil($milliseconds) : null;
     }
     $dateSeconds = strtotime($trimmed);
     if ($dateSeconds === false) {
@@ -101,15 +103,25 @@ function sorcery_proxy_read_rate_state(string $path): array
     }
     $raw = file_get_contents($path);
     if (!is_string($raw) || trim($raw) === '') {
-        return [];
+        sorcery_error('Proxy rate limiter state is unreadable', 503);
     }
     $decoded = json_decode($raw, true);
-    return is_array($decoded) ? $decoded : [];
+    if (!is_array($decoded)) {
+        sorcery_error('Proxy rate limiter state is invalid', 503);
+    }
+    foreach (['nextAllowedAtMs', 'retryAfterUntilMs', 'budgetReadyAtMs', 'updatedAtMs', 'remaining', 'resetMs'] as $key) {
+        if (isset($decoded[$key]) && sorcery_proxy_rate_number($decoded[$key]) === null) {
+            sorcery_error('Proxy rate limiter state is invalid', 503);
+        }
+    }
+    return $decoded;
 }
 
 function sorcery_proxy_write_rate_state(string $path, array $state): void
 {
-    file_put_contents($path, json_encode($state, JSON_UNESCAPED_SLASHES));
+    if (file_put_contents($path, json_encode($state, JSON_UNESCAPED_SLASHES)) === false) {
+        sorcery_error('Proxy rate limiter state could not be saved', 503);
+    }
 }
 
 function sorcery_proxy_rate_config(?array $config): ?array
@@ -118,11 +130,12 @@ function sorcery_proxy_rate_config(?array $config): ?array
         return null;
     }
     return [
-        'namespace' => (string)($config['namespace'] ?? 'default'),
-        'minIntervalMs' => max(0, (int)($config['min_interval_ms'] ?? 1000)),
-        'lowRemainingThreshold' => max(0, (int)($config['low_remaining_threshold'] ?? 2)),
-        'safeRemainingTarget' => max(1, (int)($config['safe_remaining_target'] ?? 5)),
-        'maxSleepMs' => max(0, (int)($config['max_sleep_ms'] ?? 10000)),
+        // Cards, decks, search and legacy aliases consume the same host budget.
+        'namespace' => 'sorcerytcg',
+        'minIntervalMs' => max(3000, (int)($config['min_interval_ms'] ?? 3000)),
+        'lowRemainingThreshold' => max(2, (int)($config['low_remaining_threshold'] ?? 2)),
+        'safeRemainingTarget' => max(5, (int)($config['safe_remaining_target'] ?? 5)),
+        'maxSleepMs' => max(0, (int)($config['max_sleep_ms'] ?? 8000)),
     ];
 }
 
@@ -150,8 +163,16 @@ function sorcery_proxy_rate_delay(array &$state, array $config, int $nowMs): arr
             $reason = 'rate-reset';
         } else {
             $ticks = max(1, $config['safeRemainingTarget'] - (int)$remaining);
-            $delayMs = max($delayMs, $ticks * $config['minIntervalMs']);
-            $reason = 'rate-replenish';
+            // Anchor to the response time, not each arriving visitor. Otherwise
+            // a 9s wait with an 8s sleep limit returns 429 forever.
+            $observedAtMs = sorcery_proxy_rate_number($state['updatedAtMs'] ?? null) ?? $nowMs;
+            $readyAtMs = $state['budgetReadyAtMs'] ?? ($observedAtMs + $ticks * $config['minIntervalMs']);
+            if ($readyAtMs > $nowMs) {
+                $delayMs = max($delayMs, (int)ceil($readyAtMs - $nowMs));
+                $reason = 'rate-replenish';
+            } else {
+                unset($state['remaining'], $state['budgetReadyAtMs']);
+            }
         }
     }
 
@@ -192,12 +213,16 @@ function sorcery_proxy_rate_limit_begin(?array $configInput): ?array
         header('X-Sorcery-Proxy-Min-Interval-Ms: ' . (int)$config['minIntervalMs']);
         header('X-Sorcery-Proxy-Delay-Ms: ' . $delayMs);
         header('X-Sorcery-Proxy-Delay-Reason: ' . $reason);
-        sorcery_error('Curiosa proxy is waiting to respect upstream rate limits', 429);
+        sorcery_error('SorceryTCG proxy is waiting to respect upstream rate limits', 429);
     }
 
     if ($delayMs > 0) {
         usleep($delayMs * 1000);
     }
+
+    // Verify writable state and reserve the attempt before contacting upstream.
+    $state['nextAllowedAtMs'] = sorcery_proxy_millis() + 30000 + $config['minIntervalMs'];
+    sorcery_proxy_write_rate_state($paths['state'], $state);
 
     return [
         'config' => $config,
@@ -219,7 +244,7 @@ function sorcery_proxy_extract_response_headers(string $rawHeaders): array
     return $headers;
 }
 
-function sorcery_proxy_rate_limit_finish(?array $limiter, string $rawHeaders): void
+function sorcery_proxy_rate_limit_finish(?array $limiter, string $rawHeaders, int $status = 200): void
 {
     if ($limiter === null) {
         return;
@@ -240,12 +265,20 @@ function sorcery_proxy_rate_limit_finish(?array $limiter, string $rawHeaders): v
     }
     if ($remaining !== null) {
         $state['remaining'] = $remaining;
+        if ($remaining <= $config['lowRemainingThreshold']) {
+            $state['budgetReadyAtMs'] = $nowMs
+                + max(1, $config['safeRemainingTarget'] - (int)$remaining) * $config['minIntervalMs'];
+        } else {
+            unset($state['budgetReadyAtMs']);
+        }
     }
     if ($resetMs !== null) {
         $state['resetMs'] = $resetMs;
     }
     if ($retryAfterMs !== null) {
-        $state['retryAfterUntilMs'] = $nowMs + $retryAfterMs;
+        $state['retryAfterUntilMs'] = max($state['retryAfterUntilMs'] ?? 0, $nowMs + $retryAfterMs);
+    } elseif ($status === 429 || $status === 503) {
+        $state['retryAfterUntilMs'] = max($state['retryAfterUntilMs'] ?? 0, $nowMs + 60000);
     }
 
     $state['nextAllowedAtMs'] = $nowMs + $config['minIntervalMs'];
@@ -303,14 +336,14 @@ function sorcery_proxy_request(string $baseUrl, array $headers = [], array $opti
         $requestHeaders[] = 'Accept: ' . $accept;
     }
 
-    $limiter = sorcery_proxy_rate_limit_begin($options['rate_limit'] ?? null);
+    // Every upstream route is throttled, even when its caller omits options.
+    $limiter = sorcery_proxy_rate_limit_begin($options['rate_limit'] ?? []);
 
     $curl = curl_init($targetUrl);
     curl_setopt_array($curl, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HEADER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS => 3,
+        CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
         CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
         CURLOPT_SSL_VERIFYHOST => 2,
@@ -341,7 +374,7 @@ function sorcery_proxy_request(string $baseUrl, array $headers = [], array $opti
 
     $rawHeaders = substr((string)$response, 0, $headerSize);
     $responseBody = substr((string)$response, $headerSize);
-    sorcery_proxy_rate_limit_finish($limiter, $rawHeaders);
+    sorcery_proxy_rate_limit_finish($limiter, $rawHeaders, (int)$status);
 
     $safeContentType = preg_replace('/[\r\n].*/', '', (string)$contentType);
     if (!is_string($safeContentType) || trim($safeContentType) === '') {

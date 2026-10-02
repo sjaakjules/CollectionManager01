@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
+import { sorceryDevProxy } from './scripts/lib/sorcery-dev-proxy';
+
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 /**
@@ -336,7 +338,7 @@ function authUserDevApi(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), authUserDevApi()],
+  plugins: [react(), authUserDevApi(), sorceryDevProxy()],
   root: __dirname,
   resolve: {
     alias: {
@@ -348,27 +350,6 @@ export default defineConfig({
     open: process.env.BROWSER === 'safari' ? 'Safari' : false,
     fs: {
       strict: false,
-    },
-    // Proxy API requests to avoid CORS issues during development
-    proxy: {
-      '/api/sorcery': {
-        target: 'https://api.sorcerytcg.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/sorcery/, '/api'),
-        secure: true,
-      },
-      '/api/curiosa': {
-        target: 'https://curiosa.io',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/curiosa/, ''),
-        secure: true,
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Origin', 'https://curiosa.io');
-            proxyReq.setHeader('Referer', 'https://curiosa.io/');
-          });
-        },
-      },
     },
   },
   build: {
