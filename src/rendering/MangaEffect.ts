@@ -6,7 +6,7 @@ import { MANGA_PALETTE, mangaGeometry, type EffectBounds } from './mangaStyle';
 export type { EffectBounds } from './mangaStyle';
 const { ink: INK, paper: PAPER, gold: GOLD } = MANGA_PALETTE;
 
-/** Original line drawings: four to fifteen held drawings, never a card transform. */
+/** Original line drawings held at 24fps, never a card transform. */
 export class MangaEffect {
   readonly root = new Container();
   private readonly ink = new Graphics();
@@ -69,17 +69,20 @@ export class MangaEffect {
     this.words.alpha = Math.min(1, t * 8 + 0.3) * fade;
     this.words.position.set(this.width * 0.15 + out * 4 * s, -this.height / 2 - (25 + out * 5) * s);
     this.words.scale.set((0.94 + out * 0.09) * s);
+    // Strengthen everyday accents while keeping their geometry anchored to the card.
+    const accent = this.kind === 'delete' ? 1 : 1.2;
     const line = (x1: number, y1: number, x2: number, y2: number, color: number = PAPER, width = 1.8) => {
-      this.ink.moveTo(x1, y1).lineTo(x2, y2).stroke({ color: INK, width: width + 2, alpha: 0.6 });
-      this.ink.moveTo(x1, y1).lineTo(x2, y2).stroke({ color, width });
+      this.ink.moveTo(x1, y1).lineTo(x2, y2).stroke({ color: INK, width: (width + 2) * accent, alpha: 0.6 });
+      this.ink.moveTo(x1, y1).lineTo(x2, y2).stroke({ color, width: width * accent });
     };
     const brackets = (spread: number, color: number = PAPER) => {
       for (const x of [-1, 1]) for (const y of [-1, 1]) {
-        line(x * (w + spread), y * (h + spread - 8), x * (w + spread), y * (h + spread), color);
-        line(x * (w + spread), y * (h + spread), x * (w + spread - 8), y * (h + spread), color);
+        line(x * (w + spread), y * (h + spread - 10), x * (w + spread), y * (h + spread), color);
+        line(x * (w + spread), y * (h + spread), x * (w + spread - 10), y * (h + spread), color);
       }
     };
     const glint = (x: number, y: number, radius: number) => {
+      if (this.kind !== 'delete') radius *= 1.15;
       this.ink.poly([x, y - radius, x + radius * 0.18, y - radius * 0.18, x + radius, y,
         x + radius * 0.18, y + radius * 0.18, x, y + radius, x - radius * 0.18, y + radius * 0.18,
         x - radius, y, x - radius * 0.18, y - radius * 0.18]).fill(GOLD).stroke({ color: INK, width: 1 });
@@ -109,7 +112,7 @@ export class MangaEffect {
         const peel = this.kind === 'detach' ? out : 1 - out;
         const x = w - 18 * peel; const y = -h - 12 * peel;
         line(w - 20, -h, w, -h, PAPER);
-        this.ink.moveTo(w, -h).quadraticCurveTo(x - 10, y - 16 * peel, x - 16, y).stroke({ color: PAPER, width: 2 });
+        this.ink.moveTo(w, -h).quadraticCurveTo(x - 10, y - 16 * peel, x - 16, y).stroke({ color: PAPER, width: 2 * accent });
         line(x - 16, y, x - 9, y + 5, PAPER);
         if (this.kind === 'label') brackets(2 + peel * 3, PAPER);
         break;
