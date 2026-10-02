@@ -41,6 +41,15 @@ export function saveDeckLayoutProfile(area: CanvasArea, labels: CanvasLabel[], p
   area.layoutProfiles[profile] = captureDeckLayout(area, labels);
 }
 
+/** Copies join their source stack in every existing layout, without forking one. */
+export function inheritDeckLayoutPosition(area: CanvasArea, sourceId: string, copyId: string): void {
+  for (const profile of ['phone', 'desktop'] as const) {
+    const layout = area.layoutProfiles?.[profile];
+    const position = layout?.cards[sourceId];
+    if (layout && position) layout.cards[copyId] = {...position};
+  }
+}
+
 /** Until a device type edits, it follows the first editor's shared arrangement. */
 export function applyDeckLayoutProfile(area: CanvasArea, labels: CanvasLabel[], profile: DeckLayoutProfile): void {
   const profiles = area.layoutProfiles;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CanvasLabel } from '@/data/dataModels';
 import type { CanvasArea } from './canvasAreas';
-import { applyDeckLayoutProfile, normalizeDeckLayoutProfiles, saveDeckLayoutProfile } from './deckLayoutProfiles';
+import { applyDeckLayoutProfile, inheritDeckLayoutPosition, normalizeDeckLayoutProfiles, saveDeckLayoutProfile } from './deckLayoutProfiles';
 import { appReducer, initialAppState } from '@/app/AppState';
 import { createGuestUserData } from '@/data/dataModels';
 
@@ -43,6 +43,24 @@ describe('shared then separate deck layouts', () => {
     area.cards = [{id: 'new', cardName: 'Site', x: 600, y: 400, board: 'collection'}];
     applyDeckLayoutProfile(area, labels, 'desktop');
     expect(area.cards).toEqual([{id: 'new', cardName: 'Site', x: 600, y: 400, board: 'collection'}]);
+  });
+
+  it('keeps new plus-button copies on their corresponding stack across separate layouts', () => {
+    const {area, labels} = fixture();
+    saveDeckLayoutProfile(area, labels, 'desktop');
+    const original = area.cards[0];
+    if (!original) throw new Error('Missing fixture');
+    original.x = 430; original.y = 600;
+    saveDeckLayoutProfile(area, labels, 'phone');
+    area.cards.push({...original, id: 'copy'});
+    inheritDeckLayoutPosition(area, original.id, 'copy');
+    saveDeckLayoutProfile(area, labels, 'phone');
+    // The source can be removed before the other device ever sees the copy.
+    area.cards = area.cards.filter(card => card.id !== original.id);
+    applyDeckLayoutProfile(area, labels, 'phone');
+    expect(area.cards[0]).toMatchObject({id: 'copy', x: 430, y: 600});
+    applyDeckLayoutProfile(area, labels, 'desktop');
+    expect(area.cards[0]).toMatchObject({id: 'copy', x: 100, y: 200});
   });
 
   it.each(['guest', 'account'])('retains both layouts through %s storage normalization', id => {

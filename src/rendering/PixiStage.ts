@@ -1,6 +1,6 @@
 import { required } from '@/utils/required';
 import { detectResponsiveUiMode } from '@/utils/responsiveMode';
-import { applyDeckLayoutProfile, applyDeckLabelProfile, normalizeDeckLayoutProfiles, saveDeckLayoutProfile } from '@/canvas/deckLayoutProfiles';
+import { applyDeckLayoutProfile, applyDeckLabelProfile, inheritDeckLayoutPosition, normalizeDeckLayoutProfiles, saveDeckLayoutProfile } from '@/canvas/deckLayoutProfiles';
 /**
  * PixiJS application setup and card scene management
  *
@@ -6961,6 +6961,7 @@ export class PixiStage {
     };
 
     zone.cards = [...zone.cards, duplicate];
+    inheritDeckLayoutPosition(zone, source.id, duplicate.id);
     if (zone.type === "deck" && sourceBoard) {
       this.syncDeckVariantForBoardChange(zone, duplicate.id, sourceBoard);
     }
