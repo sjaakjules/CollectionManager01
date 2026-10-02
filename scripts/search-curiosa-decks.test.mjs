@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  buildCuriosaDeckSearchCountInput,
   buildCuriosaDeckSearchPageInput,
-  parseCuriosaDeckSearchCount,
   parseCuriosaDeckSearchPage,
 } from '../src/data/curiosaService.ts';
 import {
@@ -12,6 +10,7 @@ import {
   collectCuriosaDeckSearch,
   deckSummariesToArchiveInputs,
   filterSearchDecks,
+  fetchSearchPage,
   mergeSearchDeck,
   parseArgs,
   runSearchToArchive,
@@ -42,35 +41,43 @@ const SEARCH_PAGE = [
 ];
 
 describe('Curiosa deck search helpers', () => {
-  it('builds compact count and first-page tRPC inputs', () => {
-    expect(buildCuriosaDeckSearchCountInput({ query: ' cornerstone ' })).toEqual({
-      '0': {
-        json: {
-          query: 'cornerstone',
-          avatar: '*',
-          divider: 'all',
-          filters: [],
-        },
-      },
+  it('reads current owner, popularity, views and Portable Text primers', () => {
+    const decks = parseCuriosaDeckSearchPage({ decks: [{
+      id: 'current-deck', owner: { username: 'Player' }, popularity: 12,
+      views: 80, _count: { likes: 4 },
+      primer: [{ children: [{ text: '1st Place Grand Contest' }] }],
+    }] });
+    expect(decks[0]).toMatchObject({
+      user: { username: 'Player' }, hotscore: 12, views: 80, likes: 4,
+      primer: '1st Place Grand Contest',
     });
+    expect(() => parseCuriosaDeckSearchPage({ unexpected: [] })).toThrow('search response');
+  });
 
-    expect(buildCuriosaDeckSearchPageInput({
-      query: 'cornerstone',
-      limit: 30,
-      cursor: 0,
-    })).toEqual({
-      '0': {
-        json: {
-          query: 'cornerstone',
-          sort: 'relevance',
-          avatar: '*',
-          divider: 'all',
-          filters: [],
-          limit: 30,
-          direction: 'forward',
-        },
-      },
+  it('uses current search headers and follows the returned cursor', async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify([
+      { result: { data: { json: { decks: SEARCH_PAGE, nextCursor: 17 } } } },
+    ])));
+    const result = await fetchSearchPage({
+      client: { fetch }, baseUrl: 'https://sorcerytcg.com', query: 'cornerstone',
+      pageSize: 30, cursor: 0, sort: 'latest',
     });
+    expect(result.nextCursor).toBe(17);
+    expect(result.decks).toHaveLength(2);
+    const [url, init] = fetch.mock.calls[0];
+    expect(url).toContain('/api/trpc/deck.search?');
+    expect(init.headers.origin).toBe('https://sorcerytcg.com');
+    expect(JSON.parse(new URL(url).searchParams.get('input'))['0'].json.sort).toBe('UpdatedDesc');
+  });
+  it('builds the current first-page search input', () => {
+    expect(buildCuriosaDeckSearchPageInput({ query: ' cornerstone ', limit: 30, cursor: 0 })).toEqual({
+      '0': { json: {
+        query: 'cornerstone', scope: 'all', sort: 'UpdatedDesc', avatar: null,
+        elements: [], notElements: [], formats: [], inclusions: [], exclusions: [], limit: 30,
+      } },
+    });
+    expect(buildCuriosaDeckSearchPageInput({ query: 'x', sort: 'latest' })['0'].json.sort).toBe('UpdatedDesc');
+    expect(buildCuriosaDeckSearchPageInput({ query: 'x', sort: 'relevance' })['0'].json.sort).toBe('PopularityDesc');
   });
 
   it('includes cursor on later pages', () => {
@@ -82,7 +89,6 @@ describe('Curiosa deck search helpers', () => {
   });
 
   it('parses count and search page summaries', () => {
-    expect(parseCuriosaDeckSearchCount({ count: 123 })).toBe(123);
     expect(parseCuriosaDeckSearchPage({ decks: SEARCH_PAGE })).toEqual([
       {
         id: 'deck-a',
@@ -129,6 +135,16 @@ describe('Curiosa deck search helpers', () => {
 });
 
 describe('Curiosa deck search collection', () => {
+  it('stops when the server repeats a cursor instead of repeatedly downloading a page', async () => {
+    const fetchSearchPage = vi.fn(async ({ cursor }) => ({
+      cursor, nextCursor: 5, decks: [{ id: 'deck-a', views: 1, likes: 1 }],
+    }));
+    await expect(collectCuriosaDeckSearch({ query: 'test', pageSize: 30 }, {
+      fetchSearchPage, writeJsonFile: async () => undefined,
+    })).rejects.toThrow('search cursor');
+    expect(fetchSearchPage).toHaveBeenCalledTimes(2);
+  });
+
   it('filters search decks by views, likes, max, and dedupes by ID', () => {
     expect(filterSearchDecks(
       [
@@ -145,10 +161,10 @@ describe('Curiosa deck search collection', () => {
 
   it('paginates search results and writes the search snapshot as pages arrive', async () => {
     const writes = [];
-    const fetchSearchCount = vi.fn(async () => ({ count: 3, raw: { count: 3 } }));
     const fetchSearchPage = vi.fn(async ({ cursor }) => ({
       cursor,
       raw: { cursor },
+      nextCursor: cursor === 0 ? 2 : null,
       decks: cursor === 0
         ? [
             { id: 'deck-a', views: 100, likes: 10 },
@@ -169,7 +185,6 @@ describe('Curiosa deck search collection', () => {
         pageSize: 2,
       },
       {
-        fetchSearchCount,
         fetchSearchPage,
         writeJsonFile: async (filePath, value) => writes.push({ filePath, value }),
         nowImpl: () => Date.parse('2026-01-01T00:00:00.000Z'),
@@ -180,7 +195,7 @@ describe('Curiosa deck search collection', () => {
     expect(fetchSearchPage.mock.calls.map(([arg]) => arg.cursor)).toEqual([0, 2]);
     expect(result.totalFound).toBe(3);
     expect(result.filteredDecks.map((deck) => deck.id)).toEqual(['deck-a', 'deck-c']);
-    expect(writes).toHaveLength(4);
+    expect(writes).toHaveLength(3);
     expect(writes.at(-1).value).toMatchObject({
       query: 'cornerstone',
       count: 3,
@@ -244,7 +259,6 @@ describe('Curiosa deck search collection', () => {
       {
         quiet: true,
         runArchive,
-        fetchSearchCount: async () => ({ count: 2, raw: { count: 2 } }),
         fetchSearchPage: async () => ({
           cursor: 0,
           raw: SEARCH_PAGE,
@@ -343,7 +357,6 @@ describe('Curiosa deck search collection', () => {
         pageSize: 30,
       },
       {
-        fetchSearchCount: async () => ({ count: 1, raw: { count: 1 } }),
         fetchSearchPage: async ({ query, cursor }) => ({
           cursor,
           raw: { query },

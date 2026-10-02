@@ -6,9 +6,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import {
-  buildCuriosaDeckSearchCountInput,
   buildCuriosaDeckSearchPageInput,
-  parseCuriosaDeckSearchCount,
   parseCuriosaDeckSearchPage,
 } from '../src/data/curiosaService.ts';
 import {
@@ -22,7 +20,9 @@ import {
   runArchive,
 } from './fetch-curiosa-decks.mjs';
 
-const DEFAULT_CURIOSA_BASE_URL = 'https://curiosa.io';
+import { SORCERY_DECK_ORIGIN } from '../src/data/sorceryDeckSource.ts';
+import { sorceryInterrupt } from './lib/sorcery-interrupt.mjs';
+const DEFAULT_CURIOSA_BASE_URL = SORCERY_DECK_ORIGIN;
 const DEFAULT_PAGE_SIZE = 30;
 const SEARCH_SNAPSHOT_VERSION = 'curiosa-deck-search-v2';
 
@@ -63,8 +63,8 @@ export function buildCuriosaTrpcUrl(baseUrl, procedure, input) {
 function defaultHeaders(extraHeaders = {}) {
   return {
     accept: 'application/json',
-    origin: 'https://curiosa.io',
-    referer: 'https://curiosa.io/decks',
+    origin: SORCERY_DECK_ORIGIN,
+    referer: `${SORCERY_DECK_ORIGIN}/decks`,
     'user-agent': 'SorceryStacks/1.0',
     ...extraHeaders,
   };
@@ -93,12 +93,12 @@ function readTrpcJson(entry, procedure) {
   const error = isRecord(record?.error) ? record.error : null;
   const errorJson = isRecord(error?.json) ? error.json : null;
   const errorMessage = typeof errorJson?.message === 'string' ? errorJson.message : '';
-  if (errorMessage) throw new Error(`Curiosa ${procedure} error: ${errorMessage}`);
+  if (errorMessage) throw new Error(`SorceryTCG ${procedure} error: ${errorMessage}`);
 
   const result = isRecord(record?.result) ? record.result : null;
   const data = isRecord(result?.data) ? result.data : null;
   if (!data || !('json' in data)) {
-    throw new Error(`Unexpected Curiosa response for ${procedure}`);
+    throw new Error(`Unexpected SorceryTCG response for ${procedure}`);
   }
   return data.json;
 }
@@ -109,6 +109,7 @@ async function fetchCuriosaTrpcJson({
   procedure,
   input,
   requestKind,
+  signal,
   onHealth,
   onDelay,
   onWait,
@@ -117,31 +118,17 @@ async function fetchCuriosaTrpcJson({
   const response = await client.fetch(
     url,
     { headers: defaultHeaders() },
-    { requestKind, onHealth, onDelay, onWait },
+    { requestKind, signal, onHealth, onDelay, onWait },
   );
   if (!response.ok) {
     const message = await readCuriosaError(response);
-    throw new Error(`Curiosa API error ${response.status}: ${message}`);
+    throw new Error(`SorceryTCG API error ${response.status}: ${message}`);
   }
   const results = await response.json();
   if (!Array.isArray(results) || results.length !== 1) {
-    throw new Error(`Unexpected response format from curiosa.io for ${procedure}`);
+    throw new Error(`Unexpected response format from SorceryTCG for ${procedure}`);
   }
   return readTrpcJson(results[0], procedure);
-}
-
-export async function fetchSearchCount({ client, baseUrl, query, onHealth, onDelay, onWait }) {
-  const json = await fetchCuriosaTrpcJson({
-    client,
-    baseUrl,
-    procedure: 'deck.count',
-    input: buildCuriosaDeckSearchCountInput({ query }),
-    requestKind: 'search-count',
-    onHealth,
-    onDelay,
-    onWait,
-  });
-  return { count: parseCuriosaDeckSearchCount(json), raw: json };
 }
 
 export async function fetchSearchPage({
@@ -151,6 +138,7 @@ export async function fetchSearchPage({
   pageSize,
   cursor,
   sort,
+  signal,
   onHealth,
   onDelay,
   onWait,
@@ -168,11 +156,19 @@ export async function fetchSearchPage({
     procedure: 'deck.search',
     input,
     requestKind: 'search-page',
+    signal,
     onHealth,
     onDelay,
     onWait,
   });
-  return { cursor, decks: parseCuriosaDeckSearchPage(json), raw: json };
+  const decks = parseCuriosaDeckSearchPage(json);
+  const nextCursor = json.nextCursor;
+  if (nextCursor != null && (!Number.isSafeInteger(nextCursor) || nextCursor <= (cursor ?? 0))) {
+    throw new Error('Unexpected SorceryTCG search cursor; stopping to avoid repeated downloads');
+  }
+  // Do not archive the full response: new search results include every card's
+  // printing metadata. Keep only the deck summaries needed by these tools.
+  return { cursor, decks, nextCursor: nextCursor ?? null, raw: { decks, nextCursor: nextCursor ?? null } };
 }
 
 function mergeDefined(preferred, fallback, key) {
@@ -276,7 +272,6 @@ function createSearchSnapshot({ queryRuns, decks, options, fetchedAt }) {
   const queries = queryRuns.map((run) => ({
     query: run.query,
     count: run.count,
-    countRaw: run.countRaw,
     pages: run.pages.map((page) => ({
       cursor: page.cursor,
       returned: page.decks.length,
@@ -324,12 +319,11 @@ export async function collectCuriosaDeckSearch(options, dependencies = {}) {
   const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
   const nowImpl = dependencies.nowImpl ?? (() => Date.now());
   const writeJson = dependencies.writeJsonFile ?? writeJsonFile;
-  const fetchCount = dependencies.fetchSearchCount ?? fetchSearchCount;
   const fetchPage = dependencies.fetchSearchPage ?? fetchSearchPage;
   const queryRuns = [];
   const deckById = new Map();
   let completedRequests = 0;
-  let estimatedRequests = queries.length * 2;
+  let estimatedRequests = queries.length;
   let latestSnapshot = createSearchSnapshot({
     queryRuns,
     decks: [],
@@ -347,46 +341,16 @@ export async function collectCuriosaDeckSearch(options, dependencies = {}) {
     await writeJson(options.searchOutput, latestSnapshot);
   };
 
-  const handleInterrupt = dependencies.handleSignals
-    ? async () => {
-        await writeJson(options.searchOutput, latestSnapshot);
-        (dependencies.exitProcess ?? ((code) => process.exit(code)))(130);
-      }
-    : null;
-  if (handleInterrupt) process.once('SIGINT', handleInterrupt);
+  const interrupt = sorceryInterrupt(dependencies.handleSignals);
 
   try {
     for (let queryIndex = 0; queryIndex < queries.length; queryIndex += 1) {
       const query = queries[queryIndex];
-      const countResult = await fetchCount({
-        client,
-        baseUrl,
-        query,
-        onHealth: dependencies.onHealth,
-        onDelay: dependencies.onDelay,
-        onWait: dependencies.onWait,
-      });
-      completedRequests += 1;
-      const pageCount = Math.max(1, Math.ceil(countResult.count / pageSize));
-      estimatedRequests += pageCount - 1;
-      const run = { query, count: countResult.count, countRaw: countResult.raw, pages: [] };
+      const run = { query, count: 0, pages: [] };
       queryRuns.push(run);
-      await snapshotAndWrite();
-      dependencies.onProgress?.({
-        phase: 'count',
-        query,
-        queryIndex,
-        queryTotal: queries.length,
-        page: 0,
-        pageTotal: pageCount,
-        unique: deckById.size,
-        filtered: latestSnapshot.totalFiltered,
-        completedRequests,
-        estimatedRequests,
-        lastDeck: null,
-      });
-
-      for (let cursor = 0; cursor < countResult.count; cursor += pageSize) {
+      let cursor = 0;
+      while (true) {
+        interrupt.signal.throwIfAborted();
         const page = await fetchPage({
           client,
           baseUrl,
@@ -394,12 +358,20 @@ export async function collectCuriosaDeckSearch(options, dependencies = {}) {
           pageSize,
           cursor,
           sort: options.sort,
+          signal: interrupt.signal,
           onHealth: dependencies.onHealth,
           onDelay: dependencies.onDelay,
           onWait: dependencies.onWait,
         });
+        interrupt.signal.throwIfAborted();
         completedRequests += 1;
         if (page.decks.length === 0) break;
+        const nextCursor = page.nextCursor ?? null;
+        if (nextCursor !== null && (!Number.isSafeInteger(nextCursor) || nextCursor <= cursor)) {
+          throw new Error('Unexpected SorceryTCG search cursor; stopping to avoid repeated downloads');
+        }
+        run.count += page.decks.length;
+        estimatedRequests = completedRequests + (nextCursor !== null ? 1 : 0) + queries.length - queryIndex - 1;
 
         run.pages.push(page);
         for (const deck of page.decks) {
@@ -415,7 +387,7 @@ export async function collectCuriosaDeckSearch(options, dependencies = {}) {
           queryIndex,
           queryTotal: queries.length,
           page: run.pages.length,
-          pageTotal: pageCount,
+          pageTotal: run.pages.length + (nextCursor !== null ? 1 : 0),
           unique: deckById.size,
           filtered: latestSnapshot.totalFiltered,
           completedRequests,
@@ -423,14 +395,21 @@ export async function collectCuriosaDeckSearch(options, dependencies = {}) {
           lastDeck,
         });
 
-        if (page.decks.length < pageSize) break;
+        if (nextCursor === null) break;
+        cursor = nextCursor;
       }
     }
 
     await snapshotAndWrite();
+    interrupt.signal.throwIfAborted();
     return latestSnapshot;
+  } catch (error) {
+    if (!interrupt.signal.aborted) throw error;
+    await writeJson(options.searchOutput, latestSnapshot);
+    (dependencies.exitProcess ?? ((code) => process.exit(code)))(interrupt.exitCode);
+    throw interrupt.signal.reason;
   } finally {
-    if (handleInterrupt) process.removeListener('SIGINT', handleInterrupt);
+    interrupt.dispose();
   }
 }
 
@@ -496,7 +475,7 @@ function createSearchDashboard({ enabled, stdout, nowImpl, quiet }) {
 }
 
 function printHelp() {
-  console.log(`Search Curiosa decks and archive matching decklists.
+  console.log(`Search SorceryTCG decks and archive matching decklists.
 
 Usage:
   node scripts/search-curiosa-decks.mjs --query cornerstone --output tmp/cornerstone-decks.json --min-views 100 --min-likes 5
@@ -509,8 +488,8 @@ Options:
       --search-output <file>     Search audit JSON. Defaults to <output>.search.json.
       --skipped-output <file>    Failed/invalid deck JSON. Defaults to <output>.skipped.json.
       --log <file>               Archive log path. Defaults to <output>.log.
-      --card-data <file>         Card catalog JSON. Defaults to docs/Sorcery_CardInfo.json.
-      --curiosa-base-url <url>   Defaults to ${DEFAULT_CURIOSA_BASE_URL}.
+      --card-data <file>         Card catalog JSON. Defaults to public/assets/sorcery_cards.json.
+      --sorcery-base-url <url>   Defaults to ${DEFAULT_CURIOSA_BASE_URL}.
       --sort <mode>              relevance or latest.
       --since <date>             Keep decks updated/created on or after this date.
       --format <name>            Required format, or all.
@@ -535,7 +514,7 @@ export function parseArgs(argv) {
     searchOutput: '',
     skippedOutput: '',
     log: '',
-    cardData: 'docs/Sorcery_CardInfo.json',
+    cardData: 'public/assets/sorcery_cards.json',
     curiosaBaseUrl: DEFAULT_CURIOSA_BASE_URL,
     sort: '',
     since: '',
@@ -586,7 +565,7 @@ export function parseArgs(argv) {
     else if (arg === '--skipped-output') options.skippedOutput = next;
     else if (arg === '--log') options.log = next;
     else if (arg === '--card-data') options.cardData = next;
-    else if (arg === '--curiosa-base-url') options.curiosaBaseUrl = next;
+    else if (arg === '--sorcery-base-url' || arg === '--curiosa-base-url') options.curiosaBaseUrl = next;
     else if (arg === '--sort') options.sort = next;
     else if (arg === '--since') options.since = next;
     else if (arg === '--format') options.format = next;
@@ -678,7 +657,10 @@ export async function runSearchToArchive(options, dependencies = {}) {
   if (options.rebuildLookup) {
     const rebuildLookup = dependencies.rebuildLookup ?? (async () => {
       const module = await import('./build-deck-style-associations.mjs');
-      return module.runDeckStyleAssociationBuild({ archivePath: options.output });
+      return module.runDeckStyleAssociationBuild({
+        archivePath: options.output,
+        ...(options.cardData ? { cardDataPath: options.cardData } : {}),
+      });
     });
     lookupResult = await rebuildLookup();
   }

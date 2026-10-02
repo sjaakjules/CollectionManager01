@@ -1,11 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readCardCatalog } from "./lib/card-catalog.mjs";
 
 const DEFAULT_STYLE_SCORE_PATH = "tmp/sorcery_deck_style_scores_with_substyles.json";
 const DEFAULT_TAXONOMY_PATH = "tmp/sorcery_taxonomy_tooltips.json";
 const DEFAULT_ARCHIVE_PATH = "offlineData/deckArchive.json";
-const DEFAULT_CARD_DATA_PATH = "docs/Sorcery_CardInfo.json";
+const DEFAULT_CARD_DATA_PATH = "public/assets/sorcery_cards.json";
 const DEFAULT_OUTPUT_PATH = "public/assets/sorcery_deck_style_associations.json";
 const DEFAULT_ALPHA = 1;
 const DEFAULT_STYLE_INFERENCE_NEIGHBORS = 8;
@@ -151,7 +152,7 @@ function archiveDeckToRuntimeDeck(deckId, archiveEntry, cardByName) {
     : [];
   const boards = {
     mainboard: [...boardEntries(cards.spellbook), ...boardEntries(cards.atlas)],
-    sideboard: boardEntries(cards.collection),
+    collection: boardEntries(cards.collection),
     avatar,
     maybeboard: boardEntries(cards.maybe),
   };
@@ -795,17 +796,20 @@ export async function runDeckStyleAssociationBuild(overrides = {}) {
     ...parseArgs([]),
     ...overrides,
   };
-  const [styleScores, taxonomy, archive, cards] = await Promise.all([
+  const [styleScores, taxonomy, archive, catalog] = await Promise.all([
     readJson(path.resolve(root, options.styleScoresPath)),
     readJson(path.resolve(root, options.taxonomyPath)),
     readJson(path.resolve(root, options.archivePath)),
-    readJson(path.resolve(root, options.cardDataPath)),
+    readCardCatalog(path.resolve(root, options.cardDataPath)),
   ]);
+  if (catalog.issues.length > 0) {
+    throw new Error(`Card catalogue has ${catalog.issues.length} issues; Deck Lookup was not replaced`);
+  }
   const output = buildDeckStyleAssociations({
     styleScores,
     taxonomy,
     archive,
-    cards,
+    cards: catalog.cards,
     alpha: options.alpha,
   });
   const outputPath = path.resolve(root, options.outputPath);

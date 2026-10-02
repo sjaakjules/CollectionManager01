@@ -59,52 +59,38 @@ function jsonResponse(body, init) {
   return response(JSON.stringify(body), init);
 }
 
-function htmlFixture() {
-  return `<!doctype html>
-    <html>
-      <head>
-        <title>Fallback Title | Curiosa</title>
-      </head>
-      <body>
-        <script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
-          props: {
-            pageProps: {
-              deck: {
-                id: DECK_ID,
-                createdAt: '2026-01-13T19:34:05.954Z',
-                updatedAt: '2026-01-14T08:03:19.525Z',
-                name: 'SCG Atlanta 4th',
-                format: 'Constructed',
-                hotscore: 1,
-                user: { id: 'user-1', username: 'PeterTheGreat' },
-                elements: ['Earth', 'Fire'],
-              },
-            },
-          },
-        })}</script>
-      </body>
-    </html>`;
-}
-
 function trpcFixture() {
-  return [
-    {
-      result: {
-        data: {
-          json: [
-            { card: { name: 'Site A' }, quantity: 30 },
-            { card: { name: 'Spell A' }, quantity: 60 },
-          ],
-        },
-      },
-    },
-    { result: { data: { json: [{ card: { name: 'Druid' }, quantity: 1 }] } } },
-    { result: { data: { json: [{ card: { name: 'Sideboard A' }, quantity: 2 }] } } },
-    { result: { data: { json: [{ card: { name: 'Maybe A' }, quantity: 3 }] } } },
-  ];
+  return [{ result: { data: { json: {
+    id: DECK_ID,
+    createdAt: '2026-01-13T19:34:05.954Z',
+    updatedAt: '2026-01-14T08:03:19.525Z',
+    name: 'SCG Atlanta 4th', format: 'Constructed', popularity: 1,
+    owner: { id: 'user-1', username: 'PeterTheGreat' },
+    decklist: [
+      { board: 'Main', card: { name: 'Site A' }, quantity: 30 },
+      { board: 'Main', card: { name: 'Spell A' }, quantity: 60 },
+      { board: 'Avatar', card: { name: 'Druid' }, quantity: 1 },
+      { board: 'Collection', card: { name: 'Sideboard A' }, quantity: 2 },
+      { board: 'Maybeboard', card: { name: 'Maybe A' }, quantity: 3 },
+    ],
+  } } } }];
 }
 
 describe('Curiosa archive input extraction', () => {
+  it('skips malformed search IDs without aborting the remaining import', () => {
+    const inputs = extractDeckInputs({ decks: [
+      { name: 'Missing ID' }, { id: null }, { id: {} }, { id: 'deck-a' },
+    ] }, 'search.json');
+    expect(inputs.map((input) => input.id)).toEqual(['deck-a']);
+  });
+  it('recognizes current card engines when dividing sites and new spell types', () => {
+    const lookup = buildCardTypeLookup([
+      { name: 'Future Trap', engine: { type: 'Trap' } },
+      { name: 'New Site', engine: { type: 'Site' } },
+    ]);
+    expect(lookup.get('future trap')).toBe('Trap');
+    expect(lookup.get('new site')).toBe('Site');
+  });
   it('extracts first search result IDs and hints when limited per file', () => {
     const inputs = extractDeckInputs(
       {
@@ -689,13 +675,13 @@ describe('Curiosa archive health output', () => {
     expect(formatCuriosaHealthLine({
       type: 'connection',
       host: 'curiosa.io',
-      origin: 'https://curiosa.io',
-      referer: 'https://curiosa.io/',
+      origin: 'https://sorcerytcg.com',
+      referer: 'https://sorcerytcg.com/',
       localRefillMs: 3000,
       lowRemainingThreshold: 2,
       safeRemainingTarget: 5,
     })).toBe(
-      'curiosa-health connection=direct host=curiosa.io origin="https://curiosa.io" referer="https://curiosa.io/" serialized=true local-spacing=3000ms low-remaining<=2 safe-remaining-target=5 retry-after=honored',
+      'curiosa-health connection=direct host=curiosa.io origin="https://sorcerytcg.com" referer="https://sorcerytcg.com/" serialized=true local-spacing=3000ms low-remaining<=2 safe-remaining-target=5 retry-after=honored',
     );
 
     expect(formatCuriosaHealthLine({
@@ -722,9 +708,6 @@ describe('Curiosa archive fetching', () => {
     const healthEvents = [];
     const fetchMock = vi.fn(async (url, init) => {
       calls.push({ url, init });
-      if (calls.length === 1) {
-        return response(htmlFixture(), { contentType: 'text/html' });
-      }
       return jsonResponse(trpcFixture());
     });
     const client = createCuriosaClient({
@@ -738,12 +721,11 @@ describe('Curiosa archive fetching', () => {
       onHealth: (health) => healthEvents.push(health),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(calls[0].url).toBe(`https://curiosa.io/decks/${DECK_ID}`);
-    expect(calls[1].url).toContain('/api/trpc/deck.getDecklistById');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(calls[0].url).toContain('https://sorcerytcg.com/api/trpc/deck.get?');
     expect(calls[0].init.headers).toMatchObject({
-      origin: 'https://curiosa.io',
-      referer: 'https://curiosa.io/',
+      origin: 'https://sorcerytcg.com',
+      referer: 'https://sorcerytcg.com/',
     });
     expect(deck.metadata).toMatchObject({
       id: DECK_ID,
@@ -757,7 +739,6 @@ describe('Curiosa archive fetching', () => {
       { name: 'Spell A', quantity: 60 },
     ]);
     expect(healthEvents).toMatchObject([
-      { type: 'response', deckId: DECK_ID, requestKind: 'deck-page', status: 200 },
       { type: 'response', deckId: DECK_ID, requestKind: 'deck-trpc', status: 200 },
     ]);
   });
@@ -766,9 +747,6 @@ describe('Curiosa archive fetching', () => {
     const calls = [];
     const fetchMock = vi.fn(async (url, init) => {
       calls.push({ url, init });
-      if (calls.length === 1) {
-        return response(htmlFixture(), { contentType: 'text/html' });
-      }
       return jsonResponse(trpcFixture());
     });
     const client = createCuriosaClient({
@@ -782,9 +760,6 @@ describe('Curiosa archive fetching', () => {
       curiosaBaseUrl: 'http://localhost:3000/api/curiosa',
     });
 
-    expect(calls[0].url).toBe(`http://localhost:3000/api/curiosa/decks/${DECK_ID}`);
-    expect(calls[1].url).toContain(
-      'http://localhost:3000/api/curiosa/api/trpc/deck.getDecklistById',
-    );
+    expect(calls[0].url).toContain('http://localhost:3000/api/curiosa/api/trpc/deck.get?');
   });
 });
