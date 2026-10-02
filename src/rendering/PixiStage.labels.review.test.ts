@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PixiStage } from './PixiStage';
-import { CARD_SIZE, snapCardCenter } from './Grid';
 import type { CanvasLabel } from '@/data/dataModels';
 import type { CanvasArea, CanvasCardInstance } from '@/canvas/canvasAreas';
 import { openCanvasLabelEditor } from '@/ui/canvasLabelEditor';
@@ -117,14 +116,14 @@ describe('label interaction review regressions', () => {
     expect(next.labelId).toBe('child');
   });
 
-  it('snaps a populated label group as one translation without distorting card and label offsets', () => {
+  it('lets a custom label float freely while retaining card and label offsets', () => {
     stage.startLabelDrag('child', { x: 0, y: 0 });
     stage.updateLabelDrag({ x: 113, y: 97 });
     stage.endLabelDrag();
     const [first, second] = area.cards;
     if (!first || !second) throw new Error('Missing card fixture');
-    const center = { x: first.x + CARD_SIZE.PORTRAIT.width / 2, y: first.y + CARD_SIZE.PORTRAIT.height / 2 };
-    expect(snapCardCenter(center.x, center.y, false)).toEqual(center);
+    expect(first.x).toBe(118);
+    expect(first.y).toBe(109.5);
     expect(second.x - first.x).toBe(110);
     expect(second.y - first.y).toBe(0);
     const label = stage.canvasLabels.find((entry) => entry.id === 'child');

@@ -15,6 +15,15 @@ function sanitize(payload) {
 }
 
 describe.skipIf(!phpAvailable)('account JSON contract', () => {
+  it('keeps shared and separate phone/desktop position layouts in the same PHP and dev contract', () => {
+    const frame = {x: -400, y: -600, width: 800, height: 900};
+    const layout = {bounds: frame, regions: {collection: frame}, cards: {a: {x: 10, y: 20}}, labels: {l: {x: 5, y: 6}}};
+    const payload = {canvasAreas: [{id: 'd', name: 'Deck', type: 'deck', cards: [], deckRegionBounds: {collection: frame},
+      layoutProfiles: {source: 'desktop', desktop: layout, phone: {...layout, bounds: {...frame, width: 600}}}}]};
+    const php = sanitize(payload);
+    expect(php.canvasAreas).toEqual(payload.canvasAreas);
+    expect(sanitizeDevUserData(payload, 'account-id', 'Account').canvasAreas).toEqual(php.canvasAreas);
+  });
   it('round-trips deletion markers alongside decks and canvas areas', () => {
     const payload = {
       decks: [{ id: 'kept', boards: {} }],

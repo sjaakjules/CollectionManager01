@@ -85,7 +85,8 @@ The app must remain fully usable without login.
   and fractional deltas. Pure horizontal scroll pans sideways; pinch zooms.
   Never infer vertical panning from wheel-delta size: browsers cannot reliably
   identify physical mouse vs trackpad hardware. Retain Space-drag and touch pan.
-- Touch: tap to select, hold then drag to move, swipe to pan, pinch to zoom
+- Touch: a readable card/stack centre drags immediately; edges and empty canvas
+  pan. Overview thumbnails pan until zoomed in. Hold for actions, pinch to zoom.
 - Double-click in the catalogue: add to active deck; double-right-click removes
 - Alt + double-click in a deck: toggle card inclusion in the current variant
 - Record `Deck.origin` for + imports (`user`), lookup saves (`lookup`) and seeds
@@ -96,6 +97,12 @@ The app must remain fully usable without login.
   Keep Maybe separate in layout, sorting, hit testing and variants.
   Collection uses ten portrait columns; use the shared deck-board geometry in
   `src/canvas/deckBoardLayout.ts` and preserve existing main-deck arrangements.
+- Base region titles move with a temporary insertion preview; edges resize only
+  to their padded content minimum. Moves use grid translations. Custom labels
+  float freely and expand parent regions. Cancelled previews must never save.
+  Phone/desktop layouts share the first edited arrangement until the other type
+  edits, then keep separate position snapshots in the shared guest/account schema.
+  Never duplicate card metadata, memberships or variants in those snapshots.
 - Use `getDeckLibraryEntries` for both the side Decks panel and Deck Lookup's
   Added tab. Include all saved origins; never apply separate list filters.
   Reset layout requires confirmation on mouse, keyboard and touch paths, and

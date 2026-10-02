@@ -1298,6 +1298,8 @@ export function BottomPanel({
                   {state.ui.labelPlacementMode ? "Stop Label Placement" : "Start Label Placement"}
                 </button>
                 <ul className="canvas-label-guide">
+                  <li>Drag a Main, Spellbook, Atlas, Collection or Maybe title to move that region. Its outline previews the drop and neighbouring cards make room.</li>
+                  <li>Drag a region edge or corner to resize it. Cards and titles always keep their padding. Escape cancels a move.</li>
                   <li>Choose a spot on the canvas to place a label. Labels inside a deck move with that deck.</li>
                   <li>Drop a card on a label’s name to join its group. Drag the label to move the whole group.</li>
                   <li>Shake a card while dragging to detach it. Drop it in another board to transfer it, or on another label’s name to join that group.</li>

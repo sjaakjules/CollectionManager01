@@ -50,4 +50,9 @@ describe('deck region proposals', () => {
     expect(hitDeckRegion(regions, {x: 540, y: 280}, 1)).toEqual({id: 'spellbook', edge: 'se'});
     expect(hitDeckRegion(regions, {x: 200, y: 210}, 1, true)).toBeNull();
   });
+
+  it('lets a touch on the visible name move the region instead of resizing its nearby top border', () => {
+    expect(hitDeckRegion(regions, {x: 90, y: 112}, 0.5, true)).toEqual({id: 'spellbook'});
+    expect(hitDeckRegion(regions, {x: 90, y: 100}, 0.5, true)).toEqual({id: 'spellbook', edge: 'n'});
+  });
 });

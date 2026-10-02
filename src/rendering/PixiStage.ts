@@ -1,3 +1,6 @@
+import { required } from '@/utils/required';
+import { detectResponsiveUiMode } from '@/utils/responsiveMode';
+import { applyDeckLayoutProfile, applyDeckLabelProfile, normalizeDeckLayoutProfiles, saveDeckLayoutProfile } from '@/canvas/deckLayoutProfiles';
 /**
  * PixiJS application setup and card scene management
  *
@@ -124,12 +127,17 @@ import {
   type CanvasDeckVariant,
   type CanvasArea,
   type CanvasCardInstance,
+  type DeckRegionBounds,
+  type DeckRegionId,
 } from "@/canvas/canvasAreas";
 import {
   DECK_BOARD_ORDER, DECK_BOARD_MIN_HEIGHT, DECK_MIN_WIDTH,
+  DECK_COMPACT_BOARD_WIDTH,
   getDeckBoardWidth, getDeckBoardRects as computeDeckBoardRects,
   fitDeckBoardSections, getDeckAreaBounds, placeNewDeckCards, getMainDeckSectionRects, normalizeDeckBoard, type DeckZoneBoard,
 } from '@/canvas/deckBoardLayout';
+import { DECK_REGION_NAMES, hitDeckRegion, planDeckRegionMove, resizeDeckRegion,
+  type DeckRegionHit, type DeckRegionPlan } from '@/canvas/deckRegionInteraction';
 
 // ============================================================================
 // Types
@@ -328,6 +336,7 @@ interface ZoneDragState {
 }
 
 type TouchCanvasTarget =
+  | ({ kind: 'deck-region'; zoneId: string; hit: DeckRegionHit } & TouchGestureTarget)
   | ({ kind: "empty" } & TouchGestureTarget)
   | ({
       kind: "card";
@@ -732,6 +741,15 @@ export class PixiStage {
   private catalogueLayout: CatalogueLayoutConfig = createDefaultCatalogueLayout();
   private collectionLayoutVariant: CollectionLayoutVariant | null = null;
   private collectionLayoutAspect = 0;
+  private deckLayoutProfile = detectResponsiveUiMode();
+  private deckRegionHitRects = new Map<string, DeckRegionBounds>();
+  private regionDrag: {
+    zoneId: string; hit: DeckRegionHit; start: {x: number; y: number};
+    original: CanvasArea; rects: DeckRegionBounds; labels: CanvasLabel[];
+    plan: DeckRegionPlan | null; preview: CanvasArea | null;
+    graphic: Graphics; titles: Map<DeckRegionId, Text>;
+    sprites: Map<string, {x: number; y: number; alpha: number}>;
+  } | null = null;
 
   // Culling state
   private lastCullingUpdate = 0;
@@ -1375,6 +1393,10 @@ export class PixiStage {
       };
     }
 
+    const region = this.getDeckRegionAtPosition(worldPos, true);
+    if (region) return {kind: 'deck-region', key: `deck-region:${region.zone.id}:${region.hit.id}`,
+      zoneId: region.zone.id, hit: region.hit, dragOnMove: true};
+
     const zoneCard = this.getZoneCardAtPosition(worldPos);
     if (zoneCard) {
       return {
@@ -1765,6 +1787,11 @@ export class PixiStage {
     this.activeTouchDragTarget = target;
     this.camera.pauseDrag();
 
+    if (target.kind === 'deck-region') {
+      this.startDeckRegionDrag(target.zoneId, target.hit, startWorldPos);
+      return;
+    }
+
     if (target.kind === "card") {
       this.clearZoneSelection();
       if (!this.selectedCards.has(target.cardKey)) {
@@ -1808,6 +1835,7 @@ export class PixiStage {
     screenPos: { x: number; y: number },
   ): void {
     if (!this.activeTouchDragTarget) return;
+    if (this.regionDrag) { this.updateDeckRegionDrag(worldPos); return; }
 
     if (this.labelDragState.isDragging) {
       this.clearZoneDropPreview();
@@ -1853,6 +1881,7 @@ export class PixiStage {
     worldPos: { x: number; y: number },
     screenPos: { x: number; y: number },
   ): void {
+    if (this.regionDrag) { this.endDeckRegionDrag(); return; }
     if (this.labelDragState.isDragging) {
       this.endLabelDrag();
       return;
@@ -2619,6 +2648,7 @@ export class PixiStage {
       ...area,
       bounds: { ...area.bounds },
       deckRegionBounds: area.deckRegionBounds ? Object.fromEntries(Object.entries(area.deckRegionBounds).map(([key, rect]) => [key, { ...rect }])) : undefined,
+      layoutProfiles: normalizeDeckLayoutProfiles(area.layoutProfiles),
       cards: area.cards.map((card) => ({ ...card })),
       deckVariants: area.deckVariants?.map((variant) => ({
         ...variant,
@@ -2634,6 +2664,9 @@ export class PixiStage {
   }
 
   private emitCanvasAreasChange(): void {
+    for (const area of this.canvasAreas) if (area.layoutProfiles?.[this.deckLayoutProfile]) {
+      saveDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
+    }
     this.onCanvasAreasChange?.(this.cloneCanvasAreas(this.canvasAreas));
   }
 
@@ -4638,10 +4671,12 @@ export class PixiStage {
   resetDeckLayout(zoneId: string): void {
     const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || zone.type !== 'deck') return;
+    delete zone.deckRegionBounds;
     zone.bounds.width = DECK_MIN_WIDTH;
     zone.bounds.height = 0;
     if (zone.cards.length === 0) {
       this.fitDeckSections(zone);
+      saveDeckLayoutProfile(zone, this.canvasLabels ?? [], this.deckLayoutProfile ?? 'desktop');
       this.rebuildZoneVisuals();
       this.emitCanvasAreasChange();
     } else {
@@ -4699,6 +4734,7 @@ export class PixiStage {
     this.canvasLabels = repositionLabelsAfterCardLayout(previousLabels, zone.id, zone.cards, nextCards);
     zone.cards = nextCards;
     this.reconcileCanvasAreaBounds(zone.id, { preserveTopLeft: true });
+    if (options?.emitChange ?? true) saveDeckLayoutProfile(zone, this.canvasLabels ?? [], this.deckLayoutProfile ?? 'desktop');
     this.rebuildZoneVisuals();
     if (options?.emitChange ?? true) {
       this.playAreaEffect('sort', zone);
@@ -5080,6 +5116,12 @@ export class PixiStage {
   }
 
   private updateHoveredFromWorldPos(worldPos: { x: number; y: number }): void {
+    const region = this.getDeckRegionAtPosition(worldPos);
+    if (this.isInitialized && this.app?.renderer) {
+      const edge = region?.hit.edge;
+      this.app.canvas.style.cursor = region ? edge ? `${edge}-resize` : 'grab' : '';
+      this.app.canvas.title = region ? `${DECK_REGION_NAMES[region.hit.id]}: drag the title to move; drag an edge to resize` : '';
+    }
     this.updateDeckFilterChipHover(worldPos);
     const zoneCard = this.getZoneCardAtPosition(worldPos);
     const zoneUnderPointer = this.getZoneAtPosition(worldPos);
@@ -5277,6 +5319,14 @@ export class PixiStage {
       return;
     }
 
+    const region = this.getDeckRegionAtPosition(worldPos);
+    if (region) {
+      this.cancelSelectionBox();
+      this.startDeckRegionDrag(region.zone.id, region.hit, worldPos);
+      this.camera.pauseDrag();
+      return;
+    }
+
     if (clickedZoneCard) {
       this.cancelSelectionBox();
       if (isCtrlHeld) {
@@ -5382,6 +5432,7 @@ export class PixiStage {
         this.startZoneCardDrag(card, pending.startWorldPos);
       }
     }
+    if (this.regionDrag) { this.updateDeckRegionDrag(worldPos); return; }
     // Update label drag
     if (this.labelDragState.isDragging) {
       this.clearZoneDropPreview();
@@ -5479,6 +5530,7 @@ export class PixiStage {
     this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
     this.clearZoneDropPreview();
 
+    if (this.regionDrag) { this.endDeckRegionDrag(); return; }
     // End label drag
     if (this.labelDragState.isDragging && event.button !== 2) {
       this.endLabelDrag();
@@ -5708,13 +5760,14 @@ export class PixiStage {
   }
 
   private fitLabelRegionBounds(zone: CanvasArea): boolean {
-    const regions = this.getPopulatedLabelBounds(zone);
-    if (!regions.length) return false;
+    const labels = this.getPopulatedLabelBounds(zone);
+    if (!labels.length) return false;
+    const regions = zone.type === 'deck' ? Object.values(this.getDeckBoardRects(zone.bounds, zone)) : labels;
     const before = { ...zone.bounds };
-    const left = Math.min(before.x, ...regions.map(rect => rect.x - 14));
-    const top = Math.min(before.y, ...regions.map(rect => rect.y - this.getZoneHeaderHeight(zone) - 14));
-    const right = Math.max(before.x + before.width, ...regions.map(rect => rect.x + rect.width + 14));
-    const bottom = Math.max(before.y + before.height, ...regions.map(rect => rect.y + rect.height + 14));
+    const left = Math.min(before.x, ...regions.map(rect => rect.x - 22));
+    const top = Math.min(before.y, ...regions.map(rect => rect.y - this.getZoneHeaderHeight(zone) - 22));
+    const right = Math.max(before.x + before.width, ...regions.map(rect => rect.x + rect.width + 22));
+    const bottom = Math.max(before.y + before.height, ...regions.map(rect => rect.y + rect.height + 22));
     zone.bounds = { x: left, y: top, width: right - left, height: bottom - top };
     return left !== before.x || top !== before.y || zone.bounds.width !== before.width || zone.bounds.height !== before.height;
   }
@@ -5839,10 +5892,12 @@ export class PixiStage {
   }
 
   private setCanvasLabels(labels: CanvasLabel[]): void {
-    if (this.canvasLabelsEqual(this.canvasLabels, labels)) {
+    const positioned = labels.map(label => ({...label}));
+    for (const area of this.canvasAreas) applyDeckLabelProfile(area, positioned, this.deckLayoutProfile);
+    if (this.canvasLabelsEqual(this.canvasLabels, positioned)) {
       return;
     }
-    this.canvasLabels = labels.map((label) => ({ ...label }));
+    this.canvasLabels = positioned;
     this.rebuildLabelSprites();
   }
 
@@ -5968,13 +6023,6 @@ export class PixiStage {
       this.updateLabelDrag(this.labelDragState.startWorldPos);
     } else {
       const pos = this.labelDragLastPos ?? { x: label.x, y: label.y };
-      const anchor = getLabelCards(this.canvasLabels, label.id, this.canvasAreas)[0];
-      if (anchor) {
-        const landscape = this.isLandscapeCard(anchor.cardName);
-        const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-        const snapped = snapCardCenter(anchor.x + size.width / 2, anchor.y + size.height / 2, landscape);
-        this.updateLabelDrag({ x: pos.x + snapped.x - size.width / 2 - anchor.x, y: pos.y + snapped.y - size.height / 2 - anchor.y });
-      }
       const family = getLabelFamily(this.canvasLabels, label.id);
       const cards = getLabelCards(this.canvasLabels, label.id, this.canvasAreas);
       const targetLabel = this.getLabelTarget(pos, family);
@@ -6009,6 +6057,10 @@ export class PixiStage {
     this.labelDragCardStarts.clear();
     this.labelDragLabelStarts.clear();
     for (const area of this.canvasAreas) this.reconcileCanvasAreaBounds(area.id);
+    if (!cancel && moved) {
+      const owner = this.canvasAreas.find(area => area.id === label.areaId);
+      if (owner) saveDeckLayoutProfile(owner, this.canvasLabels, this.deckLayoutProfile ?? 'desktop');
+    }
     this.rebuildZoneVisuals();
     if (!cancel && moved) {
       this.emitCanvasLabelsChange();
@@ -6575,6 +6627,7 @@ export class PixiStage {
     }
     this.selectedZoneCardKeys = selectedKeys;
     for (const zone of changedZones) this.reconcileCanvasAreaBounds(zone.id);
+    for (const zone of changedZones) saveDeckLayoutProfile(zone, this.canvasLabels ?? [], this.deckLayoutProfile ?? 'desktop');
     this.resetZoneCardDrag();
     this.rebuildZoneVisuals();
     this.playCardsEffect('place', selectedKeys);
@@ -6590,6 +6643,7 @@ export class PixiStage {
   }
 
   private cancelDesktopInteraction(): void {
+    if (this.regionDrag) this.endDeckRegionDrag(true);
     this.desktopPanStart = null;
     this.pendingCardClick = null;
     this.pendingZoneCardClick = null;
@@ -6606,6 +6660,166 @@ export class PixiStage {
       this.rebuildZoneVisuals();
     }
     this.camera?.resumeDrag();
+  }
+
+  private getDeckRegionRects(zone: CanvasArea): DeckRegionBounds {
+    return {...this.getDeckBoardRects(zone.bounds, zone),
+      ...getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name), zone.deckRegionBounds)};
+  }
+
+  private getDeckRegionAtPosition(point: {x: number; y: number}, touch = false): {zone: CanvasArea; hit: DeckRegionHit} | null {
+    for (const [id, rects] of [...(this.deckRegionHitRects?.entries() ?? [])].reverse()) {
+      const hit = hitDeckRegion(rects, point, this.camera?.zoom ?? 1, touch);
+      const zone = hit && this.canvasAreas.find(area => area.id === id && area.pinned);
+      if (hit && zone) return {zone, hit};
+    }
+    return null;
+  }
+
+  private startDeckRegionDrag(zoneId: string, hit: DeckRegionHit, point: {x: number; y: number}): void {
+    const zone = this.canvasAreas.find(area => area.id === zoneId);
+    if (!zone) return;
+    const graphic = new Graphics();
+    graphic.zIndex = 1000000;
+    graphic.eventMode = 'none';
+    this.zoneContainer.addChild(graphic);
+    this.regionDrag = {zoneId, hit, start: {...point}, original: required(this.cloneCanvasAreas([zone])[0]),
+      rects: this.getDeckRegionRects(zone), labels: this.canvasLabels.map(label => ({...label})),
+      plan: null, preview: null, graphic, titles: new Map(),
+      sprites: new Map([...this.zoneCardSprites].filter(([, card]) => card.zoneId === zoneId)
+        .map(([key, card]) => [key, {x: card.sprite.x, y: card.sprite.y, alpha: card.sprite.alpha}]))};
+    this.hoveredZoneCardKey = null;
+    this.drawZoneDeleteOverlay();
+    this.app.canvas.style.cursor = hit.edge ? `${hit.edge}-resize` : 'grabbing';
+  }
+
+  private getRegionLabelDelta(label: CanvasLabel, drag: NonNullable<PixiStage['regionDrag']>, plan: DeckRegionPlan): {x: number; y: number} {
+    if (label.areaId !== drag.zoneId) return {x: 0, y: 0};
+    const board = normalizeDeckBoard(label.board);
+    if (plan.deltas[board]) return required(plan.deltas[board]);
+    if (board === 'mainboard') {
+      const members = getLabelCards(drag.labels, label.id, [drag.original]);
+      for (const child of ['spellbook', 'atlas'] as const) {
+        if (members.length && members.every(card => this.isLandscapeCard(card.cardName) === (child === 'atlas'))) {
+          return plan.deltas[child] ?? {x: 0, y: 0};
+        }
+      }
+    }
+    return {x: 0, y: 0};
+  }
+
+  private updateDeckRegionDrag(point: {x: number; y: number}): void {
+    const drag = this.regionDrag;
+    if (!drag) return;
+    const delta = {x: point.x - drag.start.x, y: point.y - drag.start.y};
+    if (!drag.plan && Math.hypot(delta.x, delta.y) * (this.camera?.zoom ?? 1) < 5) return;
+    let plan: DeckRegionPlan;
+    if (drag.hit.edge) {
+      const minimumZone = required(this.cloneCanvasAreas([drag.original])[0]);
+      delete minimumZone.deckRegionBounds?.[drag.hit.id];
+      const board = drag.hit.id;
+      if (!drag.original.cards.some(card => normalizeDeckBoard(card.board) === board) &&
+        (board === 'collection' || board === 'maybeboard')) {
+        minimumZone.deckRegionBounds ??= {};
+        minimumZone.deckRegionBounds[board] = {...required(drag.rects[board]), width: DECK_COMPACT_BOARD_WIDTH, height: DECK_BOARD_MIN_HEIGHT[board]};
+      }
+      const minimum = this.getDeckRegionRects(minimumZone)[drag.hit.id] ?? required(drag.rects[drag.hit.id]);
+      const rect = resizeDeckRegion(required(drag.rects[drag.hit.id]), minimum, drag.hit.edge, delta);
+      plan = planDeckRegionMove({...drag.rects, [drag.hit.id]: rect}, drag.hit.id, {x: 0, y: 0}, false);
+      plan.hint = `Resize ${DECK_REGION_NAMES[drag.hit.id]}`;
+    } else plan = planDeckRegionMove(drag.rects, drag.hit.id, delta);
+    const preview = required(this.cloneCanvasAreas([drag.original])[0]);
+    preview.deckRegionBounds = plan.rects;
+    for (const card of preview.cards) {
+      const board = normalizeDeckBoard(card.board);
+      const move = plan.deltas[board] ?? (board === 'mainboard'
+        ? plan.deltas[this.isLandscapeCard(card.cardName) ? 'atlas' : 'spellbook'] : undefined);
+      if (move) { card.x += move.x; card.y += move.y; if (move.x || move.y) card.isNew = false; }
+    }
+    preview.bounds = getDeckAreaBounds(preview, this.getZoneHeaderHeight(preview), name => this.isLandscapeCard(name));
+    const originalCards = new Map(drag.original.cards.map(card => [card.id, card]));
+    for (const card of preview.cards) {
+      const key = `${preview.id}:${card.id}`, sprite = this.zoneCardSprites.get(key)?.sprite;
+      const start = drag.sprites.get(key), original = originalCards.get(card.id);
+      if (!sprite || !start || !original) continue;
+      const dx = card.x - original.x, dy = card.y - original.y;
+      sprite.position.set(start.x + dx, start.y + dy);
+      sprite.alpha = dx || dy ? start.alpha * 0.58 : start.alpha;
+    }
+    for (const label of drag.labels) {
+      const move = this.getRegionLabelDelta(label, drag, plan);
+      this.labelSprites.get(label.id)?.text.position.set(label.x + move.x, label.y + move.y);
+    }
+    if (!drag.hit.edge && drag.plan?.hint !== plan.hint) {
+      const moved = preview.cards.filter(card => {
+        const original = originalCards.get(card.id);
+        return original && (original.x !== card.x || original.y !== card.y);
+      });
+      this.playCardsEffect('sort', moved.slice(0, 4).map(card => `${preview.id}:${card.id}`));
+    }
+    const frame = this.zoneFrames.get(drag.zoneId);
+    if (frame) { frame.frame.alpha = 0.25; for (const title of frame.subzoneLabels) title.alpha = 0.18; }
+    drag.graphic.clear();
+    const outline = preview.bounds;
+    drag.graphic.rect(outline.x, outline.y, outline.width, outline.height).stroke({color: MANGA_PALETTE.line, width: 1, alpha: 0.6});
+    for (const [key, rect] of Object.entries(plan.rects)) {
+      const id = key as DeckRegionId, active = id === drag.hit.id;
+      drag.graphic.roundRect(rect.x, rect.y, rect.width, rect.height, 6)
+        .fill({color: MANGA_PALETTE.gold, alpha: active ? 0.07 : 0.015})
+        .stroke({color: active ? MANGA_PALETTE.gold : MANGA_PALETTE.line, width: (active ? 2 : 1) / Math.max(0.4, this.camera?.zoom ?? 1), alpha: 0.95});
+      let title = drag.titles.get(id);
+      if (!title) {
+        title = this.configureTextQuality(new Text({text: DECK_REGION_NAMES[id], style: {fontFamily: 'Arial', fontSize: 13, fill: MANGA_PALETTE.paper, fontWeight: 'bold'}}));
+        title.zIndex = 1000001;
+        title.eventMode = 'none';
+        drag.titles.set(id, title);
+        this.zoneContainer.addChild(title);
+      }
+      title.text = active ? `${DECK_REGION_NAMES[id]} · release to place` : DECK_REGION_NAMES[id];
+      title.position.set(rect.x + 8, rect.y + 8);
+      title.scale.set(1);
+      title.scale.set(Math.min(1, Math.max(0.5, (rect.width - 16) / title.width)));
+    }
+    drag.plan = plan;
+    drag.preview = preview;
+    this.app.canvas.title = `${plan.hint}. Release to place; Escape to cancel.`;
+    this.zoneContainer.sortChildren();
+  }
+
+  private endDeckRegionDrag(cancel = false): void {
+    const drag = this.regionDrag;
+    if (!drag) return;
+    this.regionDrag = null;
+    drag.graphic.destroy();
+    for (const title of drag.titles.values()) title.destroy();
+    for (const [key, start] of drag.sprites) {
+      const sprite = this.zoneCardSprites.get(key)?.sprite;
+      if (sprite) { sprite.position.set(start.x, start.y); sprite.alpha = start.alpha; }
+    }
+    for (const label of drag.labels) this.labelSprites.get(label.id)?.text.position.set(label.x, label.y);
+    const frame = this.zoneFrames.get(drag.zoneId);
+    if (frame) { frame.frame.alpha = 1; for (const title of frame.subzoneLabels) title.alpha = 1; }
+    this.app.canvas.style.cursor = '';
+    this.app.canvas.title = '';
+    this.camera?.resumeDrag();
+    if (cancel || !drag.plan || !drag.preview) return;
+    const zone = this.canvasAreas.find(area => area.id === drag.zoneId);
+    if (!zone) return;
+    Object.assign(zone, drag.preview);
+    for (const label of this.canvasLabels) {
+      const original = drag.labels.find(entry => entry.id === label.id);
+      if (!original) continue;
+      const move = this.getRegionLabelDelta(original, drag, drag.plan);
+      label.x = original.x + move.x; label.y = original.y + move.y;
+    }
+    saveDeckLayoutProfile(zone, this.canvasLabels, this.deckLayoutProfile);
+    this.rebuildZoneVisuals();
+    this.playCardsEffect('sort', zone.cards.filter(card => {
+      const original = drag.original.cards.find(entry => entry.id === card.id);
+      return original && (card.x !== original.x || card.y !== original.y);
+    }).map(card => `${zone.id}:${card.id}`));
+    this.emitCanvasLabelsChange();
+    this.emitCanvasAreasChange();
   }
 
   private startZoneDrag(zoneId: string, worldPos: { x: number; y: number }): void {
@@ -6647,6 +6861,7 @@ export class PixiStage {
 
     zone.bounds.x = targetX;
     zone.bounds.y = targetY;
+    for (const rect of Object.values(zone.deckRegionBounds ?? {})) { rect.x += moveX; rect.y += moveY; }
     for (const label of this.canvasLabels) if (label.areaId === zone.id) { label.x += moveX; label.y += moveY; }
     zone.cards = zone.cards.map((card) => ({
       ...card,
@@ -6683,6 +6898,7 @@ export class PixiStage {
     const dy = snappedY - zone.bounds.y;
     zone.bounds.x = snappedX;
     zone.bounds.y = snappedY;
+    for (const rect of Object.values(zone.deckRegionBounds ?? {})) { rect.x += dx; rect.y += dy; }
     for (const label of this.canvasLabels) if (label.areaId === zone.id) { label.x += dx; label.y += dy; }
     this.emitCanvasLabelsChange();
     zone.cards = zone.cards.map((card) => ({
@@ -6696,6 +6912,7 @@ export class PixiStage {
       startWorldPos: { x: 0, y: 0 },
       startBounds: null,
     };
+    saveDeckLayoutProfile(zone, this.canvasLabels, this.deckLayoutProfile ?? 'desktop');
     this.rebuildZoneVisuals();
     this.emitCanvasAreasChange();
   }
@@ -7389,10 +7606,12 @@ export class PixiStage {
   }
 
   setCanvasAreas(areas: CanvasArea[]): void {
+    if (this.regionDrag) this.endDeckRegionDrag(true);
     const previous = this.canvasAreas;
     const canAnimate = this.hasReceivedAreas && this.isInitialized && this.initialRevealCompleted;
     this.hasReceivedAreas = true;
     this.canvasAreas = this.cloneCanvasAreas(areas);
+    for (const area of this.canvasAreas) applyDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
     this.hoveredDeckFilterChip = null;
     for (const zone of this.canvasAreas) {
       if (zone.type === "deck") {
@@ -7865,6 +8084,7 @@ export class PixiStage {
   }
 
   destroy(): void {
+    if (this.regionDrag) this.endDeckRegionDrag(true);
     this.clearArrivalPops();
     this.arrivalStackHistory = [];
     window.removeEventListener('resize', this.handleInspectionResize);
@@ -8313,6 +8533,8 @@ export class PixiStage {
   }
 
   private clearZoneVisuals(preserveArrivals = false): void {
+    if (this.regionDrag) this.endDeckRegionDrag(true);
+    this.deckRegionHitRects?.clear();
     if (!preserveArrivals) this.clearArrivalPops();
     this.clearZoneDropPreview();
     this.destroyDeckGraphHoverTooltip();
@@ -8344,7 +8566,7 @@ export class PixiStage {
     zone: CanvasArea,
   ): Record<DeckZoneBoard, CanvasArea["bounds"]> {
     const rects = computeDeckBoardRects(bounds, zone.cards, this.getZoneHeaderHeight(zone),
-      (name) => this.isLandscapeCard(name));
+      (name) => this.isLandscapeCard(name), zone.deckRegionBounds);
     for (const board of DECK_BOARD_ORDER) {
       for (const label of this.getPopulatedLabelBounds(zone, board)) {
         const rect = rects[board];
@@ -8609,15 +8831,26 @@ export class PixiStage {
         boardRects.mainboard.height,
       );
       frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.56 });
-      const mainSections = getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name));
+      const mainSections = getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name), zone.deckRegionBounds);
+      this.deckRegionHitRects.set(zone.id, {...boardRects, ...mainSections});
+      const drawRegionHandle = (rect: CanvasArea['bounds']) => {
+        for (const x of [rect.x + 7, rect.x + 11]) for (const y of [rect.y + 11, rect.y + 16, rect.y + 21]) {
+          frame.circle(x, y, 0.8).fill({color: MANGA_PALETTE.muted, alpha: 0.6});
+        }
+        const x = rect.x + rect.width, y = rect.y + rect.height;
+        frame.moveTo(x - 14, y - 4).lineTo(x - 4, y - 14)
+          .moveTo(x - 9, y - 4).lineTo(x - 4, y - 9)
+          .stroke({color: MANGA_PALETTE.muted, width: 1, alpha: 0.5});
+      };
       for (const [key, name] of [['spellbook', 'Spellbook'], ['atlas', 'Atlas']] as const) {
         const rect = mainSections[key];
         if (!rect) continue;
         frame.roundRect(rect.x, rect.y, rect.width, rect.height, 8);
         frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.4 });
+        drawRegionHandle(rect);
         const sectionLabel = this.configureTextQuality(new Text({ text: name,
           style: { fontFamily: 'Arial', fontSize: 12, fill: MANGA_PALETTE.muted, fontWeight: 'bold' } }));
-        sectionLabel.position.set(rect.x + 8, rect.y + 4);
+        sectionLabel.position.set(rect.x + 20, rect.y + 8);
         sectionLabel.zIndex = frame.zIndex + 2;
         this.zoneContainer.addChild(sectionLabel);
         subzoneLabels.push(sectionLabel);
@@ -8626,6 +8859,7 @@ export class PixiStage {
         const rect = boardRects[board];
         frame.rect(rect.x, rect.y, rect.width, rect.height);
         frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.56 });
+        drawRegionHandle(rect);
 
         const boardLabel = this.configureTextQuality(new Text({
           text: label,
@@ -8636,8 +8870,8 @@ export class PixiStage {
             fontWeight: "bold",
           },
         }));
-        boardLabel.x = rect.x + 8;
-        boardLabel.y = rect.y + 6;
+        boardLabel.x = rect.x + 20;
+        boardLabel.y = rect.y + 8;
         boardLabel.zIndex = frame.zIndex + 2;
         this.zoneContainer.addChild(boardLabel);
         subzoneLabels.push(boardLabel);
@@ -9381,6 +9615,13 @@ export class PixiStage {
   }
 
   private handleViewportChange(): void {
+    const profile = detectResponsiveUiMode();
+    if (this.deckLayoutProfile !== profile) {
+      if (this.regionDrag) this.endDeckRegionDrag(true);
+      this.deckLayoutProfile = profile;
+      for (const area of this.canvasAreas) applyDeckLayoutProfile(area, this.canvasLabels, profile);
+      if (this.isInitialized) this.rebuildZoneVisuals();
+    }
     this.updateViewportVelocity();
     this.rebuildCollectionForLayoutVariantChange();
     this.scheduleCulling();

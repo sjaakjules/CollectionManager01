@@ -28,13 +28,16 @@ export function hitDeckRegion(rects: DeckRegionBounds, point: RegionDelta, zoom:
     const rect = rects[id];
     if (!rect || point.x < rect.x - tolerance || point.x > rect.x + rect.width + tolerance ||
       point.y < rect.y - tolerance || point.y > rect.y + rect.height + tolerance) continue;
+    // The visible name/grip wins over the larger touch border target. Keep
+    // the top six world pixels available for resizing above the title.
+    if (point.x >= rect.x + 4 && point.x <= rect.x + Math.min(rect.width - 4, 160) &&
+      point.y >= rect.y + 6 && point.y <= rect.y + DECK_REGION_TITLE_HEIGHT) return {id};
     const n = Math.abs(point.y - rect.y) <= tolerance;
     const s = Math.abs(point.y - rect.y - rect.height) <= tolerance;
     const w = Math.abs(point.x - rect.x) <= tolerance;
     const e = Math.abs(point.x - rect.x - rect.width) <= tolerance;
     const edge = `${n ? 'n' : s ? 's' : ''}${w ? 'w' : e ? 'e' : ''}`;
     if (edge) return {id, edge: edge as RegionEdge};
-    if (point.y <= rect.y + DECK_REGION_TITLE_HEIGHT && point.x <= rect.x + Math.min(rect.width, 160)) return {id};
   }
   return null;
 }

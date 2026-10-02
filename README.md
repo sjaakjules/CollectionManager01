@@ -166,12 +166,15 @@ All of the modules above include top-of-file headers and exported function docs 
 | Mouse wheel or vertical trackpad scroll | Zoom in/out at the cursor |
 | Horizontal trackpad scroll | Pan sideways |
 | Trackpad pinch | Zoom |
-| Touch swipe / pinch / hold then drag | Pan / zoom / move card |
+| Touch a card/stack centre and drag | Move it immediately once zoomed to a readable size |
+| Touch card edges or empty canvas / pinch | Pan / zoom; overview thumbnails also pan |
+| Hold a card | Show touch actions |
 | Double left/right-click in the catalogue | Add to Main / remove from the active deck |
 | Alt + double-click in a deck | Toggle inclusion in the current variant |
 | Click a card's X | Remove that card immediately; Cmd/Ctrl+Z restores it |
 | Drop a card on a label name | Join that label's group |
 | Shake a card while dragging | Detach it from its label group |
+| Drag a base region title / edge | Preview its move / resize around padded contents |
 
 Deck Lookup opens on **Avatars**, then **Styles**, **Competitions**, **Favourites**
 and **Added**. Added and the right-hand Decks panel share the same saved library:
@@ -203,18 +206,35 @@ including when the region extends over the catalogue. Mixed-board selections
 keep their boards and relative offsets. A selection from one board transfers
 when dropped inside another board. Older sideboard saves migrate to Collection.
 
+Drag a **Main**, **Spellbook**, **Atlas**, **Collection** or **Maybe** title to
+move its region. Over a neighbour, the preview shows the insertion and shifts
+affected cards with reduced opacity. Release to save; Escape or touch cancellation
+restores the original arrangement. Moves preserve the card grid and stack offsets.
+Drag an edge or corner to resize the border; cards stay fixed and their full
+stack height, titles and padding form the minimum. Older decks receive a one-time
+spacing repair. Subsequent manual card arrangements are retained.
+
+Phone and desktop initially share the first edited arrangement. Editing the
+other device type creates its own layout. Saved layouts contain positions only;
+card contents, board membership and variants remain shared. Both layouts use the
+same guest/account JSON contract.
+
 Catalogue double-click additions always go to Main and glow until moved.
 The **Layout** panel defines the catalogue's grouping and sorting hierarchy:
 drag steps between arrows, double-click a step to switch Group/Sort, or use its
 buttons. Element, Spellbook/Atlas and card-type groups remain after filtering.
+Measured parent groups wrap to suit the viewport without changing their reading
+order. Phone tools use five always-visible bottom tabs and a vertical layout
+editor in narrow windows; desktop tabs rise when the pointer approaches.
 Filters and layout changes leave decks, card orientations and labels intact.
 
 Create labels from **Labels**, then drop cards on their names to form groups.
 Drag a populated label to move its members, including nested label groups.
 Deck movement carries its linked labels. Shaking a card detaches it; dropping
 inside another board transfers it, and dropping on another label joins that
-group. Empty labels have no region and can leave their deck without expanding
-it. Double-click a label to rename it; saving an empty name removes the label
+group. Custom labels move freely rather than snapping their titles to the grid;
+linked labels, including empty ones, expand their parent with readable padding.
+Double-click a label to rename it; saving an empty name removes the label
 while keeping its cards. Touch users can also detach through the card menu.
 
 Card removal uses one click on the X or one tap on the touch Remove action. Expressive manga
