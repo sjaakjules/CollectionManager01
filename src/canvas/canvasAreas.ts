@@ -45,6 +45,18 @@ export interface CanvasAreaBounds {
 export type DeckRegionId = 'mainboard' | 'collection' | 'maybeboard' | 'spellbook' | 'atlas';
 /** World coordinates, shared with cards and labels in guest and account saves. */
 export type DeckRegionBounds = Partial<Record<DeckRegionId, CanvasAreaBounds>>;
+export type DeckLayoutProfile = 'phone' | 'desktop';
+export interface DeckLayoutSnapshot {
+  bounds: CanvasAreaBounds;
+  regions: DeckRegionBounds;
+  cards: Record<string, {x: number; y: number}>;
+  labels: Record<string, {x: number; y: number}>;
+}
+export interface DeckLayoutProfiles {
+  source: DeckLayoutProfile;
+  phone?: DeckLayoutSnapshot;
+  desktop?: DeckLayoutSnapshot;
+}
 
 export interface CanvasCardInstance {
   id: string;
@@ -80,6 +92,7 @@ export interface CanvasArea {
   cardFilters?: CardFilterState;
   /** An empty map records that legacy title/stack spacing has been upgraded. */
   deckRegionBounds?: DeckRegionBounds;
+  layoutProfiles?: DeckLayoutProfiles;
 }
 
 const QUADRANT_SIZE = 12000;
