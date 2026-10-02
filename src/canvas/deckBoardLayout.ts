@@ -1,3 +1,4 @@
+import { required } from '@/utils/required';
 import type { ActiveBoard } from '@/data/dataModels';
 import type { CanvasArea, CanvasAreaBounds, CanvasCardInstance, DeckRegionBounds } from './canvasAreas';
 import { CARD_CELL_SPACING, CARD_SIZE, DRAWN_GRID, STACK_OFFSET, pixelsToSnapGrid, snapCardCenter } from '@/rendering/Grid';
@@ -21,10 +22,16 @@ export function normalizeDeckRegionBounds(value: unknown): DeckRegionBounds | un
     const numbers = ['x', 'y', 'width', 'height'].map(field => record[field]);
     if (!numbers.every(n => typeof n === 'number' && Number.isFinite(n))) continue;
     const [x, y, width, height] = numbers as number[];
-    if (width! <= 0 || height! <= 0) continue;
-    result[key] = {x: x!, y: y!, width: width!, height: height!};
+    if (required(width) <= 0 || required(height) <= 0) continue;
+    result[key] = {x: required(x), y: required(y), width: required(width), height: required(height)};
   }
   return result;
+}
+
+export function unionRegionBounds(a: CanvasAreaBounds, b: CanvasAreaBounds): CanvasAreaBounds {
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+  return {x, y, width: Math.max(a.x + a.width, b.x + b.width) - x,
+    height: Math.max(a.y + a.height, b.y + b.height) - y};
 }
 export const DECK_COLLECTION_COLUMNS = 10;
 // Default/reset Collection layout has ten portrait columns. Manual layouts can
@@ -85,10 +92,11 @@ export function getDeckBoardRects(
   cards: CanvasCardInstance[],
   headerHeight: number,
   isLandscape: (name: string) => boolean,
+  saved: DeckRegionBounds = {},
 ): Record<DeckZoneBoard, CanvasAreaBounds> {
   const extents = cardExtents(cards, isLandscape);
   // Main encloses its physical children, including their own title bands.
-  const children = Object.values(getMainDeckSectionRects(cards, isLandscape));
+  const children = Object.values(getMainDeckSectionRects(cards, isLandscape, saved));
   if (children.length) extents.set('mainboard', {
     left: Math.min(...children.map(rect => rect.x)),
     top: Math.min(...children.map(rect => rect.y)),
@@ -106,8 +114,12 @@ export function getDeckBoardRects(
       content ? content.right + DECK_BOARD_INNER_PADDING - x : 0);
     const height = Math.max(DECK_BOARD_MIN_HEIGHT[board],
       content ? content.bottom + DECK_BOARD_BOTTOM_PADDING - y : 0);
-    const result = { x, y, width, height };
-    top = Math.max(top, y + height) + DECK_BOARD_GAP;
+    const requested = saved[board];
+    const result = requested
+      ? content ? unionRegionBounds({x, y, width, height}, requested)
+        : {...requested, width: Math.max(DECK_COMPACT_BOARD_WIDTH, requested.width), height: Math.max(DECK_BOARD_MIN_HEIGHT[board], requested.height)}
+      : { x, y, width, height };
+    top = Math.max(top, result.y + result.height) + DECK_BOARD_GAP;
     return result;
   };
   return { mainboard: rect('mainboard'), collection: rect('collection'), maybeboard: rect('maybeboard') };
@@ -115,28 +127,23 @@ export function getDeckBoardRects(
 
 /** Derive a frame from current contents, including empty boards, without moving cards. */
 export function getDeckAreaBounds(
-  zone: Pick<CanvasArea, 'bounds' | 'cards'>,
+  zone: Pick<CanvasArea, 'bounds' | 'cards' | 'deckRegionBounds'>,
   headerHeight: number,
   isLandscape: (name: string) => boolean,
   preserveTopLeft = false,
 ): CanvasAreaBounds {
-  const extents = cardExtents(zone.cards, isLandscape);
-  const children = Object.values(getMainDeckSectionRects(zone.cards, isLandscape));
-  if (children.length) extents.set('mainboard', {
-    left: Math.min(...children.map(rect => rect.x)), top: Math.min(...children.map(rect => rect.y)),
-    right: Math.max(...children.map(rect => rect.x + rect.width)), bottom: Math.max(...children.map(rect => rect.y + rect.height)),
-  });
+  const initial = getDeckBoardRects(zone.bounds, zone.cards, headerHeight, isLandscape, zone.deckRegionBounds);
+  const anchored = DECK_BOARD_ORDER.filter(board => zone.deckRegionBounds?.[board] || zone.cards.some(card => normalizeDeckBoard(card.board) === board));
   let x = zone.bounds.x;
   let y = zone.bounds.y;
-  if (extents.size > 0 && !preserveTopLeft) {
-    x = Math.min(...Array.from(extents.values(), (value) => value.left)) - DECK_BOARD_INNER_PADDING - DECK_BOARD_PADDING;
+  if (anchored.length > 0 && !preserveTopLeft) {
+    x = Math.min(...anchored.map(board => initial[board].x)) - DECK_BOARD_PADDING;
     let precedingEmptyHeight = 0;
     const candidateTops: number[] = [];
     let sawContent = false;
     for (const board of DECK_BOARD_ORDER) {
-      const content = extents.get(board);
-      if (content) {
-        candidateTops.push(content.top - DECK_BOARD_TOP_GAP - (sawContent ? 0 : precedingEmptyHeight));
+      if (anchored.includes(board)) {
+        candidateTops.push(initial[board].y - (sawContent ? 0 : precedingEmptyHeight));
         sawContent = true;
       } else if (!sawContent) {
         precedingEmptyHeight += DECK_BOARD_MIN_HEIGHT[board] + DECK_BOARD_GAP;
@@ -144,10 +151,11 @@ export function getDeckAreaBounds(
     }
     y = Math.min(...candidateTops) - headerHeight - DECK_BOARD_PADDING;
   }
-  const rects = getDeckBoardRects({ ...zone.bounds, x, y }, zone.cards, headerHeight, isLandscape);
+  const rects = getDeckBoardRects({ ...zone.bounds, x, y }, zone.cards, headerHeight, isLandscape, zone.deckRegionBounds);
   const right = Math.max(...DECK_BOARD_ORDER.map((board) => rects[board].x + rects[board].width));
   const bottom = Math.max(...DECK_BOARD_ORDER.map((board) => rects[board].y + rects[board].height));
-  return { x, y, width: Math.max(DECK_MIN_WIDTH, right + DECK_BOARD_PADDING - x), height: bottom + DECK_BOARD_PADDING - y };
+  const minWidth = Object.keys(zone.deckRegionBounds ?? {}).length ? 550 : DECK_MIN_WIDTH;
+  return { x, y, width: Math.max(minWidth, right + DECK_BOARD_PADDING - x), height: bottom + DECK_BOARD_PADDING - y };
 }
 
 /** Fit frames and open missing gaps without changing memberships or internal group offsets. */
@@ -181,8 +189,8 @@ function separateDeckRegions(zone: CanvasArea, headerHeight: number, isLandscape
     });
   };
   const children = getMainDeckSectionRects(zone.cards, isLandscape);
-  separate((['spellbook', 'atlas'] as const).flatMap(key => children[key] ? [{rect: children[key]!, members: zone.cards.filter(card => normalizeDeckBoard(card.board) === 'mainboard' && isLandscape(card.cardName) === (key === 'atlas'))}] : []));
-  const rects = getDeckBoardRects(zone.bounds, zone.cards, headerHeight, isLandscape);
+  separate((['spellbook', 'atlas'] as const).flatMap(key => children[key] ? [{rect: required(children[key]), members: zone.cards.filter(card => normalizeDeckBoard(card.board) === 'mainboard' && isLandscape(card.cardName) === (key === 'atlas'))}] : []));
+  const rects = getDeckBoardRects(zone.bounds, zone.cards, headerHeight, isLandscape, zone.deckRegionBounds);
   separate(DECK_BOARD_ORDER.filter(board => zone.cards.some(card => normalizeDeckBoard(card.board) === board))
     .map(board => ({rect: rects[board], members: zone.cards.filter(card => normalizeDeckBoard(card.board) === board)})));
   return changed;
@@ -195,7 +203,7 @@ export function placeNewDeckCards(
   isLandscape: (name: string) => boolean,
 ): void {
   const headerHeight = CARD_SIZE.PORTRAIT.height + 16 + DRAWN_GRID.height;
-  const rects = getDeckBoardRects(zone.bounds, zone.cards, headerHeight, isLandscape);
+  const rects = getDeckBoardRects(zone.bounds, zone.cards, headerHeight, isLandscape, zone.deckRegionBounds);
   const occupied = [...zone.cards];
   for (const addition of additions) {
     const board = normalizeDeckBoard(addition.board);
@@ -261,14 +269,19 @@ export function placeNewDeckCards(
 export function getMainDeckSectionRects(
   cards: CanvasCardInstance[],
   isLandscape: (name: string) => boolean,
+  saved: DeckRegionBounds = {},
 ): { spellbook?: CanvasAreaBounds; atlas?: CanvasAreaBounds } {
   const result: { spellbook?: CanvasAreaBounds; atlas?: CanvasAreaBounds } = {};
   for (const [key, landscape] of [['spellbook', false], ['atlas', true]] as const) {
     const members = cards.filter((card) => normalizeDeckBoard(card.board) === 'mainboard' && isLandscape(card.cardName) === landscape);
-    if (!members.length) continue;
-    const {left, top, right, bottom} = cardExtents(members, isLandscape).get('mainboard')!;
+    if (!members.length) {
+      if (saved[key]) result[key] = {...saved[key]};
+      continue;
+    }
+    const {left, top, right, bottom} = required(cardExtents(members, isLandscape).get('mainboard'));
     result[key] = { x:left-DECK_BOARD_INNER_PADDING, y:top-DECK_BOARD_TOP_GAP,
       width:right-left+DECK_BOARD_INNER_PADDING*2, height:bottom-top+DECK_BOARD_TOP_GAP+DECK_BOARD_BOTTOM_PADDING };
+    if (saved[key]) result[key] = unionRegionBounds(required(result[key]), required(saved[key]));
   }
   return result;
 }
