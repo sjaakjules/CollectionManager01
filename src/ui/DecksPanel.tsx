@@ -29,7 +29,7 @@ const CURIOSA_KIND_DELAY_MESSAGE = "Slowing download to be kind to Curiosa.io";
 const AVATAR_NAMES = Object.keys(AVATAR_SHORT_NAMES) as AvatarName[];
 const DECK_BOARD_SECTIONS = [
   { key: "mainboard", label: "Main" },
-  { key: "sideboard", label: "Side" },
+  { key: "collection", label: "Side" },
   { key: "maybeboard", label: "Maybe" },
 ] as const;
 
@@ -224,7 +224,7 @@ export function DecksPanel({
           author: fetched.author ?? "",
           mainboard: fetched.boards.mainboard,
           avatar: fetched.boards.avatar,
-          sideboard: fetched.boards.sideboard,
+          collection: fetched.boards.collection,
           maybeboard: fetched.boards.maybeboard,
         },
         state.cards,

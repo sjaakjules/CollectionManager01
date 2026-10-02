@@ -4,8 +4,8 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-
 import { sorceryDevProxy } from './scripts/lib/sorcery-dev-proxy';
+import { sanitizeDevUserData } from './scripts/lib/dev-user-data';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -97,70 +97,6 @@ function authUserDevApi(): Plugin {
     return session;
   }
 
-  function sanitizeStringList(value: unknown): string[] {
-    if (!Array.isArray(value)) return [];
-    return Array.from(
-      new Set(
-        value
-          .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
-          .filter(Boolean)
-      )
-    );
-  }
-
-  function sanitizeUserData(
-    payload: Record<string, unknown>,
-    userId: string,
-    username: string
-  ): Record<string, unknown> {
-    const decks = Array.isArray(payload.decks) ? payload.decks : [];
-    const collection = Array.isArray(payload.collection) ? payload.collection : [];
-    const selectedCardCategory =
-      typeof payload.selectedCardCategory === 'string' || payload.selectedCardCategory === null
-        ? payload.selectedCardCategory
-        : null;
-    const cardCategories =
-      payload.cardCategories && typeof payload.cardCategories === 'object'
-        ? payload.cardCategories
-        : undefined;
-    const canvasLabels = Array.isArray(payload.canvasLabels)
-      ? payload.canvasLabels.filter((label) => {
-          if (!label || typeof label !== 'object') return false;
-          const obj = label as Record<string, unknown>;
-          return (
-            typeof obj.id === 'string' &&
-            typeof obj.text === 'string' &&
-            typeof obj.x === 'number' &&
-            Number.isFinite(obj.x) &&
-            typeof obj.y === 'number' &&
-            Number.isFinite(obj.y)
-          );
-        })
-      : [];
-    const canvasAreas = Array.isArray(payload.canvasAreas)
-      ? payload.canvasAreas.filter((area) => {
-          if (!area || typeof area !== 'object' || Array.isArray(area)) return false;
-          const obj = area as Record<string, unknown>;
-          return (
-            typeof obj.id === 'string' &&
-            typeof obj.name === 'string' &&
-            (obj.type === 'stack' || obj.type === 'deck')
-          );
-        })
-      : [];
-
-    return {
-      name: username,
-      id: userId,
-      decks,
-      collection,
-      selectedCardCategory,
-      cardCategories,
-      favouriteDeckIds: sanitizeStringList(payload.favouriteDeckIds),
-      canvasLabels,
-      canvasAreas,
-    };
-  }
 
   return {
     name: 'auth-user-dev-api',
@@ -325,7 +261,7 @@ function authUserDevApi(): Plugin {
             return;
           }
 
-          db.userData[userId] = sanitizeUserData(payload, userId, session.username);
+          db.userData[userId] = sanitizeDevUserData(payload, userId, session.username);
           writeDb(db);
           jsonResponse(res, 200, { ok: true });
           return;

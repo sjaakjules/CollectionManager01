@@ -1,5 +1,5 @@
 /**
- * Deck import/export for Curiosa.io compatibility
+ * Deck import/export for SorceryTCG and legacy Curiosa compatibility
  *
  * Export format: "quantity name" per line (e.g., "4 Cave Trolls")
  * Import: Parse text, match card names, highlight unknown cards
@@ -34,9 +34,9 @@ export function exportDeckToText(deck: Deck): string {
   // Export each board with headers
   const boards: Array<[keyof DeckBoards, string]> = [
     ['avatar', '// Avatar'],
-    ['mainboard', '// Mainboard'],
-    ['sideboard', '// Sideboard'],
-    ['maybeboard', '// Maybeboard'],
+    ['mainboard', '// Main'],
+    ['collection', '// Collection'],
+    ['maybeboard', '// Maybe'],
   ];
 
   for (const [boardKey, header] of boards) {
@@ -149,11 +149,11 @@ export function importDeckFromText(
       const header = line.toLowerCase();
       if (header.includes('avatar')) {
         currentBoard = 'avatar';
-      } else if (header.includes('sideboard')) {
-        currentBoard = 'sideboard';
-      } else if (header.includes('maybeboard')) {
+      } else if (header.includes('sideboard') || header.includes('collection')) {
+        currentBoard = 'collection';
+      } else if (header.includes('maybeboard') || header.includes('maybe')) {
         currentBoard = 'maybeboard';
-      } else if (header.includes('mainboard') || header.includes('main')) {
+      } else if (header.includes('mainboard') || header.includes('main') || header.includes('spellbook') || header.includes('atlas')) {
         currentBoard = 'mainboard';
       }
       continue;
@@ -252,7 +252,9 @@ export interface CuriosaDeckData {
   author: string;
   mainboard: DeckCard[];
   avatar: DeckCard[];
-  sideboard: DeckCard[];
+  collection?: DeckCard[];
+  /** Accepted only at the legacy Curiosa import boundary. */
+  sideboard?: DeckCard[];
   maybeboard: DeckCard[];
 }
 
@@ -315,7 +317,7 @@ export function importFromCuriosaDeck(
 
   validateAndAdd(data.mainboard, 'mainboard');
   validateAndAdd(data.avatar, 'avatar');
-  validateAndAdd(data.sideboard, 'sideboard');
+  validateAndAdd(data.collection ?? data.sideboard ?? [], 'collection');
   validateAndAdd(data.maybeboard, 'maybeboard');
 
   return { deck, unknownCards, warnings };

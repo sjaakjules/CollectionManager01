@@ -11,6 +11,7 @@
  */
 
 import type { UserData } from '@/data/dataModels';
+import { normalizeUserDataBoards } from '@/data/boardMigration';
 
 // Configure base URL via environment variable or default
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
@@ -128,7 +129,7 @@ export async function fetchUserData(
     throw new Error(error.message);
   }
 
-  return response.json();
+  return normalizeUserDataBoards(await response.json() as UserData);
 }
 
 /**

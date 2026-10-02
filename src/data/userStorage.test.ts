@@ -117,7 +117,7 @@ describe('userStorage', () => {
         {
           id: 'deck-late',
           name: 'Last Second Deck',
-          boards: { mainboard: [], sideboard: [], avatar: [], maybeboard: [] },
+          boards: { mainboard: [], collection: [], avatar: [], maybeboard: [] },
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },

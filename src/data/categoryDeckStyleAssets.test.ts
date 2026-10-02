@@ -41,7 +41,7 @@ interface DeckStyleSourceDeck {
   elements: string[];
   boards: {
     mainboard: DeckStyleDeckCard[];
-    sideboard: DeckStyleDeckCard[];
+    collection: DeckStyleDeckCard[];
     avatar: DeckStyleDeckCard[];
     maybeboard: DeckStyleDeckCard[];
   };

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/shared/session.php';
+require_once __DIR__ . '/shared/user-data.php';
 
 const SORCERY_USERNAME_RE = '/^[a-zA-Z0-9_]{3,24}$/';
 
@@ -28,123 +29,6 @@ function sorcery_validate_credentials(array $payload): array
     }
 
     return [$username, $normalized, $password];
-}
-
-function sorcery_empty_user_data(string $userId, string $username): array
-{
-    return [
-        'name' => $username,
-        'id' => $userId,
-        'decks' => [],
-        'collection' => [],
-        'selectedCardCategory' => null,
-        'favouriteDeckIds' => [],
-        'canvasLabels' => [],
-        'canvasAreas' => [],
-    ];
-}
-
-function sorcery_sanitize_favourite_deck_ids($value): array
-{
-    if (!is_array($value)) {
-        return [];
-    }
-
-    $seen = [];
-    $ids = [];
-    foreach ($value as $entry) {
-        if (!is_string($entry)) {
-            continue;
-        }
-        $id = trim($entry);
-        if ($id === '' || isset($seen[$id])) {
-            continue;
-        }
-        $seen[$id] = true;
-        $ids[] = $id;
-    }
-
-    return $ids;
-}
-
-function sorcery_sanitize_canvas_labels($value): array
-{
-    if (!is_array($value)) {
-        return [];
-    }
-
-    $labels = [];
-    foreach ($value as $label) {
-        if (!is_array($label)) {
-            continue;
-        }
-        if (
-            isset($label['id'], $label['text'], $label['x'], $label['y']) &&
-            is_string($label['id']) &&
-            is_string($label['text']) &&
-            is_numeric($label['x']) &&
-            is_numeric($label['y'])
-        ) {
-            $labels[] = [
-                'id' => $label['id'],
-                'text' => $label['text'],
-                'x' => (float)$label['x'],
-                'y' => (float)$label['y'],
-            ];
-        }
-    }
-
-    return $labels;
-}
-
-function sorcery_sanitize_canvas_areas($value): array
-{
-    if (!is_array($value)) {
-        return [];
-    }
-
-    $areas = [];
-    foreach ($value as $area) {
-        if (!is_array($area)) {
-            continue;
-        }
-        $type = $area['type'] ?? null;
-        if (
-            isset($area['id'], $area['name']) &&
-            is_string($area['id']) &&
-            is_string($area['name']) &&
-            ($type === 'stack' || $type === 'deck')
-        ) {
-            $areas[] = $area;
-        }
-    }
-
-    return $areas;
-}
-
-function sorcery_sanitize_user_data(array $payload, string $userId, string $username): array
-{
-    $selectedCardCategory = $payload['selectedCardCategory'] ?? null;
-    if (!is_string($selectedCardCategory) && $selectedCardCategory !== null) {
-        $selectedCardCategory = null;
-    }
-
-    $result = [
-        'name' => $username,
-        'id' => $userId,
-        'decks' => is_array($payload['decks'] ?? null) ? array_values($payload['decks']) : [],
-        'collection' => is_array($payload['collection'] ?? null) ? array_values($payload['collection']) : [],
-        'selectedCardCategory' => $selectedCardCategory,
-        'favouriteDeckIds' => sorcery_sanitize_favourite_deck_ids($payload['favouriteDeckIds'] ?? null),
-        'canvasLabels' => sorcery_sanitize_canvas_labels($payload['canvasLabels'] ?? null),
-        'canvasAreas' => sorcery_sanitize_canvas_areas($payload['canvasAreas'] ?? null),
-    ];
-
-    if (isset($payload['cardCategories']) && is_array($payload['cardCategories'])) {
-        $result['cardCategories'] = $payload['cardCategories'];
-    }
-
-    return $result;
 }
 
 function sorcery_save_user_data(PDO $pdo, string $userId, array $data): void

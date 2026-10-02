@@ -1315,7 +1315,7 @@ function groupCards(
 
 export interface DeckCardLayoutInfo extends CardLayoutInfo {
   quantity: number;
-  board: "avatar" | "mainboard" | "sideboard" | "maybeboard";
+  board: "avatar" | "mainboard" | "collection" | "maybeboard";
 }
 
 export interface DeckLayoutResult {
@@ -1330,7 +1330,7 @@ export interface DeckLayoutConfig {
     author?: string;
     boards: {
       mainboard: Array<{ name: string; quantity: number }>;
-      sideboard: Array<{ name: string; quantity: number }>;
+      collection: Array<{ name: string; quantity: number }>;
       avatar: Array<{ name: string; quantity: number }>;
       maybeboard: Array<{ name: string; quantity: number }>;
     };
@@ -1574,7 +1574,7 @@ export function calculateDeckLayout(
   }
 
   // === Collection (below mainboard) ===
-  if (deck.boards.sideboard.length > 0) {
+  if (deck.boards.collection.length > 0) {
     currentGridY += GROUP_GAP_UNITS - SUBGROUP_GAP_UNITS;
 
     const hPos = snapGridToPixels(0, currentGridY, false);
@@ -1588,8 +1588,8 @@ export function calculateDeckLayout(
     });
 
     const result = layoutByType(
-      deck.boards.sideboard,
-      "sideboard",
+      deck.boards.collection,
+      "collection",
       0,
       currentGridY,
     );

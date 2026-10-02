@@ -15,6 +15,10 @@
 
 import type { Card, Deck, DeckCard, ActiveBoard, CardType } from "@/data/dataModels";
 import {
+  DECK_BOARD_ORDER, DECK_BOARD_MIN_HEIGHT, DECK_MIN_WIDTH,
+  getDeckBoardWidth, fitDeckBoardSections, type DeckZoneBoard,
+} from './deckBoardLayout';
+import {
   createDefaultCardFilters,
   type CardFilterState,
 } from "@/data/cardFilters";
@@ -43,6 +47,10 @@ export interface CanvasCardInstance {
   x: number;
   y: number;
   board?: ActiveBoard | null;
+  /** Optional named subregion. Membership is explicit, never inferred from overlap. */
+  labelId?: string;
+  /** Added cards remain highlighted until the user moves them. */
+  isNew?: boolean;
 }
 
 export interface CanvasDeckVariant {
@@ -451,7 +459,7 @@ const DECK_BOARD_CARD_TOP = DRAWN_GRID.height;
 const DECK_BOARD_BOTTOM_PADDING = 10;
 const DECK_TYPE_GAP = Math.round(DRAWN_GRID.height * 0.5);
 
-type DeckBoardKey = "mainboard" | "sideboard";
+type DeckBoardKey = DeckZoneBoard;
 type DeckGroupKey = "Minion" | "Magic" | "Aura" | "Artifact" | "Site" | "other";
 const DECK_LAYOUT_TYPE_SEQUENCE: DeckGroupKey[] = [
   "Minion",
@@ -462,10 +470,7 @@ const DECK_LAYOUT_TYPE_SEQUENCE: DeckGroupKey[] = [
   "other",
 ];
 
-const DECK_EMPTY_BOARD_HEIGHT: Record<DeckBoardKey, number> = {
-  mainboard: CARD_SIZE.PORTRAIT.height + 56,
-  sideboard: CARD_SIZE.PORTRAIT.height + 44,
-};
+const DECK_EMPTY_BOARD_HEIGHT = DECK_BOARD_MIN_HEIGHT;
 
 function fitBoundsToCards(
   fallback: CanvasAreaBounds,
@@ -567,23 +572,23 @@ export function createDeckZone(
         activeByDefault: true,
         instanceBoard: "mainboard" as const,
       })),
-      ...deck.boards.maybeboard.map((card) => ({
-        ...card,
-        activeByDefault: false,
-        instanceBoard: "maybeboard" as const,
-      })),
     ],
-    sideboard: deck.boards.sideboard.map((card) => ({
+    collection: deck.boards.collection.map((card) => ({
       ...card,
       activeByDefault: false,
-      instanceBoard: "sideboard" as const,
+      instanceBoard: "collection" as const,
+    })),
+    maybeboard: deck.boards.maybeboard.map((card) => ({
+      ...card,
+      activeByDefault: false,
+      instanceBoard: "maybeboard" as const,
     })),
   };
   const bodyLeft = bounds.x + DECK_BOARD_LEFT_PADDING;
-  const bodyWidth = bounds.width - DECK_BOARD_LEFT_PADDING * 2;
   let nextBoardTop = bounds.y + ZONE_DECK_HEADER_HEIGHT + DECK_BOARD_LEFT_PADDING;
 
-  (["mainboard", "sideboard"] as const).forEach((board) => {
+  DECK_BOARD_ORDER.forEach((board) => {
+    const bodyWidth = getDeckBoardWidth(board, bounds.width);
     const boardCards = [...cardsByBoard[board]].sort((left, right) => {
       const leftInfo = cardInfoByName.get(left.name);
       const rightInfo = cardInfoByName.get(right.name);
@@ -626,7 +631,7 @@ export function createDeckZone(
     );
     let boardBottom =
       nextBoardTop +
-      (populatedGroups.length === 0 ? DECK_EMPTY_BOARD_HEIGHT[board] : 0);
+      DECK_EMPTY_BOARD_HEIGHT[board];
     let groupTop = nextBoardTop + DECK_BOARD_CARD_TOP;
 
     populatedGroups.forEach((groupKey, groupIndex) => {
@@ -689,22 +694,22 @@ export function createDeckZone(
   const avatarCardName = deck.boards.avatar[0]?.name ?? null;
   const mainVariantId = createCanvasDeckVariantId();
 
-  const contentFittedBounds = fitBoundsToCards(
+  const fitted = fitBoundsToCards(
     bounds,
     instances,
     cardInfoByName,
     ZONE_DECK_HEADER_HEIGHT,
   );
-  if (instances.length > 0) {
-    const boardDrivenHeight =
-      nextBoardTop - DECK_BOARD_GAP - bounds.y + ZONE_CONTENT_PADDING;
-    contentFittedBounds.height = Math.max(
-      contentFittedBounds.height,
-      boardDrivenHeight,
-    );
-  }
+  // Keep the section origin fixed, even when the main deck is empty. Fitting
+  // the origin to Collection cards would move every following section again.
+  const contentFittedBounds = {
+    x: bounds.x, y: bounds.y,
+    width: Math.max(DECK_MIN_WIDTH, fitted.x + fitted.width - bounds.x),
+    height: Math.max(fitted.y + fitted.height - bounds.y,
+      nextBoardTop - DECK_BOARD_GAP - bounds.y + ZONE_CONTENT_PADDING),
+  };
 
-  return {
+  const zone: CanvasArea = {
     id: createZoneId("deck"),
     name: sanitizeDeckZoneName(deck.name),
     type: "deck",
@@ -724,6 +729,9 @@ export function createDeckZone(
     activeDeckVariantId: mainVariantId,
     cardFilters: createDefaultCardFilters(),
   };
+  fitDeckBoardSections(zone, ZONE_DECK_HEADER_HEIGHT,
+    (name) => cardInfoByName.get(name)?.isLandscape ?? false);
+  return zone;
 }
 
 /**

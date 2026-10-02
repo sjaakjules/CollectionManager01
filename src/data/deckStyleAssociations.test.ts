@@ -19,7 +19,7 @@ const sourceDeck = {
   boards: {
     avatar: [{ name: "Druid", quantity: 1 }],
     mainboard: [{ name: "Spark", quantity: 2 }],
-    sideboard: [],
+    collection: [],
     maybeboard: [],
   },
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -135,6 +135,7 @@ const data: DeckStyleAssociationData = {
 describe("deck style lookup helpers", () => {
   it("converts source decks to loadable deck objects", () => {
     expect(deckStyleSourceDeckToDeck(sourceDeck)).toEqual({
+      origin: "lookup",
       id: "deck-1",
       name: "Lookup Deck",
       author: "Decksmith",

@@ -14,7 +14,7 @@ export type RuleViolationType =
   | 'TOO_MANY_AVATARS'
   | 'TOO_MANY_SPELLS'
   | 'TOO_MANY_SITES'
-  | 'TOO_MANY_SIDEBOARD'
+  | 'TOO_MANY_COLLECTION'
   | 'RARITY_LIMIT_EXCEEDED'
   | 'COLLECTION_EXCEEDED';
 
@@ -36,8 +36,8 @@ const MESSAGE_TEMPLATES: Record<RuleViolationType, (params: MessageParams) => st
   TOO_MANY_SITES: (p) =>
     `Too many sites: ${p.count} (limit ${DECK_LIMITS.SITE_COUNT})`,
 
-  TOO_MANY_SIDEBOARD: (p) =>
-    `Too many sideboard cards: ${p.count} (limit ${DECK_LIMITS.SIDEBOARD_COUNT})`,
+  TOO_MANY_COLLECTION: (p) =>
+    `Too many collection cards: ${p.count} (limit ${DECK_LIMITS.COLLECTION_COUNT})`,
 
   RARITY_LIMIT_EXCEEDED: (p) =>
     `${p.cardName}: ${p.count} copies exceeds ${p.rarity} limit of ${p.limit}`,
@@ -75,7 +75,7 @@ export function getDeckLimitsDescription(): string[] {
     `Avatar: ${DECK_LIMITS.AVATAR_COUNT}`,
     `Spells: ${DECK_LIMITS.SPELL_COUNT} max`,
     `Sites: ${DECK_LIMITS.SITE_COUNT} max`,
-    `Sideboard: ${DECK_LIMITS.SIDEBOARD_COUNT}`,
+    `Collection: ${DECK_LIMITS.COLLECTION_COUNT}`,
     `Ordinary: 4x | Exceptional: 3x | Elite: 2x | Unique: 1x`,
   ];
 }

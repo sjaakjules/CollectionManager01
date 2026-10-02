@@ -10,7 +10,7 @@
  *
  * Archive board maps (spellbook/atlas/collection/maybe, name -> quantity)
  * become app boards: spellbook + atlas fold into mainboard, collection is the
- * sideboard, maybe is the maybeboard, and the deck avatar becomes the avatar
+ * collection, maybe is the maybeboard, and the deck avatar becomes the avatar
  * board. Card names are canonicalized against the card catalog; unknown names
  * are kept verbatim and reported as warnings (never silently dropped).
  *
@@ -88,7 +88,7 @@ export function convertArchiveDeckToSeedDeck(deckId, deckinfo, lookup, nowIso) {
     ...convertBoardMap(cards.spellbook, lookup, warnings, name, 'spellbook'),
     ...convertBoardMap(cards.atlas, lookup, warnings, name, 'atlas'),
   ];
-  const sideboard = convertBoardMap(cards.collection, lookup, warnings, name, 'sideboard');
+  const collection = convertBoardMap(cards.collection, lookup, warnings, name, 'collection');
   const maybeboard = convertBoardMap(cards.maybe, lookup, warnings, name, 'maybeboard');
 
   const avatar = [];
@@ -111,7 +111,7 @@ export function convertArchiveDeckToSeedDeck(deckId, deckinfo, lookup, nowIso) {
   const deck = {
     id: `${CURIOSA_DECK_ID_PREFIX}${deckId}`,
     name,
-    boards: { mainboard, sideboard, avatar, maybeboard },
+    boards: { mainboard, collection, avatar, maybeboard },
     createdAt,
     updatedAt,
   };

@@ -1,6 +1,6 @@
 import type { ActiveBoard } from "@/data/dataModels";
 
-export type DeckAddBoard = Extract<ActiveBoard, "mainboard" | "sideboard" | "maybeboard">;
+export type DeckAddBoard = Extract<ActiveBoard, "mainboard" | "collection" | "maybeboard">;
 
 export interface BoardChoiceOption {
   board: DeckAddBoard;
@@ -9,7 +9,7 @@ export interface BoardChoiceOption {
 
 export const BOARD_CHOICE_OPTIONS: BoardChoiceOption[] = [
   { board: "mainboard", label: "Main" },
-  { board: "sideboard", label: "Side" },
+  { board: "collection", label: "Collection" },
   { board: "maybeboard", label: "Maybe" },
 ];
 

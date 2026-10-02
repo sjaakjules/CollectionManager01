@@ -388,7 +388,7 @@ interface CanvasDomDropTarget {
   deckId: string | null;
 }
 
-type DeckZoneBoard = "mainboard" | "sideboard";
+type DeckZoneBoard = "mainboard" | "collection";
 
 interface DeckVariantDialogResult {
   name: string;
@@ -510,7 +510,7 @@ const ZONE_DECK_AVATAR_TITLE_GAP = 20;
 const ZONE_DECK_HEADER_X_OFFSET = DRAWN_GRID.width * 0.5;
 const ZONE_DECK_MIN_BOARD_HEIGHT = {
   mainboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP + 6,
-  sideboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP - 6,
+  collection: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP - 6,
 } as const;
 const ZONE_DECK_STATS_COL_GAP = 10;
 const ZONE_DECK_STATS_TITLE_SIZE = 11;
@@ -3090,7 +3090,7 @@ export class PixiStage {
   }
 
   private normalizeDeckBoard(board: ActiveBoard | null | undefined): DeckZoneBoard {
-    return board === "sideboard" ? "sideboard" : "mainboard";
+    return board === "collection" ? "collection" : "mainboard";
   }
 
   private createEmptyDeckCostBucket(): DeckCostBucketStats {
@@ -3594,7 +3594,7 @@ export class PixiStage {
         (!hasExplicitVariant || activeMainIds.has(instance.id)),
     );
     const collectionSideboard = zone.cards.filter(
-      (instance) => this.normalizeDeckBoard(instance.board) === "sideboard",
+      (instance) => this.normalizeDeckBoard(instance.board) === "collection",
     );
     const collectionTotal = collectionSideboard.length;
 
@@ -4262,7 +4262,7 @@ export class PixiStage {
   ): void {
     if (zone.type !== "deck") return;
     const variants = this.ensureDeckZoneVariants(zone);
-    if (board === "sideboard") {
+    if (board === "collection") {
       for (const variant of variants) {
         variant.activeCardIds = variant.activeCardIds.filter((cardId) => cardId !== instanceId);
       }
@@ -4672,7 +4672,7 @@ export class PixiStage {
       let cursorY = bodyTop;
       const boardOrder: DeckZoneBoard[] = [
         "mainboard",
-        "sideboard",
+        "collection",
       ];
 
       for (const board of boardOrder) {
@@ -6499,7 +6499,7 @@ export class PixiStage {
     const rects = this.getDeckBoardRects(zone.bounds, zone);
     const boards: DeckZoneBoard[] = [
       "mainboard",
-      "sideboard",
+      "collection",
     ];
 
     for (const board of boards) {
@@ -7246,7 +7246,7 @@ export class PixiStage {
 
     if (deck) {
       // cspell:disable-next-line
-      for (const board of ["mainboard", "sideboard", "avatar"] as const) {
+      for (const board of ["mainboard", "collection", "avatar"] as const) {
         for (const card of deck.boards[board]) {
           const current = deckQuantities.get(card.name) ?? 0;
           deckQuantities.set(card.name, current + card.quantity);
@@ -7955,7 +7955,7 @@ export class PixiStage {
     zone: CanvasArea,
   ): {
     mainboard: { x: number; y: number; width: number; height: number };
-    sideboard: { x: number; y: number; width: number; height: number };
+    collection: { x: number; y: number; width: number; height: number };
   } {
     const bodyTop = bounds.y + this.getZoneHeaderHeight(zone) + ZONE_BODY_PADDING;
     const left = bounds.x + ZONE_BODY_PADDING;
@@ -7964,7 +7964,7 @@ export class PixiStage {
     const boardBottomPadding = ZONE_DECK_BOARD_BOTTOM_PADDING;
     const minBoardHeights = {
       mainboard: ZONE_DECK_MIN_BOARD_HEIGHT.mainboard,
-      sideboard: ZONE_DECK_MIN_BOARD_HEIGHT.sideboard,
+      collection: ZONE_DECK_MIN_BOARD_HEIGHT.collection,
     } as const;
 
     const maxBottomByBoard: Partial<Record<DeckZoneBoard, number>> = {};
@@ -7990,18 +7990,18 @@ export class PixiStage {
     };
     cursorY = mainboard.y + mainboard.height + boardGap;
 
-    const sideboardHeight = Math.max(
-      minBoardHeights.sideboard,
-      (maxBottomByBoard.sideboard ?? -Infinity) - cursorY,
+    const collectionHeight = Math.max(
+      minBoardHeights.collection,
+      (maxBottomByBoard.collection ?? -Infinity) - cursorY,
     );
-    const sideboard = {
+    const collection = {
       x: left,
       y: cursorY,
       width,
-      height: sideboardHeight,
+      height: collectionHeight,
     };
 
-    return { mainboard, sideboard };
+    return { mainboard, collection };
   }
 
   private drawZoneFrame(
@@ -8242,10 +8242,10 @@ export class PixiStage {
       );
       frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
       frame.rect(
-        boardRects.sideboard.x,
-        boardRects.sideboard.y,
-        boardRects.sideboard.width,
-        boardRects.sideboard.height,
+        boardRects.collection.x,
+        boardRects.collection.y,
+        boardRects.collection.width,
+        boardRects.collection.height,
       );
       frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
 
@@ -8258,8 +8258,8 @@ export class PixiStage {
           fontWeight: "bold",
         },
       }));
-      collectionLabel.x = boardRects.sideboard.x + 8;
-      collectionLabel.y = boardRects.sideboard.y + 6;
+      collectionLabel.x = boardRects.collection.x + 8;
+      collectionLabel.y = boardRects.collection.y + 6;
       collectionLabel.zIndex = frame.zIndex + 2;
       this.zoneContainer.addChild(collectionLabel);
       subzoneLabels.push(collectionLabel);

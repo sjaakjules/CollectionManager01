@@ -1,4 +1,5 @@
 import type { Card, Deck, DeckBoards, Element } from "@/data/dataModels";
+import { normalizeDeckBoards } from "@/data/boardMigration";
 import { isBlockedTokenCardName } from "@/data/tokenCards";
 
 export type DeckStyleAssociationMode = "primary" | "fractional";
@@ -172,7 +173,9 @@ export async function loadDeckStyleAssociations(): Promise<DeckStyleAssociationD
       if (!response.ok) {
         throw new Error(`Failed to load deck style associations: ${response.status}`);
       }
-      deckStyleCache = (await response.json()) as DeckStyleAssociationData;
+      const data = (await response.json()) as DeckStyleAssociationData;
+      deckStyleCache = { ...data, decks: Object.fromEntries(Object.entries(data.decks).map(([id, deck]) =>
+        [id, { ...deck, boards: normalizeDeckBoards(deck.boards) }])) };
       return deckStyleCache;
     },
   );
@@ -228,10 +231,11 @@ export function getDeckStyleShelfCards(
 
 export function deckStyleSourceDeckToDeck(source: DeckStyleSourceDeck): Deck {
   return {
+    origin: 'lookup',
     id: source.id,
     name: source.name,
     author: source.author,
-    boards: source.boards,
+    boards: normalizeDeckBoards(source.boards),
     createdAt: source.createdAt,
     updatedAt: source.updatedAt,
   };

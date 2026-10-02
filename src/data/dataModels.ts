@@ -95,7 +95,7 @@ export interface DeckCard {
 
 export interface DeckBoards {
   mainboard: DeckCard[];
-  sideboard: DeckCard[];
+  collection: DeckCard[];
   avatar: DeckCard[];
   maybeboard: DeckCard[];
 }
@@ -103,6 +103,8 @@ export interface DeckBoards {
 export interface Deck {
   id: string;
   name: string;
+  /** How the deck entered the library; shared by guest and account storage. */
+  origin?: 'user' | 'lookup' | 'seed';
   author?: string;
   boards: DeckBoards;
   createdAt: string;
@@ -127,6 +129,11 @@ export interface CanvasLabel {
   text: string;
   x: number;
   y: number;
+  /** Deck/stack ownership follows its cards when the area moves. */
+  areaId?: string;
+  board?: ActiveBoard;
+  /** Optional containing label; cards refer to their immediate label. */
+  parentLabelId?: string;
 }
 
 export type { CardCategoryData } from '@/data/cardCategories';
@@ -139,8 +146,12 @@ export interface UserData {
   name: string;
   id: string;
   decks: Deck[];
+  /** ISO deletion times; shared by guest/account saves to prevent resurrection. */
+  removedDecks?: Record<string, string>;
   collection: CollectionItem[];
   selectedCardCategory?: string | null;
+  catalogueLayout?: import('@/data/catalogueLayout').CatalogueLayoutConfig;
+  interactionEffects?: import('@/data/interactionEffects').InteractionEffectsSettings;
   cardCategories?: import('@/data/cardCategories').CardCategoryData;
   favouriteDeckIds?: string[];
   canvasLabels?: CanvasLabel[];
@@ -151,7 +162,7 @@ export interface UserData {
 // App State Types
 // ============================================================================
 
-export type ActiveBoard = 'mainboard' | 'sideboard' | 'avatar' | 'maybeboard';
+export type ActiveBoard = 'mainboard' | 'collection' | 'avatar' | 'maybeboard';
 
 export interface DeckEditorState {
   activeDeckId: string | null;
@@ -166,7 +177,7 @@ export const DECK_LIMITS = {
   AVATAR_COUNT: 1,
   SPELL_COUNT: 60,
   SITE_COUNT: 30,
-  SIDEBOARD_COUNT: 10,
+  COLLECTION_COUNT: 10,
   RARITY_LIMITS: {
     Ordinary: 4,
     Exceptional: 3,
@@ -196,7 +207,7 @@ export function createEmptyDeck(name: string, id: string): Deck {
     name,
     boards: {
       mainboard: [],
-      sideboard: [],
+      collection: [],
       avatar: [],
       maybeboard: [],
     },

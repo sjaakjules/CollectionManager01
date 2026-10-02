@@ -16,7 +16,7 @@ describe("createLocalDeck", () => {
       { name: "Spark", quantity: 2 },
       { name: "Bolt", quantity: 1 },
     ]);
-    expect(deck.boards.sideboard).toEqual([]);
+    expect(deck.boards.collection).toEqual([]);
     expect(deck.boards.maybeboard).toEqual([]);
   });
 });

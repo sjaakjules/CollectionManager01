@@ -75,7 +75,7 @@ describe("calculateCardLayout", () => {
     const result = calculateDeckLayout({
       deck: { name: 'Future deck', boards: {
         avatar: [], mainboard: [{ name: names[0] ?? '', quantity: 2 }],
-        sideboard: [{ name: names[1] ?? '', quantity: 1 }],
+        collection: [{ name: names[1] ?? '', quantity: 1 }],
         maybeboard: [{ name: names[2] ?? '', quantity: 1 }],
       } }, cardLookup, collectionBottom: 0,
     });

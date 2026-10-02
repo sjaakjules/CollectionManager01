@@ -55,7 +55,7 @@ describe('deck import/export', () => {
       { name: 'Fireball', quantity: 2 },
       { name: 'Mystery Card', quantity: 1 },
     ]);
-    expect(result.deck.boards.sideboard).toEqual([{ name: 'Relic', quantity: 2 }]);
+    expect(result.deck.boards.collection).toEqual([{ name: 'Relic', quantity: 2 }]);
     expect(result.unknownCards).toEqual(['Mystery Card']);
   });
 
@@ -65,8 +65,22 @@ describe('deck import/export', () => {
     deck.boards.mainboard.push({ name: 'Fireball', quantity: 2 });
 
     expect(exportDeckToText(deck)).toBe(
-      ['// Avatar', '1 Avatar of Fire', '', '// Mainboard', '2 Fireball'].join('\n'),
+      ['// Avatar', '1 Avatar of Fire', '', '// Main', '2 Fireball'].join('\n'),
     );
+  });
+
+  it('recognizes SorceryTCG board labels in pasted text', () => {
+    const result = importDeckFromText([
+      '// Avatar', '1 Avatar of Fire', '// Spellbook', '2 Fireball',
+      '// Atlas', '1 Lone Tower', '// Collection', '2 Relic',
+      '// Maybeboard', '1 Missing Card',
+    ].join('\n'), 'Sorcery deck', cards);
+    expect(result.deck.boards.mainboard).toEqual([
+      { name: 'Fireball', quantity: 2 }, { name: 'Lone Tower', quantity: 1 },
+    ]);
+    expect(result.deck.boards.collection).toEqual([{ name: 'Relic', quantity: 2 }]);
+    expect(result.deck.boards.maybeboard).toEqual([{ name: 'Missing Card', quantity: 1 }]);
+    expect(result.unknownCards).toEqual(['Missing Card']);
   });
 
   it('skips token cards during deck import', () => {
@@ -96,7 +110,7 @@ describe('deck import/export', () => {
           { name: 'Frog', quantity: 1 },
         ],
         avatar: [{ name: 'Avatar of Fire', quantity: 1 }],
-        sideboard: [],
+        collection: [],
         maybeboard: [],
       },
       cards,
@@ -126,7 +140,7 @@ describe('deck import/export', () => {
         author: '',
         mainboard: [{ name: 'fireball', quantity: 2 }],
         avatar: [],
-        sideboard: [],
+        collection: [],
         maybeboard: [],
       },
       cards,

@@ -14,6 +14,8 @@ import type { UserData, CanvasLabel } from './dataModels';
 import { fetchUserData, updateUserData } from '@/auth/api';
 import { saveUserData } from './userStorage';
 import { debounce } from '@/utils/debounce';
+import { detachLabelsFromAreas, mergeDeckRemovals } from './deckRemovals';
+import { normalizeUserDataBoards } from './boardMigration';
 
 // Debounce delay for auto-save (ms)
 const SYNC_DEBOUNCE_MS = 2000;
@@ -133,6 +135,8 @@ async function performSync(userData: UserData, token: string): Promise<void> {
  * - Returns merged `UserData` preserving server precedence where conflicts exist.
  */
 export function mergeUserData(local: UserData, server: UserData): UserData {
+  local = normalizeUserDataBoards(local);
+  server = normalizeUserDataBoards(server);
   // Simple merge strategy: keep all decks, dedupe by ID
   const deckMap = new Map<string, UserData['decks'][0]>();
 
@@ -145,6 +149,23 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
   for (const deck of local.decks) {
     if (!deckMap.has(deck.id)) {
       deckMap.set(deck.id, deck);
+    } else if (deck.origin === 'user') {
+      const saved = deckMap.get(deck.id);
+      if (saved) deckMap.set(deck.id, { ...saved, origin: 'user' });
+    }
+  }
+
+  let removedDecks = mergeDeckRemovals(local.removedDecks, server.removedDecks);
+  for (const [id, removedAt] of Object.entries(removedDecks)) {
+    // A deliberate re-import after removal is kept; an older remote copy is not.
+    const readded = [local, server].flatMap((data) => data.decks)
+      .filter((deck) => deck.id === id && Date.parse(deck.updatedAt) > Date.parse(removedAt))
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0];
+    if (readded) {
+      deckMap.set(id, readded);
+      removedDecks = Object.fromEntries(Object.entries(removedDecks).filter(([key]) => key !== id));
+    } else {
+      deckMap.delete(id);
     }
   }
 
@@ -180,10 +201,15 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
     }
   }
 
+  const removedAreaIds = new Set(Array.from(canvasAreasById.values())
+    .filter((area) => area.type === 'deck' && removedDecks[area.deckId ?? area.id])
+    .map((area) => area.id));
+
   return {
     name: server.name,
     id: server.id,
     decks: Array.from(deckMap.values()),
+    removedDecks,
     collection: Array.from(collectionMap.entries()).map(([name, quantity]) => ({
       name,
       quantity,
@@ -191,8 +217,11 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
     selectedCardCategory:
       server.selectedCardCategory ?? local.selectedCardCategory ?? null,
     cardCategories: server.cardCategories ?? local.cardCategories,
+    catalogueLayout: server.catalogueLayout ?? local.catalogueLayout,
+    interactionEffects: server.interactionEffects ?? local.interactionEffects,
     favouriteDeckIds: mergeStringLists(server.favouriteDeckIds, local.favouriteDeckIds),
-    canvasLabels: Array.from(labelsById.values()),
-    canvasAreas: Array.from(canvasAreasById.values()),
+    canvasLabels: detachLabelsFromAreas(Array.from(labelsById.values()), removedAreaIds),
+    canvasAreas: Array.from(canvasAreasById.values()).filter((area) =>
+      area.type !== 'deck' || !removedDecks[area.deckId ?? area.id]),
   };
 }

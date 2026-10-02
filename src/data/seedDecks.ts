@@ -13,12 +13,13 @@
  */
 
 import type { Deck, DeckBoards, UserData } from './dataModels';
+import { normalizeDeckBoards } from './boardMigration';
 
 export const GUEST_SEED_ASSET_URL = '/assets/guest_seed_decks.json';
 
 const BOARD_KEYS: (keyof DeckBoards)[] = [
   'mainboard',
-  'sideboard',
+  'collection',
   'avatar',
   'maybeboard',
 ];
@@ -30,7 +31,7 @@ function isDeckLike(value: unknown): value is Deck {
   if (typeof record.name !== 'string' || !record.name) return false;
   const boards = record.boards as Record<string, unknown> | undefined;
   if (!boards || typeof boards !== 'object') return false;
-  return BOARD_KEYS.every((key) => Array.isArray(boards[key]));
+  return BOARD_KEYS.every((key) => Array.isArray(key === 'collection' ? boards.collection ?? boards.sideboard : boards[key]));
 }
 
 /**
@@ -53,7 +54,7 @@ export async function fetchGuestSeedDecks(): Promise<Deck[]> {
         ? (payload as Record<string, unknown>).decks
         : null;
     if (!Array.isArray(decks)) return [];
-    return decks.filter(isDeckLike);
+    return decks.filter(isDeckLike).map((deck) => ({ ...deck, boards: normalizeDeckBoards(deck.boards), origin: 'seed' }));
   } catch {
     return [];
   }
@@ -75,7 +76,7 @@ export function mergeSeedDecks(
   seedDecks: Deck[]
 ): { userData: UserData; addedDeckNames: string[] } {
   const existingIds = new Set(userData.decks.map((deck) => deck.id));
-  const newDecks = seedDecks.filter((deck) => !existingIds.has(deck.id));
+  const newDecks = seedDecks.filter((deck) => !existingIds.has(deck.id) && !userData.removedDecks?.[deck.id]);
 
   if (newDecks.length === 0) {
     return { userData, addedDeckNames: [] };

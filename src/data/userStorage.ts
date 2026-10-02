@@ -16,6 +16,7 @@
 
 import { get, set, del } from 'idb-keyval';
 import type { UserData } from './dataModels';
+import { normalizeUserDataBoards } from './boardMigration';
 
 const STORAGE_KEY = 'sorcery_user_data';
 const GUEST_KEY = 'sorcery_guest_data';
@@ -98,7 +99,7 @@ export async function loadUserDataResult(
   }
 
   return {
-    data,
+    data: data ? normalizeUserDataBoards(data) : null,
     readFailed: data === null && (idbFailed || localFailed),
   };
 }

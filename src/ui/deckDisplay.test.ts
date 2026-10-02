@@ -55,7 +55,7 @@ describe("deck display helpers", () => {
   it("derives element symbols from non-avatar deck cards", () => {
     const deck = deckWithAvatar("Avatar of Fire");
     deck.boards.mainboard.push({ name: "Air Card", quantity: 2 });
-    deck.boards.sideboard.push({ name: "Earth Fire Card", quantity: 1 });
+    deck.boards.collection.push({ name: "Earth Fire Card", quantity: 1 });
 
     expect(
       getDeckElementSummary(deck, [

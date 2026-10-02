@@ -60,7 +60,7 @@ describe('convertArchiveDeckToSeedDeck', () => {
       { name: 'Coy Nixie', quantity: 3 },
       { name: 'Troll Bridge', quantity: 3 },
     ]);
-    expect(deck.boards.sideboard).toEqual([{ name: 'Lightning Bolt', quantity: 1 }]);
+    expect(deck.boards.collection).toEqual([{ name: 'Lightning Bolt', quantity: 1 }]);
     expect(deck.boards.maybeboard).toEqual([]);
     expect(deck.boards.avatar).toEqual([{ name: 'Druid', quantity: 1 }]);
     expect(warnings).toEqual([]);

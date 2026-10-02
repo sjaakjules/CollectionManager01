@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ensureInteractionEffects, MangaEffectGate, MANGA_EFFECTS } from './interactionEffects';
+import { appReducer, initialAppState } from '@/app/AppState';
 
 describe('manga feedback policy', () => {
   it('normalizes old and malformed saves to a quiet, usable default', () => {
@@ -26,5 +27,15 @@ describe('manga feedback policy', () => {
     expect(gate.accept('reveal', 0, { intensity: 'off', lettering: 'both' }, false)).toBeNull();
     expect(gate.accept('reveal', 0, ensureInteractionEffects(null), true)).toBeNull();
     expect(gate.accept('reveal', 1, ensureInteractionEffects(null), false)?.words).toBe(true);
+  });
+  it('stores the same preferences in guest/account data and restores them on load', () => {
+    for (const id of ['guest', 'account-123']) {
+      const state = appReducer(initialAppState, { type: 'SET_USER_DATA', userData: { id, name: id, decks: [], collection: [] } });
+      const changed = appReducer(state, { type: 'SET_INTERACTION_EFFECTS', settings: { intensity: 'off', lettering: 'english' } });
+      expect(changed.userData?.interactionEffects).toEqual(changed.ui.interactionEffects);
+      if (!changed.userData) throw new Error('Expected saved data');
+      const restored = appReducer(initialAppState, { type: 'SET_USER_DATA', userData: changed.userData });
+      expect(restored.ui.interactionEffects).toEqual({ intensity: 'off', lettering: 'english' });
+    }
   });
 });

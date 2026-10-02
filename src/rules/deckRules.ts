@@ -5,7 +5,7 @@
  * - 1 avatar
  * - 60 spells maximum
  * - 30 sites maximum
- * - 10 sideboard cards
+ * - 10 collection cards
  * - Rarity limits (Ordinary 4x, Exceptional 3x, Elite 2x, Unique 1x)
  *
  * Related files:
@@ -78,8 +78,8 @@ export function validateDeck(deck: Deck, cardDatabase: Card[]): ValidationResult
     cardQuantities.set(deckCard.name.toLowerCase(), current + deckCard.quantity);
   }
 
-  // Process sideboard (counts toward rarity limits)
-  for (const deckCard of deck.boards.sideboard) {
+  // Process collection (counts toward rarity limits)
+  for (const deckCard of deck.boards.collection) {
     const current = cardQuantities.get(deckCard.name.toLowerCase()) ?? 0;
     cardQuantities.set(deckCard.name.toLowerCase(), current + deckCard.quantity);
   }
@@ -108,12 +108,12 @@ export function validateDeck(deck: Deck, cardDatabase: Card[]): ValidationResult
     });
   }
 
-  // Validate sideboard count
-  const sideboardCount = deck.boards.sideboard.reduce((sum, c) => sum + c.quantity, 0);
-  if (sideboardCount > DECK_LIMITS.SIDEBOARD_COUNT) {
+  // Validate collection count
+  const collectionCount = deck.boards.collection.reduce((sum, c) => sum + c.quantity, 0);
+  if (collectionCount > DECK_LIMITS.COLLECTION_COUNT) {
     errors.push({
-      type: 'TOO_MANY_SIDEBOARD',
-      message: getRuleMessage('TOO_MANY_SIDEBOARD', { count: sideboardCount }),
+      type: 'TOO_MANY_COLLECTION',
+      message: getRuleMessage('TOO_MANY_COLLECTION', { count: collectionCount }),
     });
   }
 
@@ -168,7 +168,7 @@ export function canAddCard(
 
   // Count current quantity of this card
   let currentQty = 0;
-  for (const board of ['mainboard', 'sideboard', 'avatar'] as const) {
+  for (const board of ['mainboard', 'collection', 'avatar'] as const) {
     const existing = deck.boards[board].find(
       (c) => c.name.toLowerCase() === cardName.toLowerCase()
     );

@@ -82,7 +82,7 @@ describe('appReducer deck board additions', () => {
   it('adds multiple card names to the requested deck board by deck id', () => {
     const deck = createEmptyDeck('Avatar of Fire Deck', 'deck-1');
     deck.boards.avatar = [{ name: 'Avatar of Fire', quantity: 1 }];
-    deck.boards.sideboard = [{ name: 'Spark', quantity: 1 }];
+    deck.boards.collection = [{ name: 'Spark', quantity: 1 }];
     const withUser = appReducer(initialAppState, {
       type: 'SET_USER_DATA',
       userData: {
@@ -94,11 +94,11 @@ describe('appReducer deck board additions', () => {
     const next = appReducer(withUser, {
       type: 'ADD_CARDS_TO_DECK_BY_ID',
       deckId: 'deck-1',
-      board: 'sideboard',
+      board: 'collection',
       cardNames: ['Spark', 'Spark', 'Bolt'],
     });
 
-    expect(next.userData?.decks[0]?.boards.sideboard).toEqual([
+    expect(next.userData?.decks[0]?.boards.collection).toEqual([
       { name: 'Spark', quantity: 3 },
       { name: 'Bolt', quantity: 1 },
     ]);
@@ -248,5 +248,42 @@ describe('appReducer favourite lookup decks', () => {
 
     expect(added.userData?.favouriteDeckIds).toEqual(['deck-1']);
     expect(removed.userData?.favouriteDeckIds).toEqual([]);
+  });
+});
+
+describe('appReducer catalogue preferences and label persistence', () => {
+  it('persists the same layout preference for guest and account data without changing decks', () => {
+    const deck = createEmptyDeck('Unchanged deck', 'deck-1');
+    const loaded = appReducer(initialAppState, { type: 'SET_USER_DATA', userData: { ...createGuestUserData('guest'), decks: [deck] } });
+    const changed = appReducer(loaded, { type: 'SET_CATALOGUE_LAYOUT', layout: {
+      columns: 8, steps: [{ field: 'family', mode: 'group', direction: 'asc' }, { field: 'name', mode: 'sort', direction: 'desc' }],
+    } });
+    expect(changed.userData?.catalogueLayout).toEqual(changed.ui.catalogueLayout);
+    expect(changed.userData?.decks).toEqual(loaded.userData?.decks);
+    const reloaded = appReducer(initialAppState, { type: 'SET_USER_DATA', userData: JSON.parse(JSON.stringify(changed.userData)) as UserData });
+    expect(reloaded.ui.catalogueLayout).toEqual(changed.ui.catalogueLayout);
+  });
+
+  it('round-trips label ownership, nested membership and new-card markers', () => {
+    const userData: UserData = {
+      ...createGuestUserData('guest'),
+      canvasLabels: [{ id: 'label', text: 'Removal', x: 100, y: 200, areaId: 'deck', board: 'collection', parentLabelId: 'parent' }],
+      canvasAreas: [stackArea({ id: 'deck', type: 'deck', cards: [{ id: 'card', cardName: 'Spark', x: 300, y: 200, board: 'collection', labelId: 'label', isNew: true }] })],
+    };
+    const loaded = appReducer(initialAppState, { type: 'SET_USER_DATA', userData });
+    const saved = appReducer(loaded, { type: 'SET_CANVAS_AREAS', canvasAreas: loaded.userData?.canvasAreas ?? [] });
+    const reloaded = appReducer(initialAppState, { type: 'SET_USER_DATA', userData: JSON.parse(JSON.stringify(saved.userData)) as UserData });
+    expect(reloaded.userData?.canvasLabels).toEqual(userData.canvasLabels);
+    expect(reloaded.userData?.canvasAreas?.[0]?.cards).toEqual(userData.canvasAreas?.[0]?.cards);
+  });
+
+  it('routes newly added Main avatars to the avatar board while preserving explicit Collection targets', () => {
+    const avatar = { name: 'Avatar', elements: '', subTypes: '', sets: [], guardian: { type: 'Avatar', rarity: 'Unique', rulesText: '', cost: null, attack: null, defence: null, life: 20, thresholds: { air: 0, earth: 0, fire: 0, water: 0 } } };
+    const loaded = appReducer({ ...initialAppState, cards: [avatar] }, { type: 'SET_USER_DATA', userData: { ...createGuestUserData('guest'), decks: [createEmptyDeck('Deck', 'deck')] } });
+    const main = appReducer(loaded, { type: 'ADD_CARDS_TO_DECK_BY_ID', deckId: 'deck', cardNames: ['Avatar', 'Spell'], board: 'mainboard' });
+    expect(main.userData?.decks[0]?.boards.avatar).toEqual([{ name: 'Avatar', quantity: 1 }]);
+    expect(main.userData?.decks[0]?.boards.mainboard).toEqual([{ name: 'Spell', quantity: 1 }]);
+    const collection = appReducer(main, { type: 'ADD_CARDS_TO_DECK_BY_ID', deckId: 'deck', cardNames: ['Avatar'], board: 'collection' });
+    expect(collection.userData?.decks[0]?.boards.collection).toEqual([{ name: 'Avatar', quantity: 1 }]);
   });
 });

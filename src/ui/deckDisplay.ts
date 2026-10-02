@@ -91,7 +91,7 @@ export function getDeckElementSummary(
   };
 
   if (deck) {
-    for (const boardKey of ["mainboard", "sideboard", "maybeboard"] as const) {
+    for (const boardKey of ["mainboard", "collection", "maybeboard"] as const) {
       for (const entry of deck.boards[boardKey]) {
         visitCardName(entry.name);
       }

@@ -1,3 +1,4 @@
+import { ensureInteractionEffects, type InteractionEffectsSettings, type CanvasGestureCommand } from '@/data/interactionEffects';
 /**
  * Global application state management
  *
@@ -28,7 +29,10 @@ import {
   type CardFilterState,
 } from '@/data/cardFilters';
 import type { DeckStyleAssociationMode } from '@/data/deckStyleAssociations';
-import { filterBlockedTokenCardNames, isBlockedTokenCardName } from '@/data/tokenCards';
+import { filterBlockedTokenCardNames } from '@/data/tokenCards';
+import { detachLabelsFromAreas, normalizeDeckRemovals } from '@/data/deckRemovals';
+import { normalizeUserDataBoards } from '@/data/boardMigration';
+import { createDefaultCatalogueLayout, ensureCatalogueLayout, type CatalogueLayoutConfig } from '@/data/catalogueLayout';
 
 // ============================================================================
 // State Shape
@@ -70,6 +74,9 @@ export interface UIState {
   selectedCardCategory: string | null;
   labelPlacementMode: boolean;
   cardFilters: CardFilterState;
+  catalogueLayout: CatalogueLayoutConfig;
+  interactionEffects: InteractionEffectsSettings;
+  canvasGesture: { command: CanvasGestureCommand; nonce: number } | null;
   selectedCardNames: string[];
   associationsEnabled: boolean;
   associationMode: DeckStyleAssociationMode;
@@ -108,6 +115,9 @@ export const initialAppState: AppState = {
     selectedCardCategory: null,
     labelPlacementMode: false,
     cardFilters: createDefaultCardFilters(),
+    catalogueLayout: createDefaultCatalogueLayout(),
+    interactionEffects: ensureInteractionEffects(null),
+    canvasGesture: null,
     selectedCardNames: [],
     associationsEnabled: false,
     associationMode: 'primary',
@@ -140,6 +150,9 @@ export type AppAction =
   | { type: 'SET_SELECTED_CARD_CATEGORY'; categoryId: string | null }
   | { type: 'SET_LABEL_PLACEMENT_MODE'; enabled: boolean }
   | { type: 'SET_CARD_FILTERS'; filters: CardFilterState }
+  | { type: 'SET_CATALOGUE_LAYOUT'; layout: CatalogueLayoutConfig }
+  | { type: 'SET_INTERACTION_EFFECTS'; settings: InteractionEffectsSettings }
+  | { type: 'RUN_CANVAS_GESTURE'; command: CanvasGestureCommand }
   | { type: 'CLEAR_CARD_FILTERS' }
   | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
   | { type: 'SET_ASSOCIATIONS_ENABLED'; enabled: boolean }
@@ -178,6 +191,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ui: {
             ...state.ui,
             selectedCardCategory: normalized.selectedCardCategory ?? null,
+            catalogueLayout: ensureCatalogueLayout(normalized.catalogueLayout),
+            interactionEffects: ensureInteractionEffects(normalized.interactionEffects),
           },
         };
       }
@@ -198,32 +213,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
 
     case 'ADD_CARD_TO_DECK': {
-      if (!state.userData || !state.editor.activeDeckId) return state;
-      if (isBlockedTokenCardName(action.cardName)) return state;
-
-      const updatedDecks = state.userData.decks.map((deck) => {
-        if (deck.id !== state.editor.activeDeckId) return deck;
-
-        const board = deck.boards[state.editor.activeBoard];
-        const existingCard = board.find((c) => c.name === action.cardName);
-
-        const updatedBoard = existingCard
-          ? board.map((c) =>
-              c.name === action.cardName ? { ...c, quantity: c.quantity + 1 } : c
-            )
-          : [...board, { name: action.cardName, quantity: 1 }];
-
-        return {
-          ...deck,
-          boards: { ...deck.boards, [state.editor.activeBoard]: updatedBoard },
-          updatedAt: new Date().toISOString(),
-        };
+      if (!state.editor.activeDeckId) return state;
+      return appReducer(state, {
+        type: 'ADD_CARDS_TO_DECK_BY_ID', deckId: state.editor.activeDeckId,
+        cardNames: [action.cardName], board: state.editor.activeBoard,
       });
-
-      return {
-        ...state,
-        userData: { ...state.userData, decks: updatedDecks },
-      };
     }
 
     case 'ADD_CARDS_TO_DECK_BY_ID': {
@@ -235,36 +229,27 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const updatedDecks = state.userData.decks.map((deck) => {
         if (deck.id !== action.deckId) return deck;
 
-        const quantities = new Map<string, number>();
-        for (const cardName of addableCardNames) {
-          const trimmed = cardName.trim();
-          if (!trimmed) continue;
-          quantities.set(trimmed, (quantities.get(trimmed) ?? 0) + 1);
+        const boards = { ...deck.boards };
+        const additions = new Map<ActiveBoard, Map<string, number>>();
+        for (const rawName of addableCardNames) {
+          const name = rawName.trim();
+          if (!name) continue;
+          const board = targetBoard === 'mainboard' && state.cards.some((card) => card.name === name && card.guardian.type === 'Avatar') ? 'avatar' : targetBoard;
+          const quantities = additions.get(board) ?? new Map<string, number>();
+          quantities.set(name, (quantities.get(name) ?? 0) + 1);
+          additions.set(board, quantities);
         }
-        if (quantities.size === 0) return deck;
-
-        const board = deck.boards[targetBoard];
-        let updatedBoard = [...board];
-        for (const [cardName, quantity] of quantities) {
-          const existingIndex = updatedBoard.findIndex((card) => card.name === cardName);
-          if (existingIndex >= 0) {
-            const existing = updatedBoard[existingIndex];
-            if (!existing) continue;
-            updatedBoard = updatedBoard.map((card, index) =>
-              index === existingIndex
-                ? { ...card, quantity: card.quantity + quantity }
-                : card,
-            );
-          } else {
-            updatedBoard = [...updatedBoard, { name: cardName, quantity }];
+        if (!additions.size) return deck;
+        for (const [board, quantities] of additions) {
+          const updated = boards[board].map((card) => ({ ...card }));
+          for (const [name, quantity] of quantities) {
+            const existing = updated.find((card) => card.name === name);
+            if (existing) existing.quantity += quantity;
+            else updated.push({ name, quantity });
           }
+          boards[board] = updated;
         }
-
-        return {
-          ...deck,
-          boards: { ...deck.boards, [targetBoard]: updatedBoard },
-          updatedAt: new Date().toISOString(),
-        };
+        return { ...deck, boards, updatedAt: new Date().toISOString() };
       });
 
       return {
@@ -301,11 +286,21 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'CREATE_DECK': {
       if (!state.userData) return state;
+      const restoring = !!state.userData.removedDecks?.[action.deck.id];
+      const removedDecks = Object.fromEntries(Object.entries(state.userData.removedDecks ?? {})
+        .filter(([id]) => id !== action.deck.id));
       return {
         ...state,
         userData: {
           ...state.userData,
-          decks: [...state.userData.decks, action.deck],
+          removedDecks,
+          // Re-importing through + marks an existing deck as personal without
+          // replacing its local edits or adding a duplicate remote ID.
+          decks: state.userData.decks.some((deck) => deck.id === action.deck.id)
+            ? state.userData.decks.map((deck) => deck.id === action.deck.id && action.deck.origin === 'user'
+              ? { ...deck, origin: 'user' as const }
+              : deck)
+            : [...state.userData.decks, restoring ? { ...action.deck, updatedAt: new Date().toISOString() } : action.deck],
         },
       };
     }
@@ -313,9 +308,19 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'DELETE_DECK': {
       if (!state.userData) return state;
       const updatedDecks = state.userData.decks.filter((d) => d.id !== action.deckId);
+      const removedAreaIds = new Set((state.userData.canvasAreas ?? [])
+        .filter((area) => area.type === 'deck' && (area.deckId ?? area.id) === action.deckId)
+        .map((area) => area.id));
       return {
         ...state,
-        userData: { ...state.userData, decks: updatedDecks },
+        userData: {
+          ...state.userData,
+          decks: updatedDecks,
+          removedDecks: { ...state.userData.removedDecks, [action.deckId]: new Date().toISOString() },
+          canvasAreas: state.userData.canvasAreas?.filter((area) =>
+            area.type !== 'deck' || (area.deckId ?? area.id) !== action.deckId),
+          canvasLabels: detachLabelsFromAreas(state.userData.canvasLabels ?? [], removedAreaIds),
+        },
         editor:
           state.editor.activeDeckId === action.deckId
             ? { ...state.editor, activeDeckId: null }
@@ -416,6 +421,23 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         ui: { ...state.ui, cardFilters: ensureCardFilterState(action.filters) },
       };
+
+    case 'RUN_CANVAS_GESTURE':
+      return { ...state, ui: { ...state.ui, canvasGesture: { command: action.command, nonce: (state.ui.canvasGesture?.nonce ?? 0) + 1 } } };
+
+    case 'SET_INTERACTION_EFFECTS': {
+      const interactionEffects = ensureInteractionEffects(action.settings);
+      return { ...state, ui: { ...state.ui, interactionEffects }, userData: state.userData ? { ...state.userData, interactionEffects } : state.userData };
+    }
+
+    case 'SET_CATALOGUE_LAYOUT': {
+      const catalogueLayout = ensureCatalogueLayout(action.layout);
+      return {
+        ...state,
+        ui: { ...state.ui, catalogueLayout },
+        userData: state.userData ? { ...state.userData, catalogueLayout } : state.userData,
+      };
+    }
 
     case 'CLEAR_CARD_FILTERS':
       return {
@@ -567,7 +589,7 @@ function normalizeCanvasAreas(value: unknown): CanvasArea[] {
         let normalizedBoard: ActiveBoard | null = null;
         if (
           board === 'mainboard' ||
-          board === 'sideboard' ||
+          board === 'collection' ||
           board === 'avatar' ||
           board === 'maybeboard'
         ) {
@@ -579,6 +601,8 @@ function normalizeCanvasAreas(value: unknown): CanvasArea[] {
           x: parseFiniteNumber(cardRecord.x, 0),
           y: parseFiniteNumber(cardRecord.y, 0),
           board: normalizedBoard,
+          labelId: parseString(cardRecord.labelId).trim() || undefined,
+          isNew: cardRecord.isNew === true || undefined,
         };
       })
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
@@ -639,17 +663,21 @@ function normalizeCanvasAreas(value: unknown): CanvasArea[] {
   return canvasAreas;
 }
 
-function normalizeUserData(userData: UserData): UserData {
+function normalizeUserData(raw: UserData): UserData {
+  const userData = normalizeUserDataBoards(raw);
   return {
     name: userData.name,
     id: userData.id,
     decks: userData.decks,
+    removedDecks: normalizeDeckRemovals(userData.removedDecks),
     collection: userData.collection,
     selectedCardCategory: userData.selectedCardCategory ?? null,
     cardCategories: userData.cardCategories,
     favouriteDeckIds: normalizeStringList(userData.favouriteDeckIds),
     canvasLabels: userData.canvasLabels ?? [],
     canvasAreas: normalizeCanvasAreas(userData.canvasAreas),
+    catalogueLayout: ensureCatalogueLayout(userData.catalogueLayout),
+    interactionEffects: ensureInteractionEffects(userData.interactionEffects),
   };
 }
 
@@ -746,14 +774,14 @@ export function selectDeckCardQuantity(
  * - `cardName`: Card name to count.
  *
  * Outputs:
- * - Returns total quantity across `mainboard`, `sideboard`, and `avatar`.
+ * - Returns total quantity across `mainboard`, `collection`, and `avatar`.
  */
 export function selectTotalDeckCardQuantity(state: AppState, cardName: string): number {
   const deck = selectActiveDeck(state);
   if (!deck) return 0;
 
   let total = 0;
-  for (const board of ['mainboard', 'sideboard', 'avatar'] as const) {
+  for (const board of ['mainboard', 'collection', 'avatar'] as const) {
     const card = deck.boards[board].find((c) => c.name === cardName);
     if (card) total += card.quantity;
   }
