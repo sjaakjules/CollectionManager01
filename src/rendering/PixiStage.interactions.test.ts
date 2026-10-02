@@ -28,6 +28,7 @@ interface StageHarness {
   selectZoneCardForPointer(key: string, additive: boolean, doubleClick?: boolean, dragging?: boolean): void;
   endSelectionBox(pos: Point): void;
   syncZoneSelectionVisuals(): void;
+  handleTouchTap(target: {kind: 'zone-card'; key: string; zoneCardKey: string; zoneId: string; instanceId: string; cardName: string; cardType: 'Minion'}, world: Point, screen: Point, doubleTap: boolean): void;
 }
 function required<T>(value: T | null | undefined): T {
   if (value == null) throw new Error('Missing fixture value');
@@ -83,6 +84,31 @@ beforeEach(() => {
 });
 
 describe('deck canvas mouse interactions', () => {
+  const touchTarget = () => ({kind: 'zone-card' as const, key: 'zone-card:zone:b', zoneCardKey: 'zone:b', zoneId: 'zone', instanceId: 'b', cardName: 'Spell', cardType: 'Minion' as const});
+  it('uses the same stack, single card and double-tap selection on touch without toggling variants', () => {
+    Object.assign(stage, {handleTouchControlTap: vi.fn(() => false)});
+    stage.selectedZoneCardKeys.clear();
+    stage.handleTouchTap(touchTarget(), {x: 500, y: 500}, {x: 500, y: 500}, false);
+    expect([...stage.selectedZoneCardKeys]).toEqual(['zone:a', 'zone:b']);
+    stage.handleTouchTap(touchTarget(), {x: 500, y: 500}, {x: 500, y: 500}, false);
+    expect([...stage.selectedZoneCardKeys]).toEqual(['zone:b']);
+    stage.handleTouchTap(touchTarget(), {x: 500, y: 500}, {x: 500, y: 500}, true);
+    expect([...stage.selectedZoneCardKeys]).toEqual(['zone:a', 'zone:b']);
+    expect(stage.emitCanvasAreasChange).not.toHaveBeenCalled();
+  });
+
+  it('does not delete from an invisible touch control and makes the visible plus respond once', () => {
+    const duplicate = vi.fn(), remove = vi.fn();
+    Object.assign(stage, {hoveredZoneCardKey: null, canDuplicateZoneCard: () => true,
+      getDuplicateButtonBounds: () => ({left: 90, top: 0, right: 100, bottom: 10}),
+      getDeleteButtonBounds: () => ({left: 0, top: 0, right: 10, bottom: 10}),
+      duplicateCanvasCardInstance: duplicate, handleZoneCardDelete: remove});
+    stage.handleTouchTap(touchTarget(), {x: 5, y: 5}, {x: 5, y: 5}, false);
+    expect(remove).not.toHaveBeenCalled();
+    Object.assign(stage, {hoveredZoneCardKey: 'zone:b'});
+    stage.handleTouchTap(touchTarget(), {x: 95, y: 5}, {x: 95, y: 5}, false);
+    expect(duplicate).toHaveBeenCalledExactlyOnceWith('zone', 'b');
+  });
   it('selects a stack, drills into one card, and restores the stack on double click', () => {
     stage.selectedZoneCardKeys.clear();
     stage.selectZoneCardForPointer(anchor.key, false);

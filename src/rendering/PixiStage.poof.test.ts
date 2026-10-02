@@ -101,7 +101,10 @@ describe('card deletion poof integration', () => {
     expect(created).toHaveBeenCalledOnce();
   });
 
-  it('removes with one tap on the canvas X without requiring a double-tap', () => {
+  it('removes with one tap on the visible canvas X without requiring a double-tap', () => {
+    Object.assign(harness, {hoveredZoneCardKey: card.key,
+      app: {canvas: document.createElement('canvas'), destroy: vi.fn()},
+      updateHoveredFromWorldPos: vi.fn()});
     harness.zoneCardSprites.set(card.key, { ...card, sprite: new Container() });
     harness.handleTouchTap(touchTarget, { x: bounds.right - 10, y: bounds.top + 10 }, { x: 100, y: 100 }, false);
     expect(harness.removeCanvasCardInstance).toHaveBeenCalledExactlyOnceWith('deck', 'a');

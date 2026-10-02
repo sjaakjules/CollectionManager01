@@ -1610,34 +1610,8 @@ export class PixiStage {
     }
 
     if (target.kind === "zone-card") {
-      const actionCard = this.zoneCardSprites.get(target.zoneCardKey);
-      if (actionCard && this.pointInBounds(worldPos, this.getDeleteButtonBounds(actionCard))) {
-        this.handleZoneCardDelete(actionCard, screenPos.x, screenPos.y);
-        return;
-      }
       this.clearMainSelection(true);
-      if (this.selectedZoneId !== target.zoneId) {
-        this.clearZoneSelection();
-      }
-      if (!this.selectedZoneCardKeys.has(target.zoneCardKey)) {
-        this.clearZoneSelection();
-        this.selectZoneCard(target.zoneCardKey);
-      }
-      this.emitSelectionChange();
-
-      if (isDoubleTap) {
-        const zone = this.canvasAreas.find((entry) => entry.id === target.zoneId);
-        if (zone?.type === "deck") {
-          const changed = this.toggleDeckZoneCardActive(target.zoneId, target.instanceId);
-          if (changed) {
-            this.rebuildZoneVisuals();
-            this.emitCanvasAreasChange();
-          }
-        } else {
-          this.duplicateCanvasCardInstance(target.zoneId, target.instanceId);
-          this.emitCanvasAreasChange();
-        }
-      }
+      this.selectZoneCardForPointer(target.zoneCardKey, false, isDoubleTap);
       this.updateHoveredFromWorldPos(worldPos);
       return;
     }
@@ -1736,6 +1710,12 @@ export class PixiStage {
 
     if (target.kind === "zone-card") {
       const zoneCard = this.zoneCardSprites.get(target.zoneCardKey);
+      if (zoneCard && this.hoveredZoneCardKey === zoneCard.key && this.canDuplicateZoneCard(zoneCard) &&
+        this.pointInBounds(worldPos, this.getDuplicateButtonBounds(zoneCard))) {
+        this.duplicateCanvasCardInstance(zoneCard.zoneId, zoneCard.instanceId);
+        this.emitCanvasAreasChange();
+        return true;
+      }
       if (
         zoneCard &&
         this.hoveredZoneCardKey === zoneCard.key &&
