@@ -16,6 +16,7 @@
 import type { Card, Deck, DeckCard, ActiveBoard, CardType } from "@/data/dataModels";
 import {
   DECK_BOARD_ORDER, DECK_BOARD_MIN_HEIGHT, DECK_MIN_WIDTH,
+  DECK_BOARD_GAP, DECK_BOARD_PADDING, DECK_BOARD_INNER_PADDING, DECK_BOARD_TOP_GAP, DECK_BOARD_BOTTOM_PADDING,
   getDeckBoardWidth, fitDeckBoardSections, type DeckZoneBoard,
 } from './deckBoardLayout';
 import {
@@ -40,6 +41,10 @@ export interface CanvasAreaBounds {
   width: number;
   height: number;
 }
+
+export type DeckRegionId = 'mainboard' | 'collection' | 'maybeboard' | 'spellbook' | 'atlas';
+/** World coordinates, shared with cards and labels in guest and account saves. */
+export type DeckRegionBounds = Partial<Record<DeckRegionId, CanvasAreaBounds>>;
 
 export interface CanvasCardInstance {
   id: string;
@@ -73,6 +78,8 @@ export interface CanvasArea {
   deckVariants?: CanvasDeckVariant[];
   activeDeckVariantId?: string | null;
   cardFilters?: CardFilterState;
+  /** An empty map records that legacy title/stack spacing has been upgraded. */
+  deckRegionBounds?: DeckRegionBounds;
 }
 
 const QUADRANT_SIZE = 12000;
@@ -452,11 +459,9 @@ const DECK_TYPE_ORDER: Record<CardType, number> = {
   Avatar: 5,
 };
 const ZONE_CONTENT_PADDING = 14 + 24;
-const DECK_BOARD_GAP = 10;
-const DECK_BOARD_LEFT_PADDING = 14;
-const DECK_BOARD_INNER_LEFT = 12;
-const DECK_BOARD_CARD_TOP = DRAWN_GRID.height;
-const DECK_BOARD_BOTTOM_PADDING = 10;
+const DECK_BOARD_LEFT_PADDING = DECK_BOARD_PADDING;
+const DECK_BOARD_INNER_LEFT = DECK_BOARD_INNER_PADDING;
+const DECK_BOARD_CARD_TOP = DECK_BOARD_TOP_GAP;
 const DECK_TYPE_GAP = Math.round(DRAWN_GRID.height * 0.5);
 
 type DeckBoardKey = DeckZoneBoard;

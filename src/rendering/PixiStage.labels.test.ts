@@ -76,12 +76,13 @@ describe('deck label interactions', () => {
     expect(area.cards).toHaveLength(2);
     expect(required(area.cards[0]).labelId).toBeUndefined();
   });
-  it('does not expand a deck for an empty label', () => {
+  it('keeps a floating empty label inside its expanded parent deck', () => {
     required(area.cards[0]).labelId = undefined;
     required(stage.canvasLabels[0]).x = -10000;
     const before = { ...area.bounds };
-    expect(stage.fitLabelRegionBounds(area)).toBe(false);
-    expect(area.bounds).toEqual(before);
+    expect(stage.fitLabelRegionBounds(area)).toBe(true);
+    expect(area.bounds.x).toBeLessThan(-10000);
+    expect(area.bounds.x + area.bounds.width).toBeGreaterThanOrEqual(before.x + before.width);
   });
 });
 

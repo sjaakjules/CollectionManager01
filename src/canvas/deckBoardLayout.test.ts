@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDeckAreaBounds, getDeckBoardRects, getMainDeckSectionRects, placeNewDeckCards, normalizeDeckBoard, DECK_COMPACT_BOARD_WIDTH, DECK_COLLECTION_WIDTH } from './deckBoardLayout';
+import { getDeckAreaBounds, getDeckBoardRects, getMainDeckSectionRects, fitDeckBoardSections, placeNewDeckCards, normalizeDeckBoard, DECK_COMPACT_BOARD_WIDTH, DECK_COLLECTION_WIDTH, DECK_REGION_TITLE_HEIGHT, DECK_BOARD_GAP } from './deckBoardLayout';
 import { createEmptyZone, ZONE_DECK_HEADER_HEIGHT, type CanvasCardInstance } from './canvasAreas';
 import { CARD_SIZE } from '@/rendering/Grid';
 
@@ -12,6 +12,25 @@ const landscape = (name: string) => name.includes('Site');
 const card = (id: string, board: CanvasCardInstance['board'], x: number, y: number, cardName = id): CanvasCardInstance => ({id, cardName, board, x, y});
 
 describe('content-driven deck boards', () => {
+  it.each([1, 2, 3, 4, 5, 6])('reserves readable nested titles around stacks of %s portrait and landscape cards', count => {
+    const zone = createEmptyZone('deck', 'Nested titles', 0);
+    zone.cards = [false, true].flatMap(site => Array.from({length: count}, (_, i) =>
+      card(`${site}-${i}`, 'mainboard', 5, site ? 190 : 0, site ? 'Site' : 'Spell')));
+    fitDeckBoardSections(zone, ZONE_DECK_HEADER_HEIGHT, landscape);
+    const children = getMainDeckSectionRects(zone.cards, landscape);
+    const boards = getDeckBoardRects(zone.bounds, zone.cards, ZONE_DECK_HEADER_HEIGHT, landscape);
+    for (const [key, site] of [['spellbook', false], ['atlas', true]] as const) {
+      const rect = children[key]!;
+      const first = zone.cards.find(card => landscape(card.cardName) === site)!;
+      expect(first.y - (count - 1) * 15 / 2 - rect.y).toBeGreaterThan(DECK_REGION_TITLE_HEIGHT);
+      expect(rect.x - boards.mainboard.x).toBeGreaterThanOrEqual(18);
+      expect(rect.y - boards.mainboard.y).toBeGreaterThan(DECK_REGION_TITLE_HEIGHT);
+    }
+    expect(children.atlas!.y - children.spellbook!.y - children.spellbook!.height).toBeGreaterThanOrEqual(DECK_BOARD_GAP);
+    const fitted = structuredClone(zone);
+    fitDeckBoardSections(zone, ZONE_DECK_HEADER_HEIGHT, landscape);
+    expect(zone).toEqual(fitted);
+  });
   it('accepts legacy Collection membership without exposing the legacy board internally', () => {
     expect(normalizeDeckBoard('sideboard')).toBe('collection');
   });

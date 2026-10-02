@@ -2638,6 +2638,7 @@ export class PixiStage {
     return areas.map((area) => ({
       ...area,
       bounds: { ...area.bounds },
+      deckRegionBounds: area.deckRegionBounds ? Object.fromEntries(Object.entries(area.deckRegionBounds).map(([key, rect]) => [key, { ...rect }])) : undefined,
       cards: area.cards.map((card) => ({ ...card })),
       deckVariants: area.deckVariants?.map((variant) => ({
         ...variant,
@@ -5720,7 +5721,9 @@ export class PixiStage {
             const text = this.labelSprites?.get(id)?.text;
             return { width: text?.width ?? 160, height: text?.height ?? 36 };
           });
-        return bounds ? [bounds] : [];
+        if (bounds) return [bounds];
+        const text = this.labelSprites?.get(label.id)?.text;
+        return [{ x: label.x - 14, y: label.y - 14, width: (text?.width ?? 160) + 28, height: (text?.height ?? 36) + 28 }];
       });
   }
 
@@ -8365,10 +8368,10 @@ export class PixiStage {
     for (const board of DECK_BOARD_ORDER) {
       for (const label of this.getPopulatedLabelBounds(zone, board)) {
         const rect = rects[board];
-        const right = Math.max(rect.x + rect.width, label.x + label.width);
-        const bottom = Math.max(rect.y + rect.height, label.y + label.height);
-        rect.x = Math.min(rect.x, label.x);
-        rect.y = Math.min(rect.y, label.y);
+        const right = Math.max(rect.x + rect.width, label.x + label.width + 18);
+        const bottom = Math.max(rect.y + rect.height, label.y + label.height + 18);
+        rect.x = Math.min(rect.x, label.x - 18);
+        rect.y = Math.min(rect.y, label.y - 55);
         rect.width = right - rect.x;
         rect.height = bottom - rect.y;
       }
@@ -8378,10 +8381,13 @@ export class PixiStage {
 
   private fitDeckSections(zone: CanvasArea): boolean {
     const previous = { ...zone.bounds };
+    const upgraded = zone.type === 'deck' && zone.deckRegionBounds === undefined;
+    const beforeCards = zone.cards.map(card => ({ ...card }));
     fitDeckBoardSections(zone, this.getZoneHeaderHeight(zone),
       (name) => this.isLandscapeCard(name));
+    this.canvasLabels = repositionLabelsAfterCardLayout(this.canvasLabels ?? [], zone.id, beforeCards, zone.cards);
     this.fitLabelRegionBounds(zone);
-    return previous.x !== zone.bounds.x || previous.y !== zone.bounds.y ||
+    return upgraded || previous.x !== zone.bounds.x || previous.y !== zone.bounds.y ||
       previous.width !== zone.bounds.width || previous.height !== zone.bounds.height;
   }
 

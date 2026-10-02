@@ -23,6 +23,7 @@ import type {
   CardCategoryData,
 } from '@/data/dataModels';
 import type { CanvasDeckVariant, CanvasArea, CanvasAreaKind } from '@/canvas/canvasAreas';
+import { normalizeDeckRegionBounds } from '@/canvas/deckBoardLayout';
 import {
   createDefaultCardFilters,
   ensureCardFilterState,
@@ -657,6 +658,7 @@ function normalizeCanvasAreas(value: unknown): CanvasArea[] {
       deckVariants,
       activeDeckVariantId: parseString(areaRecord.activeDeckVariantId).trim() || null,
       cardFilters,
+      deckRegionBounds: type === 'deck' ? normalizeDeckRegionBounds(areaRecord.deckRegionBounds) : undefined,
     });
   }
 
