@@ -228,11 +228,11 @@
     "id": "cmfs8kpe300fyl704pkslpwhu",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-08-27T17:34:03.534Z",
-    "attempts": 3,
+    "skippedAt": "2026-09-29T17:05:32.344Z",
+    "attempts": 4,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 369,
+      "index": 370,
       "raw": "cmfs8kpe300fyl704pkslpwhu"
     },
     "hint": {
@@ -241,12 +241,16 @@
       "updatedAt": "2026-01-05T21:08:20.322Z",
       "name": "A Song of Ice & Fire (Top 8 SCGCon Baltimore)",
       "format": "Constructed",
-      "hotscore": 1,
+      "hotscore": 1.252878536349733,
       "user": {
-        "id": "clvcuyje20000av43mrel2d0c",
+        "id": "cmt86v34c00a82wcy3bttnq0y",
         "username": "JESTER"
       },
-      "elements": [],
+      "elements": [
+        "Fire",
+        "None",
+        "Water"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -279,7 +283,7 @@
           "result:top-cut"
         ],
         "likes": 3,
-        "views": 364
+        "views": 368
       }
     },
     "deckinfo": {
@@ -289,12 +293,16 @@
       "name": "A Song of Ice & Fire (Top 8 SCGCon Baltimore)",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 1,
+      "hotscore": 1.252878536349733,
       "user": {
-        "id": "clvcuyje20000av43mrel2d0c",
+        "id": "cmt86v34c00a82wcy3bttnq0y",
         "username": "JESTER"
       },
-      "elements": [],
+      "elements": [
+        "Fire",
+        "None",
+        "Water"
+      ],
       "cardCount": {
         "spellbook": 50,
         "atlas": 30,
@@ -304,64 +312,64 @@
       "avatar": "Druid",
       "cards": {
         "spellbook": {
-          "Colicky Dragonettes": 3,
-          "Panorama Manticore": 2,
-          "Quarrelsome Kobolds": 3,
+          "Plague of Frogs": 1,
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 2,
+          "Adept Illusionist": 2,
+          "Geyser": 2,
+          "Jihad": 1,
+          "Pnakotic Manuscript": 1,
           "Swiven Scout": 2,
           "Vile Imp": 4,
+          "Colicky Dragonettes": 3,
           "Disintegrate": 2,
-          "Infiltrate": 2,
+          "Lugbog Cat": 3,
           "Minor Explosion": 1,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Sir Agravaine": 1,
+          "Swap": 1,
+          "Boudicca": 1,
+          "Infiltrate": 2,
+          "Monstrous Lion": 2,
           "Pact with the Devil": 1,
-          "Jihad": 1,
-          "Adept Illusionist": 2,
           "Ruler of Thul": 1,
-          "Geyser": 2,
-          "Plague of Frogs": 1,
+          "Shatter Strike": 2,
+          "Sir Gaheris": 1,
           "Atlantean Fate": 1,
           "Drums of Doom": 1,
-          "Pnakotic Manuscript": 1,
-          "Torshammar Trinket": 2,
-          "Boudicca": 1,
-          "Lugbog Cat": 3,
-          "Monstrous Lion": 2,
-          "Morgana le Fay": 1,
+          "Panorama Manticore": 2,
           "Questing Beast": 1,
-          "Redcap Powries": 3,
-          "Ring of Morrigan": 1,
-          "Shatter Strike": 2,
-          "Sir Agravaine": 1,
-          "Sir Gaheris": 1,
-          "The Green Knight": 1,
-          "Swap": 1
+          "The Green Knight": 1
         },
         "atlas": {
-          "Red Desert": 2,
-          "Remote Desert": 3,
-          "River of Flame": 1,
-          "Floodplain": 2,
-          "Tadpole Pool": 1,
-          "Oasis": 3,
-          "The Colour Out of Space": 1,
           "Boneyard": 1,
-          "Mirror Realm": 1,
           "Caerleon-Upon-Usk": 1,
+          "Floodplain": 2,
           "Forge": 2,
           "Funeral Pyre": 3,
           "Joyous Garde": 1,
+          "Mirror Realm": 1,
+          "Oasis": 3,
           "Pond": 4,
+          "Red Desert": 2,
+          "Remote Desert": 3,
+          "River of Flame": 1,
+          "Tadpole Pool": 1,
+          "The Colour Out of Space": 1,
           "Troll Bridge": 2,
           "Valley of Delight": 2
         },
         "collection": {
-          "Peregrine Apparition": 1,
-          "Polar Explorers": 2,
           "Aquamarine Core": 1,
           "Torshammar Trinket": 1,
-          "Vesuvius": 1,
-          "Black Knight": 1,
+          "Polar Explorers": 2,
+          "Peregrine Apparition": 1,
           "Shatter Strike": 1,
-          "Siege Giant": 1
+          "Siege Giant": 1,
+          "Black Knight": 1,
+          "Vesuvius": 1
         },
         "maybe": {}
       },
@@ -396,7 +404,7 @@
           "result:top-cut"
         ],
         "likes": 3,
-        "views": 364
+        "views": 368
       }
     },
     "errors": [
@@ -10279,29 +10287,74 @@
     "id": "cmejc9qce00csjv042y78z2gw",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=55",
-    "skippedAt": "2026-06-09T11:09:22.920Z",
-    "attempts": 1,
+    "skippedAt": "2026-09-29T17:04:59.471Z",
+    "attempts": 2,
     "source": {
-      "path": "tmp/decks.json",
-      "index": 130,
-      "raw": "https://curiosa.io/decks/cmejc9qce00csjv042y78z2gw"
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 74,
+      "raw": "cmejc9qce00csjv042y78z2gw"
     },
     "hint": {
-      "id": "cmejc9qce00csjv042y78z2gw"
+      "id": "cmejc9qce00csjv042y78z2gw",
+      "createdAt": "2025-08-20T02:13:49.598Z",
+      "updatedAt": "2026-09-02T18:25:11.244Z",
+      "name": "JOHNNY FIRELORD (2nd Place Explorer Series KY)",
+      "format": "Constructed",
+      "hotscore": 6.554036175069425,
+      "user": {
+        "id": "cmt87yvv2004u92cyjbquvocu",
+        "username": "10bposey"
+      },
+      "elements": [
+        "Fire",
+        "None"
+      ],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Explorer Series"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Explorer Series"
+        ],
+        "matchedSignals": [
+          "event:explorer-series",
+          "result:placed"
+        ],
+        "likes": 22,
+        "views": 1629
+      }
     },
     "deckinfo": {
       "id": "cmejc9qce00csjv042y78z2gw",
       "createdAt": "2025-08-20T02:13:49.598Z",
-      "updatedAt": "2025-11-10T16:06:46.758Z",
+      "updatedAt": "2026-09-02T18:25:11.244Z",
       "name": "JOHNNY FIRELORD (2nd Place Explorer Series KY)",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 0,
+      "hotscore": 6.554036175069425,
       "user": {
-        "id": "clqj2pyw00000v9yu2z6dcijs",
+        "id": "cmt87yvv2004u92cyjbquvocu",
         "username": "10bposey"
       },
-      "elements": [],
+      "elements": [
+        "Fire",
+        "None"
+      ],
       "cardCount": {
         "spellbook": 55,
         "atlas": 30,
@@ -10311,55 +10364,83 @@
       "avatar": "Dragonlord",
       "cards": {
         "spellbook": {
-          "Askelon Phoenix": 2,
+          "Immolation": 1,
+          "Philosopher's Stone": 1,
+          "Pit Vipers": 2,
+          "Torshammar Trinket": 3,
+          "Jihad": 1,
+          "Poisonous Dagger": 2,
+          "Vile Imp": 3,
+          "War Horse": 3,
           "Cerberus in Chains": 1,
           "Colicky Dragonettes": 3,
-          "Courtesan Thaïs": 1,
-          "Maze Minotaur": 2,
-          "Panorama Manticore": 2,
-          "Pit Vipers": 2,
-          "Quarrelsome Kobolds": 3,
-          "Vile Imp": 3,
           "Disintegrate": 2,
-          "Immolation": 1,
-          "Infiltrate": 2,
-          "Poison Nova": 2,
-          "Warp Spasm": 1,
-          "Jihad": 1,
-          "Philosopher's Stone": 1,
-          "Poisonous Dagger": 2,
-          "Torshammar Trinket": 3,
-          "Boudicca": 1,
           "Grim Guisarme": 2,
-          "Lava Flow": 2,
-          "Monstrous Lion": 2,
           "Morgana le Fay": 1,
-          "Peasant Revolt": 1,
+          "Quarrelsome Kobolds": 3,
           "Redcap Powries": 3,
+          "Warp Spasm": 1,
+          "Boudicca": 1,
+          "Infiltrate": 2,
+          "Maze Minotaur": 2,
+          "Monstrous Lion": 2,
           "Saracen Raiders": 3,
           "Siege Giant": 3,
-          "War Horse": 3
+          "Askelon Phoenix": 2,
+          "Courtesan Thaïs": 1,
+          "Lava Flow": 2,
+          "Panorama Manticore": 2,
+          "Peasant Revolt": 1,
+          "Poison Nova": 2
         },
         "atlas": {
+          "Arid Desert": 4,
+          "Bonfire": 3,
           "Dark Tower": 1,
+          "Fields of Camlann": 1,
+          "Forge": 4,
           "Gothic Tower": 1,
           "Lone Tower": 1,
-          "Rift Valley": 2,
-          "Arid Desert": 4,
           "Red Desert": 4,
           "Remote Desert": 4,
+          "Rift Valley": 2,
           "River of Flame": 1,
           "Shifting Sands": 1,
           "Vesuvius": 1,
-          "Bonfire": 3,
-          "Fields of Camlann": 1,
-          "Forge": 4,
           "Wizard's Den": 2
         },
         "collection": {
           "Ignis Rex": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Explorer Series"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Explorer Series"
+        ],
+        "matchedSignals": [
+          "event:explorer-series",
+          "result:placed"
+        ],
+        "likes": 22,
+        "views": 1629
       }
     },
     "errors": [
@@ -16124,11 +16205,11 @@
     "id": "cmdwatpjh00ocla04qivqgjsj",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-08-27T17:33:57.505Z",
-    "attempts": 3,
+    "skippedAt": "2026-09-29T17:05:26.290Z",
+    "attempts": 4,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 306,
+      "index": 315,
       "raw": "cmdwatpjh00ocla04qivqgjsj"
     },
     "hint": {
@@ -16137,13 +16218,18 @@
       "updatedAt": "2026-02-24T12:41:31.244Z",
       "name": "1st Place Cornerstone Winner ENCHANTRESS Topdeck Games 8-3-25",
       "format": "Constructed",
-      "hotscore": 20,
+      "hotscore": 5.968849562541,
       "user": {
-        "id": "clnrp8e1i0000me08qdiuon7p",
+        "id": "cmt882or100ih92cylsl7k8sp",
         "username": "DurdleMagus"
       },
-      "elements": [],
-      "primer": "<p>I'm not much for writing down my thoughts but you can see me talk about them here!</p><p><br></p><p>https://youtu.be/dhzJiaJKsmc</p>",
+      "elements": [
+        "Air",
+        "Fire",
+        "None",
+        "Water"
+      ],
+      "primer": "I'm not much for writing down my thoughts but you can see me talk about them here!\nhttps://youtu.be/dhzJiaJKsmc",
       "competitive": {
         "isCompetitive": true,
         "confidence": "high",
@@ -16174,7 +16260,7 @@
           "result:winner"
         ],
         "likes": 48,
-        "views": 4113
+        "views": 4123
       }
     },
     "deckinfo": {
@@ -16183,13 +16269,18 @@
       "updatedAt": "2026-02-24T12:41:31.244Z",
       "name": "1st Place Cornerstone Winner ENCHANTRESS Topdeck Games 8-3-25",
       "format": "Constructed",
-      "primer": "<p>I'm not much for writing down my thoughts but you can see me talk about them here!</p><p><br></p><p>https://youtu.be/dhzJiaJKsmc</p>",
-      "hotscore": 20,
+      "primer": "I'm not much for writing down my thoughts but you can see me talk about them here!\nhttps://youtu.be/dhzJiaJKsmc",
+      "hotscore": 5.968849562541,
       "user": {
-        "id": "clnrp8e1i0000me08qdiuon7p",
+        "id": "cmt882or100ih92cylsl7k8sp",
         "username": "DurdleMagus"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Fire",
+        "None",
+        "Water"
+      ],
       "cardCount": {
         "spellbook": 50,
         "atlas": 30,
@@ -16199,55 +16290,55 @@
       "avatar": "Enchantress",
       "cards": {
         "spellbook": {
-          "Apprentice Wizard": 4,
-          "Grandmaster Wizard": 2,
-          "Blink": 1,
-          "Disenchant": 1,
-          "Lightning Bolt": 2,
-          "Thunderstorm": 3,
-          "Courtesan Thaïs": 1,
-          "Death Dealer": 1,
-          "Firebolts": 1,
-          "Infiltrate": 2,
-          "Major Explosion": 2,
-          "Pact with the Devil": 1,
-          "Poison Nova": 3,
-          "Wildfire": 3,
-          "Adept Illusionist": 2,
-          "Fey Changeling": 1,
-          "Riptide": 2,
-          "Twist of Fate": 1,
-          "Abundance": 2,
-          "Atlantean Fate": 1,
-          "Silence": 2,
           "Amethyst Core": 1,
-          "Angel's Egg": 2,
           "Aquamarine Core": 1,
           "Philosopher's Stone": 1,
-          "Ruby Core": 1,
-          "Ball Lightning": 1,
-          "Feast for Crows": 1,
-          "Merlin": 1,
           "Ring of Morrigan": 1,
+          "Ruby Core": 1,
+          "Adept Illusionist": 2,
+          "Blink": 1,
+          "Disenchant": 1,
+          "Firebolts": 1,
+          "Lightning Bolt": 2,
+          "Riptide": 2,
+          "Angel's Egg": 2,
+          "Apprentice Wizard": 4,
+          "Feast for Crows": 1,
+          "Fey Changeling": 1,
+          "Merlin": 1,
+          "Silence": 2,
+          "Infiltrate": 2,
+          "Pact with the Devil": 1,
           "The Black Plague": 1,
-          "The Great Famine": 1
+          "The Great Famine": 1,
+          "Thunderstorm": 3,
+          "Wildfire": 3,
+          "Abundance": 2,
+          "Atlantean Fate": 1,
+          "Ball Lightning": 1,
+          "Courtesan Thaïs": 1,
+          "Poison Nova": 3,
+          "Grandmaster Wizard": 2,
+          "Death Dealer": 1,
+          "Major Explosion": 2,
+          "Twist of Fate": 1
         },
         "atlas": {
-          "Dark Tower": 2,
-          "Gothic Tower": 2,
-          "Lone Tower": 2,
-          "Pillar of Zeiros": 1,
-          "River of Flame": 1,
-          "Lighthouse": 3,
-          "Oasis": 3,
-          "Ruins": 3,
-          "The Colour Out of Space": 1,
           "Annual Fair": 1,
           "Bog": 3,
+          "Dark Tower": 2,
           "Fields of Camlann": 1,
           "Funeral Pyre": 3,
+          "Gothic Tower": 2,
           "Joyous Garde": 1,
+          "Lighthouse": 3,
+          "Lone Tower": 2,
           "Merlin's Tower": 1,
+          "Oasis": 3,
+          "Pillar of Zeiros": 1,
+          "River of Flame": 1,
+          "Ruins": 3,
+          "The Colour Out of Space": 1,
           "Troll Bridge": 2
         },
         "collection": {},
@@ -16288,7 +16379,7 @@
           "result:winner"
         ],
         "likes": 48,
-        "views": 4113
+        "views": 4123
       }
     },
     "errors": [
@@ -24886,11 +24977,11 @@
     "id": "cmp3chrer001404lerxhufy4f",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-08-27T17:33:45.697Z",
-    "attempts": 2,
+    "skippedAt": "2026-09-29T17:05:20.255Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 246,
+      "index": 271,
       "raw": "cmp3chrer001404lerxhufy4f"
     },
     "hint": {
@@ -24899,12 +24990,15 @@
       "updatedAt": "2026-05-21T12:20:19.021Z",
       "name": "1st Place Mono Fire Pathfinder Poorcery 50/30/10",
       "format": "Constructed",
-      "hotscore": 6,
+      "hotscore": 15.7019215894191,
       "user": {
-        "id": "cm30oegds009d9tpfpiurn5xi",
-        "username": "Bad@Game"
+        "id": "cmt86xpuz00hf2wcy3nvk30rw",
+        "username": "Upstate SC Sorcerers"
       },
-      "elements": [],
+      "elements": [
+        "Fire",
+        "None"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -24934,7 +25028,7 @@
           "result:winner"
         ],
         "likes": 5,
-        "views": 494
+        "views": 538
       }
     },
     "deckinfo": {
@@ -24944,12 +25038,15 @@
       "name": "1st Place Mono Fire Pathfinder Poorcery 50/30/10",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 6,
+      "hotscore": 15.7019215894191,
       "user": {
-        "id": "cm30oegds009d9tpfpiurn5xi",
-        "username": "Bad@Game"
+        "id": "cmt86xpuz00hf2wcy3nvk30rw",
+        "username": "Upstate SC Sorcerers"
       },
-      "elements": [],
+      "elements": [
+        "Fire",
+        "None"
+      ],
       "cardCount": {
         "spellbook": 50,
         "atlas": 30,
@@ -24959,73 +25056,73 @@
       "avatar": "Pathfinder",
       "cards": {
         "spellbook": {
-          "Colicky Dragonettes": 3,
           "Pit Vipers": 2,
-          "Quarrelsome Kobolds": 3,
-          "Vile Imp": 4,
-          "Blaze": 1,
-          "Critical Strike": 1,
-          "Poison Nova": 1,
-          "Spin Attack": 1,
           "Torshammar Trinket": 3,
+          "Critical Strike": 1,
+          "Gift of the Serpent": 2,
+          "Redmane Hyena": 3,
+          "Sinterfee": 3,
+          "Toolbox": 2,
+          "Vile Imp": 4,
+          "War Horse": 3,
+          "Wild Fanatic": 2,
+          "Begone!": 1,
+          "Blaze": 1,
+          "Colicky Dragonettes": 3,
+          "Quarrelsome Kobolds": 3,
           "Redcap Powries": 3,
+          "Searing Truth": 1,
+          "Spin Attack": 1,
+          "Trial by Fire": 1,
           "Saracen Raiders": 3,
           "Shatter Strike": 1,
           "Siege Giant": 3,
-          "War Horse": 3,
-          "Begone!": 1,
-          "Gift of the Serpent": 2,
-          "Ravenous Werewolf": 3,
-          "Redmane Hyena": 3,
-          "Searing Truth": 1,
-          "Sinterfee": 3,
-          "Toolbox": 2,
-          "Trial by Fire": 1,
-          "Wild Fanatic": 2
+          "Poison Nova": 1,
+          "Ravenous Werewolf": 3
         },
         "atlas": {
-          "Dark Tower": 1,
-          "Gothic Tower": 1,
-          "Lone Tower": 1,
-          "Arid Desert": 1,
-          "Red Desert": 1,
-          "Remote Desert": 1,
-          "Shifting Sands": 1,
-          "Iceberg": 1,
-          "Oasis": 1,
-          "Ruins": 1,
-          "Steppe": 1,
-          "Free City": 1,
-          "Wasteland": 1,
-          "Annual Fair": 1,
-          "Bonfire": 1,
-          "Forge": 1,
-          "Funeral Pyre": 1,
-          "Poisoned Well": 1,
-          "River of Blood": 1,
           "Accursed Desert": 1,
           "Active Volcano": 1,
           "Algae Bloom": 1,
+          "Annual Fair": 1,
+          "Arid Desert": 1,
           "Autumn Bloom": 1,
+          "Bonfire": 1,
+          "Dark Tower": 1,
           "Desert Bloom": 1,
+          "Forge": 1,
+          "Free City": 1,
+          "Funeral Pyre": 1,
           "Ghost Town": 1,
+          "Gothic Tower": 1,
+          "Iceberg": 1,
           "Leadworks": 1,
+          "Lone Tower": 1,
           "Molten Maar": 1,
+          "Oasis": 1,
+          "Poisoned Well": 1,
+          "Red Desert": 1,
+          "Remote Desert": 1,
+          "River of Blood": 1,
           "Road to Perdition": 1,
+          "Ruins": 1,
+          "Shifting Sands": 1,
+          "Steppe": 1,
           "Twilight Bloom": 1,
-          "Vast Desert": 1
+          "Vast Desert": 1,
+          "Wasteland": 1
         },
         "collection": {
-          "Boil": 1,
-          "Mad Dash": 1,
-          "Minor Explosion": 1,
-          "Drought": 1,
-          "Hamlet's Ablaze!": 1,
-          "Just a Rock": 1,
           "Detonate": 1,
-          "Flame Strike": 1,
+          "Just a Rock": 1,
           "Gift of the Serpent": 1,
-          "Hellhounds": 1
+          "Mad Dash": 1,
+          "Boil": 1,
+          "Flame Strike": 1,
+          "Hamlet's Ablaze!": 1,
+          "Hellhounds": 1,
+          "Minor Explosion": 1,
+          "Drought": 1
         },
         "maybe": {}
       },
@@ -25057,7 +25154,7 @@
           "result:winner"
         ],
         "likes": 5,
-        "views": 494
+        "views": 538
       }
     },
     "errors": [
@@ -25169,11 +25266,11 @@
     "id": "cmnxmxuer00ie04ji1k1m96re",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-08-27T17:33:51.574Z",
-    "attempts": 2,
+    "skippedAt": "2026-09-29T17:05:23.294Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 268,
+      "index": 285,
       "raw": "cmnxmxuer00ie04ji1k1m96re"
     },
     "hint": {
@@ -25182,12 +25279,16 @@
       "updatedAt": "2026-05-03T17:40:38.884Z",
       "name": "Poorcery Sorcerer 1st Place London",
       "format": "Constructed",
-      "hotscore": 7,
+      "hotscore": 17.292830342960777,
       "user": {
-        "id": "clk1dbtbw0000k008gda20bxt",
+        "id": "cmt88e6oc01lo92cys4jxypss",
         "username": "Cuckworthy"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth",
+        "None"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -25220,7 +25321,7 @@
           "result:winner"
         ],
         "likes": 6,
-        "views": 448
+        "views": 498
       }
     },
     "deckinfo": {
@@ -25230,12 +25331,16 @@
       "name": "Poorcery Sorcerer 1st Place London",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 7,
+      "hotscore": 17.292830342960777,
       "user": {
-        "id": "clk1dbtbw0000k008gda20bxt",
+        "id": "cmt88e6oc01lo92cys4jxypss",
         "username": "Cuckworthy"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth",
+        "None"
+      ],
       "cardCount": {
         "spellbook": 50,
         "atlas": 30,
@@ -25245,54 +25350,54 @@
       "avatar": "Sorcerer",
       "cards": {
         "spellbook": {
-          "Daperyll Vampire": 3,
-          "Headless Haunt": 3,
-          "Sling Pixies": 1,
-          "Blink": 3,
-          "Grapple Shot": 2,
-          "Whirling Blades": 3,
-          "Autumn Unicorn": 3,
-          "Bosk Troll": 4,
-          "Dalcean Phalanx": 3,
-          "Pudge Butcher": 3,
-          "Root Spider": 3,
-          "Shield Maidens": 1,
-          "Bury": 3,
-          "Cave-In": 1,
           "Divine Healing": 1,
+          "Sling Pixies": 1,
           "Torshammar Trinket": 3,
+          "Blink": 3,
+          "Bosk Troll": 4,
           "Entombed": 1,
           "Gift of the Wolf": 1,
           "Holy Warrior": 1,
-          "Order of the White Wing": 3,
           "Toolbox": 3,
-          "Vampire Bats": 1
+          "Vampire Bats": 1,
+          "Autumn Unicorn": 3,
+          "Bury": 3,
+          "Grapple Shot": 2,
+          "Headless Haunt": 3,
+          "Order of the White Wing": 3,
+          "Root Spider": 3,
+          "Shield Maidens": 1,
+          "Cave-In": 1,
+          "Dalcean Phalanx": 3,
+          "Pudge Butcher": 3,
+          "Daperyll Vampire": 3,
+          "Whirling Blades": 3
         },
         "atlas": {
-          "Dark Tower": 2,
-          "Gothic Tower": 1,
-          "Lone Tower": 1,
-          "Quagmire": 2,
-          "Simple Village": 3,
-          "Windmill": 3,
           "Beacon": 3,
           "Briar Patch": 3,
-          "Impenetrable Copse": 3,
-          "Pebbled Paths": 3,
+          "Dark Tower": 2,
           "Fertile Earth": 3,
-          "Mountain Peaks": 3
+          "Gothic Tower": 1,
+          "Impenetrable Copse": 3,
+          "Lone Tower": 1,
+          "Mountain Peaks": 3,
+          "Pebbled Paths": 3,
+          "Quagmire": 2,
+          "Simple Village": 3,
+          "Windmill": 3
         },
         "collection": {
+          "Zap!": 1,
           "Blink": 1,
           "Disenchant": 1,
-          "Lightning Bolt": 1,
-          "Mortality": 1,
-          "Bury": 1,
           "Exorcism": 1,
           "Gift of the Raven": 1,
           "Gift of the Wolf": 1,
-          "Murder of Crows": 1,
-          "Zap!": 1
+          "Lightning Bolt": 1,
+          "Mortality": 1,
+          "Bury": 1,
+          "Murder of Crows": 1
         },
         "maybe": {}
       },
@@ -25327,7 +25432,7 @@
           "result:winner"
         ],
         "likes": 6,
-        "views": 448
+        "views": 498
       }
     },
     "errors": [
@@ -25449,11 +25554,11 @@
     "id": "cmgclcwpl0061jo041ity4zpa",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=36; minimum-atlas expected>=30 actual=16",
-    "skippedAt": "2026-08-27T17:33:03.630Z",
-    "attempts": 3,
+    "skippedAt": "2026-09-29T17:05:05.363Z",
+    "attempts": 4,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 49,
+      "index": 119,
       "raw": "cmgclcwpl0061jo041ity4zpa"
     },
     "hint": {
@@ -25462,12 +25567,15 @@
       "updatedAt": "2026-08-17T00:55:40.518Z",
       "name": "Air / Fire. 36/16 1st place at Pará de Minas tournament.",
       "format": "Constructed",
-      "hotscore": 8,
+      "hotscore": 9.974331220710498,
       "user": {
-        "id": "cmgclam6b003kjo04tfxdqlkb",
-        "username": "Joaogalo93"
+        "id": "cmt8bn8g20qom92cyw0gmmhmj"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Fire",
+        "None"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -25496,7 +25604,7 @@
           "result:winner"
         ],
         "likes": 3,
-        "views": 748
+        "views": 769
       }
     },
     "deckinfo": {
@@ -25506,12 +25614,15 @@
       "name": "Air / Fire. 36/16 1st place at Pará de Minas tournament.",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 8,
+      "hotscore": 9.974331220710498,
       "user": {
-        "id": "cmgclam6b003kjo04tfxdqlkb",
-        "username": "Joaogalo93"
+        "id": "cmt8bn8g20qom92cyw0gmmhmj"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Fire",
+        "None"
+      ],
       "cardCount": {
         "spellbook": 36,
         "atlas": 16,
@@ -25521,44 +25632,44 @@
       "avatar": "Sorcerer",
       "cards": {
         "spellbook": {
-          "Daperyll Vampire": 3,
-          "Plumed Pegasus": 3,
-          "Roaming Monster": 1,
-          "Blink": 3,
-          "Grapple Shot": 1,
-          "Lightning Bolt": 2,
           "Summoning Sphere": 1,
-          "Clamor of Harpies": 1,
-          "Karkemish Chimera": 1,
-          "Panorama Manticore": 2,
+          "Blink": 3,
+          "Gift of the Serpent": 1,
+          "Lightning Bolt": 2,
+          "Magic Missiles": 1,
+          "Pith Imp": 3,
           "Sacred Scarabs": 3,
           "Vile Imp": 2,
+          "Corruptor Freak": 2,
+          "Grapple Shot": 1,
           "Iron Shackles": 1,
-          "Magic Missiles": 1,
+          "Plumed Pegasus": 3,
+          "Clamor of Harpies": 1,
           "Saracen Raiders": 3,
           "Siege Giant": 1,
           "Sir Lamorak": 1,
-          "Corruptor Freak": 2,
-          "Gift of the Serpent": 1,
-          "Pith Imp": 3
+          "Daperyll Vampire": 3,
+          "Panorama Manticore": 2,
+          "Roaming Monster": 1,
+          "Karkemish Chimera": 1
         },
         "atlas": {
-          "Dark Tower": 1,
-          "Gothic Tower": 1,
-          "Lone Tower": 1,
-          "Updraft Ridge": 1,
-          "Remote Desert": 1,
-          "Ruins": 1,
-          "Bottomless Pit": 1,
+          "Active Volcano": 1,
           "Beacon": 1,
+          "Bottomless Pit": 1,
           "Cursed Land": 1,
+          "Dark Alley": 1,
+          "Dark Tower": 1,
           "Forge": 1,
           "Funeral Pyre": 1,
+          "Gothic Tower": 1,
+          "Lone Tower": 1,
           "Lookout": 1,
+          "Molten Maar": 1,
           "Poisoned Well": 1,
-          "Active Volcano": 1,
-          "Dark Alley": 1,
-          "Molten Maar": 1
+          "Remote Desert": 1,
+          "Ruins": 1,
+          "Updraft Ridge": 1
         },
         "collection": {
           "Hellhounds": 1
@@ -25592,7 +25703,7 @@
           "result:winner"
         ],
         "likes": 3,
-        "views": 748
+        "views": 769
       }
     },
     "errors": [
@@ -28106,94 +28217,168 @@
     "id": "cm9ac27xd0069jy03o28ymxs7",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=50",
-    "skippedAt": "2026-06-09T15:15:15.595Z",
-    "attempts": 1,
+    "skippedAt": "2026-09-29T17:04:56.706Z",
+    "attempts": 2,
     "source": {
-      "path": "offlineData/deckArchive.search.place.json",
-      "index": 151,
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 71,
       "raw": "cm9ac27xd0069jy03o28ymxs7"
     },
     "hint": {
       "id": "cm9ac27xd0069jy03o28ymxs7",
       "createdAt": "2025-04-09T19:39:31.873Z",
-      "updatedAt": "2025-10-30T20:07:36.541Z",
+      "updatedAt": "2026-09-03T15:21:34.078Z",
       "name": "2nd Place GenCon 1st Crossroads Event! Hopp Schwiiz!:)",
       "format": "Constructed",
-      "hotscore": 3,
+      "hotscore": 9.449538125975826,
       "user": {
-        "id": "clvj9ylam0000hrowjzum4mju",
+        "id": "cmt87zv0o009192cybhe6lsmk",
         "username": "Fuenfrappe"
       },
-      "elements": []
+      "elements": [
+        "Earth",
+        "Fire",
+        "None",
+        "Water"
+      ],
+      "primer": null,
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Gen Con"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1,
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "GenCon"
+        ],
+        "matchedSignals": [
+          "event:gen-con",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 20,
+        "views": 1957
+      }
     },
     "deckinfo": {
       "id": "cm9ac27xd0069jy03o28ymxs7",
       "createdAt": "2025-04-09T19:39:31.873Z",
-      "updatedAt": "2025-10-30T20:07:36.541Z",
+      "updatedAt": "2026-09-03T15:21:34.078Z",
       "name": "2nd Place GenCon 1st Crossroads Event! Hopp Schwiiz!:)",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 3,
+      "hotscore": 9.449538125975826,
       "user": {
-        "id": "clvj9ylam0000hrowjzum4mju",
+        "id": "cmt87zv0o009192cybhe6lsmk",
         "username": "Fuenfrappe"
       },
-      "elements": [],
+      "elements": [
+        "Earth",
+        "Fire",
+        "None",
+        "Water"
+      ],
       "cardCount": {
         "spellbook": 50,
-        "atlas": 30,
+        "atlas": 31,
         "collection": 0,
         "maybe": 0
       },
       "avatar": "Druid",
       "cards": {
         "spellbook": {
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 3,
+          "Kettletop Leprechaun": 4,
+          "War Horse": 2,
           "Autumn Unicorn": 3,
-          "Dalcean Phalanx": 3,
-          "Pudge Butcher": 3,
+          "Blaze": 1,
+          "Colicky Dragonettes": 1,
+          "Disintegrate": 2,
+          "Grim Guisarme": 2,
+          "Minor Explosion": 1,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
           "Root Spider": 2,
           "Slumbering Giantess": 3,
-          "Earthquake": 2,
-          "Gigantism": 1,
-          "Colicky Dragonettes": 1,
-          "Courtesan Thaïs": 1,
-          "Quarrelsome Kobolds": 3,
-          "Blaze": 1,
-          "Disintegrate": 2,
-          "Infiltrate": 2,
-          "Minor Explosion": 1,
-          "Pact with the Devil": 1,
-          "Poison Nova": 1,
-          "Torshammar Trinket": 3,
+          "Yellow Knight": 2,
           "Boudicca": 1,
-          "Grim Guisarme": 2,
-          "Kettletop Leprechaun": 4,
-          "Lava Flow": 1,
-          "Morgana le Fay": 1,
-          "Ring of Morrigan": 1,
+          "Dalcean Phalanx": 3,
+          "Gigantism": 1,
+          "Infiltrate": 2,
+          "Pact with the Devil": 1,
+          "Pudge Butcher": 3,
           "Shatter Strike": 2,
           "Sir Morien": 1,
-          "War Horse": 2,
-          "Yellow Knight": 2
+          "Courtesan Thaïs": 1,
+          "Earthquake": 2,
+          "Lava Flow": 1,
+          "Poison Nova": 1
         },
         "atlas": {
-          "Humble Village": 2,
-          "Pillar of Zeiros": 1,
-          "Rift Valley": 2,
-          "Rustic Village": 3,
-          "Simple Village": 2,
           "Arid Desert": 2,
-          "Red Desert": 3,
-          "Remote Desert": 3,
-          "Smokestacks of Gnaak": 1,
-          "Steppe": 3,
           "Caerleon-Upon-Usk": 1,
           "Common Village": 2,
           "Funeral Pyre": 3,
+          "Humble Village": 2,
+          "Pillar of Zeiros": 1,
+          "Red Desert": 3,
+          "Remote Desert": 3,
+          "Rift Valley": 2,
+          "River of Flame": 1,
+          "Rustic Village": 3,
+          "Simple Village": 2,
+          "Smokestacks of Gnaak": 1,
+          "Steppe": 3,
           "Wizard's Den": 2
         },
         "collection": {},
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Gen Con"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1,
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "GenCon"
+        ],
+        "matchedSignals": [
+          "event:gen-con",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 20,
+        "views": 1957
       }
     },
     "errors": [
@@ -42473,11 +42658,11 @@
     "id": "cmt51wrny009904l7xx22dd02",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=39; minimum-atlas expected>=30 actual=21",
-    "skippedAt": "2026-08-27T17:32:57.431Z",
-    "attempts": 2,
+    "skippedAt": "2026-09-29T17:05:02.260Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 32,
+      "index": 111,
       "raw": "cmt51wrny009904l7xx22dd02"
     },
     "hint": {
@@ -42486,12 +42671,17 @@
       "updatedAt": "2026-08-23T02:24:19.593Z",
       "name": "Boston Cornerstone List",
       "format": "Constructed",
-      "hotscore": 12,
+      "hotscore": 5.547400130002554,
       "user": {
-        "id": "cmoyk5u1n00fo04jr7kngqjqw",
+        "id": "cmt88qlgg02hu92cyqvwn8lhj",
         "username": "NPRoss"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth",
+        "None",
+        "Water"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -42514,7 +42704,7 @@
           "event:cornerstone"
         ],
         "likes": 0,
-        "views": 12
+        "views": 19
       }
     },
     "deckinfo": {
@@ -42524,12 +42714,17 @@
       "name": "Boston Cornerstone List",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 12,
+      "hotscore": 5.547400130002554,
       "user": {
-        "id": "cmoyk5u1n00fo04jr7kngqjqw",
+        "id": "cmt88qlgg02hu92cyqvwn8lhj",
         "username": "NPRoss"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth",
+        "None",
+        "Water"
+      ],
       "cardCount": {
         "spellbook": 39,
         "atlas": 21,
@@ -42539,38 +42734,38 @@
       "avatar": "Magician",
       "cards": {
         "spellbook": {
-          "Grandmaster Wizard": 2,
-          "Nightmare": 1,
-          "Chaos Twister": 2,
-          "Lightning Bolt": 4,
-          "Raise Dead": 3,
-          "Conqueror Worm": 1,
-          "Fey Changeling": 3,
-          "Great Old One": 1,
-          "Pollimorph": 2,
-          "Pnakotic Manuscript": 1,
-          "Salmon of Knowledge": 2,
-          "Sisters of Avalon": 3,
-          "Adtonitum": 1,
-          "Shrine of the Dragonlord": 1,
           "Cemetery Rats": 4,
           "Clairvoyant": 2,
-          "Lilith": 1,
+          "Lightning Bolt": 4,
           "Pith Imp": 4,
+          "Pnakotic Manuscript": 1,
+          "Pollimorph": 2,
+          "Shrine of the Dragonlord": 1,
+          "Sisters of Avalon": 3,
+          "Fey Changeling": 3,
+          "Salmon of Knowledge": 2,
+          "Chaos Twister": 2,
+          "Raise Dead": 3,
+          "Lilith": 1,
+          "Grandmaster Wizard": 2,
+          "Adtonitum": 1,
+          "Nightmare": 1,
+          "Conqueror Worm": 1,
+          "Great Old One": 1,
           "The Doom of Dilmun": 1
         },
         "atlas": {
           "Aqueduct": 3,
-          "Lighthouse": 3,
           "Boneyard": 1,
-          "Lookout": 1,
-          "Tintagel": 1,
-          "Troll Bridge": 3,
-          "Wizard's Den": 2,
           "Forgotten Tomb": 2,
           "Garden of Eden": 1,
+          "Lighthouse": 3,
+          "Lookout": 1,
           "Mountain Peaks": 3,
-          "Shallow Grave": 1
+          "Shallow Grave": 1,
+          "Tintagel": 1,
+          "Troll Bridge": 3,
+          "Wizard's Den": 2
         },
         "collection": {},
         "maybe": {}
@@ -42596,7 +42791,7 @@
           "event:cornerstone"
         ],
         "likes": 0,
-        "views": 12
+        "views": 19
       }
     },
     "errors": [
@@ -42612,192 +42807,15 @@
       }
     ]
   },
-  "cmnt1f9p9006q04l7y98ldn8w": {
-    "id": "cmnt1f9p9006q04l7y98ldn8w",
-    "status": "skipped-invalid",
-    "reason": "minimum-spellbook expected>=60 actual=58",
-    "skippedAt": "2026-08-27T17:33:09.872Z",
-    "attempts": 2,
-    "source": {
-      "path": "offlineData/deckArchive.json.search.json",
-      "index": 54,
-      "raw": "cmnt1f9p9006q04l7y98ldn8w"
-    },
-    "hint": {
-      "id": "cmnt1f9p9006q04l7y98ldn8w",
-      "createdAt": "2026-04-10T15:05:14.961Z",
-      "updatedAt": "2026-08-14T00:05:16.304Z",
-      "name": "Enchantress? Never heard of her (top 8 SCG Vegas)",
-      "format": "Constructed",
-      "hotscore": 7,
-      "user": {
-        "id": "cm2o57p7h0000qexp26v04v93",
-        "username": "Rackhir"
-      },
-      "elements": [],
-      "primer": null,
-      "competitive": {
-        "isCompetitive": true,
-        "confidence": "medium",
-        "seasons": [
-          2026
-        ],
-        "events": [],
-        "locations": [
-          "Las Vegas"
-        ],
-        "resultTags": [
-          "top-cut"
-        ],
-        "placements": [],
-        "topCuts": [
-          8
-        ],
-        "records": [],
-        "matchedQueries": [
-          "Top 8"
-        ],
-        "matchedSignals": [
-          "location:las-vegas",
-          "result:top-cut"
-        ],
-        "likes": 9,
-        "views": 694
-      }
-    },
-    "deckinfo": {
-      "id": "cmnt1f9p9006q04l7y98ldn8w",
-      "createdAt": "2026-04-10T15:05:14.961Z",
-      "updatedAt": "2026-08-14T00:05:16.304Z",
-      "name": "Enchantress? Never heard of her (top 8 SCG Vegas)",
-      "format": "Constructed",
-      "primer": null,
-      "hotscore": 7,
-      "user": {
-        "id": "cm2o57p7h0000qexp26v04v93",
-        "username": "Rackhir"
-      },
-      "elements": [],
-      "cardCount": {
-        "spellbook": 58,
-        "atlas": 30,
-        "collection": 10,
-        "maybe": 0
-      },
-      "avatar": "Imposter",
-      "cards": {
-        "spellbook": {
-          "Quarrelsome Kobolds": 3,
-          "Vile Imp": 4,
-          "Disintegrate": 2,
-          "Poison Nova": 3,
-          "Wildfire": 3,
-          "Fey Changeling": 1,
-          "Ruler of Thul": 1,
-          "Selfsame Simulacrum": 1,
-          "Atlantean Fate": 1,
-          "Torshammar Trinket": 1,
-          "Boudicca": 1,
-          "Coy Nixie": 3,
-          "Lugbog Cat": 3,
-          "Mesmerism": 1,
-          "Morgana le Fay": 1,
-          "Ring of Morrigan": 1,
-          "Snowball": 2,
-          "The Great Famine": 1,
-          "Swap": 3,
-          "Abaddon Succubus": 2,
-          "Acid Rain": 2,
-          "Archangel Raphael": 1,
-          "Balor of the Evil Eye": 1,
-          "Betrayal": 1,
-          "Failed Mutation": 3,
-          "Gift of the Serpent": 2,
-          "Hyperparasite": 1,
-          "Key to the City": 1,
-          "Lilith": 1,
-          "Order of the Sacred Oak": 2,
-          "Sacred Stag": 2,
-          "Salt the Earth": 1,
-          "Sinterfee": 2
-        },
-        "atlas": {
-          "River of Flame": 1,
-          "Smokestacks of Gnaak": 1,
-          "Floodplain": 3,
-          "Oasis": 3,
-          "Mirror Realm": 1,
-          "Babbling Brook": 3,
-          "Funeral Pyre": 2,
-          "Troll Bridge": 3,
-          "Active Volcano": 3,
-          "Garden of Eden": 1,
-          "Heirloom Lost": 1,
-          "River Rapids": 2,
-          "Thin Ice": 3,
-          "Vindictive Nation": 1,
-          "Mobbed Court": 2
-        },
-        "collection": {
-          "Elementalist": 1,
-          "Enchantress": 1,
-          "Pathfinder": 1,
-          "Sorcerer": 1,
-          "Flamecaller": 1,
-          "Archimago": 1,
-          "Witch": 1,
-          "Interrogator": 1,
-          "Ironclad": 1,
-          "Necromancer": 1
-        },
-        "maybe": {}
-      },
-      "competitive": {
-        "isCompetitive": true,
-        "confidence": "medium",
-        "seasons": [
-          2026
-        ],
-        "events": [],
-        "locations": [
-          "Las Vegas"
-        ],
-        "resultTags": [
-          "top-cut"
-        ],
-        "placements": [],
-        "topCuts": [
-          8
-        ],
-        "records": [],
-        "matchedQueries": [
-          "Top 8"
-        ],
-        "matchedSignals": [
-          "location:las-vegas",
-          "result:top-cut"
-        ],
-        "likes": 9,
-        "views": 694
-      }
-    },
-    "errors": [
-      {
-        "type": "SPELLBOOK_TOO_SMALL",
-        "count": 58,
-        "message": "minimum-spellbook expected>=60 actual=58"
-      }
-    ]
-  },
   "cmsjbav6200060aklz23ov03v": {
     "id": "cmsjbav6200060aklz23ov03v",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=58",
-    "skippedAt": "2026-08-27T17:33:15.632Z",
-    "attempts": 2,
+    "skippedAt": "2026-09-29T17:05:08.282Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 67,
+      "index": 129,
       "raw": "cmsjbav6200060aklz23ov03v"
     },
     "hint": {
@@ -42806,12 +42824,16 @@
       "updatedAt": "2026-08-07T19:03:06.809Z",
       "name": "12th Place Enchatress SCGCON DC",
       "format": "Constructed",
-      "hotscore": 10,
+      "hotscore": 8.156897072096287,
       "user": {
-        "id": "clnrp8e1i0000me08qdiuon7p",
+        "id": "cmt882or100ih92cylsl7k8sp",
         "username": "DurdleMagus"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Fire",
+        "None"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -42843,7 +42865,7 @@
           "result:placed"
         ],
         "likes": 1,
-        "views": 47
+        "views": 68
       }
     },
     "deckinfo": {
@@ -42853,12 +42875,16 @@
       "name": "12th Place Enchatress SCGCON DC",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 10,
+      "hotscore": 8.156897072096287,
       "user": {
-        "id": "clnrp8e1i0000me08qdiuon7p",
+        "id": "cmt882or100ih92cylsl7k8sp",
         "username": "DurdleMagus"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Fire",
+        "None"
+      ],
       "cardCount": {
         "spellbook": 58,
         "atlas": 30,
@@ -42868,67 +42894,67 @@
       "avatar": "Enchantress",
       "cards": {
         "spellbook": {
-          "Daperyll Vampire": 3,
-          "Hounds of Ondaros": 2,
-          "Witherwing Hero": 1,
           "Browse": 1,
-          "Grapple Shot": 4,
-          "Whirling Blades": 3,
-          "Thunderstorm": 3,
-          "Colicky Dragonettes": 3,
-          "Death Dealer": 1,
-          "Quarrelsome Kobolds": 3,
-          "Infiltrate": 2,
-          "Warp Spasm": 1,
-          "Drought": 3,
-          "Wildfire": 3,
+          "Ring of Morrigan": 1,
           "Torshammar Trinket": 2,
           "Four Waters of Paradise": 1,
-          "Monstrous Lion": 2,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Grapple Shot": 4,
+          "Màzuj Ifrit": 2,
           "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
           "Redcap Powries": 3,
-          "Ring of Morrigan": 1,
+          "Sturmgeist": 2,
+          "Warp Spasm": 1,
+          "Angry Mob": 1,
+          "Bane of Aventis": 1,
+          "Char Omphalos": 1,
+          "Drought": 3,
+          "Infiltrate": 2,
+          "Monstrous Lion": 2,
+          "Salt the Earth": 1,
           "Sir Lamorak": 1,
           "The Black Plague": 1,
           "The Great Famine": 1,
-          "Angry Mob": 1,
-          "Balor of the Evil Eye": 1,
-          "Bane of Aventis": 1,
+          "Thunderstorm": 3,
+          "Wildfire": 3,
+          "Witherwing Hero": 1,
           "Betrayal": 2,
-          "Blaze of Glory": 1,
-          "Char Omphalos": 1,
-          "Màzuj Ifrit": 2,
-          "Salt the Earth": 1,
-          "Sturmgeist": 2
+          "Daperyll Vampire": 3,
+          "Hounds of Ondaros": 2,
+          "Whirling Blades": 3,
+          "Balor of the Evil Eye": 1,
+          "Death Dealer": 1
         },
         "atlas": {
+          "Active Volcano": 3,
           "Dark Tower": 2,
-          "Gothic Tower": 2,
-          "Lone Tower": 2,
-          "River of Flame": 1,
-          "Ruins": 3,
           "Fields of Camlann": 1,
           "Forge": 4,
           "Glastonbury Tor": 1,
+          "Gothic Tower": 2,
           "Joyous Garde": 1,
+          "Lone Tower": 2,
           "Merlin's Tower": 1,
-          "Active Volcano": 3,
           "Mountain Peaks": 3,
+          "River of Flame": 1,
+          "Ruins": 3,
           "Sea of Ash": 1,
           "Vast Desert": 3,
           "Wuthering Heights": 2
         },
         "collection": {
+          "Detonate": 1,
+          "Zap!": 1,
           "Blink": 1,
           "Disenchant": 1,
-          "Firebolts": 1,
-          "Angry Mob": 1,
-          "Detonate": 1,
           "Displace": 1,
+          "Firebolts": 1,
           "Gift of the Raven": 1,
-          "Makeshift Barricade": 1,
           "Toolbox": 1,
-          "Zap!": 1
+          "Makeshift Barricade": 1,
+          "Angry Mob": 1
         },
         "maybe": {}
       },
@@ -42962,7 +42988,7 @@
           "result:placed"
         ],
         "likes": 1,
-        "views": 47
+        "views": 68
       }
     },
     "errors": [
@@ -42977,11 +43003,11 @@
     "id": "cmr7ref3c006c04jojcuaen2c",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=24; minimum-atlas expected>=30 actual=12",
-    "skippedAt": "2026-08-27T17:33:21.608Z",
-    "attempts": 2,
+    "skippedAt": "2026-09-29T17:05:11.002Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 160,
+      "index": 214,
       "raw": "cmr7ref3c006c04jojcuaen2c"
     },
     "hint": {
@@ -42990,12 +43016,15 @@
       "updatedAt": "2026-07-05T12:28:19.825Z",
       "name": "Casual Gothic Draft (SorceryFest 2026)",
       "format": "Constructed",
-      "hotscore": 1,
+      "hotscore": 0,
       "user": {
-        "id": "clqhsnemb0000y6z175f694w3",
+        "id": "cmt8ck2up1kao92cygmakb85z",
         "username": "lm"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -43020,7 +43049,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 4
+        "views": 5
       }
     },
     "deckinfo": {
@@ -43030,12 +43059,15 @@
       "name": "Casual Gothic Draft (SorceryFest 2026)",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 1,
+      "hotscore": 0,
       "user": {
-        "id": "clqhsnemb0000y6z175f694w3",
+        "id": "cmt8ck2up1kao92cygmakb85z",
         "username": "lm"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth"
+      ],
       "cardCount": {
         "spellbook": 24,
         "atlas": 12,
@@ -43045,35 +43077,35 @@
       "avatar": "Harbinger",
       "cards": {
         "spellbook": {
-          "Barrow Wight": 1,
           "Bone Jumble": 1,
           "Bone Spear": 1,
-          "Crawler": 1,
-          "Death Knight": 1,
           "Fowl Bones": 1,
+          "Necropotence": 1,
+          "Zap!": 1,
+          "Barrow Wight": 1,
+          "Noisome Twosome": 1,
+          "Skeleton Mage": 1,
+          "Vampire Bats": 1,
+          "Crawler": 1,
           "Ghoul": 2,
           "Kiss of Death": 1,
-          "Necropotence": 1,
-          "Noisome Twosome": 1,
           "Raise Militia": 1,
-          "Skeleton Mage": 1,
-          "Smite": 1,
           "Snallygaster": 2,
           "Undead Ambush": 1,
-          "Undesirables": 4,
-          "Vampire Bats": 1,
-          "Zap!": 1,
-          "Zombie Horde": 1
+          "Death Knight": 1,
+          "Smite": 1,
+          "Zombie Horde": 1,
+          "Undesirables": 4
         },
         "atlas": {
-          "Spire": 3,
-          "Valley": 3,
           "Accursed Tower": 1,
           "Autumn Bloom": 1,
           "Blessed Village": 1,
           "Dread Thicket": 1,
           "Elder Ruins": 1,
-          "Open Mausoleum": 1
+          "Open Mausoleum": 1,
+          "Spire": 3,
+          "Valley": 3
         },
         "collection": {
           "Shoggoth": 1
@@ -43103,7 +43135,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 4
+        "views": 5
       }
     },
     "errors": [
@@ -43123,11 +43155,11 @@
     "id": "cmqyjtv6j01x104jx57vx2k7b",
     "status": "skipped-invalid",
     "reason": "minimum-atlas expected>=30 actual=28",
-    "skippedAt": "2026-08-27T17:33:28.335Z",
-    "attempts": 2,
+    "skippedAt": "2026-09-29T17:05:15.608Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 180,
+      "index": 226,
       "raw": "cmqyjtv6j01x104jx57vx2k7b"
     },
     "hint": {
@@ -43136,12 +43168,18 @@
       "updatedAt": "2026-06-29T01:45:33.939Z",
       "name": "Hella Mentalist SCG con top 8 by Michael",
       "format": "Constructed",
-      "hotscore": 1,
+      "hotscore": 1.5498227645639087,
       "user": {
-        "id": "clczbmaa1006kv5ugepx9ko43",
+        "id": "cmt8abspb08ev92cycj6cg6iq",
         "username": "Goldeneagle1833"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth",
+        "Fire",
+        "None",
+        "Water"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -43170,7 +43208,7 @@
           "result:top-cut"
         ],
         "likes": 4,
-        "views": 101
+        "views": 107
       }
     },
     "deckinfo": {
@@ -43180,12 +43218,18 @@
       "name": "Hella Mentalist SCG con top 8 by Michael",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 1,
+      "hotscore": 1.5498227645639087,
       "user": {
-        "id": "clczbmaa1006kv5ugepx9ko43",
+        "id": "cmt8abspb08ev92cycj6cg6iq",
         "username": "Goldeneagle1833"
       },
-      "elements": [],
+      "elements": [
+        "Air",
+        "Earth",
+        "Fire",
+        "None",
+        "Water"
+      ],
       "cardCount": {
         "spellbook": 61,
         "atlas": 28,
@@ -43195,71 +43239,71 @@
       "avatar": "Elementalist",
       "cards": {
         "spellbook": {
-          "Daperyll Vampire": 3,
-          "Blink": 2,
-          "Grapple Shot": 3,
-          "Whirling Blades": 2,
-          "Autumn Unicorn": 3,
-          "Bosk Troll": 4,
-          "Pudge Butcher": 3,
-          "Quarrelsome Kobolds": 3,
-          "Geyser": 2,
-          "Atlantean Fate": 1,
-          "Torshammar Trinket": 2,
-          "King Arthur": 1,
-          "Lady Iseult": 1,
           "Ring of Morrigan": 1,
+          "Torshammar Trinket": 2,
+          "Arjaro Exorcist": 2,
+          "Blink": 2,
+          "Bosk Troll": 4,
+          "Geyser": 2,
+          "Gift of the Frog": 4,
+          "Lady Iseult": 1,
+          "Silver Bullet": 2,
+          "Sinterfee": 3,
+          "Sir Tom Thumb": 1,
+          "War Horse": 3,
+          "Autumn Unicorn": 3,
+          "Grapple Shot": 3,
+          "Onslaught": 2,
+          "Quarrelsome Kobolds": 3,
           "Sir Bors the Younger": 1,
+          "Apply Alkahest": 2,
+          "Doctor Demetrius": 1,
+          "Gargantula": 2,
+          "King Arthur": 1,
+          "Pudge Butcher": 3,
           "Sir Gawain": 1,
           "Sir Lamorak": 1,
           "Sir Perceval": 1,
-          "Sir Tom Thumb": 1,
           "The Black Plague": 1,
-          "War Horse": 3,
-          "Apply Alkahest": 2,
-          "Arjaro Exorcist": 2,
+          "Atlantean Fate": 1,
           "Book of the Dead": 1,
-          "Doctor Demetrius": 1,
-          "Gargantula": 2,
-          "Gift of the Frog": 4,
-          "Lord of Lies": 2,
-          "Onslaught": 2,
-          "Silver Bullet": 2,
-          "Sinterfee": 3
+          "Daperyll Vampire": 3,
+          "Whirling Blades": 2,
+          "Lord of Lies": 2
         },
         "atlas": {
-          "Dark Tower": 1,
-          "Gothic Tower": 1,
-          "Lone Tower": 1,
-          "Kingdom of Agartha": 1,
-          "Rustic Village": 2,
-          "Simple Village": 1,
-          "Lighthouse": 1,
-          "The Colour Out of Space": 1,
-          "Windmill": 1,
-          "Sinkhole": 2,
-          "Common Village": 4,
-          "Merlin's Tower": 1,
-          "Tintagel": 1,
-          "Wizard's Den": 2,
           "City of Glass": 1,
           "City of Souls": 1,
           "City of Traitors": 1,
+          "Common Village": 4,
+          "Dark Tower": 1,
           "Forlorn Keep": 1,
           "Garden of Eden": 1,
-          "Peculiar Port": 3
+          "Gothic Tower": 1,
+          "Kingdom of Agartha": 1,
+          "Lighthouse": 1,
+          "Lone Tower": 1,
+          "Merlin's Tower": 1,
+          "Peculiar Port": 3,
+          "Rustic Village": 2,
+          "Simple Village": 1,
+          "Sinkhole": 2,
+          "The Colour Out of Space": 1,
+          "Tintagel": 1,
+          "Windmill": 1,
+          "Wizard's Den": 2
         },
         "collection": {
-          "Flanking Maneuver": 1,
-          "Whirling Blades": 1,
-          "Poison Nova": 1,
-          "Geyser": 1,
           "Torshammar Trinket": 1,
-          "Stone Rain": 1,
-          "Swap": 1,
+          "Geyser": 1,
+          "Flanking Maneuver": 1,
           "Horrible Hybrids": 1,
           "Onslaught": 1,
-          "Penitent Knight": 1
+          "Penitent Knight": 1,
+          "Swap": 1,
+          "Stone Rain": 1,
+          "Poison Nova": 1,
+          "Whirling Blades": 1
         },
         "maybe": {}
       },
@@ -43290,7 +43334,7 @@
           "result:top-cut"
         ],
         "likes": 4,
-        "views": 101
+        "views": 107
       }
     },
     "errors": [
@@ -43473,11 +43517,11 @@
     "id": "cmpiq4txt001804kzpqdcafaz",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=59",
-    "skippedAt": "2026-08-27T17:33:40.913Z",
-    "attempts": 2,
+    "skippedAt": "2026-09-29T17:05:17.050Z",
+    "attempts": 3,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 242,
+      "index": 267,
       "raw": "cmpiq4txt001804kzpqdcafaz"
     },
     "hint": {
@@ -43486,12 +43530,16 @@
       "updatedAt": "2026-05-25T23:06:04.554Z",
       "name": "ARCHIMAGO AOTR",
       "format": "Constructed",
-      "hotscore": 1,
+      "hotscore": 0.7587999379632743,
       "user": {
-        "id": "clnrp8e1i0000me08qdiuon7p",
+        "id": "cmt882or100ih92cylsl7k8sp",
         "username": "DurdleMagus"
       },
-      "elements": [],
+      "elements": [
+        "Earth",
+        "Fire",
+        "None"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -43514,7 +43562,7 @@
           "event:avatar-of-the-realm"
         ],
         "likes": 1,
-        "views": 63
+        "views": 68
       }
     },
     "deckinfo": {
@@ -43524,12 +43572,16 @@
       "name": "ARCHIMAGO AOTR",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 1,
+      "hotscore": 0.7587999379632743,
       "user": {
-        "id": "clnrp8e1i0000me08qdiuon7p",
+        "id": "cmt882or100ih92cylsl7k8sp",
         "username": "DurdleMagus"
       },
-      "elements": [],
+      "elements": [
+        "Earth",
+        "Fire",
+        "None"
+      ],
       "cardCount": {
         "spellbook": 59,
         "atlas": 30,
@@ -43539,63 +43591,63 @@
       "avatar": "Archimago",
       "cards": {
         "spellbook": {
-          "King of the Realm": 1,
-          "Root Spider": 3,
-          "Assorted Animals": 2,
-          "Border Militia": 4,
-          "Bury": 2,
-          "Cave-In": 2,
-          "Common Sense": 4,
-          "Craterize": 2,
-          "Dispel": 1,
+          "Cemetery Rats": 1,
           "Divine Healing": 2,
-          "Earthquake": 2,
-          "Death Dealer": 1,
-          "Firebolts": 1,
-          "Major Explosion": 2,
-          "Poison Nova": 3,
-          "Kettletop Leprechaun": 4,
           "Pendragon Legacy": 1,
-          "Rhitta Gawr of Snowdonia": 1,
           "Ring of Morrigan": 1,
           "Tithe": 1,
-          "Archangel Michael": 1,
-          "Cemetery Rats": 1,
-          "Gargantula": 2,
+          "Common Sense": 4,
+          "Dispel": 1,
+          "Firebolts": 1,
           "Gift of the Wolf": 4,
-          "Landmass": 4,
-          "Onslaught": 2,
-          "Powerwish": 1,
+          "Kettletop Leprechaun": 4,
           "Saint of Redemption": 1,
           "Sister Stefánia": 1,
+          "Border Militia": 4,
+          "Bury": 2,
+          "Landmass": 4,
+          "Onslaught": 2,
+          "Root Spider": 3,
+          "Cave-In": 2,
+          "Gargantula": 2,
           "Smite": 1,
-          "Torrid Omphalos": 1
+          "Torrid Omphalos": 1,
+          "Archangel Michael": 1,
+          "Earthquake": 2,
+          "Poison Nova": 3,
+          "Powerwish": 1,
+          "Rhitta Gawr of Snowdonia": 1,
+          "Death Dealer": 1,
+          "King of the Realm": 1,
+          "Major Explosion": 2,
+          "Craterize": 2,
+          "Assorted Animals": 2
         },
         "atlas": {
-          "Gnome Hollows": 3,
-          "Rift Valley": 2,
-          "Mirage": 2,
-          "River of Flame": 1,
-          "Steppe": 3,
-          "Imperial Road": 2,
-          "Mirror Realm": 1,
-          "Sinkhole": 2,
-          "Valley of Delight": 2,
           "Active Volcano": 2,
           "Boulevard of Bones": 2,
           "Fertile Earth": 3,
+          "Gnome Hollows": 3,
           "Heirloom Lost": 2,
-          "Shallow Grave": 3
+          "Imperial Road": 2,
+          "Mirage": 2,
+          "Mirror Realm": 1,
+          "Rift Valley": 2,
+          "River of Flame": 1,
+          "Shallow Grave": 3,
+          "Sinkhole": 2,
+          "Steppe": 3,
+          "Valley of Delight": 2
         },
         "collection": {
+          "Consecrate": 1,
+          "Onslaught": 1,
+          "Searing Truth": 1,
           "Cave-In": 1,
           "Drought": 1,
-          "Lava Flow": 1,
-          "Consecrate": 1,
-          "Consecrated Ground": 3,
-          "Onslaught": 1,
           "Raze": 1,
-          "Searing Truth": 1
+          "Lava Flow": 1,
+          "Consecrated Ground": 3
         },
         "maybe": {
           "Mover of Mountains": 1
@@ -43622,7 +43674,7 @@
           "event:avatar-of-the-realm"
         ],
         "likes": 1,
-        "views": 63
+        "views": 68
       }
     },
     "errors": [
@@ -43637,11 +43689,11 @@
     "id": "cmlzwpz5o014004l4iv6xyge7",
     "status": "skipped-invalid",
     "reason": "minimum-spellbook expected>=60 actual=42; minimum-atlas expected>=30 actual=18",
-    "skippedAt": "2026-08-27T17:32:00.438Z",
-    "attempts": 1,
+    "skippedAt": "2026-09-29T17:05:29.301Z",
+    "attempts": 2,
     "source": {
       "path": "offlineData/deckArchive.json.search.json",
-      "index": 322,
+      "index": 331,
       "raw": "cmlzwpz5o014004l4iv6xyge7"
     },
     "hint": {
@@ -43650,12 +43702,15 @@
       "updatedAt": "2026-02-24T01:08:34.942Z",
       "name": "Tūmatarau whakataetae o Aotearoa 2026 - 19th - Sean B",
       "format": "Constructed",
-      "hotscore": 1,
+      "hotscore": 0,
       "user": {
-        "id": "cls6jfjxr0000ugwfx6p5xgeq",
-        "username": "FTW Events"
+        "id": "cmt8721il00vl2wcyppj3xcnh"
       },
-      "elements": [],
+      "elements": [
+        "Fire",
+        "None",
+        "Water"
+      ],
       "primer": null,
       "competitive": {
         "isCompetitive": true,
@@ -43678,7 +43733,6 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Tumatarau",
           "2026"
         ],
         "matchedSignals": [
@@ -43699,12 +43753,15 @@
       "name": "Tūmatarau whakataetae o Aotearoa 2026 - 19th - Sean B",
       "format": "Constructed",
       "primer": null,
-      "hotscore": 1,
+      "hotscore": 0,
       "user": {
-        "id": "cls6jfjxr0000ugwfx6p5xgeq",
-        "username": "FTW Events"
+        "id": "cmt8721il00vl2wcyppj3xcnh"
       },
-      "elements": [],
+      "elements": [
+        "Fire",
+        "None",
+        "Water"
+      ],
       "cardCount": {
         "spellbook": 42,
         "atlas": 18,
@@ -43714,53 +43771,53 @@
       "avatar": "Magician",
       "cards": {
         "spellbook": {
-          "Cerberus in Chains": 1,
-          "Vile Imp": 3,
-          "Infiltrate": 2,
-          "Fey Changeling": 2,
-          "Selfsame Simulacrum": 2,
-          "Plague of Frogs": 1,
-          "Pollimorph": 2,
-          "Atlantean Fate": 1,
           "Philosopher's Stone": 1,
-          "Pnakotic Manuscript": 1,
+          "Plague of Frogs": 1,
           "Ruby Core": 1,
           "Torshammar Trinket": 1,
+          "Pnakotic Manuscript": 1,
+          "Pollimorph": 2,
+          "Return to Nature": 2,
+          "Silver Bullet": 2,
+          "Vile Imp": 3,
+          "Barging Barghest": 3,
+          "Cerberus in Chains": 1,
           "Coy Nixie": 3,
+          "Fey Changeling": 2,
           "Lugbog Cat": 3,
+          "Searing Truth": 2,
           "Sir Agravaine": 1,
+          "Swap": 2,
+          "Failed Mutation": 2,
+          "Infiltrate": 2,
+          "Selfsame Simulacrum": 2,
+          "Shackled Demon": 2,
           "Sir Gaheris": 1,
           "The Great Famine": 1,
-          "Swap": 2,
-          "Barging Barghest": 3,
-          "Failed Mutation": 2,
-          "Return to Nature": 2,
-          "Searing Truth": 2,
-          "Shackled Demon": 2,
-          "Silver Bullet": 2
+          "Atlantean Fate": 1
         },
         "atlas": {
-          "Red Desert": 3,
-          "Oasis": 3,
+          "Active Volcano": 2,
           "Annual Fair": 1,
           "Babbling Brook": 2,
           "Caerleon-Upon-Usk": 1,
-          "Kelp Cavern": 2,
-          "Active Volcano": 2,
           "Deep Sea": 1,
+          "Kelp Cavern": 2,
+          "Oasis": 3,
+          "Red Desert": 3,
           "Thin Ice": 3
         },
         "collection": {
-          "Hillock Basilisk": 1,
-          "Poison Nova": 1,
-          "Drought": 1,
-          "Mariner's Curse": 1,
-          "Torshammar Trinket": 1,
-          "Swap": 1,
-          "Begone!": 1,
           "Ferryman's Coin": 1,
+          "Torshammar Trinket": 1,
+          "Begone!": 1,
+          "Mariner's Curse": 1,
+          "Searing Truth": 1,
+          "Swap": 1,
+          "Drought": 1,
+          "Hillock Basilisk": 1,
           "Mimic": 1,
-          "Searing Truth": 1
+          "Poison Nova": 1
         },
         "maybe": {}
       },
@@ -43785,7 +43842,6 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Tumatarau",
           "2026"
         ],
         "matchedSignals": [
@@ -43809,6 +43865,228 @@
         "type": "ATLAS_TOO_SMALL",
         "count": 18,
         "message": "minimum-atlas expected>=30 actual=18"
+      }
+    ]
+  },
+  "cmtgkrb78000a0akrbpycykgt": {
+    "id": "cmtgkrb78000a0akrbpycykgt",
+    "status": "skipped-invalid",
+    "reason": "minimum-spellbook expected>=60 actual=59",
+    "skippedAt": "2026-09-29T17:02:38.478Z",
+    "attempts": 1,
+    "source": {
+      "path": "offlineData/deckArchive.json.search.json",
+      "index": 64,
+      "raw": "cmtgkrb78000a0akrbpycykgt"
+    },
+    "hint": {
+      "id": "cmtgkrb78000a0akrbpycykgt",
+      "createdAt": "2026-08-31T01:43:43.220Z",
+      "updatedAt": "2026-09-05T20:13:25.549Z",
+      "name": "5th place CORNERSTONE SAO PAULO/BRAZIL 2026 - Roots Bloody Roots ",
+      "format": "Constructed",
+      "hotscore": 16.70846428522778,
+      "user": {
+        "id": "cmt8bmgbd0q2w92cyo6bnlrc6",
+        "username": "Sgamba"
+      },
+      "elements": [
+        "Earth",
+        "Fire",
+        "None"
+      ],
+      "primer": "{{https://youtu.be/F_6IjeprfEs?is=iGa4ub4COkQrUojG}}\nMy Deck Updated \nhttps://sorcerytcg.com/decks/cmk9l8p9s005304k3rtcgs1sm\nI finished Cornerstone 4–1. Here was my run:\n - 1st Win against Pathfinder (F)\n - 2nd Win against Necromancer (A)(F)\n - 3rd Win against Avatar of Earth (A)(E)\n - 4th Loss against Archmage (A)(E)(F)\n - 5th Win against Waveshaper (W)\n",
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed",
+          "record"
+        ],
+        "placements": [
+          5,
+          1,
+          2,
+          3,
+          4
+        ],
+        "topCuts": [],
+        "records": [
+          "4-1"
+        ],
+        "matchedQueries": [
+          "Cornerstone",
+          "2026"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "result:placed",
+          "result:record",
+          "result:winner",
+          "season:2026"
+        ],
+        "likes": 1,
+        "views": 147
+      }
+    },
+    "deckinfo": {
+      "id": "cmtgkrb78000a0akrbpycykgt",
+      "createdAt": "2026-08-31T01:43:43.220Z",
+      "updatedAt": "2026-09-05T20:13:25.549Z",
+      "name": "5th place CORNERSTONE SAO PAULO/BRAZIL 2026 - Roots Bloody Roots",
+      "format": "Constructed",
+      "primer": "{{https://youtu.be/F_6IjeprfEs?is=iGa4ub4COkQrUojG}}\nMy Deck Updated \nhttps://sorcerytcg.com/decks/cmk9l8p9s005304k3rtcgs1sm\nI finished Cornerstone 4–1. Here was my run:\n - 1st Win against Pathfinder (F)\n - 2nd Win against Necromancer (A)(F)\n - 3rd Win against Avatar of Earth (A)(E)\n - 4th Loss against Archmage (A)(E)(F)\n - 5th Win against Waveshaper (W)\n",
+      "hotscore": 16.70846428522778,
+      "user": {
+        "id": "cmt8bmgbd0q2w92cyo6bnlrc6",
+        "username": "Sgamba"
+      },
+      "elements": [
+        "Earth",
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 59,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 13
+      },
+      "avatar": "Geomancer",
+      "cards": {
+        "spellbook": {
+          "Arjaro Exorcist": 2,
+          "Crusade": 1,
+          "Gift of the Wolf": 3,
+          "Kettletop Leprechaun": 4,
+          "Mover of Mountains": 1,
+          "Saint of Redemption": 1,
+          "Sister Stefánia": 1,
+          "Toolbox": 3,
+          "Autumn Unicorn": 3,
+          "Bury": 1,
+          "Landmass": 3,
+          "Morgana le Fay": 1,
+          "Onslaught": 1,
+          "Order of the White Wing": 3,
+          "Quarrelsome Kobolds": 3,
+          "Root Spider": 3,
+          "Scorched Earth": 1,
+          "Gargantula": 2,
+          "Gigantism": 1,
+          "Paladins of Bazia": 2,
+          "Pudge Butcher": 3,
+          "Torrid Omphalos": 1,
+          "Archangel Michael": 1,
+          "Atlas Wanderers": 1,
+          "Earthquake": 2,
+          "Poison Nova": 2,
+          "The Inquisition": 1,
+          "Balor of the Evil Eye": 1,
+          "Rhitta Gawr of Snowdonia": 1,
+          "Death Dealer": 1,
+          "Major Explosion": 2,
+          "Craterize": 2,
+          "Assorted Animals": 1
+        },
+        "atlas": {
+          "Boulevard of Bones": 2,
+          "Common Village": 1,
+          "Desert Bloom": 3,
+          "Funeral Pyre": 3,
+          "Humble Village": 2,
+          "Mount Ussar Sanctuary": 1,
+          "Pillar of Zeiros": 1,
+          "Rift Valley": 2,
+          "River of Blood": 3,
+          "Roots of Yggdrasil": 1,
+          "Rustic Village": 1,
+          "Simple Village": 4,
+          "Sinkhole": 2,
+          "Steppe": 3,
+          "Valley of Delight": 1
+        },
+        "collection": {
+          "Dispel": 1,
+          "Gift of the Wolf": 1,
+          "Scent Hounds": 1,
+          "Unravel": 1,
+          "Boil": 1,
+          "Bury": 1,
+          "Heat Ray": 1,
+          "Minor Explosion": 1,
+          "Angry Mob": 1,
+          "Flayer": 1
+        },
+        "maybe": {
+          "Carrion Beetles": 1,
+          "Torshammar Trinket": 1,
+          "Gift of the Wolf": 1,
+          "Redmane Hyena": 1,
+          "Colicky Dragonettes": 1,
+          "Landmass": 1,
+          "Onslaught": 1,
+          "Dalcean Phalanx": 2,
+          "Petrosian Cavalry": 1,
+          "Askelon Phoenix": 1,
+          "Common Village": 1,
+          "Pilgrim's Shrine": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed",
+          "record"
+        ],
+        "placements": [
+          5,
+          1,
+          2,
+          3,
+          4
+        ],
+        "topCuts": [],
+        "records": [
+          "4-1"
+        ],
+        "matchedQueries": [
+          "Cornerstone",
+          "2026"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "result:placed",
+          "result:record",
+          "result:winner",
+          "season:2026"
+        ],
+        "likes": 1,
+        "views": 147
+      }
+    },
+    "errors": [
+      {
+        "type": "SPELLBOOK_TOO_SMALL",
+        "count": 59,
+        "message": "minimum-spellbook expected>=60 actual=59"
       }
     ]
   }
