@@ -190,7 +190,7 @@ interface Deck {
 
 interface DeckBoards {
   mainboard: DeckCard[]
-  sideboard: DeckCard[]
+  collection: DeckCard[]
   avatar: DeckCard[]
   maybeboard: DeckCard[]
 }
@@ -224,7 +224,7 @@ const DECK_LIMITS = {
   AVATAR_COUNT: 1,
   SPELL_COUNT: 60,
   SITE_COUNT: 30,
-  SIDEBOARD_COUNT: 10,
+  COLLECTION_COUNT: 10,
   RARITY_LIMITS: {
     Ordinary: 4,
     Exceptional: 3,
@@ -354,7 +354,7 @@ React NEVER directly manipulates PixiJS objects. State flows one-way from React 
 - Generate .txt
 - Format: `quantity name`
 - One card per line
-- Board headers: `// Mainboard`, `// Sideboard`, etc.
+- Board headers: `// Main`, `// Collection`, etc.
 
 **Import**
 - Parse pasted text

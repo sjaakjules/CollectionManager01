@@ -26,8 +26,12 @@ These are the scripts currently exposed through `package.json`:
 | `pnpm cards:atlas:medium` | `scripts/generate-card-thumb-atlases.mjs` | Generate the medium atlas tier. |
 | `pnpm cards:atlas:all` | `cards:atlas` and `cards:atlas:medium` | Generate both atlas tiers. |
 | `pnpm cards:thumbs+atlas` | `cards:thumbs` and `cards:atlas:all` | Generate standalone thumbnails and both atlas tiers. |
+| `pnpm sorcery:request` | `scripts/sorcery-request.mjs` | Download one response through the shared host throttle. |
+| `pnpm sorcery:decks` | `scripts/fetch-curiosa-decks.mjs` | Download decklists through the shared host throttle. |
+| `pnpm sorcery:search-decks` | `scripts/search-curiosa-decks.mjs` | Search SorceryTCG sequentially and archive matching decks. |
+| `pnpm sorcery:competitive-decks` | `scripts/search-curiosa-decks.mjs --preset competitive-2026` | Refresh competition decks and rebuild Deck Lookup. |
 | `pnpm curiosa:decks` | `scripts/fetch-curiosa-decks.mjs` | Download decklists from input files into an archive. |
-| `pnpm curiosa:search-decks` | `scripts/search-curiosa-decks.mjs` | Search Curiosa and archive matching decklists. |
+| `pnpm curiosa:search-decks` | `scripts/search-curiosa-decks.mjs` | Legacy alias for the SorceryTCG search command. |
 | `pnpm deck-styles:build` | `scripts/build-deck-style-associations.mjs` | Build the Deck Lookup and deck-style card score asset. |
 
 Helper scripts that are not package commands:
@@ -105,9 +109,40 @@ pnpm test
 This includes the script tests such as Curiosa archive handling, association
 generation, and deployment asset manifest logic.
 
-## Curiosa Deck Archives
+## SorceryTCG Deck Archives
 
-The Curiosa scripts write local archive files. These are data inputs for
+Follow the [mandatory request policy](sorcery-request-policy.md). Every query,
+page, deck download, retry and manual diagnostic uses one shared host budget:
+one request at a time, at least three seconds after the previous response/failure,
+plus any longer server-directed wait. Do not run parallel upstream jobs or use
+raw `curl`/fetch to avoid the queue. Use saved files and mocked tests to verify
+changes without contacting SorceryTCG again.
+
+### `pnpm sorcery:request <https-url> <output-file>`
+
+Downloads a response using the same throttle and persisted deadlines as archive
+commands and Vite. Accepts HTTPS URLs on `sorcerytcg.com` and
+`api.sorcerytcg.com`; it does not follow redirects. An HTTP error leaves the
+existing output file untouched.
+
+```sh
+pnpm sorcery:request https://api.sorcerytcg.com/api/cards /tmp/sorcery-cards.json
+pnpm cards:check /tmp/sorcery-cards.json
+```
+
+Reuse the downloaded file for subsequent validation and archive commands.
+
+### Archive command compatibility
+
+The `pnpm sorcery:decks`, `pnpm sorcery:search-decks`, and
+`pnpm sorcery:competitive-decks` commands are the current names. Existing
+`curiosa:*` commands and `--curiosa-base-url` remain aliases. The upstream is
+SorceryTCG for both names. Imports use one `deck.get` request; search follows
+`nextCursor` until it is absent, because the old `deck.count` endpoint is gone.
+The old `relevance` search option now selects SorceryTCG's popularity order;
+`latest` selects update time. Search audit counts are totals discovered so far.
+
+The deck scripts write local archive files. These are data inputs for
 offline analysis and association generation; they are separate from
 `guest.json` and `username.json`.
 
@@ -117,9 +152,38 @@ Recommended local archive path:
 offlineData/deckArchive.json
 ```
 
+### `pnpm sorcery:competitive-decks`
+
+Refreshes the competition archive using the existing `competitive-2026` preset:
+36 event, placement and tournament search terms, Constructed format, and a
+1 January 2026 cutoff. Matching decks are merged by ID, unchanged decklists are
+reused, and new or updated lists are validated before entering the archive.
+The command rebuilds Deck Lookup after the refresh.
+
+```sh
+pnpm sorcery:competitive-decks
+```
+
+For a newly released set, first download the public card catalogue and validate
+it with `pnpm cards:check <file>`, then pass that file with `--card-data <file>`.
+The override is used for both archive validation and the Deck Lookup rebuild.
+Both legacy `guardian/sets` and current `engine/printings` catalogues are accepted.
+The default is `public/assets/sorcery_cards.json`.
+
+Use `--no-rebuild-lookup` to separate the two steps, then run
+`pnpm deck-styles:build --card-data <file>` with the same catalogue. A catalogue
+validation failure leaves the existing Deck Lookup asset untouched.
+
+The 30 September 2026 refresh searched 881 unique results, selected 371 eligible
+decks, added 59 and updated 29. Fourteen lists failed the existing minimum-size
+rules; no network requests failed. All 631 archived decks were retained in
+Deck Lookup, including 416 tagged for the 2026 competition season. Search and
+skip details are recorded in `offlineData/deckArchive.json.search.json` and
+`offlineData/deckArchive.json.skipped.json`.
+
 ### `pnpm curiosa:search-decks`
 
-Searches Curiosa, saves a search snapshot, then downloads matching decklists
+Searches SorceryTCG, saves a search snapshot, then downloads matching decklists
 into an archive.
 
 Common command:
@@ -136,8 +200,8 @@ Useful options:
 --search-output <file>     Search snapshot JSON. Defaults to <output>.search.json.
 --skipped-output <file>    Failed or invalid deck archive. Defaults to <output>.skipped.json.
 --log <file>               Archive log. Defaults to <output>.log.
---card-data <file>         Card catalog. Defaults to docs/Sorcery_CardInfo.json.
---curiosa-base-url <url>   Defaults to https://curiosa.io.
+--card-data <file>         Card catalog. Defaults to public/assets/sorcery_cards.json.
+--sorcery-base-url <url>   Defaults to https://sorcerytcg.com.
 --min-views <n>            Download only decks with at least n views.
 --min-likes <n>            Download only decks with at least n likes.
 --max-decks <n>            Stop after this many filtered decks.
@@ -198,8 +262,8 @@ Useful options:
 --output <file>         Main deck archive JSON.
 --log <file>            Log file. Defaults to <output>.log.
 --skipped-output <file> Failed or invalid deck archive. Defaults to <output>.skipped.json.
---card-data <file>      Card catalog. Defaults to docs/Sorcery_CardInfo.json.
---curiosa-base-url <url> Defaults to https://curiosa.io.
+--card-data <file>      Card catalog. Defaults to public/assets/sorcery_cards.json.
+--sorcery-base-url <url> Defaults to https://sorcerytcg.com.
 --limit-per-file <n>    Process only the first n entries from each input file.
 --skip-processed        Do not re-fetch IDs already in output or skipped-output.
 ```

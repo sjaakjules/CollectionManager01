@@ -1,6 +1,11 @@
 # Project Design Requirements (PDR)
 ## Sorcery Collection Manager
 
+Upstream access must follow the current [SorceryTCG request policy](sorcery-request-policy.md),
+including scripts, agent diagnostics and future automatic refreshes. Historical
+Curiosa endpoint examples below are superseded by the
+[SorceryTCG integration notes](curiosa-service-request-policy.md).
+
 ---
 
 ## 1. Project Summary
@@ -95,7 +100,7 @@ Sorcery Collection Manager is a web-based visual deck-building tool for the Sorc
   - ​TRPC endpoint: https://curiosa.io/api/trpc/ 
   - ​filenames: deck.getDecklistById, deck.getAvatarById, deck.getSideboardById, deck.getMaybeboardById
   - ​query: {"json": {"id": deck_id}} for each filename
-  - ​saved offline in browser guest.json or user.json with data: {name, author, mainboard, avatar, sideboard, maybeboard}
+  - ​saved offline in browser guest.json or user.json with data: {name, author, mainboard, avatar, collection, maybeboard}
 - Collection loaded from text file 
   - user upload with structure same as curiosa.io download: 1 item per line in the format "quantity name" e.g. "4 Cave Trolls"
   - saved in guest.json or user.json
@@ -186,17 +191,22 @@ Optimisations:
 ### 6.2 Selection & Dragging
 
 **Selection:**
-- Single click on unselected card: Selects it (clears other selections)
-- Single click on selected card: Deselects it
-- Shift+click: Toggles card in multi-selection (additive)
-- Left-drag on empty space OR unselected card: Creates selection box
-- Ctrl+drag: Creates selection box (alternative method)
+- Click an unselected card: Select its stack (or itself when unstacked)
+- Click a selected stack again: Select only the clicked card
+- Double-click in a deck or stack area: Select the whole stack
+- Shift+click: Toggle one card in the selection
+- Left-drag on empty canvas: Selection rectangle; Shift preserves the selection
+- Ctrl+drag: Selection rectangle starting over a card
 
-**Dragging:**
-- Left-drag on **already selected** card: Moves all selected cards
-- Right-drag anywhere: Always pans viewport
-- On release, cards snap to the nearest grid cell position
-- Orientation is preserved (site cards rotated +90° clockwise)
+**Dragging and navigation:**
+- Left-drag on a card: Move its selected card, stack or group
+- Snap the group's translation from its anchor's base position; decorative stack
+  offsets must not separate cards or accumulate drift
+- Middle/right-drag or Space + left-drag: Pan
+- Mouse wheel/vertical trackpad scroll: Zoom at cursor; pure horizontal scroll:
+  Pan sideways; pinch: Zoom. Do not guess input hardware from wheel-delta size.
+- Touch remains separate: tap, swipe to pan, hold then drag, pinch to zoom
+- Card arrangements persist in `canvasAreas` without changing the user schema
 
 ---
 
@@ -207,8 +217,15 @@ Optimisations:
 - Collapsible side panel containing:
   - Deck list
   - Create / rename / delete deck controls
+- Selecting a deck loads/focuses it on one click. Hide closes the inspector while
+  preserving the layout; Hide deck hides its canvas area without discarding positions.
+- Deck Lookup uses Avatars, Styles, Competitions, Favourites and Added. Added
+  and the side panel list the same saved decks. Removal updates both and the
+  canvas, and persists through reload/login; layout reset requires confirmation.
+- Selecting an Added deck focuses it above the analysis panel, which shows
+  active-variant metrics and locally estimated style affinities.
 - Only one deck may be active and modified at a time
-- active deck has boards: mainboard, sideboard, avatar, maybeboard
+- active deck has boards: mainboard, collection, avatar, maybeboard
 - Load Collection via text upload (later with curiosa login)
 - Multiple decks can be loaded when a collection is present to ensure user can make all loaded decks from the cards in their collection. 
 
@@ -218,8 +235,10 @@ Optimisations:
 
 | Interaction | Effect |
 |-----------|--------|
-| Double left-click | Add card to active deck |
-| Double right-click | Remove card from active deck |
+| Catalogue double left-click | Add card to active deck |
+| Catalogue double right-click | Remove card from active deck |
+| Deck/stack double-click | Select the whole stack |
+| Deck Alt + double-click | Toggle inclusion in current variant |
 
 - Card counts in deck cannot go below zero
 
@@ -233,13 +252,13 @@ Optimisations:
 - When a collection is present:
   - Quantity colour is white if more cards are in the collection, black if none remain and red if there are more cards in the deck than the collection.
   - If multiple decks are loaded their joined quantity influence numeric colour.
-  - limits combine cards in mainboard and sideboard, maybeboard not included in limits 
+  - limits combine cards in mainboard and collection, maybeboard not included in limits
 
 ---
 
 ## 8. Deck Rules & Validation
 
-- Deck-building rules are tracked in real time (1 avatar, 60 spells, 30 sites, 10 sideboard of all types)
+- Deck-building rules are tracked in real time (1 avatar, 60 spells, 30 sites, 10 Collection cards of all types)
 - deck card limits are tracked per card rarity (​Ordinary 4x, Exceptional 3x, Elite 2x, Unique 1x)
 - Collection limits are tacked when present with loaded decks
 

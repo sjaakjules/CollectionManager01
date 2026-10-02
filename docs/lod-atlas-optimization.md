@@ -70,6 +70,10 @@ Startup:
 
 Zoom and pan:
 
+- Wheel/vertical trackpad scrolling zooms at the cursor, regardless of delta
+  size. Pure horizontal scrolling pans sideways; middle/right-drag or
+  Space + left-drag pans freely. Canvas events prevent browser page scrolling
+  and page zoom while panels retain their normal scroll behavior.
 - LOD selection uses estimated on-screen card height, not raw zoom alone.
 - Current automatic LOD thresholds are:
 
@@ -80,6 +84,16 @@ Zoom and pan:
 | Save-Data/low-memory | Always thumbnail | Disabled | Disabled | `1.5x` |
 
 - Full-catalog full-detail preload is disabled.
+- Zoom updates coalesce until the viewport has finished anchoring at the cursor.
+  Visibility is recalculated before requesting detail, including large wheel
+  steps from an overview. A changed viewport or zoom-out cancels obsolete queued
+  preload work after its in-flight downloads finish.
+- Decks, stacks and deck avatars share the near-viewport loading policy.
+  Distant deck cards do not request detail on every zoom; panning them into view
+  loads the appropriate tier even when the zoom level has not changed.
+- Keep useful cached/arriving fallback images visible while sharper detail is
+  loading. Downloads can finish out of order: a late thumbnail or medium image
+  must not overwrite full detail, and late full images must not undo zoom-out.
 - The background loading indicator says `Loading Detail` because the active
   tier may be medium atlas pages on phones rather than full individual files.
 - Full textures are pruned with an LRU policy on desktop/tablet-rich devices.
@@ -209,6 +223,14 @@ pnpm test
 pnpm typecheck
 pnpm build
 ```
+
+Navigation and loading regressions are covered by `Camera.test.ts`,
+`CardSprite.test.ts` and `PixiStage.lod.test.ts`: real canvas wheel events,
+cursor anchoring, thumbnail-to-medium-to-full promotion, reversed download
+completion order, cache reuse, and deck/avatar visibility during zoom and pan.
+Control changes must preserve the existing thresholds and device budgets unless
+separately measured and justified. Browser checks should zoom through all three
+tiers and confirm that sharper images arrive without blanking the cards.
 
 Also inspect generated manifests for:
 

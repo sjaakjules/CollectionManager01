@@ -7,9 +7,9 @@ A visual deck-building tool for the Sorcery TCG. Built with React and PixiJS for
 - **Visual Deck Building**: Pan and zoom through your entire card collection on an interactive grid
 - **Direct Card Manipulation**: Double-click to add/remove cards from your deck
 - **Real-time Validation**: Deck rules enforced with clear visual feedback
-- **Multiple Boards**: Mainboard, sideboard, avatar, and maybeboard support
+- **Multiple Boards**: Main (Spellbook and Atlas), Collection, Maybe, and avatar support
 - **Local-first**: Works fully offline with optional cloud sync
-- **Curiosa.io Compatible**: Import/export decks in standard text format
+- **SorceryTCG deck imports**: Load current or legacy Curiosa deck links; import/export standard deck text
 
 ## Quick Start
 
@@ -24,7 +24,19 @@ pnpm dev
 pnpm build
 ```
 
+## SorceryTCG Request Limits
+
+All SorceryTCG traffic must follow the [request policy](docs/sorcery-request-policy.md):
+one request at a time, at least three seconds after completion, server-directed
+cooldowns, and no bypasses for scripts or manual diagnostics. Download a live
+response with `pnpm sorcery:request <https-url> <output-file>` and reuse that
+file for subsequent checks. Tests use offline fixtures.
+
 ## Faster Card Startup (Thumbnails)
+
+For API compatibility, preview cards, and the release review workflow, see
+[Card catalogue updates](docs/card-catalog-updates.md). Run `pnpm cards:check`
+to validate local card data, or pass a downloaded catalogue file to check it.
 
 Generate a thumbnail set from `public/assets/Cards`:
 
@@ -127,7 +139,8 @@ Key runtime modules and how they connect:
 | `src/rendering/PixiCanvas.tsx` | React <-> Pixi bridge and loading overlays | `src/rendering/PixiStage.ts`, `src/data/cardFilters.ts` |
 | `src/canvas/canvasAreas.ts` | Stack/deck canvas model + placement/layout helpers | `src/rendering/Grid.ts`, `src/app/App.tsx` |
 | `src/data/cardFilters.ts` | Filter state + card matching engine | `src/ui/BottomPanel.tsx`, `src/rendering/PixiCanvas.tsx` |
-| `src/data/curiosaService.ts` | Curiosa URL import and deck payload parsing | `src/ui/BottomPanel.tsx` |
+| `src/data/curiosaService.ts` | SorceryTCG URL import and deck payload parsing | `src/ui/BottomPanel.tsx` |
+| `src/data/sorceryRequest.ts` | Shared upstream queue, spacing and retry policy | Cards, decks, search, Node maintenance/dev clients |
 | `src/data/importExport.ts` | Deck text import/export helpers | `src/ui/BottomPanel.tsx` |
 | `src/data/userSync.ts` | Debounced server sync + merge strategy | `src/auth/api.ts`, `src/app/App.tsx` |
 
@@ -138,17 +151,95 @@ All of the modules above include top-of-file headers and exported function docs 
 - 1 Avatar
 - 60 Spells maximum
 - 30 Sites maximum
-- 10 Sideboard cards
+- 10 Collection cards
 - Rarity limits: Ordinary (4x), Exceptional (3x), Elite (2x), Unique (1x)
 
 ## Controls
 
-| Action                | Effect             |
-| --------------------- | ------------------ |
-| Pan                   | Click and drag     |
-| Zoom                  | Scroll wheel       |
-| Add card to deck      | Double left-click  |
-| Remove card from deck | Double right-click |
+| Action | Effect |
+| ------ | ------ |
+| Left-drag empty canvas | Draw a selection rectangle (Shift adds) |
+| Click a card stack | Select the stack; another click selects one card |
+| Double-click in a deck or stack | Select the whole stack |
+| Drag a card | Move the selected card, stack or group; snap on release |
+| Middle/right-drag or Space + left-drag | Pan, including mice without a middle button |
+| Mouse wheel or vertical trackpad scroll | Zoom in/out at the cursor |
+| Horizontal trackpad scroll | Pan sideways |
+| Trackpad pinch | Zoom |
+| Touch swipe / pinch / hold then drag | Pan / zoom / move card |
+| Double left/right-click in the catalogue | Add to Main / remove from the active deck |
+| Alt + double-click in a deck | Toggle inclusion in the current variant |
+| Click a card's X twice | Arm removal in red, then remove that card; Escape cancels |
+| Drop a card on a label name | Join that label's group |
+| Shake a card while dragging | Detach it from its label group |
+
+Deck Lookup opens on **Avatars**, then **Styles**, **Competitions**, **Favourites**
+and **Added**. Added and the right-hand Decks panel share the same saved library:
+manual imports, saved lookup decks and examples. Adding or removing a deck in
+either panel updates both. Removal also clears its canvas area and persists
+through reload, guest seeding and account sync; re-importing restores it.
+
+Selecting a deck in the right-hand list loads and focuses it with one click.
+**Hide** closes the inspector while keeping its canvas layout; **Hide deck**
+hides it from the canvas but keeps the saved deck and its arrangement. Opening an existing deck
+from Added preserves its card arrangement. **Reset layout** in the side panel
+or canvas header asks for confirmation before restoring default rows and stacks.
+It preserves card IDs, board membership and variants. **Remove deck** asks for
+confirmation separately; export first to keep a copy.
+
+Selecting an Added deck frames it above the bottom panel and displays its current
+active variant's counts, card types, mana curve and average mana cost. Style
+affinities are estimated locally from the bundled style catalogue using rarity
+saturation and TF-IDF similarity to up to eight decks. Avatar, main deck and
+Collection contribute; Maybe does not. Scores describe style affinity, not
+win probability. Edits are analysed from current cards rather than a stored remote
+ID; unknown cards are reported and excluded. Analysis makes no upstream requests.
+
+Each deck canvas has separate **Main**, **Collection**, and **Maybe**
+sections, in that order. Main contains Spellbook and Atlas. Collection uses ten
+portrait columns on import or reset; all populated regions fit their current
+contents. Moving cards changes the region bounds without moving other cards,
+including when the region extends over the catalogue. Mixed-board selections
+keep their boards and relative offsets. A selection from one board transfers
+when dropped inside another board. Older sideboard saves migrate to Collection.
+
+Catalogue double-click additions always go to Main and glow until moved.
+The **Layout** panel defines the catalogue's grouping and sorting hierarchy:
+drag steps between arrows, double-click a step to switch Group/Sort, or use its
+buttons. Element, Spellbook/Atlas and card-type groups remain after filtering.
+Filters and layout changes leave decks, card orientations and labels intact.
+
+Create labels from **Labels**, then drop cards on their names to form groups.
+Drag a populated label to move its members, including nested label groups.
+Deck movement carries its linked labels. Shaking a card detaches it; dropping
+inside another board transfers it, and dropping on another label joins that
+group. Empty labels have no region and can leave their deck without expanding
+it. Double-click a label to rename it; saving an empty name removes the label
+while keeping its cards. Touch users can also detach through the card menu.
+
+Card removal uses two clicks on the same X within five seconds. Expressive manga
+gestures use paper rims, ink keylines and gold accents, sized to the actual card
+or stack, including landscape sites. Routine actions use marks without words;
+occasional actions share a caption cooldown. All sequences use held drawings at
+24 fps and respect reduced motion. Deletion uses the 1.75-second cloud →
+contraction → pop → twinkles / “pooft” / “ボフッ” sequence; rapid repeat deletions
+use a compact puff. Removal happens immediately.
+
+Layout contains catalogue grouping and sorting controls. Research panels and
+animation previews are local artifacts under `tmp/GraphicIdeas/`; they are never
+published. Canvas effects are original vector drawings with no external image
+requests. Older effect preferences remain readable in guest/account saves, but
+the application uses one consistent expressive treatment.
+
+Undo card removal with Cmd/Ctrl+Z outside text fields. It restores the exact
+instance and its remaining label/variant memberships without reverting later
+edits. The last 20 individual card removals are kept for the current session;
+switching accounts clears this history.
+
+Vertical wheel scrolling always zooms, including smooth and fractional wheel
+movements. Space-drag pans freely in two dimensions. Zoom keeps the point under
+the cursor fixed and progressively loads sharper images for visible and nearby
+cards, including deck avatars. Cached images remain visible while detail loads.
 
 ## Open Work
 

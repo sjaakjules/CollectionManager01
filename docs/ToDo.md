@@ -43,7 +43,7 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 | ------------------------- | ------ | ------------------------------------------------------- |
 | guest.json storage        | Done   | `userStorage.ts` with IndexedDB + localStorage fallback |
 | Deck editing (add/remove) | Done   | Double-click interactions                               |
-| Board selection           | Done   | Mainboard/sideboard/avatar/maybeboard                   |
+| Board selection           | Done   | Main/Collection/avatar/Maybe                   |
 | Quantity overlays         | Done   | Color-coded based on collection                         |
 | Export to .txt            | Done   | `importExport.ts` with Curiosa format                   |
 | Import from .txt          | Done   | Parse with unknown card highlighting                    |
