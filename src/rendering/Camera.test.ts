@@ -43,6 +43,16 @@ function wheel(options: WheelEventInit): WheelEvent {
 }
 
 describe('canvas wheel navigation', () => {
+  it('keeps the overview below the login control and above the phone dock', () => {
+    camera.viewport.resize(390, 844);
+    const animate = vi.spyOn(camera.viewport, 'animate');
+    camera.fitToContent({left: 0, top: 0, right: 3300, bottom: 7600}, 100, 1, 0,
+      {top: 48, bottom: 56, left: 12, right: 12});
+    const options = animate.mock.calls[0]![0];
+    const scale = options.scale!, position = options.position!;
+    expect(422 - position.y * scale).toBeGreaterThanOrEqual(48);
+    expect(422 + (7600 - position.y) * scale).toBeLessThanOrEqual(788);
+  });
   it('focuses deck bounds above an open analysis panel and still notifies detail loading', () => {
     const animate = vi.spyOn(camera.viewport, 'animate');
     camera.fitToContent({ left: 100, top: 200, right: 1100, bottom: 1000 }, 50, 450, 300);

@@ -7,6 +7,7 @@ import {
   TouchGestureTracker,
   isSyntheticMouseAfterTouch,
   isTouchLikePointerEvent,
+  isTouchDragCentre,
   type TouchGesturePoint,
   type TouchGestureTarget,
 } from "./touchGestures";
@@ -34,6 +35,27 @@ afterEach(() => {
 });
 
 describe("TouchGestureTracker", () => {
+  it('drags a centre grab immediately after slop, keeping taps and pinch cancellation intact', () => {
+    const tracker = new TouchGestureTracker<TestTarget>();
+    const centre = { ...cardTarget, dragOnMove: true };
+    tracker.start(point(), centre);
+    expect(tracker.isClaimingDrag()).toBe(true);
+    expect(tracker.release(point({timeMs: 50})).type).toBe('tap');
+    tracker.start(point(), centre);
+    expect(tracker.move(point({x: 140, timeMs: 40})).type).toBe('drag-start');
+    tracker.start(point({pointerId: 2}), centre);
+    expect(tracker.isClaimingDrag()).toBe(false);
+    expect(tracker.release(point({x: 150})).type).toBe('none');
+  });
+
+  it.each([{right: 100, bottom: 140}, {right: 140, bottom: 100}])('distinguishes a readable card centre from its pan edges: %j', (size) => {
+    const bounds = {left: 0, top: 0, ...size};
+    const centre = {x: size.right / 2, y: size.bottom / 2};
+    expect(isTouchDragCentre(centre, bounds, 1)).toBe(true);
+    expect(isTouchDragCentre({...centre, x: 5}, bounds, 1)).toBe(false);
+    expect(isTouchDragCentre({...centre, y: 5}, bounds, 1)).toBe(false);
+    expect(isTouchDragCentre(centre, bounds, 0.2)).toBe(false);
+  });
   it("classifies a stable touch as a tap", () => {
     const tracker = new TouchGestureTracker<TestTarget>();
     tracker.start(point(), cardTarget);

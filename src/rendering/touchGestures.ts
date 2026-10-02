@@ -14,6 +14,20 @@ export interface TouchGesturePoint {
 
 export interface TouchGestureTarget {
   key: string;
+  /** A deliberate centre/title grab; edge swipes keep their pan behavior. */
+  dragOnMove?: boolean;
+}
+
+export function isTouchDragCentre(
+  point: { x: number; y: number },
+  bounds: { left: number; top: number; right: number; bottom: number },
+  zoom: number,
+): boolean {
+  const width = bounds.right - bounds.left, height = bounds.bottom - bounds.top;
+  // Overview thumbnails are navigation, not tiny accidental drag targets.
+  if (width * zoom < 44 || height * zoom < 44) return false;
+  return point.x >= bounds.left + width * 0.22 && point.x <= bounds.right - width * 0.22 &&
+    point.y >= bounds.top + height * 0.22 && point.y <= bounds.bottom - height * 0.22;
 }
 
 export interface TouchGestureSnapshot<TTarget extends TouchGestureTarget> {
@@ -176,6 +190,10 @@ export class TouchGestureTracker<TTarget extends TouchGestureTarget> {
 
     if (this.phase === "pending" && movedBeyondTap) {
       this.clearLongPressTimer();
+      if (this.target.dragOnMove) {
+        this.phase = 'dragging';
+        return { type: 'drag-start', gesture: this.snapshot(point) };
+      }
       this.phase = "panning";
       this.target = null;
       this.startPoint = null;
@@ -241,6 +259,10 @@ export class TouchGestureTracker<TTarget extends TouchGestureTarget> {
 
   isLongPressed(): boolean {
     return this.phase === "long-pressed" || this.phase === "dragging";
+  }
+
+  isClaimingDrag(): boolean {
+    return this.isLongPressed() || (this.phase === 'pending' && this.target?.dragOnMove === true);
   }
 
   private fireLongPress(): void {

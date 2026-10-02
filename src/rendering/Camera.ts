@@ -201,18 +201,21 @@ export class Camera {
     this.viewport.emit('moved', { viewport: this.viewport, type: 'wheel' });
   }
 
-  fitToContent(bounds: CameraBounds, padding = 100, time = 800, bottomInset = 0): void {
+  fitToContent(bounds: CameraBounds, padding = 100, time = 800, bottomInset = 0,
+    screenInsets: { top?: number; right?: number; bottom?: number; left?: number } = {}): void {
     const width = bounds.right - bounds.left + padding * 2;
     const height = bounds.bottom - bounds.top + padding * 2;
 
-    const scaleX = this.viewport.screenWidth / width;
-    const inset = Math.max(0, Math.min(bottomInset, this.viewport.screenHeight - 100));
-    const scaleY = (this.viewport.screenHeight - inset) / height;
+    const left = screenInsets.left ?? 0, right = screenInsets.right ?? 0;
+    const top = screenInsets.top ?? 0;
+    const scaleX = Math.max(100, this.viewport.screenWidth - left - right) / width;
+    const inset = Math.max(0, Math.min(Math.max(bottomInset, screenInsets.bottom ?? 0), this.viewport.screenHeight - 100));
+    const scaleY = Math.max(100, this.viewport.screenHeight - inset - top) / height;
     const scale = Math.min(scaleX, scaleY, CAMERA_DEFAULTS.MAX_ZOOM);
     const clampedScale = Math.max(scale, CAMERA_DEFAULTS.MIN_ZOOM);
 
-    const centerX = (bounds.left + bounds.right) / 2;
-    const centerY = (bounds.top + bounds.bottom) / 2 + inset / (2 * clampedScale);
+    const centerX = (bounds.left + bounds.right) / 2 + (right - left) / (2 * clampedScale);
+    const centerY = (bounds.top + bounds.bottom) / 2 + (inset - top) / (2 * clampedScale);
 
     // Update current zoom tracking
     this.currentZoom = clampedScale;

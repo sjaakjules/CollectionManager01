@@ -56,7 +56,7 @@ type FilterPanelMode = "details" | "settings" | null;
 type CategoryDialogMode = "add" | "edit" | null;
 type DeckLookupTab = "create" | "styles" | "avatars" | "competitive" | "favourites" | "user";
 
-const BOTTOM_EDGE_TRIGGER_PX = 92;
+const BOTTOM_EDGE_TRIGGER_PX = 112;
 const EMPTY_ASSOCIATION_STYLES: DeckStyleAssociationData["styles"] = [];
 const EMPTY_FAVOURITE_DECK_IDS: string[] = [];
 
@@ -210,6 +210,7 @@ export function BottomPanel({
       if (!(event.target instanceof Element)) return;
       if (!event.target.closest(".pixi-canvas-container")) return;
       setActiveToolTab(null);
+      if (isPhone && phoneExpanded) onPhoneTabToggle?.();
       setActiveActionPanel(null);
       setFilterPanelMode(null);
       setFilterDetailIndex(null);
@@ -217,7 +218,7 @@ export function BottomPanel({
 
     document.addEventListener("pointerdown", handlePointerDown, true);
     return () => document.removeEventListener("pointerdown", handlePointerDown, true);
-  }, []);
+  }, [isPhone, phoneExpanded, onPhoneTabToggle]);
 
   useEffect(() => {
     if (filterDetailIndex === null) return;
@@ -388,8 +389,10 @@ export function BottomPanel({
     setFilterPanelMode(null);
     setFilterDetailIndex(null);
     setCategoryRemoveMode(false);
-    setActiveToolTab((previous) => (previous === "categories" ? null : "categories"));
-  }, [dispatch]);
+    const closing = displayedToolTab === 'categories' && (!isPhone || phoneExpanded);
+    setActiveToolTab(closing ? null : 'categories');
+    if (isPhone && (closing || !phoneExpanded)) onPhoneTabToggle?.();
+  }, [dispatch, displayedToolTab, isPhone, phoneExpanded, onPhoneTabToggle]);
 
   const openAssociationsTab = useCallback(() => {
     setActiveActionPanel(null);
@@ -425,8 +428,10 @@ export function BottomPanel({
     setActiveToolTab(null);
     setFilterPanelMode(null);
     setFilterDetailIndex(null);
-    setActiveActionPanel((previous) => (previous === "label" ? null : "label"));
-  }, [dispatch]);
+    const closing = activeActionPanel === 'label' && (!isPhone || phoneExpanded);
+    setActiveActionPanel(closing ? null : 'label');
+    if (isPhone && (closing || !phoneExpanded)) onPhoneTabToggle?.();
+  }, [dispatch, activeActionPanel, isPhone, phoneExpanded, onPhoneTabToggle]);
 
   const handleBeginNewFilter = useCallback(() => {
     beginNewFilter();

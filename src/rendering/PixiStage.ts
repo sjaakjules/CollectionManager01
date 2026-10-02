@@ -73,6 +73,7 @@ import {
 import {
   isSyntheticMouseAfterTouch,
   isTouchLikePointerEvent,
+  isTouchDragCentre,
   SYNTHETIC_MOUSE_AFTER_TOUCH_MS,
   TouchGestureTracker,
   type TouchGesturePoint,
@@ -1384,6 +1385,7 @@ export class PixiStage {
         instanceId: zoneCard.instanceId,
         cardName: zoneCard.cardName,
         cardType: zoneCard.cardType,
+        dragOnMove: isTouchDragCentre(worldPos, zoneCard.bounds, this.camera?.zoom ?? 1),
       };
     }
 
@@ -1414,6 +1416,7 @@ export class PixiStage {
         cardKey,
         cardName: data?.layout.name ?? cardKey,
         cardType: data?.layout.type ?? null,
+        dragOnMove: !!data && isTouchDragCentre(worldPos, data.bounds, this.camera?.zoom ?? 1),
       };
     }
 
@@ -1444,13 +1447,15 @@ export class PixiStage {
     this.setStacksDropVisual(false);
 
     const target = this.getTouchTarget(worldPos);
-    const wasLongPressed = this.touchGestures.isLongPressed();
+    const wasClaimingDrag = this.touchGestures.isClaimingDrag();
     this.touchGestures.start(this.toTouchPoint(event), target, (gesture) => {
       this.onTouchLongPressStart(gesture);
     });
-    if (wasLongPressed && !this.touchGestures.isLongPressed()) {
+    if (wasClaimingDrag && !this.touchGestures.isClaimingDrag()) {
       this.cancelActiveTouchDrag();
       this.camera.resumeDrag();
+    } else if (this.touchGestures.isClaimingDrag()) {
+      this.camera.pauseDrag();
     }
   }
 
@@ -1801,7 +1806,7 @@ export class PixiStage {
         !this.selectedZoneCardKeys.has(target.zoneCardKey)
       ) {
         this.clearZoneSelection();
-        this.selectZoneCard(target.zoneCardKey);
+        this.selectZoneCardForPointer(target.zoneCardKey, false, false, true);
         this.emitSelectionChange();
       }
       this.startZoneCardDrag(zoneCard, startWorldPos);
@@ -9126,7 +9131,7 @@ export class PixiStage {
 
     // Move camera to content area before creating sprites
     if (shiftedLayout.length > 0 && this.camera && !keepDeckInView) {
-      this.camera.fitToContent(shiftedBounds, 100);
+      this.camera.fitToContent(shiftedBounds, 100, 800, 0, { top: 48, bottom: 56, left: 12, right: 12 });
     }
 
     // Create group header labels

@@ -81,7 +81,7 @@ export function CatalogueLayoutPanel({ layout, onChange, visibleCount, totalCoun
       className={`catalogue-layout-connector ${dropIndex === index ? 'drop-active' : ''}`}
       aria-label={`Insert layout step at position ${index + 1}`}
       data-layout-insert-index={index}
-    >{dropIndex === index ? '+' : '→'}</div>
+    ><span aria-hidden="true">{dropIndex === index ? '+' : '→'}</span></div>
   );
   return (
     <section ref={panelRef} className="catalogue-layout-panel" aria-label="Catalogue layout">
@@ -89,7 +89,8 @@ export function CatalogueLayoutPanel({ layout, onChange, visibleCount, totalCoun
         <div><strong>Arrange the catalogue</strong><span>{visibleCount} / {totalCount} cards</span></div>
         <button type="button" className="tool-button" onClick={() => change(createDefaultCatalogueLayout(), 'Default layout restored')}>Reset layout</button>
       </div>
-      <p className="bottom-tools-note">Read left to right: groups make nested areas; sorts order cards inside them. Earlier sorts take priority. Your decks keep their own layout.</p>
+      <p className="bottom-tools-note">Follow the steps in order: groups make nested areas; sorts order cards inside them. Earlier sorts take priority. Your decks keep their own layout.</p>
+      <p className="touch-layout-hint">Drag cards from their centre. Swipe card edges or empty canvas to pan; pinch to zoom. Hold a card for actions.</p>
       <div className="catalogue-layout-flow" aria-label="Layout operation order">
         <span className="catalogue-layout-endpoint">Filtered cards</span>
         {layout.steps.map((step, index) => (
