@@ -108,8 +108,8 @@ export function CatalogueLayoutPanel({ layout, onChange, visibleCount, totalCoun
                 <button type="button" onClick={() => update(step.field, { direction: step.direction === 'asc' ? 'desc' : 'asc' })} aria-label={`${CATALOGUE_FIELD_LABELS[step.field]} ${step.direction === 'asc' ? 'ascending; switch to descending' : 'descending; switch to ascending'}`} title={step.direction === 'asc' ? 'Ascending' : 'Descending'}>{step.direction === 'asc' ? '↑' : '↓'}</button>
               </div>
               <div className="catalogue-layout-node-tools">
-                <button type="button" disabled={index === 0} onClick={() => insert(step.field, index - 1)} aria-label={`Move ${CATALOGUE_FIELD_LABELS[step.field]} earlier`}>←</button>
-                <button type="button" disabled={index === layout.steps.length - 1} onClick={() => insert(step.field, index + 2)} aria-label={`Move ${CATALOGUE_FIELD_LABELS[step.field]} later`}>→</button>
+                <button type="button" disabled={index === 0} onClick={() => insert(step.field, index - 1)} aria-label={`Move ${CATALOGUE_FIELD_LABELS[step.field]} earlier`}><span className="layout-order-arrow">←</span></button>
+                <button type="button" disabled={index === layout.steps.length - 1} onClick={() => insert(step.field, index + 2)} aria-label={`Move ${CATALOGUE_FIELD_LABELS[step.field]} later`}><span className="layout-order-arrow">→</span></button>
                 <button type="button" onClick={() => change({ ...layout, steps: layout.steps.filter((entry) => entry.field !== step.field) }, `${CATALOGUE_FIELD_LABELS[step.field]} removed`)} aria-label={`Remove ${CATALOGUE_FIELD_LABELS[step.field]} step`}>×</button>
               </div>
             </div>
