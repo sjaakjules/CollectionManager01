@@ -1,3 +1,4 @@
+import { required } from '@/utils/required';
 import { describe, expect, it } from 'vitest';
 import { appReducer, initialAppState } from '@/app/AppState';
 import { createEmptyDeck, createGuestUserData, type UserData } from '@/data/dataModels';
@@ -256,10 +257,10 @@ describe('appReducer catalogue preferences and label persistence', () => {
     const rect = {x: -200, y: -500, width: 440, height: 990};
     const userData = {...createGuestUserData(id), canvasAreas: [stackArea({type: 'deck', deckRegionBounds: {collection: rect}})]};
     const loaded = appReducer(initialAppState, {type: 'SET_USER_DATA', userData});
-    const saved = appReducer(loaded, {type: 'SET_CANVAS_AREAS', canvasAreas: loaded.userData!.canvasAreas!});
+    const saved = appReducer(loaded, {type: 'SET_CANVAS_AREAS', canvasAreas: required(required(loaded.userData).canvasAreas)});
     const reloaded = appReducer(initialAppState, {type: 'SET_USER_DATA', userData: JSON.parse(JSON.stringify(saved.userData)) as UserData});
-    expect(reloaded.userData!.canvasAreas![0]!.deckRegionBounds).toEqual({collection: rect});
-    expect(reloaded.userData!.canvasAreas![0]!.deckRegionBounds!.collection).not.toBe(rect);
+    expect(required(required(required(reloaded.userData).canvasAreas)[0]).deckRegionBounds).toEqual({collection: rect});
+    expect(required(required(required(required(reloaded.userData).canvasAreas)[0]).deckRegionBounds).collection).not.toBe(rect);
   });
   it('persists the same layout preference for guest and account data without changing decks', () => {
     const deck = createEmptyDeck('Unchanged deck', 'deck-1');

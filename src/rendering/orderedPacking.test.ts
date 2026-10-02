@@ -1,3 +1,4 @@
+import { required } from '@/utils/required';
 import { describe, expect, it } from 'vitest';
 import { packOrderedGroups } from './orderedPacking';
 
@@ -7,10 +8,10 @@ describe('ordered aspect packing', () => {
     const boxes = packOrderedGroups(sizes, aspect, 4);
     expect(boxes).toHaveLength(sizes.length);
     boxes.forEach((box, index) => {
-      expect(box.width).toBe(sizes[index]!.width);
-      expect(box.height).toBe(sizes[index]!.height);
+      expect(box.width).toBe(required(sizes[index]).width);
+      expect(box.height).toBe(required(sizes[index]).height);
       if (index) {
-        const previous = boxes[index - 1]!;
+        const previous = required(boxes[index - 1]);
         expect(box.y > previous.y || (box.y === previous.y && box.x > previous.x)).toBe(true);
       }
       boxes.slice(index + 1).forEach(other => {

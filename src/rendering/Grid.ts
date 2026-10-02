@@ -1,3 +1,4 @@
+import { required } from '@/utils/required';
 /**
  * Grid system for card layout and snapping
  *
@@ -681,10 +682,10 @@ function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLa
   });
   const packed = packOrderedGroups(measured, config.viewportAspect ?? (config.layoutVariant === 'portrait' ? 9 / 19.5 : 16 / 9), GROUP_GAP_UNITS);
   measured.forEach((group, index) => {
-    const box = packed[index]!;
+    const box = required(packed[index]);
     const dx = box.x * SNAP_GRID.width, dy = box.y * SNAP_GRID.height;
     for (let i = group.cardStart; i < group.cardEnd; i++) {
-      const card = cards[i]!;
+      const card = required(cards[i]);
       card.position.x += dx;
       card.position.y += dy;
       const size = getCardPixelSize(card.isLandscape);
@@ -694,7 +695,7 @@ function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLa
       bounds.bottom = Math.max(bounds.bottom, card.position.y + size.height / 2);
     }
     for (let i = group.headerStart; i < group.headerEnd; i++) {
-      const header = headers[i]!;
+      const header = required(headers[i]);
       header.position.x += dx;
       header.position.y += dy;
       // Include titles when centering the complete catalogue.

@@ -1,3 +1,4 @@
+import { required } from '@/utils/required';
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Container, Point, type Application } from 'pixi.js';
@@ -48,8 +49,8 @@ describe('canvas wheel navigation', () => {
     const animate = vi.spyOn(camera.viewport, 'animate');
     camera.fitToContent({left: 0, top: 0, right: 3300, bottom: 7600}, 100, 1, 0,
       {top: 48, bottom: 56, left: 12, right: 12});
-    const options = animate.mock.calls[0]![0];
-    const scale = options.scale!, position = options.position!;
+    const options = required(animate.mock.calls[0])[0];
+    const scale = required(options.scale), position = required(options.position);
     expect(422 - position.y * scale).toBeGreaterThanOrEqual(48);
     expect(422 + (7600 - position.y) * scale).toBeLessThanOrEqual(788);
   });

@@ -20,13 +20,13 @@ describe('content-driven deck boards', () => {
     const children = getMainDeckSectionRects(zone.cards, landscape);
     const boards = getDeckBoardRects(zone.bounds, zone.cards, ZONE_DECK_HEADER_HEIGHT, landscape);
     for (const [key, site] of [['spellbook', false], ['atlas', true]] as const) {
-      const rect = children[key]!;
-      const first = zone.cards.find(card => landscape(card.cardName) === site)!;
+      const rect = required(children[key]);
+      const first = required(zone.cards.find(card => landscape(card.cardName) === site));
       expect(first.y - (count - 1) * 15 / 2 - rect.y).toBeGreaterThan(DECK_REGION_TITLE_HEIGHT);
       expect(rect.x - boards.mainboard.x).toBeGreaterThanOrEqual(18);
       expect(rect.y - boards.mainboard.y).toBeGreaterThan(DECK_REGION_TITLE_HEIGHT);
     }
-    expect(children.atlas!.y - children.spellbook!.y - children.spellbook!.height).toBeGreaterThanOrEqual(DECK_BOARD_GAP);
+    expect(required(children.atlas).y - required(children.spellbook).y - required(children.spellbook).height).toBeGreaterThanOrEqual(DECK_BOARD_GAP);
     const fitted = structuredClone(zone);
     fitDeckBoardSections(zone, ZONE_DECK_HEADER_HEIGHT, landscape);
     expect(zone).toEqual(fitted);
