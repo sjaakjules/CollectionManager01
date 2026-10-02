@@ -9,14 +9,13 @@
  *   - Sites: offset upward (names on bottom)
  *
  * Interaction model:
- * - Right-drag anywhere: Pans viewport
- * - Left-click on card: Select (or add to selection with shift)
- * - Left-drag on selected card: Move all selected cards
- * - Left-drag on empty space OR unselected card: Selection box
- * - Ctrl+left-drag: Selection box (alternative)
- * - Double left-click: Add card to deck
- * - Double right-click: Remove card from deck
- * - Click on stacked card: Brings it to front of stack
+ * - Middle/right-drag or Space + left-drag: Pan viewport
+ * - Left-click: Select stack; another click drills into one card
+ * - Left-drag on a card: Move the selected card, stack or group
+ * - Left-drag on empty space (or Ctrl+drag): Selection box; Shift extends
+ * - Double-click in a deck/stack area: Select the stack
+ * - Double-click in the catalogue: Add to active deck (right-click removes)
+ * - Touch: Tap, hold-to-drag, one-finger pan and pinch remain separate
  */
 
 import {
@@ -26,8 +25,16 @@ import {
   Text,
   FederatedPointerEvent,
 } from "pixi.js";
-import { getRarityLimit } from "@/rules/deckRules";
 import { Camera, type CameraBounds } from "./Camera";
+import { DeletionPoof } from "./DeletionPoof";
+import { MangaEffect, type EffectBounds } from './MangaEffect';
+import { drawMangaOutline, MANGA_PALETTE, unionEffectBounds } from './mangaStyle';
+import { DEFAULT_INTERACTION_EFFECTS, ensureInteractionEffects, MangaEffectGate, MAX_MANGA_EFFECTS, type InteractionEffectsSettings, type MangaEffectKind, type CanvasGestureCommand } from '@/data/interactionEffects';
+import { outlineSelectedStack } from './stackSelectionOutline';
+import { openCanvasLabelEditor } from "@/ui/canvasLabelEditor";
+import { createDefaultCatalogueLayout, type CatalogueLayoutConfig } from "@/data/catalogueLayout";
+import { getLabelFamily, getLabelCards, getLabelRegionBounds, repositionLabelsAfterCardLayout, ShakeDetector } from "@/canvas/labelRegions";
+import { getCardClickSelection } from "./cardSelection";
 import { CardSprite, type CardSpriteState } from "./CardSprite";
 import {
   calculateCardLayout,
@@ -102,6 +109,7 @@ import {
   type CardFilterState,
 } from "@/data/cardFilters";
 import { getThresholdGroup } from "@/data/dataModels";
+import { getRarityLimit } from "@/rules/deckRules";
 import { describeFilterButton } from "@/ui/cardFilterUi";
 import {
   QUADRANT_BOUNDS,
@@ -114,6 +122,11 @@ import {
   type CanvasArea,
   type CanvasCardInstance,
 } from "@/canvas/canvasAreas";
+import {
+  DECK_BOARD_ORDER, DECK_BOARD_MIN_HEIGHT, DECK_MIN_WIDTH,
+  getDeckBoardWidth, getDeckBoardRects as computeDeckBoardRects,
+  fitDeckBoardSections, getDeckAreaBounds, placeNewDeckCards, getMainDeckSectionRects, normalizeDeckBoard, type DeckZoneBoard,
+} from '@/canvas/deckBoardLayout';
 
 // ============================================================================
 // Types
@@ -139,6 +152,7 @@ export interface PixiStageConfig {
   }) => void;
   onCardDragDrop?: (payload: CardDragDropPayload) => void;
   onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
+  onDeckLayoutResetRequest?: (canvasAreaId: string) => void;
   onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
   onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
   onCardCategoryScoreChange?: (
@@ -179,6 +193,8 @@ export interface DeckAddRequestPayload {
   clientX: number;
   clientY: number;
   source: "active-deck" | "quick-transfer" | "side-rail" | "canvas-zone";
+  board?: ActiveBoard;
+  labelId?: string;
 }
 
 export interface QuickTransferDeckTarget {
@@ -218,22 +234,22 @@ interface SelectionBoxState {
   isActive: boolean;
   startWorldPos: { x: number; y: number } | null;
   graphics: Graphics | null;
+  additive?: boolean;
 }
 
 interface PendingCardClickState {
   cardKey: string;
   startScreenPos: { x: number; y: number };
+  startWorldPos: { x: number; y: number };
   shiftKey: boolean;
 }
 
 interface PendingZoneCardClickState {
   zoneCardKey: string;
   startScreenPos: { x: number; y: number };
+  startWorldPos: { x: number; y: number };
   shiftKey: boolean;
-}
-
-interface PendingEmptyClickState {
-  startScreenPos: { x: number; y: number };
+  altKey: boolean;
 }
 
 interface LabelSpriteData {
@@ -298,6 +314,7 @@ interface ZoneCardDragState {
   instanceId: string | null;
   startWorldPos: { x: number; y: number };
   startCardPos: { x: number; y: number };
+  cards: Map<string, { zoneId: string; instanceId: string; x: number; y: number; spriteX: number; spriteY: number }>;
 }
 
 interface ZoneDragState {
@@ -388,8 +405,6 @@ interface CanvasDomDropTarget {
   deckId: string | null;
 }
 
-type DeckZoneBoard = "mainboard" | "collection";
-
 interface DeckVariantDialogResult {
   name: string;
   sourceVariantId: string | null;
@@ -397,7 +412,7 @@ interface DeckVariantDialogResult {
 
 interface DeckCostBucketStats {
   total: number;
-  byType: Record<"Minion" | "Magic" | "Aura" | "Artifact", number>;
+  byType: Record<string, number>;
   byThreshold: Record<ThresholdGroup, number>;
 }
 
@@ -405,7 +420,7 @@ interface DeckHeaderStats {
   spellsTotal: number;
   sitesTotal: number;
   collectionTotal: number;
-  spellTypeCounts: Record<"Minion" | "Magic" | "Aura" | "Artifact", number>;
+  spellTypeCounts: Record<string, number>;
   minionInfo: {
     total: number;
     topKeywords: Array<{
@@ -508,10 +523,7 @@ const ZONE_DECK_AVATAR_CENTER_GRID_X = 1;
 const ZONE_DECK_AVATAR_CENTER_GRID_Y = 2;
 const ZONE_DECK_AVATAR_TITLE_GAP = 20;
 const ZONE_DECK_HEADER_X_OFFSET = DRAWN_GRID.width * 0.5;
-const ZONE_DECK_MIN_BOARD_HEIGHT = {
-  mainboard: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP + 6,
-  collection: CARD_SIZE.PORTRAIT.height + ZONE_DECK_CARD_TOP_GAP - 6,
-} as const;
+const ZONE_DECK_MIN_BOARD_HEIGHT = DECK_BOARD_MIN_HEIGHT;
 const ZONE_DECK_STATS_COL_GAP = 10;
 const ZONE_DECK_STATS_TITLE_SIZE = 11;
 const ZONE_DECK_STATS_LINE_SIZE = 10;
@@ -523,7 +535,7 @@ const ZONE_DECK_STATS_TEXT_FILLS = {
 } as const;
 const ZONE_DECK_STATS_TEXT_STROKE = { color: 0x0d1224, width: 1 };
 const ZONE_DECK_GRAPH_COLORS = {
-  total: 0xf2f5ff,
+  total: MANGA_PALETTE.paper,
   air: 0x9bdcff,
   earth: 0x9fe07e,
   fire: 0xffac76,
@@ -665,9 +677,34 @@ export class PixiStage {
   private zoneDropPreviewSignature: string | null = null;
   private quickTransferOverlay: Graphics | null = null;
   private quickTransferOverlayTexts: Text[] = [];
-  private deckCardDeletePromptRoot: HTMLElement | null = null;
-  private deckCardDeletePromptPointerHandler: ((event: PointerEvent) => void) | null = null;
-  private deckCardDeletePromptKeyHandler: ((event: KeyboardEvent) => void) | null = null;
+  private armedDelete: { key: string; expires: number } | null = null;
+  private labelRegionGraphics: Map<string, Graphics> = new Map();
+  private dragFeedbackGraphic: Graphics | null = null;
+  private dragFeedbackText: Text | null = null;
+  private dragFeedbackBounds: CanvasArea["bounds"] | null = null;
+  private shakeDetector = new ShakeDetector();
+  private dragDetached = false;
+  private dragDetachedAt = 0;
+  private labelDragCardStarts = new Map<string, { x: number; y: number }>();
+  private labelDragLabelStarts = new Map<string, { x: number; y: number }>();
+  private labelDragBoardTargets: Array<{ areaId: string; board: DeckZoneBoard; rect: CanvasArea["bounds"] }> = [];
+  private labelDragLastPos: { x: number; y: number } | null = null;
+  private deletionPuffs: Array<{ effect: DeletionPoof; start: number }> = [];
+  private mangaEffects: Array<{ effect: MangaEffect; start: number; follow?: string[] }> = [];
+  private mangaEffectLayer: Container | null = null;
+  private effectSettings = { ...DEFAULT_INTERACTION_EFFECTS };
+  private effectGate = new MangaEffectGate();
+  private catalogueEffectTimer: ReturnType<typeof setTimeout> | null = null;
+  private hasReceivedAreas = false;
+  private lastSelectionEffect = '';
+  private lastFullPoof = -Infinity;
+  private focusEffectTimer: ReturnType<typeof setTimeout> | null = null;
+  private inspection: Container | null = null;
+  private readonly handleInspectionResize = (): void => this.closeInspection();
+  private readonly handleInspectionWheel = (event: WheelEvent): void => {
+    if (this.inspection) { event.preventDefault(); event.stopImmediatePropagation(); }
+  };
+  private removedCardHistory: Array<{ areaId: string; card: CanvasCardInstance; index: number; variants: string[] }> = [];
   private touchActionSheetRoot: HTMLElement | null = null;
   private touchActionSheetPointerHandler: ((event: PointerEvent) => void) | null = null;
   private touchActionSheetKeyHandler: ((event: KeyboardEvent) => void) | null = null;
@@ -685,9 +722,10 @@ export class PixiStage {
   private isInitialized = false;
   private isDestroyed = false;
   private pendingCardSet:
-    | { cards: Card[]; filteredMode: boolean }
+    | { cards: Card[]; catalogueCards: Card[]; catalogueLayout: CatalogueLayoutConfig }
     | null = null;
-  private collectionFilteredMode = false;
+  private catalogueCards: Card[] = [];
+  private catalogueLayout: CatalogueLayoutConfig = createDefaultCatalogueLayout();
   private collectionLayoutVariant: CollectionLayoutVariant | null = null;
 
   // Culling state
@@ -717,6 +755,35 @@ export class PixiStage {
     cardOriginalZIndices: new Map(),
   };
   private pointerDownOnSelectedCard = false;
+  private spacePanHeld = false;
+  private desktopPanStart: { x: number; y: number } | null = null;
+  private readonly handlePanKeyDown = (event: KeyboardEvent): void => {
+    const editing = event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable], [role='dialog']");
+    if (!editing && (event.metaKey || event.ctrlKey) && !event.shiftKey && event.code === 'KeyZ' && this.removedCardHistory.length) {
+      event.preventDefault();
+      this.runCanvasGesture('undo');
+      return;
+    }
+    if (event.code === 'Escape' && !(event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable], [role='dialog']"))) {
+      this.closeInspection();
+      this.armedDelete = null;
+      this.cancelDesktopInteraction();
+      this.drawZoneDeleteOverlay();
+      return;
+    }
+    if (this.inspection) return;
+    if (event.code !== "Space" || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target instanceof Element && event.target.closest("input, textarea, select, button, [contenteditable], [role='button'], [role='dialog']")) return;
+    this.spacePanHeld = true;
+    event.preventDefault();
+  };
+  private readonly handlePanKeyUp = (event: KeyboardEvent): void => {
+    if (event.code === "Space") this.spacePanHeld = false;
+  };
+  private readonly handleCanvasBlur = (): void => {
+    this.spacePanHeld = false;
+    this.cancelDesktopInteraction();
+  };
   private stacksDropVisualActive = false;
   private zoneCardDragState: ZoneCardDragState = {
     isDragging: false,
@@ -725,6 +792,7 @@ export class PixiStage {
     instanceId: null,
     startWorldPos: { x: 0, y: 0 },
     startCardPos: { x: 0, y: 0 },
+    cards: new Map(),
   };
   private zoneDragState: ZoneDragState = {
     isDragging: false,
@@ -759,12 +827,10 @@ export class PixiStage {
   private lastClickedLabel: string | null = null;
   private pendingCardClick: PendingCardClickState | null = null;
   private pendingZoneCardClick: PendingZoneCardClickState | null = null;
-  private pendingEmptyClick: PendingEmptyClickState | null = null;
-  private lastEmptyClickTime = 0;
-  private lastEmptyClickScreenPos: { x: number; y: number } | null = null;
 
   // Label state
   private labelPlacementMode = false;
+  private closeLabelEditor: (() => void) | null = null;
   private labelDragState: LabelDragState = {
     isDragging: false,
     labelId: null,
@@ -839,6 +905,7 @@ export class PixiStage {
   }) => void;
   private onCardDragDrop?: (payload: CardDragDropPayload) => void;
   private onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
+  private onDeckLayoutResetRequest?: (canvasAreaId: string) => void;
   private onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
   private onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
   private onCardCategoryScoreChange?: (
@@ -872,6 +939,7 @@ export class PixiStage {
     this.onDeckFilterRequest = config.onDeckFilterRequest;
     this.onCardDragDrop = config.onCardDragDrop;
     this.onCardsAddedToCanvasArea = config.onCardsAddedToCanvasArea;
+    this.onDeckLayoutResetRequest = config.onDeckLayoutResetRequest;
     this.onQuickTransferCreateTarget = config.onQuickTransferCreateTarget;
     this.onDeckAddRequest = config.onDeckAddRequest;
     this.onCardCategoryScoreChange = config.onCardCategoryScoreChange;
@@ -896,7 +964,7 @@ export class PixiStage {
     if (this.isDestroyed) return;
 
     await this.app.init({
-      background: 0x1a1a2e,
+      background: MANGA_PALETTE.surface,
       resizeTo: container,
       antialias: true,
       resolution: getPixiCanvasResolution(),
@@ -919,6 +987,9 @@ export class PixiStage {
 
     container.appendChild(this.app.canvas);
 
+    // Register before the camera's horizontal-wheel capture listener so an
+    // inspection blocks every gesture before it can move the canvas beneath it.
+    this.app.canvas.addEventListener('wheel', this.handleInspectionWheel, { capture: true, passive: false });
     this.camera = new Camera({
       app: this.app,
       worldWidth: 100000,
@@ -954,6 +1025,7 @@ export class PixiStage {
     this.zoneDropPreviewOverlay = new Graphics();
     this.zoneDropPreviewContainer.addChild(this.zoneDropPreviewOverlay);
 
+    window.addEventListener('resize', this.handleInspectionResize);
     this.setupPointerEvents();
 
     this.app.ticker.add(this.update.bind(this));
@@ -963,7 +1035,8 @@ export class PixiStage {
 
     if (this.pendingCardSet) {
       this.cards = this.pendingCardSet.cards;
-      this.collectionFilteredMode = this.pendingCardSet.filteredMode;
+      this.catalogueCards = this.pendingCardSet.catalogueCards;
+      this.catalogueLayout = this.pendingCardSet.catalogueLayout;
       this.pendingCardSet = null;
       // Reset reveal state left by any earlier empty reveal call so culling
       // inside rebuildCardSprites() doesn't prematurely preload textures.
@@ -1033,6 +1106,9 @@ export class PixiStage {
     if (!this.camera) return;
 
     const viewport = this.camera.viewport;
+    window.addEventListener("keydown", this.handlePanKeyDown);
+    window.addEventListener("keyup", this.handlePanKeyUp);
+    window.addEventListener("blur", this.handleCanvasBlur);
     viewport.eventMode = "static";
 
     viewport.on("pointerdown", this.onPointerDown.bind(this));
@@ -1044,7 +1120,6 @@ export class PixiStage {
     viewport.on("pointerleave", () => {
       this.pendingCardClick = null;
       this.pendingZoneCardClick = null;
-      this.pendingEmptyClick = null;
       this.clearQuickTransferHold();
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
@@ -1083,7 +1158,6 @@ export class PixiStage {
     this.app.canvas.addEventListener("pointerleave", () => {
       this.pendingCardClick = null;
       this.pendingZoneCardClick = null;
-      this.pendingEmptyClick = null;
       this.clearQuickTransferHold();
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
@@ -1144,20 +1218,11 @@ export class PixiStage {
     return Math.hypot(current.x - start.x, current.y - start.y) > DESKTOP_CLICK_SLOP_PX;
   }
 
-  private isDoubleEmptyClick(screenPos: { x: number; y: number }): boolean {
-    return (
-      Date.now() - this.lastEmptyClickTime < DOUBLE_CLICK_TIME_MS &&
-      this.lastEmptyClickScreenPos !== null &&
-      !this.movedBeyondDesktopClickSlop(this.lastEmptyClickScreenPos, screenPos)
-    );
-  }
-
   private handlePendingCardClick(
     pending: PendingCardClickState,
     worldPos: { x: number; y: number },
   ): void {
     this.clearZoneSelection();
-    const wasSelected = this.selectedCards.has(pending.cardKey);
     const now = Date.now();
     const isDoubleClick =
       now - this.lastClickTime < DOUBLE_CLICK_TIME_MS &&
@@ -1177,78 +1242,65 @@ export class PixiStage {
       return;
     }
 
-    if (pending.shiftKey) {
-      if (wasSelected) {
-        this.deselectCard(pending.cardKey);
-      } else {
-        this.selectCard(pending.cardKey);
-      }
-      this.emitSelectionChange();
-      return;
-    }
+    this.selectMainCardForPointer(pending.cardKey, pending.shiftKey);
+  }
 
+  private selectMainCardForPointer(key: string, additive: boolean, dragging = false): void {
+    const data = this.getSpriteData(key);
+    const stack = (data ? this.cardStacks.get(data.gridKey) : null) ?? [key];
+    const keys = getCardClickSelection({
+      clickedKey: key,
+      stackKeys: stack.filter((entry) => this.getSpriteData(entry)?.sprite.visible),
+      selectedKeys: this.selectedCards,
+      additive,
+      dragging,
+    });
     this.clearSelection(true);
-    this.selectCard(pending.cardKey, true);
+    for (const selectedKey of keys) this.selectCard(selectedKey, true);
+    this.emitSelectionChange();
+  }
+
+  private selectZoneCardForPointer(key: string, additive: boolean, doubleClick = false, dragging = false): void {
+    const data = this.zoneCardSprites.get(key);
+    const zone = this.canvasAreas.find((entry) => entry.id === data?.zoneId);
+    const instance = zone?.cards.find((entry) => entry.id === data?.instanceId);
+    if (!data || !zone || !instance) return;
+    const stackKey = this.getZoneCardStackKey(zone, instance);
+    const stackKeys = zone.cards
+      .filter((card) => this.getZoneCardStackKey(zone, card) === stackKey)
+      .map((card) => `${zone.id}:${card.id}`)
+      .filter((cardKey) => this.zoneCardSprites.has(cardKey));
+    const keys = getCardClickSelection({
+      clickedKey: key,
+      stackKeys,
+      selectedKeys: additive || dragging || this.selectedZoneId === zone.id ? this.selectedZoneCardKeys : new Set(),
+      additive,
+      doubleClick,
+      dragging,
+    });
+    this.clearSelection(true);
+    for (const selectedKey of keys) this.selectZoneCard(selectedKey);
     this.emitSelectionChange();
   }
 
   private handlePendingZoneCardClick(pending: PendingZoneCardClickState): void {
     const zoneCard = this.zoneCardSprites.get(pending.zoneCardKey);
     if (!zoneCard) return;
-
-    this.cancelSelectionBox();
-    this.clearMainSelection(true);
-
-    if (pending.shiftKey) {
-      if (
-        this.selectedZoneId !== null &&
-        this.selectedZoneId !== zoneCard.zoneId
-      ) {
-        this.clearZoneSelection();
-      }
-      if (this.selectedZoneCardKeys.has(zoneCard.key)) {
-        this.deselectZoneCard(zoneCard.key);
-      } else {
-        this.selectZoneCard(zoneCard.key);
-      }
-      this.emitSelectionChange();
-      return;
-    }
-
-    if (
-      !this.selectedZoneCardKeys.has(zoneCard.key) ||
-      this.selectedZoneId !== zoneCard.zoneId
-    ) {
-      this.clearZoneSelection();
-      this.selectZoneCard(zoneCard.key);
-    }
-    this.emitSelectionChange();
-
     const now = Date.now();
-    const isDoubleClick =
-      now - this.lastZoneCardClickTime < DOUBLE_CLICK_TIME_MS &&
+    const isDoubleClick = now - this.lastZoneCardClickTime < DOUBLE_CLICK_TIME_MS &&
       this.lastClickedZoneCardKey === zoneCard.key;
     this.lastZoneCardClickTime = now;
     this.lastClickedZoneCardKey = zoneCard.key;
+    this.selectZoneCardForPointer(zoneCard.key, pending.shiftKey, isDoubleClick);
 
-    if (!isDoubleClick) return;
-
-    const zone = this.canvasAreas.find((entry) => entry.id === zoneCard.zoneId);
-    if (zone?.type === "deck") {
-      const changed = this.toggleDeckZoneCardActive(
-        zoneCard.zoneId,
-        zoneCard.instanceId,
-      );
-      if (changed) {
+    // Keep variant editing available without conflicting with stack selection.
+    if (isDoubleClick && pending.altKey) {
+      const zone = this.canvasAreas.find((entry) => entry.id === zoneCard.zoneId);
+      if (zone?.type === "deck" && this.toggleDeckZoneCardActive(zone.id, zoneCard.instanceId)) {
         this.rebuildZoneVisuals();
         this.emitCanvasAreasChange();
       }
-      return;
     }
-
-    this.duplicateCanvasCardInstance(zoneCard.zoneId, zoneCard.instanceId);
-    this.rebuildZoneVisuals();
-    this.emitCanvasAreasChange();
   }
 
   private captureTouchPointer(event: FederatedPointerEvent): void {
@@ -1381,7 +1433,6 @@ export class PixiStage {
     this.cancelSelectionBox();
     this.pointerDownOnSelectedCard = false;
     this.closeTouchActionSheet();
-    this.closeDeckCardDeletePrompt();
     this.captureTouchPointer(event);
 
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
@@ -1483,7 +1534,6 @@ export class PixiStage {
   private onPointerCancel(event: FederatedPointerEvent): void {
     this.pendingCardClick = null;
     this.pendingZoneCardClick = null;
-    this.pendingEmptyClick = null;
     this.clearQuickTransferHold();
     if (this.isTouchPointer(event)) {
       this.markTouchPointerEvent();
@@ -1500,6 +1550,7 @@ export class PixiStage {
       return;
     }
 
+    this.cancelDesktopInteraction();
     this.setStacksDropVisual(false);
     this.clearZoneDropPreview();
     this.deactivateQuickTransfer();
@@ -1551,6 +1602,11 @@ export class PixiStage {
     }
 
     if (target.kind === "zone-card") {
+      const actionCard = this.zoneCardSprites.get(target.zoneCardKey);
+      if (actionCard && this.pointInBounds(worldPos, this.getDeleteButtonBounds(actionCard))) {
+        this.handleZoneCardDelete(actionCard, screenPos.x, screenPos.y);
+        return;
+      }
       this.clearMainSelection(true);
       if (this.selectedZoneId !== target.zoneId) {
         this.clearZoneSelection();
@@ -1644,7 +1700,7 @@ export class PixiStage {
     }
 
     if (target.kind === "zone-sort") {
-      this.sortZoneCards(target.zoneId);
+      this.requestZoneLayoutReset(target.zoneId);
       return true;
     }
 
@@ -1891,26 +1947,7 @@ export class PixiStage {
   }
 
   private cancelActiveTouchDrag(): void {
-    if (this.labelDragState.isDragging) {
-      this.endLabelDrag();
-    }
-
-    const fallbackWorldPos = this.lastPointerScreenPos && this.camera
-      ? this.camera.screenToWorld(this.lastPointerScreenPos.x, this.lastPointerScreenPos.y)
-      : { x: 0, y: 0 };
-
-    if (this.zoneCardDragState.isDragging) {
-      this.endZoneCardDrag(fallbackWorldPos);
-    }
-
-    if (this.zoneDragState.isDragging) {
-      this.endZoneDrag(fallbackWorldPos);
-    }
-
-    if (this.dragState.isDragging) {
-      this.endCardDrag(true);
-    }
-
+    this.cancelDesktopInteraction();
     this.activeTouchDragTarget = null;
     this.pointerDownOnSelectedCard = false;
     this.clearZoneDropPreview();
@@ -1954,9 +1991,9 @@ export class PixiStage {
         data.sprite.releaseTextureForLOD(invalidation.lod);
       }
     }
-    for (const data of this.zoneCardSprites.values()) {
-      if (invalidatedSlugs.has(data.sprite.imageSlug)) {
-        data.sprite.releaseTextureForLOD(invalidation.lod);
+    for (const sprite of this.getCanvasAreaCardSprites()) {
+      if (invalidatedSlugs.has(sprite.imageSlug)) {
+        sprite.releaseTextureForLOD(invalidation.lod);
       }
     }
   }
@@ -2524,7 +2561,11 @@ export class PixiStage {
   }): void {
     if (payload.cardNames.length === 0) return;
     const rect = this.app.canvas.getBoundingClientRect();
+    const zone = this.canvasAreas.find(area => area.id === payload.canvasAreaId);
+    const label = payload.source === 'canvas-zone' ? this.getLabelTarget(payload.worldPos) : null;
     this.onDeckAddRequest?.({
+      board: payload.source === 'canvas-zone' && zone ? label?.board ?? (this.getDeckBoardForPosition(zone, payload.worldPos) ?? 'mainboard') : undefined,
+      labelId: label?.id,
       deckId: payload.deckId,
       canvasAreaId: payload.canvasAreaId ?? null,
       cardNames: payload.cardNames,
@@ -2609,18 +2650,7 @@ export class PixiStage {
   }
 
   private closeDeckCardDeletePrompt(): void {
-    if (this.deckCardDeletePromptPointerHandler) {
-      window.removeEventListener("pointerdown", this.deckCardDeletePromptPointerHandler, true);
-      this.deckCardDeletePromptPointerHandler = null;
-    }
-    if (this.deckCardDeletePromptKeyHandler) {
-      window.removeEventListener("keydown", this.deckCardDeletePromptKeyHandler, true);
-      this.deckCardDeletePromptKeyHandler = null;
-    }
-    if (this.deckCardDeletePromptRoot?.parentNode) {
-      this.deckCardDeletePromptRoot.parentNode.removeChild(this.deckCardDeletePromptRoot);
-    }
-    this.deckCardDeletePromptRoot = null;
+    this.armedDelete = null;
   }
 
   private closeTouchActionSheet(): void {
@@ -2665,7 +2695,7 @@ export class PixiStage {
     if (target.kind === "empty") return;
 
     this.closeTouchActionSheet();
-    this.closeDeckCardDeletePrompt();
+    if (target.kind !== 'zone-card' || this.armedDelete?.key !== target.zoneCardKey) this.closeDeckCardDeletePrompt();
 
     const panel = document.createElement("div");
     panel.className = "touch-action-sheet";
@@ -2746,6 +2776,15 @@ export class PixiStage {
 
     if (target.kind === "zone-card") {
       const zone = this.canvasAreas.find((entry) => entry.id === target.zoneId);
+      const member = zone?.cards.find(card => card.id === target.instanceId);
+      if (member?.labelId) {
+        this.addTouchActionButton(panel, 'Detach from label', () => {
+          delete member.labelId;
+          this.reconcileCanvasAreaBounds(target.zoneId);
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        });
+      }
       if (zone?.type === "deck") {
         this.addTouchActionButton(panel, "Toggle active", () => {
           const changed = this.toggleDeckZoneCardActive(target.zoneId, target.instanceId);
@@ -2762,7 +2801,7 @@ export class PixiStage {
 
       this.addTouchActionButton(
         panel,
-        zone?.type === "deck" ? "Remove from deck canvas" : "Remove from stack",
+        this.armedDelete?.key === target.zoneCardKey && Date.now() <= this.armedDelete.expires ? 'Confirm remove card' : zone?.type === "deck" ? "Remove from deck canvas" : "Remove from stack",
         () => {
           const zoneCard = this.zoneCardSprites.get(target.zoneCardKey);
           if (!zoneCard) return;
@@ -2793,7 +2832,8 @@ export class PixiStage {
           this.onStackZoneHeaderClick?.(zone.id),
         );
       }
-      this.addTouchActionButton(panel, "Sort cards", () => this.sortZoneCards(zone.id));
+      this.addTouchActionButton(panel, zone.type === 'deck' ? "Reset layout" : "Sort cards",
+        () => this.requestZoneLayoutReset(zone.id));
       if (zone.type === "deck") {
         this.addTouchActionButton(panel, "Filter deck", () =>
           this.openDeckFilterRequest(zone.id, null),
@@ -2808,238 +2848,130 @@ export class PixiStage {
     }
   }
 
-  private getDeckCardActiveVariants(
-    zoneId: string,
-    instanceId: string,
-  ): Array<{ id: string; name: string; isActiveVariant: boolean }> {
-    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
-    if (!zone || zone.type !== "deck") return [];
-
-    const variants = this.ensureDeckZoneVariants(zone);
-    const matches = variants
-      .filter((variant) => variant.activeCardIds.includes(instanceId))
-      .map((variant) => ({
-        id: variant.id,
-        name: variant.name,
-        isActiveVariant: zone.activeDeckVariantId === variant.id,
-      }));
-
-    matches.sort((left, right) => {
-      if (left.isActiveVariant !== right.isActiveVariant) {
-        return left.isActiveVariant ? -1 : 1;
-      }
-      return left.name.localeCompare(right.name);
-    });
-    return matches;
-  }
-
-  private deactivateDeckZoneCardInVariant(
-    zoneId: string,
-    instanceId: string,
-    variantId: string,
-  ): boolean {
-    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
-    if (!zone || zone.type !== "deck") return false;
-    const variants = this.ensureDeckZoneVariants(zone);
-    const variant = variants.find((entry) => entry.id === variantId);
-    if (!variant) return false;
-    if (!variant.activeCardIds.includes(instanceId)) return false;
-
-    variant.activeCardIds = variant.activeCardIds.filter((cardId) => cardId !== instanceId);
-    if (zone.activeDeckVariantId === variantId) {
-      this.moveDeckZoneCardToStackBack(zone, instanceId);
-    }
-    return true;
-  }
-
-  private showDeckCardDeletePrompt(
-    zoneId: string,
-    instanceId: string,
-    anchorClientX: number,
-    anchorClientY: number,
-  ): void {
-    if (typeof document === "undefined") return;
-    const activeVariants = this.getDeckCardActiveVariants(zoneId, instanceId);
-    if (activeVariants.length === 0) {
-      this.closeDeckCardDeletePrompt();
-      this.removeCanvasCardInstance(zoneId, instanceId);
-      this.emitCanvasAreasChange();
-      this.hoveredZoneCardKey = null;
-      this.drawZoneDeleteOverlay();
-      return;
-    }
-
-    this.closeDeckCardDeletePrompt();
-
-    const panel = document.createElement("div");
-    panel.style.position = "fixed";
-    panel.style.zIndex = "10001";
-    panel.style.minWidth = "188px";
-    panel.style.maxWidth = "260px";
-    panel.style.maxHeight = "320px";
-    panel.style.overflowY = "auto";
-    panel.style.padding = "8px";
-    panel.style.background = "rgba(22, 22, 38, 0.98)";
-    panel.style.border = "1px solid #3a3a5a";
-    panel.style.borderRadius = "10px";
-    panel.style.boxShadow = "0 10px 24px rgba(0, 0, 0, 0.38)";
-    panel.style.display = "grid";
-    panel.style.gap = "6px";
-    panel.style.fontFamily = "Arial, sans-serif";
-
-    const title = document.createElement("div");
-    title.textContent = "Deactivate in variants";
-    title.style.fontSize = "11px";
-    title.style.fontWeight = "700";
-    title.style.color = "#d4d6ff";
-    title.style.letterSpacing = "0.02em";
-    title.style.padding = "0 2px 2px";
-    panel.appendChild(title);
-
-    for (const variant of activeVariants) {
-      const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.justifyContent = "space-between";
-      row.style.gap = "8px";
-      row.style.padding = "6px 8px";
-      row.style.border = "1px solid #3a3a5a";
-      row.style.borderRadius = "8px";
-      row.style.background = variant.isActiveVariant ? "#4a4a8a" : "rgba(22, 22, 38, 0.92)";
-
-      const name = document.createElement("span");
-      name.textContent = variant.name;
-      name.style.fontSize = "12px";
-      name.style.fontWeight = variant.isActiveVariant ? "700" : "600";
-      name.style.color = variant.isActiveVariant ? "#ffffff" : "#e0e0e0";
-      name.style.whiteSpace = "nowrap";
-      name.style.overflow = "hidden";
-      name.style.textOverflow = "ellipsis";
-      row.appendChild(name);
-
-      const removeButton = document.createElement("button");
-      removeButton.type = "button";
-      removeButton.textContent = "X";
-      removeButton.title = `Deactivate in ${variant.name}`;
-      removeButton.style.width = "20px";
-      removeButton.style.height = "20px";
-      removeButton.style.minWidth = "20px";
-      removeButton.style.border = "1px solid #6a6aba";
-      removeButton.style.borderRadius = "6px";
-      removeButton.style.background = "#3a3a5a";
-      removeButton.style.color = "#ffffff";
-      removeButton.style.fontSize = "11px";
-      removeButton.style.fontWeight = "800";
-      removeButton.style.cursor = "pointer";
-      removeButton.style.opacity = "0";
-      removeButton.style.transition = "opacity 0.12s ease, background 0.12s ease";
-      row.appendChild(removeButton);
-
-      row.addEventListener("mouseenter", () => {
-        removeButton.style.opacity = "1";
-      });
-      row.addEventListener("mouseleave", () => {
-        removeButton.style.opacity = "0";
-      });
-      removeButton.addEventListener("mouseenter", () => {
-        removeButton.style.background = "#4a4a8a";
-      });
-      removeButton.addEventListener("mouseleave", () => {
-        removeButton.style.background = "#3a3a5a";
-      });
-      removeButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const changed = this.deactivateDeckZoneCardInVariant(zoneId, instanceId, variant.id);
-        if (!changed) return;
-
-        this.rebuildZoneVisuals();
-        this.emitCanvasAreasChange();
-
-        const remaining = this.getDeckCardActiveVariants(zoneId, instanceId);
-        if (remaining.length === 0) {
-          this.closeDeckCardDeletePrompt();
-          this.removeCanvasCardInstance(zoneId, instanceId);
-          this.emitCanvasAreasChange();
-          this.hoveredZoneCardKey = null;
-          this.drawZoneDeleteOverlay();
-          return;
-        }
-        this.showDeckCardDeletePrompt(zoneId, instanceId, anchorClientX, anchorClientY);
-      });
-
-      panel.appendChild(row);
-    }
-
-    const clamp = (
-      value: number,
-      minValue: number,
-      maxValue: number,
-    ): number => Math.max(minValue, Math.min(value, maxValue));
-    const panelWidth = 220;
-    const estimatedHeight = 52 + activeVariants.length * 36;
-    const left = clamp(
-      anchorClientX + 10,
-      8,
-      window.innerWidth - panelWidth - 8,
-    );
-    const top = clamp(
-      anchorClientY + 10,
-      8,
-      window.innerHeight - Math.min(estimatedHeight, 320) - 8,
-    );
-    panel.style.left = `${Math.round(left)}px`;
-    panel.style.top = `${Math.round(top)}px`;
-
-    document.body.appendChild(panel);
-    this.deckCardDeletePromptRoot = panel;
-
-    this.deckCardDeletePromptPointerHandler = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) {
-        this.closeDeckCardDeletePrompt();
-        return;
-      }
-      if (!this.deckCardDeletePromptRoot?.contains(target)) {
-        this.closeDeckCardDeletePrompt();
-      }
-    };
-    this.deckCardDeletePromptKeyHandler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        this.closeDeckCardDeletePrompt();
-      }
-    };
-    window.addEventListener("pointerdown", this.deckCardDeletePromptPointerHandler, true);
-    window.addEventListener("keydown", this.deckCardDeletePromptKeyHandler, true);
-  }
-
   private handleZoneCardDelete(
     zoneCard: ZoneCardSpriteData,
-    clientX: number,
-    clientY: number,
+    _clientX: number,
+    _clientY: number,
   ): void {
-    const zone = this.canvasAreas.find((entry) => entry.id === zoneCard.zoneId);
-    if (!zone || zone.type !== "deck") {
-      this.closeDeckCardDeletePrompt();
-      this.removeCanvasCardInstance(zoneCard.zoneId, zoneCard.instanceId);
-      this.emitCanvasAreasChange();
-      this.hoveredZoneCardKey = null;
+    const now = Date.now();
+    if (this.armedDelete?.key !== zoneCard.key || now > this.armedDelete.expires) {
+      this.armedDelete = { key: zoneCard.key, expires: now + 5000 };
+      this.hoveredZoneCardKey = zoneCard.key;
       this.drawZoneDeleteOverlay();
       return;
     }
+    this.armedDelete = null;
+    this.showDeletionPuff(zoneCard.bounds);
+    this.removeCanvasCardInstance(zoneCard.zoneId, zoneCard.instanceId);
+    this.emitCanvasAreasChange();
+    this.hoveredZoneCardKey = null;
+    this.drawZoneDeleteOverlay();
+  }
 
-    const activeVariants = this.getDeckCardActiveVariants(zone.id, zoneCard.instanceId);
-    if (activeVariants.length === 0) {
-      this.closeDeckCardDeletePrompt();
-      this.removeCanvasCardInstance(zone.id, zoneCard.instanceId);
-      this.emitCanvasAreasChange();
-      this.hoveredZoneCardKey = null;
-      this.drawZoneDeleteOverlay();
+  private showDeletionPuff(bounds: ZoneCardSpriteData["bounds"]): void {
+    if (!this.camera?.container || (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)) return;
+    if (this.effectSettings.intensity === 'off') return;
+    // Everyday card removal stays small. Expressive mode retains the full cloud
+    // for isolated deletions; rapid repeats use the compact drawing sequence.
+    if (this.effectSettings.intensity !== 'expressive' || performance.now() - this.lastFullPoof < 2400) {
+      this.playMangaEffect('delete', bounds);
       return;
     }
+    const now = performance.now();
+    const accepted = this.effectGate.accept('delete', now, this.effectSettings, false);
+    if (!accepted) return;
+    this.lastFullPoof = now;
+    // Bound transient graphics when several cards are removed in quick succession.
+    if (this.deletionPuffs.length >= 8) this.deletionPuffs.shift()?.effect.destroy();
+    const effect = new DeletionPoof(bounds, this.camera.zoom, undefined, accepted.words ? this.effectSettings.lettering : 'none');
+    this.getMangaEffectLayer()?.addChild(effect.root);
+    this.deletionPuffs.push({ effect, start: performance.now() });
+  }
 
-    this.showDeckCardDeletePrompt(zone.id, zoneCard.instanceId, clientX, clientY);
+  resetSessionGestures(): void {
+    this.removedCardHistory = [];
+    this.hasReceivedAreas = false;
+    this.effectGate = new MangaEffectGate();
+    this.lastFullPoof = -Infinity;
+    this.lastSelectionEffect = '';
+    this.setInteractionEffects(this.effectSettings);
+    this.closeInspection();
+    if (this.focusEffectTimer) clearTimeout(this.focusEffectTimer);
+    this.focusEffectTimer = null;
+  }
+
+  setInteractionEffects(settings: InteractionEffectsSettings): void {
+    this.effectSettings = ensureInteractionEffects(settings);
+    for (const { effect } of this.mangaEffects) effect.destroy();
+    this.mangaEffects = [];
+    for (const { effect } of this.deletionPuffs) effect.destroy();
+    this.deletionPuffs = [];
+    this.mangaEffectLayer?.destroy({ children: true });
+    this.mangaEffectLayer = null;
+  }
+
+  private motionEnabled(): boolean {
+    return this.effectSettings?.intensity !== 'off' && !(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  private getMangaEffectLayer(): Container | null {
+    const camera = this.camera?.container;
+    if (!camera) return null;
+    if (!this.mangaEffectLayer || this.mangaEffectLayer.destroyed) {
+      this.mangaEffectLayer = new Container();
+      this.mangaEffectLayer.label = 'manga-effects';
+      this.mangaEffectLayer.eventMode = 'none';
+      this.mangaEffectLayer.interactiveChildren = false;
+      this.mangaEffectLayer.zIndex = 20_000_000;
+      camera.addChild(this.mangaEffectLayer);
+    }
+    if (camera.children.at(-1) !== this.mangaEffectLayer) camera.setChildIndex(this.mangaEffectLayer, camera.children.length - 1);
+    return this.mangaEffectLayer;
+  }
+
+  private getCardsEffectBounds(keys: Iterable<string>): EffectBounds | undefined {
+    const boxes: EffectBounds[] = [];
+    for (const key of keys) {
+      const data = this.zoneCardSprites.get(key) ?? this.getSpriteData(key);
+      if (!data) continue;
+      boxes.push(data.sprite?.getWorldBounds?.() ?? data.bounds);
+    }
+    return unionEffectBounds(boxes);
+  }
+
+  private playCardsEffect(kind: MangaEffectKind, keys: Iterable<string>, follow = false): void {
+    if (!this.camera?.container || !this.motionEnabled()) return;
+    const selected = [...new Set(keys)];
+    const bounds = this.getCardsEffectBounds(selected);
+    if (follow) this.playMangaEffect(kind, bounds, selected);
+    else this.playMangaEffect(kind, bounds);
+  }
+
+  private getZoneStackEffectKeys(zoneId: string, instanceId: string): string[] {
+    const area = this.canvasAreas.find(zone => zone.id === zoneId);
+    const instance = area?.cards.find(card => card.id === instanceId);
+    if (!area || !instance) return [];
+    const stack = this.getZoneCardStackKey(area, instance);
+    return area.cards.filter(card => this.getZoneCardStackKey(area, card) === stack).map(card => `${zoneId}:${card.id}`);
+  }
+
+  private playMangaEffect(kind: MangaEffectKind, bounds?: EffectBounds, follow?: string[]): void {
+    if (!bounds || !this.camera?.container || !this.motionEnabled()) return;
+    const visible = this.camera.getVisibleBounds?.();
+    if (visible && !this.boundsIntersect(bounds, visible)) return;
+    const now = performance.now();
+    const accepted = this.effectGate?.accept(kind, now, this.effectSettings, false);
+    if (!accepted) return;
+    if (this.mangaEffects.length >= MAX_MANGA_EFFECTS) this.mangaEffects.shift()?.effect.destroy();
+    const effect = new MangaEffect(kind, bounds, this.camera.zoom, this.effectSettings, accepted.words);
+    this.getMangaEffectLayer()?.addChild(effect.root);
+    this.mangaEffects.push({ effect, start: now, follow });
+  }
+
+  private playAreaEffect(kind: MangaEffectKind, area: CanvasArea): void {
+    // Anchor to the title instead of covering a potentially enormous deck.
+    this.playMangaEffect(kind, { left: area.bounds.x, top: area.bounds.y,
+      right: area.bounds.x + Math.min(area.bounds.width, 360), bottom: area.bounds.y + 70 });
   }
 
   private getCardType(cardName: string): CardType | null {
@@ -3090,7 +3022,7 @@ export class PixiStage {
   }
 
   private normalizeDeckBoard(board: ActiveBoard | null | undefined): DeckZoneBoard {
-    return board === "collection" ? "collection" : "mainboard";
+    return normalizeDeckBoard(board);
   }
 
   private createEmptyDeckCostBucket(): DeckCostBucketStats {
@@ -3481,6 +3413,9 @@ export class PixiStage {
       `Magic: ${stats.spellTypeCounts.Magic}`,
       `Auras: ${stats.spellTypeCounts.Aura}`,
       `Artifacts: ${stats.spellTypeCounts.Artifact}`,
+      ...Object.entries(stats.spellTypeCounts)
+        .filter(([type]) => !["Minion", "Magic", "Aura", "Artifact"].includes(type))
+        .map(([type, count]) => `${type}: ${count}`),
     ]);
 
     const minionTotal = stats.minionInfo.total;
@@ -3593,10 +3528,10 @@ export class PixiStage {
         this.normalizeDeckBoard(instance.board) === "mainboard" &&
         (!hasExplicitVariant || activeMainIds.has(instance.id)),
     );
-    const collectionSideboard = zone.cards.filter(
+    const collectionCollection = zone.cards.filter(
       (instance) => this.normalizeDeckBoard(instance.board) === "collection",
     );
-    const collectionTotal = collectionSideboard.length;
+    const collectionTotal = collectionCollection.length;
 
     const spellTypeCounts: DeckHeaderStats["spellTypeCounts"] = {
       Minion: 0,
@@ -3687,21 +3622,12 @@ export class PixiStage {
         continue;
       }
 
-      if (
-        type !== "Minion" &&
-        type !== "Magic" &&
-        type !== "Aura" &&
-        type !== "Artifact"
-      ) {
-        continue;
-      }
+      if (type === "Avatar") continue;
 
       spellsTotal += 1;
-      spellTypeCounts[type] += 1;
+      spellTypeCounts[type] = (spellTypeCounts[type] ?? 0) + 1;
 
-      const cost = Number.isFinite(card.guardian.cost)
-        ? Math.max(0, card.guardian.cost ?? 0)
-        : 0;
+      const cost = Math.max(0, card.guardian.cost ?? 0);
       const manaCost = Math.max(0, Math.trunc(cost));
       totalSpellMana += cost;
       const thresholdSum = air + earth + fire + water;
@@ -3717,12 +3643,14 @@ export class PixiStage {
       if (water > 0) increment(manaCardCurve.water, manaCost);
       increment(thresholdSumByMana, manaCost, thresholdSum);
       increment(spellCountByMana, manaCost);
-      increment(thresholdSumByManaType[type], manaCost, thresholdSum);
-      increment(spellCountByManaType[type], manaCost);
+      if (type === "Minion" || type === "Magic" || type === "Aura" || type === "Artifact") {
+        increment(thresholdSumByManaType[type], manaCost, thresholdSum);
+        increment(spellCountByManaType[type], manaCost);
+      }
 
       const bucket = costBuckets[this.getDeckCostBucketKey(cost)];
       bucket.total += 1;
-      bucket.byType[type] += 1;
+      bucket.byType[type] = (bucket.byType[type] ?? 0) + 1;
       bucket.byThreshold[getThresholdGroup(thresholds)] += 1;
 
       if (type === "Minion") {
@@ -3745,7 +3673,7 @@ export class PixiStage {
         (duplicateCounts.get(instance.cardName) ?? 0) + 1,
       );
     }
-    for (const instance of collectionSideboard) {
+    for (const instance of collectionCollection) {
       duplicateCounts.set(
         instance.cardName,
         (duplicateCounts.get(instance.cardName) ?? 0) + 1,
@@ -4262,7 +4190,7 @@ export class PixiStage {
   ): void {
     if (zone.type !== "deck") return;
     const variants = this.ensureDeckZoneVariants(zone);
-    if (board === "collection") {
+    if (board !== "mainboard") {
       for (const variant of variants) {
         variant.activeCardIds = variant.activeCardIds.filter((cardId) => cardId !== instanceId);
       }
@@ -4630,7 +4558,8 @@ export class PixiStage {
           y + cardSize.height / 2,
           isLandscape,
         );
-        const nextX = snapped.x - cardSize.width / 2;
+        const snappedLeft = snapped.x - cardSize.width / 2;
+        const nextX = snappedLeft < x ? snappedLeft + DRAWN_GRID.width : snappedLeft;
         const nextY = snapped.y - cardSize.height / 2;
 
         stack.instances.forEach((instance) => {
@@ -4652,6 +4581,27 @@ export class PixiStage {
     return boardBottom;
   }
 
+  private requestZoneLayoutReset(zoneId: string): void {
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
+    if (zone?.type === 'deck') this.onDeckLayoutResetRequest?.(zoneId);
+    else if (zone) this.sortZoneCards(zoneId);
+  }
+
+  /** Called only after the UI confirms. Preserve IDs, board membership and variants. */
+  resetDeckLayout(zoneId: string): void {
+    const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
+    if (!zone || zone.type !== 'deck') return;
+    zone.bounds.width = DECK_MIN_WIDTH;
+    zone.bounds.height = 0;
+    if (zone.cards.length === 0) {
+      this.fitDeckSections(zone);
+      this.rebuildZoneVisuals();
+      this.emitCanvasAreasChange();
+    } else {
+      this.sortZoneCards(zoneId);
+    }
+  }
+
   private sortZoneCards(
     zoneId: string,
     options?: { emitChange?: boolean },
@@ -4670,12 +4620,7 @@ export class PixiStage {
 
     if (zone.type === "deck") {
       let cursorY = bodyTop;
-      const boardOrder: DeckZoneBoard[] = [
-        "mainboard",
-        "collection",
-      ];
-
-      for (const board of boardOrder) {
+      for (const board of DECK_BOARD_ORDER) {
         const boardCards = nextCards.filter((card) => {
           const normalizedBoard = this.normalizeDeckBoard(card.board);
           if (normalizedBoard !== board) return false;
@@ -4685,7 +4630,7 @@ export class PixiStage {
         const boardBottom = this.layoutZoneBoardCards(boardCards, {
           left: bodyLeft + ZONE_DECK_BOARD_INNER_LEFT,
           top: cursorY,
-          width: bodyWidth - ZONE_DECK_BOARD_INNER_LEFT * 2,
+          width: getDeckBoardWidth(board, Math.max(zone.bounds.width, DECK_MIN_WIDTH)) - ZONE_DECK_BOARD_INNER_LEFT * 2,
           leadingGap: ZONE_DECK_CARD_TOP_GAP,
           minHeight: ZONE_DECK_MIN_BOARD_HEIGHT[board],
         });
@@ -4703,17 +4648,22 @@ export class PixiStage {
       });
     }
 
+    const previousLabels = this.canvasLabels ?? [];
+    this.canvasLabels = repositionLabelsAfterCardLayout(previousLabels, zone.id, zone.cards, nextCards);
     zone.cards = nextCards;
     this.reconcileCanvasAreaBounds(zone.id, { preserveTopLeft: true });
     this.rebuildZoneVisuals();
     if (options?.emitChange ?? true) {
+      this.playAreaEffect('sort', zone);
       this.emitCanvasAreasChange();
+      if (this.canvasLabels !== previousLabels) this.emitCanvasLabelsChange();
     }
   }
 
   private hideZoneFromCanvas(zoneId: string): void {
     const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone || !zone.pinned) return;
+    this.playAreaEffect('hide', zone);
     zone.pinned = false;
     this.rebuildZoneVisuals();
     this.emitCanvasAreasChange();
@@ -4768,13 +4718,13 @@ export class PixiStage {
       const duplicateRadius = (duplicateBounds.right - duplicateBounds.left) / 2;
 
       this.zoneDeleteOverlay.circle(duplicateCenterX, duplicateCenterY, duplicateRadius);
-      this.zoneDeleteOverlay.fill({ color: 0x223b78, alpha: 0.95 });
-      this.zoneDeleteOverlay.stroke({ width: 1.5, color: 0xbccaff, alpha: 0.85 });
+      this.zoneDeleteOverlay.fill({ color: MANGA_PALETTE.raised, alpha: 0.95 });
+      this.zoneDeleteOverlay.stroke({ width: 1.5, color: MANGA_PALETTE.gold, alpha: 0.85 });
       this.zoneDeleteOverlay.moveTo(duplicateBounds.left + 4, duplicateCenterY);
       this.zoneDeleteOverlay.lineTo(duplicateBounds.right - 4, duplicateCenterY);
       this.zoneDeleteOverlay.moveTo(duplicateCenterX, duplicateBounds.top + 4);
       this.zoneDeleteOverlay.lineTo(duplicateCenterX, duplicateBounds.bottom - 4);
-      this.zoneDeleteOverlay.stroke({ width: 1.45, color: 0xf2f5ff, alpha: 0.94 });
+      this.zoneDeleteOverlay.stroke({ width: 1.45, color: MANGA_PALETTE.paper, alpha: 0.94 });
     }
 
     const bounds = this.getDeleteButtonBounds(data);
@@ -4782,14 +4732,21 @@ export class PixiStage {
     const centerY = (bounds.top + bounds.bottom) / 2;
     const radius = (bounds.right - bounds.left) / 2;
 
+    const armed = this.armedDelete?.key === data.key && Date.now() <= this.armedDelete.expires;
+    if (armed) {
+      this.zoneDeleteOverlay.circle(centerX, centerY, radius + 7);
+      this.zoneDeleteOverlay.fill({ color: MANGA_PALETTE.danger, alpha: 0.3 });
+      this.zoneDeleteOverlay.rect(data.bounds.left - 3, data.bounds.top - 3, data.displaySize.width + 6, data.displaySize.height + 6);
+      this.zoneDeleteOverlay.stroke({ width: 3, color: MANGA_PALETTE.danger, alpha: 0.95 });
+    }
     this.zoneDeleteOverlay.circle(centerX, centerY, radius);
-    this.zoneDeleteOverlay.fill({ color: 0x1b1b2f, alpha: 0.94 });
-    this.zoneDeleteOverlay.stroke({ width: 1.5, color: 0xc8d0ff, alpha: 0.8 });
+    this.zoneDeleteOverlay.fill({ color: armed ? 0xdb263e : MANGA_PALETTE.ink, alpha: 0.94 });
+    this.zoneDeleteOverlay.stroke({ width: 1.5, color: MANGA_PALETTE.paper, alpha: 0.8 });
     this.zoneDeleteOverlay.moveTo(bounds.left + 4, bounds.top + 4);
     this.zoneDeleteOverlay.lineTo(bounds.right - 4, bounds.bottom - 4);
     this.zoneDeleteOverlay.moveTo(bounds.right - 4, bounds.top + 4);
     this.zoneDeleteOverlay.lineTo(bounds.left + 4, bounds.bottom - 4);
-    this.zoneDeleteOverlay.stroke({ width: 1.4, color: 0xf2f4ff, alpha: 0.92 });
+    this.zoneDeleteOverlay.stroke({ width: 1.4, color: MANGA_PALETTE.paper, alpha: 0.92 });
   }
 
   private ensureDeckGraphHoverTooltip(): {
@@ -5134,9 +5091,13 @@ export class PixiStage {
 
     this.pendingCardClick = null;
     this.pendingZoneCardClick = null;
-    this.pendingEmptyClick = null;
 
-    const isRightClick = event.button === 2;
+    if (event.button !== 0 || this.spacePanHeld) {
+      this.desktopPanStart = this.getPointerScreenPosition(event);
+      return;
+    }
+    this.desktopPanStart = null;
+
     const isCtrlHeld = event.ctrlKey || event.metaKey;
     const isShiftHeld = event.shiftKey;
 
@@ -5144,7 +5105,7 @@ export class PixiStage {
     this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
     this.clearZoneDropPreview();
     const clickedZoneVariantTab = this.getZoneVariantTabTargetAtPosition(worldPos);
-    if (!isRightClick && clickedZoneVariantTab) {
+    if (clickedZoneVariantTab) {
       this.cancelSelectionBox();
       if (clickedZoneVariantTab.isAdd) {
         this.pointerDownOnSelectedCard = false;
@@ -5170,15 +5131,15 @@ export class PixiStage {
     }
 
     const clickedZoneSort = this.getZoneSortTargetAtPosition(worldPos);
-    if (!isRightClick && clickedZoneSort) {
+    if (clickedZoneSort) {
       this.cancelSelectionBox();
-      this.sortZoneCards(clickedZoneSort.id);
+      this.requestZoneLayoutReset(clickedZoneSort.id);
       this.updateHoveredFromWorldPos(worldPos);
       return;
     }
 
     const clickedZoneFilterChip = this.getDeckFilterChipTargetAtPosition(worldPos);
-    if (!isRightClick && clickedZoneFilterChip) {
+    if (clickedZoneFilterChip) {
       this.cancelSelectionBox();
       if (clickedZoneFilterChip.removeHovered) {
         const changed = this.removeDeckFilterClause(
@@ -5200,7 +5161,7 @@ export class PixiStage {
     }
 
     const clickedZoneFilter = this.getZoneFilterTargetAtPosition(worldPos);
-    if (!isRightClick && clickedZoneFilter) {
+    if (clickedZoneFilter) {
       this.cancelSelectionBox();
       this.openDeckFilterRequest(clickedZoneFilter.id, null);
       this.updateHoveredFromWorldPos(worldPos);
@@ -5208,7 +5169,7 @@ export class PixiStage {
     }
 
     const clickedZoneClose = this.getZoneCloseTargetAtPosition(worldPos);
-    if (!isRightClick && clickedZoneClose) {
+    if (clickedZoneClose) {
       this.cancelSelectionBox();
       this.hideZoneFromCanvas(clickedZoneClose.id);
       this.updateHoveredFromWorldPos(worldPos);
@@ -5218,7 +5179,6 @@ export class PixiStage {
     const clickedZoneCard = this.getZoneCardAtPosition(worldPos);
     const clickedZoneHeader = this.getZoneHeaderAtPosition(worldPos);
     if (
-      !isRightClick &&
       this.hoveredZoneCardKey &&
       clickedZoneCard &&
       clickedZoneCard.key === this.hoveredZoneCardKey
@@ -5250,20 +5210,17 @@ export class PixiStage {
       }
     }
 
+    this.armedDelete = null;
     const clickedLabel = this.getLabelAtPosition(worldPos);
 
     // Label placement mode: next left-click places a label.
-    if (this.labelPlacementMode && !isRightClick) {
+    if (this.labelPlacementMode) {
       this.addLabelAtPosition(worldPos);
       this.consumeLabelPlacementMode();
       return;
     }
 
     if (clickedLabel) {
-      if (isRightClick) {
-        return;
-      }
-
       const now = Date.now();
       const isDoubleClick =
         now - this.lastLabelClickTime < DOUBLE_CLICK_TIME_MS &&
@@ -5282,19 +5239,27 @@ export class PixiStage {
       return;
     }
 
-    if (!isRightClick && clickedZoneCard) {
+    if (clickedZoneCard) {
       this.cancelSelectionBox();
+      if (isCtrlHeld) {
+        this.startSelectionBox(worldPos, isShiftHeld);
+        this.camera.pauseDrag();
+        return;
+      }
 
       this.pendingZoneCardClick = {
         zoneCardKey: clickedZoneCard.key,
         startScreenPos: this.getPointerScreenPosition(event),
+        startWorldPos: worldPos,
         shiftKey: isShiftHeld,
+        altKey: event.altKey,
       };
+      this.camera.pauseDrag();
       this.updateHoveredFromWorldPos(worldPos);
       return;
     }
 
-    if (!isRightClick && clickedZoneHeader) {
+    if (clickedZoneHeader) {
       this.cancelSelectionBox();
       if (clickedZoneHeader.type === "stack") {
         this.onStackZoneHeaderClick?.(clickedZoneHeader.id);
@@ -5306,45 +5271,28 @@ export class PixiStage {
 
     this.pointerDownOnSelectedCard = false;
 
-    // Right-click always pans (do nothing special, let viewport handle it)
-    if (isRightClick) {
-      return;
-    }
-
     const clickedCard = this.getCardAtPosition(worldPos);
 
     if (clickedCard) {
       if (isCtrlHeld) {
         // Ctrl+click starts selection box
-        this.startSelectionBox(worldPos);
+        this.startSelectionBox(worldPos, isShiftHeld);
         this.camera.pauseDrag();
         this.updateHoveredFromWorldPos(worldPos);
         return;
       }
 
-      this.clearZoneSelection();
       this.pendingCardClick = {
         cardKey: clickedCard,
         startScreenPos: this.getPointerScreenPosition(event),
+        startWorldPos: worldPos,
         shiftKey: isShiftHeld,
       };
+      this.camera.pauseDrag();
     } else {
-      const screenPos = this.getPointerScreenPosition(event);
-      const shouldStartSelectionBox =
-        isShiftHeld || isCtrlHeld || this.isDoubleEmptyClick(screenPos);
-      if (shouldStartSelectionBox) {
-        this.lastEmptyClickTime = 0;
-        this.lastEmptyClickScreenPos = null;
-        if (!isShiftHeld) {
-          this.clearSelection();
-        }
-        this.startSelectionBox(worldPos);
-        this.camera.pauseDrag();
-      } else {
-        // Empty-space drag pans the camera. Use Shift/Ctrl+drag for marquee selection.
-        this.clearSelection();
-        this.pendingEmptyClick = { startScreenPos: screenPos };
-      }
+      if (!isShiftHeld) this.clearSelection();
+      this.startSelectionBox(worldPos, isShiftHeld);
+      this.camera.pauseDrag();
     }
 
     this.updateHoveredFromWorldPos(worldPos);
@@ -5373,7 +5321,12 @@ export class PixiStage {
         screenPos,
       )
     ) {
+      const pending = this.pendingCardClick;
       this.pendingCardClick = null;
+      this.selectMainCardForPointer(pending.cardKey, pending.shiftKey, true);
+      this.lastClickedCard = null;
+      this.pointerDownOnSelectedCard = true;
+      this.startCardDrag(pending.startWorldPos);
     }
     if (
       this.pendingZoneCardClick &&
@@ -5382,18 +5335,15 @@ export class PixiStage {
         screenPos,
       )
     ) {
+      const pending = this.pendingZoneCardClick;
       this.pendingZoneCardClick = null;
+      const card = this.zoneCardSprites.get(pending.zoneCardKey);
+      if (card) {
+        this.selectZoneCardForPointer(card.key, pending.shiftKey, false, true);
+        this.lastClickedZoneCardKey = null;
+        this.startZoneCardDrag(card, pending.startWorldPos);
+      }
     }
-    if (
-      this.pendingEmptyClick &&
-      this.movedBeyondDesktopClickSlop(
-        this.pendingEmptyClick.startScreenPos,
-        screenPos,
-      )
-    ) {
-      this.pendingEmptyClick = null;
-    }
-
     // Update label drag
     if (this.labelDragState.isDragging) {
       this.clearZoneDropPreview();
@@ -5475,7 +5425,15 @@ export class PixiStage {
       this.pointerDownOnSelectedCard = false;
       this.pendingCardClick = null;
       this.pendingZoneCardClick = null;
-      this.pendingEmptyClick = null;
+      return;
+    }
+
+    this.camera.resumeDrag();
+    const panStart = this.desktopPanStart;
+    this.desktopPanStart = null;
+    if (panStart && (event.button !== 2 || this.movedBeyondDesktopClickSlop(panStart, this.getPointerScreenPosition(event)))) {
+      this.lastClickedCard = null;
+      this.lastClickedLabel = null;
       return;
     }
 
@@ -5493,7 +5451,8 @@ export class PixiStage {
     // Handle double-right-click for remove from deck
     const isRightClick = event.button === 2;
     if (isRightClick) {
-      const clickedLabel = this.getLabelAtPosition(worldPos);
+      this.armedDelete = null;
+    const clickedLabel = this.getLabelAtPosition(worldPos);
       const now = Date.now();
 
       if (
@@ -5557,15 +5516,6 @@ export class PixiStage {
         this.handlePendingCardClick(pending, worldPos);
         this.updateHoveredFromWorldPos(worldPos);
         return;
-      }
-    }
-
-    if (this.pendingEmptyClick) {
-      const pending = this.pendingEmptyClick;
-      this.pendingEmptyClick = null;
-      if (!this.movedBeyondDesktopClickSlop(pending.startScreenPos, screenPos)) {
-        this.lastEmptyClickTime = Date.now();
-        this.lastEmptyClickScreenPos = pending.startScreenPos;
       }
     }
 
@@ -5634,7 +5584,7 @@ export class PixiStage {
           "canvas-zone",
         );
       }
-      this.endCardDrag(true);
+      this.endCardDrag(shouldDropToCanvasZone || droppedInStacksTarget);
       this.camera.resumeDrag();
       this.setStacksDropVisual(false);
 
@@ -5697,6 +5647,158 @@ export class PixiStage {
     return null;
   }
 
+  private getLabelTarget(worldPos: { x: number; y: number }, excluded = new Set<string>()): CanvasLabel | null {
+    for (const data of [...(this.labelSprites?.values() ?? [])].reverse()) {
+      if (!excluded.has(data.label.id) && this.pointInBounds(worldPos, data.bounds)) {
+        return this.canvasLabels.find(label => label.id === data.label.id) ?? null;
+      }
+    }
+    return null;
+  }
+
+  private getPopulatedLabelBounds(zone: CanvasArea, board?: DeckZoneBoard): CanvasArea["bounds"][] {
+    return (this.canvasLabels ?? []).filter(label => label.areaId === zone.id && (!board || this.normalizeDeckBoard(label.board) === board))
+      .flatMap(label => {
+        const bounds = getLabelRegionBounds(this.canvasLabels, label, this.canvasAreas,
+          name => this.isLandscapeCard(name), id => {
+            const text = this.labelSprites?.get(id)?.text;
+            return { width: text?.width ?? 160, height: text?.height ?? 36 };
+          });
+        return bounds ? [bounds] : [];
+      });
+  }
+
+  private fitLabelRegionBounds(zone: CanvasArea): boolean {
+    const regions = this.getPopulatedLabelBounds(zone);
+    if (!regions.length) return false;
+    const before = { ...zone.bounds };
+    const left = Math.min(before.x, ...regions.map(rect => rect.x - 14));
+    const top = Math.min(before.y, ...regions.map(rect => rect.y - this.getZoneHeaderHeight(zone) - 14));
+    const right = Math.max(before.x + before.width, ...regions.map(rect => rect.x + rect.width + 14));
+    const bottom = Math.max(before.y + before.height, ...regions.map(rect => rect.y + rect.height + 14));
+    zone.bounds = { x: left, y: top, width: right - left, height: bottom - top };
+    return left !== before.x || top !== before.y || zone.bounds.width !== before.width || zone.bounds.height !== before.height;
+  }
+
+  private rebuildLabelRegions(): void {
+    for (const graphic of this.labelRegionGraphics.values()) graphic.destroy();
+    this.labelRegionGraphics.clear();
+    for (const label of this.canvasLabels) {
+      if (!label.areaId || !this.canvasAreas.some(area => area.id === label.areaId && area.pinned)) continue;
+      const bounds = getLabelRegionBounds(this.canvasLabels, label, this.canvasAreas,
+        name => this.isLandscapeCard(name), id => {
+          const text = this.labelSprites.get(id)?.text;
+          return { width: text?.width ?? 160, height: text?.height ?? 36 };
+        });
+      if (!bounds) continue;
+      const graphic = new Graphics();
+      graphic.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, 12);
+      graphic.fill({ color: MANGA_PALETTE.line, alpha: 0.035 });
+      graphic.stroke({ color: MANGA_PALETTE.line, width: 2, alpha: 0.58 });
+      this.labelContainer.addChildAt(graphic, 0);
+      this.labelRegionGraphics.set(label.id, graphic);
+    }
+  }
+
+  private prepareZoneCardDragFeedback(worldPos: { x: number; y: number }): void {
+    this.dragDetached = false;
+    this.dragDetachedAt = 0;
+    this.shakeDetector ??= new ShakeDetector();
+    const scale = this.camera?.zoom ?? 1;
+    this.shakeDetector.reset({ x: worldPos.x * scale, y: worldPos.y * scale }, performance.now());
+    for (const entry of this.zoneCardDragState.cards.values()) {
+      const zone = this.canvasAreas.find(area => area.id === entry.zoneId);
+      const card = zone?.cards.find(card => card.id === entry.instanceId);
+      if (card?.labelId) {
+        const region = this.labelRegionGraphics?.get(card.labelId);
+        if (region) region.alpha = 1.6;
+      }
+    }
+  }
+
+  private updateZoneCardDragFeedback(worldPos: { x: number; y: number }): void {
+    const scale = this.camera?.zoom ?? 1;
+    if (!this.dragDetached && this.shakeDetector?.move({ x: worldPos.x * scale, y: worldPos.y * scale }, performance.now())) {
+      this.dragDetached = true;
+      this.dragDetachedAt = performance.now();
+      this.playCardsEffect('detach', this.zoneCardDragState.cards.keys(), true);
+      for (const region of this.labelRegionGraphics?.values() ?? []) region.alpha = 0.25;
+    }
+    if (!this.camera?.container) return;
+    this.dragFeedbackGraphic ??= this.camera.container.addChild(new Graphics());
+    this.dragFeedbackText ??= this.camera.container.addChild(new Text({ text: '', style: {
+      fontFamily: 'Arial', fontSize: 12, fontWeight: '600', fill: MANGA_PALETTE.paper,
+      stroke: { color: MANGA_PALETTE.ink, width: 3 }, wordWrap: true, wordWrapWidth: 280,
+    } }));
+    this.dragFeedbackText.scale.set(1 / Math.max(0.01, scale));
+    this.dragFeedbackGraphic.clear();
+    const draggedBoards = new Set([...this.zoneCardDragState.cards.values()].flatMap(entry => {
+      const card = this.canvasAreas.find(area => area.id === entry.zoneId)?.cards.find(card => card.id === entry.instanceId);
+      return card ? [this.normalizeDeckBoard(card.board)] : [];
+    }));
+    const mixedBoards = draggedBoards.size > 1;
+    const label = this.dragDetached || mixedBoards ? null : this.getLabelTarget(worldPos);
+    const zone = (label?.areaId ? this.canvasAreas.find(area => area.id === label.areaId) : null) ?? this.getZoneAtPosition(worldPos);
+    const board = zone?.type === 'deck' ? this.getDeckBoardForPosition(zone, worldPos) : null;
+    const bounds = label ? this.labelSprites.get(label.id)?.bounds : null;
+    const rect = bounds ? { x: bounds.left, y: bounds.top, width: bounds.right - bounds.left, height: bounds.bottom - bounds.top }
+      : zone && board ? this.getDeckBoardRects(zone.bounds, zone)[board] : zone?.bounds;
+    this.dragFeedbackBounds = rect ?? null;
+    if (rect) {
+      drawMangaOutline(this.dragFeedbackGraphic, {
+        left: rect.x, top: rect.y, right: rect.x + rect.width, bottom: rect.y + rect.height,
+      }, scale, true);
+    }
+    const boardName = board === 'collection' ? 'Collection' : board === 'maybeboard' ? 'Maybe' : 'Main';
+    this.dragFeedbackText.text = this.dragDetached ? 'Detached · release to place freely'
+      : mixedBoards ? 'Keep boards · move selection' : label ? `Join ${label.text}` : zone ? `Release in ${zone.name} · ${boardName}` : 'Keep board · expand to this position';
+    const view = this.camera.getVisibleBounds?.();
+    const x = worldPos.x + 24 / scale; const y = worldPos.y - 40 / scale;
+    this.dragFeedbackText.position.set(
+      view ? Math.max(view.left + 8 / scale, Math.min(x, view.right - this.dragFeedbackText.width - 8 / scale)) : x,
+      view ? Math.max(view.top + 8 / scale, Math.min(y, view.bottom - this.dragFeedbackText.height - 8 / scale)) : y,
+    );
+  }
+
+  private clearZoneCardDragFeedback(): void {
+    for (const key of this.zoneCardDragState.cards?.keys() ?? []) {
+      const sprite = this.zoneCardSprites.get(key)?.sprite;
+      if (sprite) sprite.rotation = 0;
+    }
+    this.dragFeedbackGraphic?.destroy();
+    this.dragFeedbackGraphic = null;
+    this.dragFeedbackText?.destroy();
+    this.dragFeedbackText = null;
+    this.dragFeedbackBounds = null;
+    for (const region of this.labelRegionGraphics?.values() ?? []) region.alpha = 1;
+    this.dragDetachedAt = 0;
+    this.dragDetached = false;
+  }
+
+  private applyLabelDrop(cards: CanvasCardInstance[], sourceZone: CanvasArea, targetZone: CanvasArea,
+    worldPos: { x: number; y: number }, mixedBoards: boolean): void {
+    const target = this.dragDetached || mixedBoards ? null : this.getLabelTarget(worldPos);
+    if (target && (!target.areaId || target.areaId === targetZone.id)) {
+      target.areaId = targetZone.id;
+      target.board ??= cards[0]?.board ?? 'mainboard';
+      const parent = this.canvasLabels.find(label => label.id === target.parentLabelId);
+      if (parent && (parent.areaId !== target.areaId || this.normalizeDeckBoard(parent.board) !== this.normalizeDeckBoard(target.board))) delete target.parentLabelId;
+      for (const card of cards) {
+        const oldBoard = this.normalizeDeckBoard(card.board);
+        card.labelId = target.id;
+        card.board = target.board;
+        if (targetZone.type === 'deck' && oldBoard !== this.normalizeDeckBoard(card.board)) this.syncDeckVariantForBoardChange(targetZone, card.id, this.normalizeDeckBoard(card.board));
+      }
+      this.playMangaEffect('attach', this.labelSprites?.get(target.id)?.bounds);
+      this.emitCanvasLabelsChange();
+    } else {
+      for (const card of cards) {
+        const label = this.canvasLabels?.find(label => label.id === card.labelId);
+        if (this.dragDetached || sourceZone.id !== targetZone.id || (label && this.normalizeDeckBoard(label.board) !== this.normalizeDeckBoard(card.board))) delete card.labelId;
+      }
+    }
+  }
+
   private setCanvasLabels(labels: CanvasLabel[]): void {
     if (this.canvasLabelsEqual(this.canvasLabels, labels)) {
       return;
@@ -5715,7 +5817,7 @@ export class PixiStage {
         left.id !== right.id ||
         left.text !== right.text ||
         left.x !== right.x ||
-        left.y !== right.y
+        left.y !== right.y || left.areaId !== right.areaId || left.board !== right.board || left.parentLabelId !== right.parentLabelId
       ) {
         return false;
       }
@@ -5731,6 +5833,7 @@ export class PixiStage {
     this.labelContainer.removeChildren();
 
     for (const label of this.canvasLabels) {
+      if (label.areaId && !this.canvasAreas.some(area => area.id === label.areaId && area.pinned)) continue;
       const text = new Text({
         text: label.text,
         style: {
@@ -5754,6 +5857,7 @@ export class PixiStage {
       this.updateLabelBounds(data);
       this.labelSprites.set(label.id, data);
     }
+    this.rebuildLabelRegions();
   }
 
   private updateLabelBounds(data: LabelSpriteData): void {
@@ -5767,98 +5871,170 @@ export class PixiStage {
   }
 
   private startLabelDrag(labelId: string, worldPos: { x: number; y: number }): void {
-    const data = this.labelSprites.get(labelId);
-    if (!data) return;
-
-    this.labelDragState.isDragging = true;
-    this.labelDragState.labelId = labelId;
-    this.labelDragState.startWorldPos = { ...worldPos };
-    this.labelDragState.labelStartPos = { x: data.label.x, y: data.label.y };
-
-    // Bring dragged label to top.
-    this.labelContainer.addChild(data.text);
+    const label = this.canvasLabels.find(entry => entry.id === labelId);
+    if (!label) return;
+    this.labelDragState = { isDragging: true, labelId, startWorldPos: { ...worldPos }, labelStartPos: { x: label.x, y: label.y } };
+    this.labelDragLastPos = { ...worldPos };
+    this.labelDragBoardTargets = this.canvasAreas.filter(area => area.pinned && area.type === 'deck').flatMap(area => {
+      const rects = this.getDeckBoardRects(area.bounds, area);
+      return DECK_BOARD_ORDER.map(board => ({ areaId: area.id, board, rect: { ...rects[board] } }));
+    });
+    this.labelDragCardStarts.clear();
+    this.labelDragLabelStarts.clear();
+    const family = getLabelFamily(this.canvasLabels, labelId);
+    for (const member of this.canvasLabels) if (family.has(member.id)) this.labelDragLabelStarts.set(member.id, { x: member.x, y: member.y });
+    for (const card of getLabelCards(this.canvasLabels, labelId, this.canvasAreas)) this.labelDragCardStarts.set(card.id, { x: card.x, y: card.y });
   }
 
   private updateLabelDrag(worldPos: { x: number; y: number }): void {
-    if (!this.labelDragState.isDragging || !this.labelDragState.labelId) return;
-
-    const data = this.labelSprites.get(this.labelDragState.labelId);
-    if (!data) return;
-
+    if (!this.labelDragState.isDragging) return;
+    this.labelDragLastPos = { ...worldPos };
     const dx = worldPos.x - this.labelDragState.startWorldPos.x;
     const dy = worldPos.y - this.labelDragState.startWorldPos.y;
-    const x = this.labelDragState.labelStartPos.x + dx;
-    const y = this.labelDragState.labelStartPos.y + dy;
-
-    data.label.x = x;
-    data.label.y = y;
-    data.text.x = x;
-    data.text.y = y;
-    this.updateLabelBounds(data);
-  }
-
-  private endLabelDrag(): void {
-    const { labelId } = this.labelDragState;
-    if (labelId) {
-      const data = this.labelSprites.get(labelId);
+    for (const label of this.canvasLabels) {
+      const start = this.labelDragLabelStarts.get(label.id);
+      if (!start) continue;
+      label.x = start.x + dx;
+      label.y = start.y + dy;
+      const data = this.labelSprites.get(label.id);
       if (data) {
-        this.canvasLabels = this.canvasLabels.map((label) =>
-          label.id === labelId ? { ...label, x: data.label.x, y: data.label.y } : label,
-        );
-        this.emitCanvasLabelsChange();
+        data.label = { ...label };
+        data.text.position.set(label.x, label.y);
+        this.updateLabelBounds(data);
       }
     }
+    for (const area of this.canvasAreas) for (const card of area.cards) {
+      const start = this.labelDragCardStarts.get(card.id);
+      if (!start) continue;
+      const sprite = this.zoneCardSprites.get(`${area.id}:${card.id}`);
+      const moveX = start.x + dx - card.x;
+      const moveY = start.y + dy - card.y;
+      card.x += moveX;
+      card.y += moveY;
+      if (sprite) {
+        sprite.sprite.x += moveX;
+        sprite.sprite.y += moveY;
+        sprite.bounds = { left: sprite.bounds.left + moveX, right: sprite.bounds.right + moveX, top: sprite.bounds.top + moveY, bottom: sprite.bounds.bottom + moveY };
+      }
+    }
+    this.rebuildLabelRegions();
+  }
 
+  private endLabelDrag(cancel = false): void {
+    const { labelId } = this.labelDragState;
+    const label = this.canvasLabels.find(entry => entry.id === labelId);
+    if (!label) return;
+    const moved = (this.labelDragLastPos?.x !== this.labelDragState.startWorldPos.x || this.labelDragLastPos?.y !== this.labelDragState.startWorldPos.y);
+    if (cancel || !moved) {
+      this.updateLabelDrag(this.labelDragState.startWorldPos);
+    } else {
+      const pos = this.labelDragLastPos ?? { x: label.x, y: label.y };
+      const anchor = getLabelCards(this.canvasLabels, label.id, this.canvasAreas)[0];
+      if (anchor) {
+        const landscape = this.isLandscapeCard(anchor.cardName);
+        const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const snapped = snapCardCenter(anchor.x + size.width / 2, anchor.y + size.height / 2, landscape);
+        this.updateLabelDrag({ x: pos.x + snapped.x - size.width / 2 - anchor.x, y: pos.y + snapped.y - size.height / 2 - anchor.y });
+      }
+      const family = getLabelFamily(this.canvasLabels, label.id);
+      const cards = getLabelCards(this.canvasLabels, label.id, this.canvasAreas);
+      const targetLabel = this.getLabelTarget(pos, family);
+      const oldArea = this.canvasAreas.find(area => area.id === label.areaId);
+      const targetArea = (targetLabel?.areaId ? this.canvasAreas.find(area => area.id === targetLabel.areaId) : this.getZoneAtPosition(pos)) ?? (cards.length ? oldArea : undefined);
+      const boardTarget = this.labelDragBoardTargets.find(target => target.areaId === targetArea?.id && this.pointInBounds(pos, { left: target.rect.x, top: target.rect.y, right: target.rect.x + target.rect.width, bottom: target.rect.y + target.rect.height }));
+      const board = targetLabel?.board ?? (targetArea ? boardTarget?.board ?? label.board ?? 'mainboard' : undefined);
+      label.parentLabelId = targetArea && targetLabel?.areaId === targetArea.id ? targetLabel.id : undefined;
+      for (const member of this.canvasLabels) if (family.has(member.id)) {
+        member.areaId = targetArea?.id;
+        member.board = board;
+      }
+      if (targetArea && cards.length) {
+        for (const area of this.canvasAreas) {
+          const transferring = area.cards.filter(card => this.labelDragCardStarts.has(card.id));
+          if (area.id !== targetArea.id) {
+            area.cards = area.cards.filter(card => !this.labelDragCardStarts.has(card.id));
+            this.removeDeckVariantCardReferences(area, transferring.map(card => card.id));
+            targetArea.cards.push(...transferring);
+          }
+        }
+        for (const card of cards) {
+          const oldBoard = this.normalizeDeckBoard(card.board);
+          card.board = board;
+          card.isNew = false;
+          if (oldBoard !== this.normalizeDeckBoard(board) || oldArea?.id !== targetArea.id) this.syncDeckVariantForBoardChange(targetArea, card.id, this.normalizeDeckBoard(board));
+        }
+      }
+    }
     this.labelDragState.isDragging = false;
     this.labelDragState.labelId = null;
+    this.labelDragCardStarts.clear();
+    this.labelDragLabelStarts.clear();
+    for (const area of this.canvasAreas) this.reconcileCanvasAreaBounds(area.id);
+    this.rebuildZoneVisuals();
+    if (!cancel && moved) {
+      this.emitCanvasLabelsChange();
+      this.emitCanvasAreasChange();
+    }
   }
 
   private addLabelAtPosition(worldPos: { x: number; y: number }): void {
-    const text = window.prompt("Label text", "");
-    if (text === null) return;
-
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const label: CanvasLabel = {
-      id: crypto.randomUUID(),
-      text: trimmed,
-      x: worldPos.x,
-      y: worldPos.y,
-    };
-
-    this.canvasLabels = [...this.canvasLabels, label];
-    this.rebuildLabelSprites();
-    this.emitCanvasLabelsChange();
+    this.closeLabelEditor?.();
+    this.closeLabelEditor = openCanvasLabelEditor({
+      title: "Add label",
+      onClose: () => { this.closeLabelEditor = null; },
+      onSave: (text) => {
+        if (this.isDestroyed || !text) return;
+        const area = this.getZoneAtPosition(worldPos);
+        const label: CanvasLabel = {
+          id: crypto.randomUUID(), text, x: worldPos.x, y: worldPos.y,
+          areaId: area?.id,
+          board: area?.type === 'deck' ? (this.getDeckBoardForPosition(area, worldPos) ?? 'mainboard') : undefined,
+        };
+        this.canvasLabels = [...this.canvasLabels, label];
+        this.rebuildLabelSprites();
+        this.playMangaEffect('label', this.labelSprites.get(label.id)?.bounds);
+        this.emitCanvasLabelsChange();
+      },
+    });
   }
 
   private editLabel(labelId: string): void {
     const current = this.canvasLabels.find((label) => label.id === labelId);
     if (!current) return;
-
-    const next = window.prompt(
-      "Edit label text (leave blank to delete)",
-      current.text,
-    );
-    if (next === null) return;
-
-    const trimmed = next.trim();
-    if (!trimmed) {
-      this.deleteLabel(labelId);
-      return;
-    }
-
-    this.canvasLabels = this.canvasLabels.map((label) =>
-      label.id === labelId ? { ...label, text: trimmed } : label,
-    );
-    this.rebuildLabelSprites();
-    this.emitCanvasLabelsChange();
+    this.closeLabelEditor?.();
+    this.closeLabelEditor = openCanvasLabelEditor({
+      title: "Edit label",
+      initialText: current.text,
+      onClose: () => { this.closeLabelEditor = null; },
+      onSave: (text) => {
+        if (this.isDestroyed || !this.canvasLabels.some(label => label.id === labelId)) return;
+        if (!text) {
+          this.deleteLabel(labelId);
+          return;
+        }
+        this.canvasLabels = this.canvasLabels.map((label) => label.id === labelId ? { ...label, text } : label);
+        this.rebuildLabelSprites();
+        if (current.areaId) {
+          this.reconcileCanvasAreaBounds(current.areaId);
+          this.rebuildZoneVisuals();
+          this.emitCanvasAreasChange();
+        }
+        this.emitCanvasLabelsChange();
+      },
+    });
   }
 
   private deleteLabel(labelId: string): void {
     const next = this.canvasLabels.filter((label) => label.id !== labelId);
     if (next.length === this.canvasLabels.length) return;
-    this.canvasLabels = next;
+    const parentId = this.canvasLabels.find(label => label.id === labelId)?.parentLabelId;
+    this.canvasLabels = next.map(label => label.parentLabelId === labelId ? { ...label, parentLabelId: parentId } : label);
+    for (const area of this.canvasAreas) {
+      for (const card of area.cards) if (card.labelId === labelId) card.labelId = parentId;
+      this.reconcileCanvasAreaBounds(area.id);
+    }
+    this.rebuildZoneVisuals();
+    this.emitCanvasAreasChange();
     this.rebuildLabelSprites();
     this.emitCanvasLabelsChange();
   }
@@ -5900,39 +6076,13 @@ export class PixiStage {
     }
   }
 
-  private deselectCard(cardName: string, suppressEmit = false): void {
-    this.selectedCards.delete(cardName);
-    const data = this.getSpriteData(cardName);
-    if (data) {
-      data.sprite.setSelected(false);
-    }
-    if (!suppressEmit) {
-      this.emitSelectionChange();
-    }
-  }
-
   private selectZoneCard(key: string): void {
     const data = this.zoneCardSprites.get(key);
     if (!data) return;
 
-    if (this.selectedZoneId && this.selectedZoneId !== data.zoneId) {
-      this.clearZoneSelection();
-    }
-
     this.selectedZoneId = data.zoneId;
     this.selectedZoneCardKeys.add(key);
     data.sprite.setSelected(true);
-  }
-
-  private deselectZoneCard(key: string): void {
-    this.selectedZoneCardKeys.delete(key);
-    const data = this.zoneCardSprites.get(key);
-    if (data) {
-      data.sprite.setSelected(false);
-    }
-    if (this.selectedZoneCardKeys.size === 0) {
-      this.selectedZoneId = null;
-    }
   }
 
   private clearZoneSelection(): void {
@@ -5956,7 +6106,6 @@ export class PixiStage {
       if (zoneId === null) {
         zoneId = data.zoneId;
       }
-      if (data.zoneId !== zoneId) continue;
       nextSelectedKeys.add(key);
     }
 
@@ -5966,6 +6115,24 @@ export class PixiStage {
 
     this.selectedZoneCardKeys = nextSelectedKeys;
     this.selectedZoneId = zoneId;
+    this.updateZoneSelectionOutlines();
+  }
+
+  private updateZoneSelectionOutlines(): void {
+    if (!this.zoneCardSprites?.size || !this.canvasAreas?.length) return;
+    const zones = new Map(this.canvasAreas.map(area => [area.id, area]));
+    const groups = new Map<string, CardSprite[]>();
+    for (const key of this.selectedZoneCardKeys) {
+      const data = this.zoneCardSprites.get(key);
+      const zone = data ? zones.get(data.zoneId) : undefined;
+      const card = zone?.cards.find(card => card.id === data?.instanceId);
+      if (!data || !zone || !card) continue;
+      const groupKey = `${zone.id}:${this.getZoneCardStackKey(zone, card)}`;
+      const group = groups.get(groupKey) ?? [];
+      group.push(data.sprite);
+      groups.set(groupKey, group);
+    }
+    for (const group of groups.values()) outlineSelectedStack(group);
   }
 
   private clearSelection(suppressEmit = false): void {
@@ -5993,6 +6160,13 @@ export class PixiStage {
   }
 
   private emitSelectionChange(): void {
+    this.updateZoneSelectionOutlines();
+    const keys = [...this.selectedZoneCardKeys, ...this.selectedCards];
+    const signature = keys.join('|');
+    if (keys.length > 1 && signature !== this.lastSelectionEffect) {
+      this.playCardsEffect('select', keys);
+    }
+    this.lastSelectionEffect = signature;
     this.onSelectionChange?.(this.getSelectedCardNames());
   }
 
@@ -6057,6 +6231,7 @@ export class PixiStage {
   // ============================================================================
 
   private startCardDrag(worldPos: { x: number; y: number }): void {
+    this.playCardsEffect('pickup', this.selectedCards, true);
     this.dragState.isDragging = true;
     this.dragState.startWorldPos = { ...worldPos };
     this.dragState.draggedCards = new Set(this.selectedCards);
@@ -6104,6 +6279,24 @@ export class PixiStage {
   }
 
   private endCardDrag(revertToStart = false): void {
+    let snappedDelta = { x: 0, y: 0 };
+    if (!revertToStart) {
+      const anchorKey = this.dragState.draggedCards.values().next().value;
+      const anchor = anchorKey ? this.getSpriteData(anchorKey) : null;
+      const start = anchorKey ? this.dragState.cardStartPositions.get(anchorKey) : null;
+      const base = anchorKey ? this.dragState.cardStartBasePositions.get(anchorKey) : null;
+      if (anchor && start && base) {
+        const snapped = snapCardCenter(
+          base.x + anchor.displaySize.width / 2 + anchor.sprite.x - start.x,
+          base.y + anchor.displaySize.height / 2 + anchor.sprite.y - start.y,
+          anchor.layout.isLandscape,
+        );
+        snappedDelta = {
+          x: snapped.x - anchor.displaySize.width / 2 - base.x,
+          y: snapped.y - anchor.displaySize.height / 2 - base.y,
+        };
+      }
+    }
     for (const cardName of this.dragState.draggedCards) {
       const data = this.getSpriteData(cardName);
       if (data) {
@@ -6141,12 +6334,11 @@ export class PixiStage {
           continue;
         }
 
-        // Get current center position
-        const centerX = data.sprite.x + cardSize.width / 2;
-        const centerY = data.sprite.y + cardSize.height / 2;
-
-        // Snap center to the appropriate snap grid
-        const snappedCenter = snapCardCenter(centerX, centerY, isLandscape);
+        const base = this.dragState.cardStartBasePositions.get(cardName) ?? data.basePosition;
+        const snappedCenter = {
+          x: base.x + cardSize.width / 2 + snappedDelta.x,
+          y: base.y + cardSize.height / 2 + snappedDelta.y,
+        };
 
         // Convert back to top-left for sprite positioning
         const snappedX = snappedCenter.x - cardSize.width / 2;
@@ -6187,6 +6379,7 @@ export class PixiStage {
     }
 
     this.rebuildCardStacks();
+    if (!revertToStart) this.playCardsEffect('place', this.dragState.draggedCards);
 
     this.dragState.isDragging = false;
     this.dragState.draggedCards.clear();
@@ -6232,135 +6425,147 @@ export class PixiStage {
     zoneCard: ZoneCardSpriteData,
     worldPos: { x: number; y: number },
   ): void {
-    this.zoneCardDragState.isDragging = true;
-    this.zoneCardDragState.key = zoneCard.key;
-    this.zoneCardDragState.zoneId = zoneCard.zoneId;
-    this.zoneCardDragState.instanceId = zoneCard.instanceId;
-    this.zoneCardDragState.startWorldPos = { ...worldPos };
-    this.zoneCardDragState.startCardPos = {
-      x: zoneCard.sprite.x,
-      y: zoneCard.sprite.y,
-    };
-
     const zone = this.canvasAreas.find((entry) => entry.id === zoneCard.zoneId);
-    if (zone) {
-      const instanceIndex = zone.cards.findIndex(
-        (entry) => entry.id === zoneCard.instanceId,
-      );
-      if (instanceIndex !== -1) {
-        const [instance] = zone.cards.splice(instanceIndex, 1);
-        if (instance) {
-          zone.cards.push(instance);
-        }
+    const anchor = zone?.cards.find((entry) => entry.id === zoneCard.instanceId);
+    if (!zone || !anchor) return;
+    const keys = this.selectedZoneCardKeys.has(zoneCard.key)
+      ? this.selectedZoneCardKeys : new Set([zoneCard.key]);
+    const cards: ZoneCardDragState["cards"] = new Map();
+    for (const source of this.canvasAreas) {
+      for (const instance of source.cards) {
+        const key = `${source.id}:${instance.id}`;
+        const data = this.zoneCardSprites.get(key);
+        if (!keys.has(key) || !data) continue;
+        cards.set(key, {
+          zoneId: source.id, instanceId: instance.id, x: instance.x, y: instance.y,
+          spriteX: data.sprite.x, spriteY: data.sprite.y,
+        });
+        data.sprite.zIndex += 30000;
       }
     }
-
-    zoneCard.sprite.zIndex = 30000;
+    this.zoneCardDragState = {
+      isDragging: true, key: zoneCard.key, zoneId: zone.id, instanceId: anchor.id,
+      startWorldPos: { ...worldPos }, startCardPos: { x: anchor.x, y: anchor.y }, cards,
+    };
+    this.playCardsEffect('pickup', cards.keys(), true);
+    this.prepareZoneCardDragFeedback(worldPos);
     this.zoneContainer.sortChildren();
   }
 
   private updateZoneCardDrag(worldPos: { x: number; y: number }): void {
-    if (!this.zoneCardDragState.isDragging || !this.zoneCardDragState.key) return;
-
-    const zoneCard = this.zoneCardSprites.get(this.zoneCardDragState.key);
-    if (!zoneCard) return;
-
-    const dx = worldPos.x - this.zoneCardDragState.startWorldPos.x;
-    const dy = worldPos.y - this.zoneCardDragState.startWorldPos.y;
-
-    zoneCard.sprite.x = this.zoneCardDragState.startCardPos.x + dx;
-    zoneCard.sprite.y = this.zoneCardDragState.startCardPos.y + dy;
-    zoneCard.bounds = {
-      left: zoneCard.sprite.x,
-      top: zoneCard.sprite.y,
-      right: zoneCard.sprite.x + zoneCard.displaySize.width,
-      bottom: zoneCard.sprite.y + zoneCard.displaySize.height,
-    };
+    const drag = this.zoneCardDragState;
+    if (!drag.isDragging) return;
+    const dx = worldPos.x - drag.startWorldPos.x;
+    const dy = worldPos.y - drag.startWorldPos.y;
+    for (const [key, start] of drag.cards) {
+      const card = this.zoneCardSprites.get(key);
+      if (!card) continue;
+      card.sprite.x = start.spriteX + dx;
+      card.sprite.y = start.spriteY + dy;
+      card.bounds = {
+        left: card.sprite.x, top: card.sprite.y,
+        right: card.sprite.x + card.displaySize.width,
+        bottom: card.sprite.y + card.displaySize.height,
+      };
+    }
+    this.updateZoneCardDragFeedback(worldPos);
     this.drawZoneDeleteOverlay();
   }
 
   private endZoneCardDrag(worldPos: { x: number; y: number }): void {
     const drag = this.zoneCardDragState;
-    if (!drag.zoneId || !drag.instanceId || !drag.key) {
-      this.zoneCardDragState = {
-        isDragging: false,
-        key: null,
-        zoneId: null,
-        instanceId: null,
-        startWorldPos: { x: 0, y: 0 },
-        startCardPos: { x: 0, y: 0 },
-      };
+    const anchor = drag.key ? this.zoneCardSprites.get(drag.key) : null;
+    if (!anchor || !drag.zoneId) {
+      this.resetZoneCardDrag();
       return;
     }
-
-    const zone = this.canvasAreas.find((entry) => entry.id === drag.zoneId);
-    const zoneCard = this.zoneCardSprites.get(drag.key);
-    if (!zone || !zoneCard) {
-      this.zoneCardDragState = {
-        isDragging: false,
-        key: null,
-        zoneId: null,
-        instanceId: null,
-        startWorldPos: { x: 0, y: 0 },
-        startCardPos: { x: 0, y: 0 },
-      };
-      return;
-    }
-
-    const isLandscape = zoneCard.cardType === "Site";
+    // A single snapped translation preserves offsets, including mixed orientations.
     const snapped = snapCardCenter(
-      zoneCard.sprite.x + zoneCard.displaySize.width / 2,
-      zoneCard.sprite.y + zoneCard.displaySize.height / 2,
-      isLandscape,
+      drag.startCardPos.x + anchor.displaySize.width / 2 + worldPos.x - drag.startWorldPos.x,
+      drag.startCardPos.y + anchor.displaySize.height / 2 + worldPos.y - drag.startWorldPos.y,
+      anchor.cardType === "Site",
     );
-    const nextX = snapped.x - zoneCard.displaySize.width / 2;
-    const nextY = snapped.y - zoneCard.displaySize.height / 2;
-    const nextCenter = {
-      x: nextX + zoneCard.displaySize.width / 2,
-      y: nextY + zoneCard.displaySize.height / 2,
-    };
-    const movedBoard =
-      zone.type === "deck"
-        ? this.getDeckBoardForPosition(zone, nextCenter) ??
-          this.getDeckBoardForPosition(zone, worldPos)
-        : null;
-    const draggedInstance = zone.cards.find(
-      (instance) => instance.id === drag.instanceId,
-    );
-    const fallbackBoard = this.normalizeDeckBoard(draggedInstance?.board);
-    const resolvedBoard: DeckZoneBoard | null =
-      zone.type === "deck" ? movedBoard ?? fallbackBoard : null;
-    const movedDistance =
-      Math.abs(nextX - drag.startCardPos.x) + Math.abs(nextY - drag.startCardPos.y);
-    const boardChanged =
-      zone.type === "deck" && resolvedBoard !== fallbackBoard;
-    const hasMeaningfulMove = movedDistance >= 1 || boardChanged;
-
-    zone.cards = zone.cards.map((instance) =>
-      instance.id === drag.instanceId
-        ? {
-            ...instance,
-            x: nextX,
-            y: nextY,
-            board:
-              zone.type === "deck" ? resolvedBoard : instance.board,
+    const dx = snapped.x - anchor.displaySize.width / 2 - drag.startCardPos.x;
+    const dy = snapped.y - anchor.displaySize.height / 2 - drag.startCardPos.y;
+    const sourceIds = new Set(Array.from(drag.cards.values(), (entry) => entry.zoneId ?? drag.zoneId));
+    const sources = this.canvasAreas.filter((zone) => sourceIds.has(zone.id));
+    const selected = sources.flatMap((source) => source.cards.filter((card) => drag.cards.has(`${source.id}:${card.id}`)));
+    const mixedBoards = new Set(selected.map((card) => this.normalizeDeckBoard(card.board))).size > 1;
+    const hovered = this.getZoneAtPosition(worldPos);
+    // A multi-area selection retains its source areas unless explicitly dropped
+    // into a new deck/stack. Empty canvas expands its existing frames.
+    const transferTarget = hovered && !sourceIds.has(hovered.id) ? hovered : null;
+    const changedZones = new Set<CanvasArea>();
+    const selectedKeys = new Set<string>();
+    for (const source of sources) {
+      const target = transferTarget ?? source;
+      const targetBoard = target.type === "deck" && !mixedBoards
+        ? this.getDeckBoardForPosition(target, worldPos) : null;
+      const affected: CanvasCardInstance[] = [];
+      const movedIds: string[] = [];
+      for (const card of source.cards) {
+        const start = drag.cards.get(`${source.id}:${card.id}`);
+        if (!start) continue;
+        const board = target.type === "deck" ? targetBoard ?? this.normalizeDeckBoard(card.board) : null;
+        const moved = { ...card, x: start.x + dx, y: start.y + dy, board, isNew: false };
+        affected.push(moved);
+        movedIds.push(card.id);
+        selectedKeys.add(`${target.id}:${card.id}`);
+      }
+      if (affected.length === 0) continue;
+      this.applyLabelDrop(affected, source, target, worldPos, mixedBoards);
+      const ids = new Set(movedIds);
+      if (source === target) {
+        const updates = new Map(affected.map((card) => [card.id, card]));
+        const previousBoards = new Map(source.cards.map((card) => [card.id, this.normalizeDeckBoard(card.board)]));
+        source.cards = source.cards.map((card) => updates.get(card.id) ?? card);
+        for (const card of affected) {
+          if (target.type === "deck" && previousBoards.get(card.id) !== this.normalizeDeckBoard(card.board)) {
+            this.syncDeckVariantForBoardChange(target, card.id, this.normalizeDeckBoard(card.board));
           }
-        : instance,
-    );
-    if (zone.type === "deck" && resolvedBoard && hasMeaningfulMove) {
-      this.syncDeckVariantForBoardChange(zone, drag.instanceId, resolvedBoard);
+        }
+      } else {
+        source.cards = source.cards.filter((card) => !ids.has(card.id));
+        this.removeDeckVariantCardReferences(source, movedIds);
+        target.cards = [...target.cards, ...affected];
+        this.registerDeckVariantAdditions(target, affected);
+      }
+      changedZones.add(source);
+      changedZones.add(target);
     }
-    this.reconcileCanvasAreaBounds(zone.id, { anchorBoard: resolvedBoard });
-    this.zoneCardDragState = {
-      isDragging: false,
-      key: null,
-      zoneId: null,
-      instanceId: null,
-      startWorldPos: { x: 0, y: 0 },
-      startCardPos: { x: 0, y: 0 },
-    };
+    this.selectedZoneCardKeys = selectedKeys;
+    for (const zone of changedZones) this.reconcileCanvasAreaBounds(zone.id);
+    this.resetZoneCardDrag();
     this.rebuildZoneVisuals();
+    this.playCardsEffect('place', selectedKeys);
     this.emitCanvasAreasChange();
+  }
+
+  private resetZoneCardDrag(): void {
+    this.clearZoneCardDragFeedback();
+    this.zoneCardDragState = {
+      isDragging: false, key: null, zoneId: null, instanceId: null,
+      startWorldPos: { x: 0, y: 0 }, startCardPos: { x: 0, y: 0 }, cards: new Map(),
+    };
+  }
+
+  private cancelDesktopInteraction(): void {
+    this.desktopPanStart = null;
+    this.pendingCardClick = null;
+    this.pendingZoneCardClick = null;
+    this.pointerDownOnSelectedCard = false;
+    this.cancelSelectionBox();
+    if (this.dragState.isDragging) this.endCardDrag(true);
+    if (this.labelDragState.isDragging) this.endLabelDrag(true);
+    if (this.zoneDragState.isDragging) {
+      this.updateZoneDrag(this.zoneDragState.startWorldPos);
+      this.endZoneDrag(this.zoneDragState.startWorldPos);
+    }
+    if (this.zoneCardDragState.isDragging) {
+      this.resetZoneCardDrag();
+      this.rebuildZoneVisuals();
+    }
+    this.camera?.resumeDrag();
   }
 
   private startZoneDrag(zoneId: string, worldPos: { x: number; y: number }): void {
@@ -6402,6 +6607,7 @@ export class PixiStage {
 
     zone.bounds.x = targetX;
     zone.bounds.y = targetY;
+    for (const label of this.canvasLabels) if (label.areaId === zone.id) { label.x += moveX; label.y += moveY; }
     zone.cards = zone.cards.map((card) => ({
       ...card,
       x: card.x + moveX,
@@ -6437,6 +6643,8 @@ export class PixiStage {
     const dy = snappedY - zone.bounds.y;
     zone.bounds.x = snappedX;
     zone.bounds.y = snappedY;
+    for (const label of this.canvasLabels) if (label.areaId === zone.id) { label.x += dx; label.y += dy; }
+    this.emitCanvasLabelsChange();
     zone.cards = zone.cards.map((card) => ({
       ...card,
       x: card.x + dx,
@@ -6455,6 +6663,14 @@ export class PixiStage {
   private removeCanvasCardInstance(zoneId: string, instanceId: string): void {
     const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone) return;
+
+    const index = zone.cards.findIndex(card => card.id === instanceId);
+    const card = zone.cards[index];
+    if (!card) return;
+    this.removedCardHistory ??= [];
+    this.removedCardHistory.push({ areaId: zoneId, card: { ...card }, index,
+      variants: zone.deckVariants?.filter(variant => variant.activeCardIds.includes(instanceId)).map(variant => variant.id) ?? [] });
+    if (this.removedCardHistory.length > 20) this.removedCardHistory.shift();
 
     zone.cards = zone.cards.filter((entry) => entry.id !== instanceId);
     this.removeDeckVariantCardReferences(zone, [instanceId]);
@@ -6482,12 +6698,15 @@ export class PixiStage {
       x: source.x,
       y: source.y,
       board: sourceBoard,
+      labelId: source.labelId,
+      isNew: zone.type === 'deck',
     };
 
     zone.cards = [...zone.cards, duplicate];
     if (zone.type === "deck" && sourceBoard) {
       this.syncDeckVariantForBoardChange(zone, duplicate.id, sourceBoard);
     }
+    this.playCardsEffect('stack', this.getZoneStackEffectKeys(zoneId, instanceId));
     this.reconcileCanvasAreaBounds(zone.id, { anchorBoard: sourceBoard });
   }
 
@@ -6497,24 +6716,16 @@ export class PixiStage {
   ): DeckZoneBoard | null {
     if (zone.type !== "deck") return null;
     const rects = this.getDeckBoardRects(zone.bounds, zone);
-    const boards: DeckZoneBoard[] = [
-      "mainboard",
-      "collection",
-    ];
-
-    for (const board of boards) {
+    const containing = DECK_BOARD_ORDER.filter((board) => {
       const rect = rects[board];
-      if (
-        worldPos.x >= rect.x &&
-        worldPos.x <= rect.x + rect.width &&
-        worldPos.y >= rect.y &&
-        worldPos.y <= rect.y + rect.height
-      ) {
-        return board;
-      }
-    }
-
-    return null;
+      return worldPos.x >= rect.x && worldPos.x <= rect.x + rect.width &&
+        worldPos.y >= rect.y && worldPos.y <= rect.y + rect.height;
+    });
+    // Headers are deliberate targets even when expanded board frames overlap.
+    const header = containing.find((board) => worldPos.y <= rects[board].y + ZONE_DECK_CARD_TOP_GAP);
+    if (header) return header;
+    containing.sort((left, right) => rects[left].width * rects[left].height - rects[right].width * rects[right].height);
+    return containing[0] ?? null;
   }
 
   private planZoneCardAdditions(
@@ -6561,38 +6772,17 @@ export class PixiStage {
       };
     });
 
-    if (useZonePlacement && entries.length > 0) {
-      const headerHeight = this.getZoneHeaderHeight(zone);
-      const minCenterX = entries.reduce(
-        (min, entry) => Math.min(min, entry.centerX),
-        Number.POSITIVE_INFINITY,
-      );
-      const minCenterY = entries.reduce(
-        (min, entry) => Math.min(min, entry.centerY),
-        Number.POSITIVE_INFINITY,
-      );
-      const anchorCenterX =
-        zone.bounds.x +
-        ZONE_BODY_PADDING +
-        ZONE_DECK_BOARD_INNER_LEFT +
-        CARD_SIZE.PORTRAIT.width / 2;
-      const anchorCenterY =
-        zone.bounds.y +
-        headerHeight +
-        ZONE_BODY_PADDING +
-        CARD_SIZE.PORTRAIT.height / 2;
-      for (const entry of entries) {
-        entry.centerX = anchorCenterX + (entry.centerX - minCenterX);
-        entry.centerY = anchorCenterY + (entry.centerY - minCenterY);
-      }
-    }
-
     const fallbackDeckBoard =
       zone.type === "deck"
-        ? this.getDeckBoardForPosition(zone, worldPos) ?? "mainboard"
+        ? useZonePlacement ? "mainboard" : this.getDeckBoardForPosition(zone, worldPos) ?? "mainboard"
         : null;
     let anchorBoard: DeckZoneBoard | null = fallbackDeckBoard;
     const additions: CanvasCardInstance[] = [];
+
+    const firstEntry = entries[0];
+    const firstSnap = firstEntry ? snapCardCenter(firstEntry.centerX, firstEntry.centerY,
+      this.isLandscapeCard(firstEntry.cardName)) : worldPos;
+    const snapOffset = firstEntry ? { x: firstSnap.x - firstEntry.centerX, y: firstSnap.y - firstEntry.centerY } : { x: 0, y: 0 };
 
     entries.forEach((entry, index) => {
       if (
@@ -6605,21 +6795,9 @@ export class PixiStage {
 
       const isLandscape = this.isLandscapeCard(entry.cardName);
       const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-      const snapped = snapCardCenter(
-        entry.centerX,
-        entry.centerY,
-        isLandscape,
-      );
-      const snappedCenter = { x: snapped.x, y: snapped.y };
-      const boardForCard =
-        zone.type === "deck"
-          ? this.getDeckBoardForPosition(zone, snappedCenter) ??
-            fallbackDeckBoard ??
-            "mainboard"
-          : null;
-      if (zone.type === "deck" && additions.length === 0) {
-        anchorBoard = boardForCard;
-      }
+      const snapped = { x: entry.centerX + snapOffset.x, y: entry.centerY + snapOffset.y };
+      const boardForCard = fallbackDeckBoard;
+      if (zone.type === "deck" && additions.length === 0) anchorBoard = boardForCard;
 
       additions.push({
         id: options?.previewIds
@@ -6635,6 +6813,9 @@ export class PixiStage {
       });
     });
 
+    if (zone.type === "deck" && useZonePlacement) {
+      placeNewDeckCards(zone, additions, (name) => this.isLandscapeCard(name));
+    }
     return { additions, anchorBoard };
   }
 
@@ -6642,10 +6823,11 @@ export class PixiStage {
     zone: CanvasArea,
     cards: CanvasCardInstance[],
   ): { x: number; y: number; width: number; height: number } {
-    const usesDefaultMin = !(zone.type === "deck" && cards.length > 0);
-    const minSize = usesDefaultMin
-      ? ZONE_DEFAULT_SIZE[zone.type]
-      : { width: 0, height: 0 };
+    if (zone.type === "deck") {
+      return getDeckAreaBounds({ bounds: zone.bounds, cards }, this.getZoneHeaderHeight(zone),
+        (name) => this.isLandscapeCard(name));
+    }
+    const minSize = ZONE_DEFAULT_SIZE.stack;
     const headerHeight = this.getZoneHeaderHeight(zone);
 
     if (cards.length === 0) {
@@ -6738,8 +6920,8 @@ export class PixiStage {
         previewBounds.height,
         8,
       );
-      overlay.fill({ color: 0x4f64bf, alpha: 0.13 });
-      overlay.stroke({ width: 2, color: 0xa7b5ff, alpha: 0.78 });
+      overlay.fill({ color: MANGA_PALETTE.gold, alpha: 0.13 });
+      overlay.stroke({ width: 2, color: MANGA_PALETTE.paper, alpha: 0.78 });
       overlay.roundRect(
         previewBounds.x,
         previewBounds.y,
@@ -6747,8 +6929,8 @@ export class PixiStage {
         headerHeight,
         8,
       );
-      overlay.fill({ color: 0x5f72cc, alpha: 0.1 });
-      overlay.stroke({ width: 1, color: 0xc3cdfc, alpha: 0.58 });
+      overlay.fill({ color: MANGA_PALETTE.gold, alpha: 0.1 });
+      overlay.stroke({ width: 1, color: MANGA_PALETTE.paper, alpha: 0.58 });
     }
 
     additions.forEach((addition, index) => {
@@ -6842,6 +7024,7 @@ export class PixiStage {
     }
 
     zone.cards = [...zone.cards, ...additions];
+    this.applyLabelDrop(additions, zone, zone, worldPos, false);
     this.registerDeckVariantAdditions(zone, additions);
     this.onCardsAddedToCanvasArea?.(
       zone.id,
@@ -6851,12 +7034,14 @@ export class PixiStage {
     if (zone.type === "stack") {
       this.reconcileCanvasAreaBounds(zone.id);
       this.rebuildZoneVisuals();
+      this.playCardsEffect('stack', additions.flatMap(card => this.getZoneStackEffectKeys(zone.id, card.id)));
       this.emitCanvasAreasChange();
       return;
     }
 
     this.reconcileCanvasAreaBounds(zone.id, { anchorBoard });
     this.rebuildZoneVisuals();
+    this.playCardsEffect('arrive', additions.flatMap(card => this.getZoneStackEffectKeys(zone.id, card.id)));
     this.emitCanvasAreasChange();
   }
 
@@ -6870,10 +7055,14 @@ export class PixiStage {
     const zone = this.canvasAreas.find((entry) => entry.id === zoneId);
     if (!zone) return;
 
-    const usesDefaultMin = !(zone.type === "deck" && zone.cards.length > 0);
-    const minSize = usesDefaultMin
-      ? ZONE_DEFAULT_SIZE[zone.type]
-      : { width: 0, height: 0 };
+    if (zone.type === "deck") {
+      zone.bounds = getDeckAreaBounds(zone, this.getZoneHeaderHeight(zone),
+        (name) => this.isLandscapeCard(name), options?.preserveTopLeft);
+      this.fitLabelRegionBounds(zone);
+      return;
+    }
+
+    const minSize = ZONE_DEFAULT_SIZE.stack;
     const headerHeight = this.getZoneHeaderHeight(zone);
     if (zone.cards.length === 0) {
       zone.bounds.width = minSize.width;
@@ -6924,29 +7113,6 @@ export class PixiStage {
     zone.bounds.width = Math.max(minSize.width, nextRight - nextX);
     zone.bounds.height = Math.max(minSize.height, nextBottom - nextY);
 
-    if (zone.type === "deck" && zone.cards.length > 0) {
-      const anchorBoard = options?.anchorBoard ?? null;
-      if (!anchorBoard) return;
-
-      const dx = nextX - prevX;
-      const dy = nextY - prevY;
-      if (dx === 0 && dy === 0) return;
-
-      zone.cards = zone.cards.map((card) => {
-        const normalizedBoard = this.normalizeDeckBoard(card.board);
-        if (normalizedBoard === anchorBoard) {
-          return normalizedBoard === card.board
-            ? card
-            : { ...card, board: normalizedBoard };
-        }
-        return {
-          ...card,
-          x: card.x + dx,
-          y: card.y + dy,
-          board: normalizedBoard,
-        };
-      });
-    }
   }
 
   // ============================================================================
@@ -7064,7 +7230,8 @@ export class PixiStage {
   // Selection Box
   // ============================================================================
 
-  private startSelectionBox(worldPos: { x: number; y: number }): void {
+  private startSelectionBox(worldPos: { x: number; y: number }, additive = false): void {
+    this.selectionBox.additive = additive;
     this.selectionBox.isActive = true;
     this.selectionBox.startWorldPos = { ...worldPos };
 
@@ -7085,8 +7252,8 @@ export class PixiStage {
 
     this.selectionBox.graphics.clear();
     this.selectionBox.graphics.rect(left, top, width, height);
-    this.selectionBox.graphics.fill({ color: 0x4488ff, alpha: 0.2 });
-    this.selectionBox.graphics.stroke({ width: 2, color: 0x4488ff });
+    this.selectionBox.graphics.fill({ color: MANGA_PALETTE.gold, alpha: 0.07 });
+    this.selectionBox.graphics.stroke({ width: 1.5 / Math.max(0.01, this.camera?.zoom ?? 1), color: MANGA_PALETTE.paper });
   }
 
   private endSelectionBox(worldPos: { x: number; y: number }): void {
@@ -7113,49 +7280,19 @@ export class PixiStage {
         zoneHitsById.set(data.zoneId, hits);
       }
 
-      this.clearSelection(true);
+      if (!this.selectionBox.additive) this.clearSelection(true);
 
       if (zoneHitsById.size > 0) {
-        const selectionCenter = {
-          x: (selectionBounds.left + selectionBounds.right) / 2,
-          y: (selectionBounds.top + selectionBounds.bottom) / 2,
-        };
-        const centerZoneId = this.getZoneAtPosition(selectionCenter)?.id ?? null;
-        let targetZoneId =
-          centerZoneId && zoneHitsById.has(centerZoneId) ? centerZoneId : null;
-
-        if (!targetZoneId) {
-          let bestCount = -1;
-          for (const [zoneId, keys] of zoneHitsById) {
-            if (keys.length <= bestCount) continue;
-            bestCount = keys.length;
-            targetZoneId = zoneId;
-          }
-        }
-
-        if (targetZoneId) {
-          const targetKeys = zoneHitsById.get(targetZoneId) ?? [];
-          this.selectedZoneId = targetZoneId;
-          for (const key of targetKeys) {
-            this.selectZoneCard(key);
-          }
+        this.clearMainSelection(true);
+        for (const keys of zoneHitsById.values()) {
+          for (const key of keys) this.selectZoneCard(key);
         }
       } else {
-        for (const [cardName, data] of this.cardSprites) {
-          if (this.boundsIntersect(data.bounds, selectionBounds)) {
-            this.selectCard(cardName, true);
-          }
-        }
-        for (const [key, data] of this.deckSprites) {
-          if (this.boundsIntersect(data.bounds, selectionBounds)) {
-            this.selectCard(key, true);
-          }
-        }
-        for (const [key, data] of this.associationShelfSprites) {
-          if (this.boundsIntersect(data.bounds, selectionBounds)) {
-            this.selectCard(key, true);
-          }
-        }
+        const mainHits = [...this.cardSprites, ...this.deckSprites, ...this.associationShelfSprites]
+          .filter(([, data]) => data.sprite.visible && this.boundsIntersect(data.bounds, selectionBounds));
+        // An empty additive marquee must leave the existing deck selection intact.
+        if (mainHits.length > 0) this.clearZoneSelection();
+        for (const [key] of mainHits) this.selectCard(key, true);
       }
       this.emitSelectionChange();
     }
@@ -7177,20 +7314,41 @@ export class PixiStage {
   // Public Methods
   // ============================================================================
 
-  setCards(cards: Card[], options?: { filteredMode?: boolean }): void {
-    const filteredMode = options?.filteredMode ?? false;
+  setCards(cards: Card[], options?: { catalogueCards?: Card[]; catalogueLayout?: CatalogueLayoutConfig }): void {
+    const catalogueCards = options?.catalogueCards ?? cards;
+    const catalogueLayout = options?.catalogueLayout ?? createDefaultCatalogueLayout();
     if (!this.isInitialized) {
-      this.pendingCardSet = { cards, filteredMode };
+      this.pendingCardSet = { cards, catalogueCards, catalogueLayout };
       return;
     }
 
+    const sourceChanged = this.cards !== cards;
+    const layoutChanged = JSON.stringify(this.catalogueLayout) !== JSON.stringify(catalogueLayout);
+    const restartReveal = this.isRevealInProgress;
     this.cards = cards;
-    this.collectionFilteredMode = filteredMode;
+    this.catalogueCards = catalogueCards;
+    this.catalogueLayout = catalogueLayout;
     this.onBackgroundTextureProgress?.(0, 0);
-    this.rebuildCardSprites();
+    // A filter/layout change touches only catalogue sprites. Deck metadata,
+    // selections, custom positions, variants and frame geometry stay intact.
+    this.rebuildCardSprites(sourceChanged);
+    // Filters and restored preferences can replace sprites while startup is
+    // awaiting their textures. Continue with the current sprites, not the dead queue.
+    if (restartReveal) void this.startTextureReveal();
+    if (this.catalogueEffectTimer) clearTimeout(this.catalogueEffectTimer);
+    if (!sourceChanged && this.camera && this.motionEnabled()) {
+      this.catalogueEffectTimer = setTimeout(() => {
+        this.catalogueEffectTimer = null;
+        const data = [...this.cardSprites.values()].find(entry => entry.sprite.visible);
+        this.playMangaEffect(layoutChanged ? 'sort' : 'filter', data?.bounds);
+      }, 220);
+    }
   }
 
   setCanvasAreas(areas: CanvasArea[]): void {
+    const previous = this.canvasAreas;
+    const canAnimate = this.hasReceivedAreas && this.isInitialized && this.initialRevealCompleted;
+    this.hasReceivedAreas = true;
     this.canvasAreas = this.cloneCanvasAreas(areas);
     this.hoveredDeckFilterChip = null;
     for (const zone of this.canvasAreas) {
@@ -7203,6 +7361,18 @@ export class PixiStage {
     this.deactivateQuickTransfer();
     this.closeDeckCardDeletePrompt();
     this.rebuildZoneVisuals();
+    if (canAnimate) {
+      const previousIds = new Set(previous.flatMap(area => area.cards.map(card => card.id)));
+      for (const area of this.canvasAreas) {
+        if (!area.pinned) continue;
+        const old = previous.find(entry => entry.id === area.id);
+        if (!old?.pinned) { this.playAreaEffect('reveal', area); continue; }
+        const added = area.cards.filter(card => !previousIds.has(card.id));
+        if (added.length) this.playCardsEffect(area.type === 'stack' ? 'stack' : 'arrive',
+          added.flatMap(card => this.getZoneStackEffectKeys(area.id, card.id)));
+      }
+      for (const old of previous) if (old.pinned && !this.canvasAreas.some(area => area.id === old.id && area.pinned)) this.playAreaEffect('hide', old);
+    }
   }
 
   setDeckTransferTargets(targets: QuickTransferDeckTarget[]): void {
@@ -7212,7 +7382,7 @@ export class PixiStage {
     }
   }
 
-  focusZone(zoneId: string): void {
+  focusZone(zoneId: string, bottomInset = 0): void {
     if (!this.camera) return;
     const zone = this.canvasAreas.find((entry) => entry.id === zoneId && entry.pinned);
     if (!zone) return;
@@ -7227,8 +7397,168 @@ export class PixiStage {
         bottom: zone.bounds.y + safeHeight,
       },
       120,
-      450,
+      this.motionEnabled() ? 450 : 1,
+      bottomInset,
     );
+    if (this.focusEffectTimer) clearTimeout(this.focusEffectTimer);
+    this.focusEffectTimer = setTimeout(() => { this.focusEffectTimer = null; this.playAreaEffect('focus', zone); }, this.motionEnabled() ? 460 : 0);
+  }
+
+  /** Explicit canvas tools: effects describe successful actions, never delay them. */
+  runCanvasGesture(command: CanvasGestureCommand, bottomInset = 0): string | null {
+    if (command === 'close-inspection') { this.closeInspection(); return null; }
+    if (command === 'undo') {
+      const saved = this.removedCardHistory.pop();
+      if (!saved) return 'There is no card removal to undo in this session.';
+      const area = this.canvasAreas.find(entry => entry.id === saved.areaId);
+      if (!area) return 'That deck or stack is no longer on this canvas.';
+      if (area.cards.some(card => card.id === saved.card.id)) return null;
+      // An immediate undo must not leave "pooft" playing over a restored card.
+      for (const { effect } of this.deletionPuffs) effect.destroy();
+      this.deletionPuffs = [];
+      this.mangaEffects = this.mangaEffects.filter(entry => {
+        if (entry.effect.kind !== 'delete') return true;
+        entry.effect.destroy(); return false;
+      });
+      const card = { ...saved.card };
+      if (!this.canvasLabels.some(label => label.id === card.labelId)) delete card.labelId;
+      area.cards.splice(Math.min(saved.index, area.cards.length), 0, card);
+      for (const variant of area.deckVariants ?? []) if (saved.variants.includes(variant.id) && !variant.activeCardIds.includes(card.id)) variant.activeCardIds.push(card.id);
+      this.reconcileCanvasAreaBounds(area.id);
+      this.rebuildZoneVisuals();
+      this.playMangaEffect('restore', this.zoneCardSprites.get(`${area.id}:${card.id}`)?.bounds);
+      this.emitCanvasAreasChange();
+      return null;
+    }
+    if (command === 'new') {
+      const added = this.canvasAreas.filter(area => area.pinned).flatMap(area => area.cards.filter(card => card.isNew).map(card => `${area.id}:${card.id}`));
+      if (!added.length) return 'All added cards have already been picked up.';
+      this.clearSelection(true);
+      for (const key of added) this.selectZoneCard(key);
+      this.emitSelectionChange();
+      const first = this.zoneCardSprites.get(added[0] ?? '');
+      if (first) {
+        this.camera?.fitToContent(first.bounds, 130, this.motionEnabled() ? 300 : 1, bottomInset);
+        if (this.focusEffectTimer) clearTimeout(this.focusEffectTimer);
+        this.focusEffectTimer = setTimeout(() => { this.focusEffectTimer = null; this.playMangaEffect('arrive', first.bounds); }, 310);
+      }
+      return null;
+    }
+    const selected = [...this.selectedZoneCardKeys, ...this.selectedCards];
+    if (!selected.length) return 'Select cards on the canvas first.';
+    if (command === 'compare' || command === 'peek') {
+      const names = selected.flatMap(key => {
+        const name = this.zoneCardSprites.get(key)?.cardName ?? this.getSpriteData(key)?.layout.name;
+        return name ? [name] : [];
+      });
+      const unique = [...new Set(names)];
+      if (command === 'compare' && unique.length < 2) return 'Select two different cards to compare.';
+      this.openInspection(command === 'compare' ? unique.slice(0, 2) : names, command === 'compare', 0);
+      return null;
+    }
+    const firstKey = selected[0] ?? '';
+    const first = this.zoneCardSprites.get(firstKey) ?? this.getSpriteData(firstKey);
+    if (command === 'focus') {
+      const zone = this.zoneCardSprites.get(firstKey);
+      if (zone) this.focusZone(zone.zoneId, bottomInset);
+      else if (first) {
+        this.camera?.fitToContent(first.bounds, 100, this.motionEnabled() ? 300 : 1, bottomInset);
+        if (this.focusEffectTimer) clearTimeout(this.focusEffectTimer);
+        this.focusEffectTimer = setTimeout(() => { this.focusEffectTimer = null; this.playMangaEffect('focus', first.bounds); }, 310);
+      }
+      return null;
+    }
+    if (command === 'tidy') {
+      // Align the selection by a shared grid translation. Keep group offsets,
+      // labels, board membership and unselected cards exactly where they were.
+      if (!first) return null;
+      if (this.selectedZoneCardKeys.size) {
+        const data = this.zoneCardSprites.get(firstKey);
+        if (!data) return null;
+        const original = this.canvasAreas.find(area => area.id === data.zoneId)?.cards.find(card => card.id === data.instanceId);
+        if (!original) return null;
+        const snapped = snapCardCenter(original.x + data.displaySize.width / 2, original.y + data.displaySize.height / 2, data.cardType === 'Site');
+        const dx = snapped.x - data.displaySize.width / 2 - original.x;
+        const dy = snapped.y - data.displaySize.height / 2 - original.y;
+        for (const area of this.canvasAreas) {
+          const previousCards = area.cards;
+          area.cards = area.cards.map(card => this.selectedZoneCardKeys.has(`${area.id}:${card.id}`) ? { ...card, x: card.x + dx, y: card.y + dy } : card);
+          this.canvasLabels = repositionLabelsAfterCardLayout(this.canvasLabels, area.id, previousCards, area.cards);
+          this.reconcileCanvasAreaBounds(area.id);
+        }
+        this.rebuildZoneVisuals();
+        this.emitCanvasAreasChange();
+        this.emitCanvasLabelsChange();
+      } else {
+        this.startCardDrag({ x: first.bounds.left, y: first.bounds.top });
+        this.endCardDrag();
+      }
+      this.playMangaEffect('snap', first.bounds);
+      return null;
+    }
+    return null;
+  }
+
+  private closeInspection(): void {
+    this.inspection?.destroy({ children: true });
+    this.inspection = null;
+  }
+
+  private openInspection(names: string[], compare: boolean, page: number): void {
+    this.closeInspection();
+    const root = new Container();
+    this.inspection = root;
+    root.eventMode = 'static';
+    root.on('pointerdown', event => event.stopPropagation());
+    root.on('pointerup', event => event.stopPropagation());
+    const width = this.app.screen.width; const height = this.app.screen.height;
+    const background = new Graphics().rect(0, 0, width, height).fill({ color: 0x0f1423, alpha: 0.96 });
+    background.eventMode = 'static';
+    root.addChild(background);
+    const pageSize = compare ? 2 : Math.max(1, Math.min(8, Math.floor((width - 40) / 140)));
+    const shown = names.slice(page * pageSize, (page + 1) * pageSize);
+    const title = new Text({ text: compare ? 'Compare cards' : `Peek · ${page * pageSize + 1}–${page * pageSize + shown.length} of ${names.length}`, style: { fontFamily: 'Arial', fontSize: 22, fill: 0xfff6df } });
+    title.anchor.set(0.5, 0); title.position.set(width / 2, 54); root.addChild(title);
+    const close = new Text({ text: 'Close ×', style: { fontFamily: 'Arial', fontSize: 20, fill: 0xfff6df } });
+    // Keep inspection controls clear of the edge drawers and the account button.
+    close.position.set(width / 2 + 30, 94); close.eventMode = 'static'; close.cursor = 'pointer';
+    close.on('pointertap', () => this.closeInspection()); root.addChild(close);
+    if (!compare && names.length > pageSize) {
+      const next = new Text({ text: 'Next →', style: { fontFamily: 'Arial', fontSize: 19, fill: 0x9debd2 } });
+      next.position.set(width / 2 - 120, 94); next.eventMode = 'static'; next.cursor = 'pointer';
+      next.on('pointertap', () => this.openInspection(names, compare, (page + 1) % Math.ceil(names.length / pageSize))); root.addChild(next);
+    }
+    const cellWidth = Math.min(compare ? 470 : 230, (width - 48) / Math.max(1, shown.length));
+    const maxHeight = Math.min(height - 210, compare ? 650 : 360);
+    for (const [index, name] of shown.entries()) {
+      const landscape = this.isLandscapeCard(name);
+      const ratio = landscape ? 1039 / 744 : 744 / 1039;
+      const cardWidth = Math.min(cellWidth - 18, maxHeight * ratio);
+      const cardHeight = cardWidth / ratio;
+      const x = width / 2 - shown.length * cellWidth / 2 + index * cellWidth + (cellWidth - cardWidth) / 2;
+      const y = Math.max(130, (height - cardHeight) / 2);
+      const sprite = new CardSprite({ name, isLandscape: landscape, x: x + cardWidth / 2, y: y + cardHeight / 2, displaySize: { width: cardWidth, height: cardHeight } });
+      sprite.eventMode = 'none'; sprite.loadInitialTexture(); sprite.updateLOD(compare ? 4 : 0.8);
+      root.addChild(sprite);
+      const caption = new Text({ text: name, style: { fontFamily: 'Arial', fontSize: 13, fill: 0xc7cede, wordWrap: true, wordWrapWidth: cellWidth - 18 } });
+      caption.position.set(x, y + cardHeight + 8); root.addChild(caption);
+    }
+    this.app.stage.addChild(root);
+    if (this.motionEnabled()) {
+      const now = performance.now();
+      const accepted = this.effectGate.accept(compare ? 'inspect' : 'sort', now, this.effectSettings, false);
+      if (accepted) {
+        const effect = new MangaEffect(compare ? 'inspect' : 'sort', { left: 24, top: 130, right: 150, bottom: 185 }, 1, this.effectSettings, accepted.words);
+        root.addChild(effect.root);
+        // Screen-space inspection effects use their own ticker, with cleanup on close.
+        const tick = () => {
+          if (root.destroyed || !this.motionEnabled()) { effect.destroy(); this.app.ticker.remove(tick); }
+          else if (!effect.update(performance.now() - now, 1)) this.app.ticker.remove(tick);
+        };
+        this.app.ticker.add(tick);
+        root.once('destroyed', () => this.app.ticker.remove(tick));
+      }
+    }
   }
 
   updateDeckOverlays(
@@ -7330,6 +7660,7 @@ export class PixiStage {
    * fade to 1.0 once every card has been revealed.
    */
   async startTextureReveal(): Promise<void> {
+    const wasRevealing = this.isRevealInProgress;
     this.isRevealInProgress = true;
     this.initialRevealCompleted = false;
     this.onBackgroundTextureProgress?.(0, 0);
@@ -7349,6 +7680,8 @@ export class PixiStage {
       // schedule a stale clear-timeout that could wipe a later real reveal.
       this.isRevealInProgress = false;
       this.initialRevealCompleted = true;
+      if (wasRevealing) this.onTextureProgress?.(0, 0);
+      this.performCulling();
       return;
     }
 
@@ -7380,6 +7713,7 @@ export class PixiStage {
       all.map((data) => data.layout.name),
       startupLOD,
     );
+    if (this.isDestroyed || this.revealRunId !== runId) return;
     const atlasCardCounts = new Map<string, number>();
     for (const data of all) {
       const slug = cardNameToSlug(data.layout.name);
@@ -7404,6 +7738,7 @@ export class PixiStage {
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => resolve()),
     );
+    if (this.isDestroyed || this.revealRunId !== runId) return;
 
     const tryFinish = () => {
       if (revealed >= totalAll && !this.initialRevealCompleted) {
@@ -7411,7 +7746,9 @@ export class PixiStage {
         this.isRevealInProgress = false;
         this.revealFading = true;
         this.revealFadeStart = performance.now();
-        this.queueVisibleHighDetailPreload();
+        // The camera may have moved while startup textures were downloading.
+        // Set visible sprites to that zoom before preloading/refreshing detail.
+        this.performCulling();
       }
     };
 
@@ -7485,6 +7822,16 @@ export class PixiStage {
   }
 
   destroy(): void {
+    window.removeEventListener('resize', this.handleInspectionResize);
+    if (this.isInitialized) this.app.canvas.removeEventListener('wheel', this.handleInspectionWheel, true);
+    if (this.focusEffectTimer) clearTimeout(this.focusEffectTimer);
+    this.closeInspection();
+    if (this.catalogueEffectTimer) clearTimeout(this.catalogueEffectTimer);
+    for (const entry of this.mangaEffects ?? []) entry.effect.destroy();
+    this.mangaEffects = [];
+    window.removeEventListener("keydown", this.handlePanKeyDown);
+    window.removeEventListener("keyup", this.handlePanKeyUp);
+    window.removeEventListener("blur", this.handleCanvasBlur);
     this.isDestroyed = true;
     this.setHoveredCard(null);
     this.highDetailPreloadQueued = false;
@@ -7504,10 +7851,17 @@ export class PixiStage {
     }
     this.removeTextureInvalidationListener?.();
     this.removeTextureInvalidationListener = null;
+    this.closeLabelEditor?.();
+    this.closeLabelEditor = null;
     this.closeDeckVariantDialog();
     this.closeDeckCardDeletePrompt();
     this.closeTouchActionSheet();
     this.deactivateQuickTransfer();
+    this.clearZoneCardDragFeedback();
+    for (const puff of this.deletionPuffs) puff.effect.destroy();
+    this.deletionPuffs = [];
+    this.mangaEffectLayer?.destroy({ children: true });
+    this.mangaEffectLayer = null;
     this.destroyAssociationTooltip();
 
     for (const data of this.labelSprites.values()) {
@@ -7560,7 +7914,7 @@ export class PixiStage {
         return;
       }
       sprite.setMetricScore(getCategoryScore(scores, cardName, categoryId), {
-        color: 0x00ddff,
+        color: MANGA_PALETTE.gold,
       });
     };
 
@@ -7589,7 +7943,7 @@ export class PixiStage {
           data.cardName,
         ),
         {
-          color: 0x4aa8ff,
+          color: MANGA_PALETTE.gold,
           dimInactive: false,
           showValue: false,
         },
@@ -7765,21 +8119,16 @@ export class PixiStage {
     cost: number | null;
     isLandscape: boolean;
     primarySet: string | undefined;
-    rarity: "Ordinary" | "Exceptional" | "Elite" | "Unique" | null;
+    rarity: Card["guardian"]["rarity"];
   } {
     return {
       name: card.name,
       type: card.guardian.type,
       thresholdGroup: getThresholdGroup(card.guardian.thresholds),
-      cost: card.guardian.cost ?? 0,
+      cost: card.guardian.cost,
       isLandscape: card.guardian.type === "Site",
       primarySet: card.sets[0]?.name,
-      rarity: card.guardian.rarity as
-        | "Ordinary"
-        | "Exceptional"
-        | "Elite"
-        | "Unique"
-        | null,
+      rarity: card.guardian.rarity,
     };
   }
 
@@ -7819,7 +8168,7 @@ export class PixiStage {
           this.selectedAssociationSubStyleId,
           cardName,
         ),
-        { color: 0x4aa8ff },
+        { color: MANGA_PALETTE.gold },
       );
     };
 
@@ -7923,7 +8272,6 @@ export class PixiStage {
     this.clearZoneDropPreview();
     this.destroyDeckGraphHoverTooltip();
     this.deactivateQuickTransfer();
-    this.closeDeckCardDeletePrompt();
     this.closeTouchActionSheet();
     for (const data of this.zoneCardSprites.values()) {
       data.sprite.destroy();
@@ -7946,62 +8294,32 @@ export class PixiStage {
   }
 
   private getDeckBoardRects(
-    bounds: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    },
+    bounds: CanvasArea["bounds"],
     zone: CanvasArea,
-  ): {
-    mainboard: { x: number; y: number; width: number; height: number };
-    collection: { x: number; y: number; width: number; height: number };
-  } {
-    const bodyTop = bounds.y + this.getZoneHeaderHeight(zone) + ZONE_BODY_PADDING;
-    const left = bounds.x + ZONE_BODY_PADDING;
-    const width = bounds.width - ZONE_BODY_PADDING * 2;
-    const boardGap = ZONE_DECK_BOARD_GAP;
-    const boardBottomPadding = ZONE_DECK_BOARD_BOTTOM_PADDING;
-    const minBoardHeights = {
-      mainboard: ZONE_DECK_MIN_BOARD_HEIGHT.mainboard,
-      collection: ZONE_DECK_MIN_BOARD_HEIGHT.collection,
-    } as const;
-
-    const maxBottomByBoard: Partial<Record<DeckZoneBoard, number>> = {};
-    for (const card of zone.cards) {
-      const board = this.normalizeDeckBoard(card.board);
-      const isLandscape = this.isLandscapeCard(card.cardName);
-      const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-      const bottom = card.y + size.height + boardBottomPadding;
-      const previous = maxBottomByBoard[board] ?? -Infinity;
-      maxBottomByBoard[board] = Math.max(previous, bottom);
+  ): Record<DeckZoneBoard, CanvasArea["bounds"]> {
+    const rects = computeDeckBoardRects(bounds, zone.cards, this.getZoneHeaderHeight(zone),
+      (name) => this.isLandscapeCard(name));
+    for (const board of DECK_BOARD_ORDER) {
+      for (const label of this.getPopulatedLabelBounds(zone, board)) {
+        const rect = rects[board];
+        const right = Math.max(rect.x + rect.width, label.x + label.width);
+        const bottom = Math.max(rect.y + rect.height, label.y + label.height);
+        rect.x = Math.min(rect.x, label.x);
+        rect.y = Math.min(rect.y, label.y);
+        rect.width = right - rect.x;
+        rect.height = bottom - rect.y;
+      }
     }
+    return rects;
+  }
 
-    let cursorY = bodyTop;
-    const mainboardHeight = Math.max(
-      minBoardHeights.mainboard,
-      (maxBottomByBoard.mainboard ?? -Infinity) - cursorY,
-    );
-    const mainboard = {
-      x: left,
-      y: cursorY,
-      width,
-      height: mainboardHeight,
-    };
-    cursorY = mainboard.y + mainboard.height + boardGap;
-
-    const collectionHeight = Math.max(
-      minBoardHeights.collection,
-      (maxBottomByBoard.collection ?? -Infinity) - cursorY,
-    );
-    const collection = {
-      x: left,
-      y: cursorY,
-      width,
-      height: collectionHeight,
-    };
-
-    return { mainboard, collection };
+  private fitDeckSections(zone: CanvasArea): boolean {
+    const previous = { ...zone.bounds };
+    fitDeckBoardSections(zone, this.getZoneHeaderHeight(zone),
+      (name) => this.isLandscapeCard(name));
+    this.fitLabelRegionBounds(zone);
+    return previous.x !== zone.bounds.x || previous.y !== zone.bounds.y ||
+      previous.width !== zone.bounds.width || previous.height !== zone.bounds.height;
   }
 
   private drawZoneFrame(
@@ -8022,12 +8340,12 @@ export class PixiStage {
     const closeButtonRight = zone.bounds.x + zone.bounds.width - buttonMargin;
     frame.zIndex = 2000 + zoneIndex * 1000;
     frame.rect(zone.bounds.x, zone.bounds.y, zone.bounds.width, zone.bounds.height);
-    frame.fill({ color: 0x111528, alpha: 0.88 });
-    frame.stroke({ width: 2, color: 0x626fb2, alpha: 0.92 });
+    frame.fill({ color: MANGA_PALETTE.ink, alpha: 0.88 });
+    frame.stroke({ width: 2, color: MANGA_PALETTE.line, alpha: 0.92 });
 
     frame.rect(zone.bounds.x, zone.bounds.y, zone.bounds.width, headerHeight);
-    frame.fill({ color: 0x1f2746, alpha: 0.96 });
-    frame.stroke({ width: 1, color: 0x7d89cf, alpha: 0.88 });
+    frame.fill({ color: MANGA_PALETTE.raised, alpha: 0.96 });
+    frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.88 });
 
     const closeBounds = {
       left: closeButtonRight - closeButtonSize,
@@ -8036,8 +8354,9 @@ export class PixiStage {
       bottom: buttonTop + closeButtonSize,
     };
     const sortLeft = zone.bounds.x + buttonMargin;
+    const sortButtonWidth = zone.type === 'deck' ? 92 : ZONE_SORT_BUTTON_WIDTH;
     const sortBounds = {
-      right: sortLeft + ZONE_SORT_BUTTON_WIDTH,
+      right: sortLeft + sortButtonWidth,
       bottom: headerBottom,
       left: sortLeft,
       top: headerBottom - ZONE_SORT_BUTTON_HEIGHT,
@@ -8045,24 +8364,24 @@ export class PixiStage {
     frame.roundRect(
       sortBounds.left,
       sortBounds.top,
-      ZONE_SORT_BUTTON_WIDTH,
+      sortButtonWidth,
       ZONE_SORT_BUTTON_HEIGHT,
       6,
     );
-    frame.fill({ color: 0x2a3152, alpha: 0.94 });
-    frame.stroke({ width: 1, color: 0x98a4e8, alpha: 0.85 });
+    frame.fill({ color: MANGA_PALETTE.raised, alpha: 0.94 });
+    frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.85 });
 
     const sortGlyph = this.configureTextQuality(new Text({
-      text: "sort",
+      text: zone.type === 'deck' ? "Reset layout" : "sort",
       style: {
         fontFamily: "Arial",
         fontSize: 11,
-        fill: 0xeef2ff,
+        fill: MANGA_PALETTE.paper,
         fontWeight: "bold",
       },
     }));
     sortGlyph.x =
-      sortBounds.left + (ZONE_SORT_BUTTON_WIDTH - sortGlyph.width) / 2;
+      sortBounds.left + (sortButtonWidth - sortGlyph.width) / 2;
     sortGlyph.y =
       sortBounds.top + (ZONE_SORT_BUTTON_HEIGHT - sortGlyph.height) / 2 - 1;
     sortGlyph.zIndex = frame.zIndex + 2;
@@ -8087,15 +8406,15 @@ export class PixiStage {
         ZONE_FILTER_BUTTON_HEIGHT,
         6,
       );
-      frame.fill({ color: 0x2a3152, alpha: 0.94 });
-      frame.stroke({ width: 1, color: 0x98a4e8, alpha: 0.85 });
+      frame.fill({ color: MANGA_PALETTE.raised, alpha: 0.94 });
+      frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.85 });
 
       filterGlyph = this.configureTextQuality(new Text({
         text: "filter",
         style: {
           fontFamily: "Arial",
           fontSize: 10,
-          fill: 0xeef2ff,
+          fill: MANGA_PALETTE.paper,
           fontWeight: "bold",
         },
       }));
@@ -8130,7 +8449,7 @@ export class PixiStage {
           style: {
             fontFamily: "Arial",
             fontSize: 10,
-            fill: 0xeef2ff,
+            fill: MANGA_PALETTE.paper,
             fontWeight: "bold",
           },
         }));
@@ -8147,12 +8466,12 @@ export class PixiStage {
         const chipTop = headerBottom - ZONE_FILTER_CHIP_HEIGHT;
         frame.roundRect(chipLeft, chipTop, chipWidth, ZONE_FILTER_CHIP_HEIGHT, 5);
         frame.fill({
-          color: chipHovered ? 0x4257a6 : 0x2a3152,
+          color: chipHovered ? MANGA_PALETTE.active : MANGA_PALETTE.raised,
           alpha: clause.enabled ? 0.94 : 0.65,
         });
         frame.stroke({
           width: 1,
-          color: chipHovered ? 0xc6d0ff : 0x95a4e6,
+          color: chipHovered ? MANGA_PALETTE.paper : MANGA_PALETTE.line,
           alpha: 0.85,
         });
 
@@ -8218,8 +8537,8 @@ export class PixiStage {
       closeButtonSize,
       6,
     );
-    frame.fill({ color: 0x2a3152, alpha: 0.94 });
-    frame.stroke({ width: 1, color: 0x98a4e8, alpha: 0.85 });
+    frame.fill({ color: MANGA_PALETTE.raised, alpha: 0.94 });
+    frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.85 });
     frame.moveTo(closeBounds.left + 5, closeBounds.top + 5);
     frame.lineTo(closeBounds.right - 5, closeBounds.bottom - 5);
     frame.moveTo(closeBounds.right - 5, closeBounds.top + 5);
@@ -8240,29 +8559,40 @@ export class PixiStage {
         boardRects.mainboard.width,
         boardRects.mainboard.height,
       );
-      frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
-      frame.rect(
-        boardRects.collection.x,
-        boardRects.collection.y,
-        boardRects.collection.width,
-        boardRects.collection.height,
-      );
-      frame.stroke({ width: 1, color: 0x5d6699, alpha: 0.56 });
+      frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.56 });
+      const mainSections = getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name));
+      for (const [key, name] of [['spellbook', 'Spellbook'], ['atlas', 'Atlas']] as const) {
+        const rect = mainSections[key];
+        if (!rect) continue;
+        frame.roundRect(rect.x, rect.y, rect.width, rect.height, 8);
+        frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.4 });
+        const sectionLabel = this.configureTextQuality(new Text({ text: name,
+          style: { fontFamily: 'Arial', fontSize: 12, fill: MANGA_PALETTE.muted, fontWeight: 'bold' } }));
+        sectionLabel.position.set(rect.x + 8, rect.y + 4);
+        sectionLabel.zIndex = frame.zIndex + 2;
+        this.zoneContainer.addChild(sectionLabel);
+        subzoneLabels.push(sectionLabel);
+      }
+      for (const [board, label] of [['mainboard', 'Main'], ['collection', 'Collection'], ['maybeboard', 'Maybe']] as const) {
+        const rect = boardRects[board];
+        frame.rect(rect.x, rect.y, rect.width, rect.height);
+        frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.56 });
 
-      const collectionLabel = this.configureTextQuality(new Text({
-        text: "Collection",
-        style: {
-          fontFamily: "Arial",
-          fontSize: 13,
-          fill: 0x98a3de,
-          fontWeight: "bold",
-        },
-      }));
-      collectionLabel.x = boardRects.collection.x + 8;
-      collectionLabel.y = boardRects.collection.y + 6;
-      collectionLabel.zIndex = frame.zIndex + 2;
-      this.zoneContainer.addChild(collectionLabel);
-      subzoneLabels.push(collectionLabel);
+        const boardLabel = this.configureTextQuality(new Text({
+          text: label,
+          style: {
+            fontFamily: "Arial",
+            fontSize: 13,
+            fill: MANGA_PALETTE.muted,
+            fontWeight: "bold",
+          },
+        }));
+        boardLabel.x = rect.x + 8;
+        boardLabel.y = rect.y + 6;
+        boardLabel.zIndex = frame.zIndex + 2;
+        this.zoneContainer.addChild(boardLabel);
+        subzoneLabels.push(boardLabel);
+      }
     }
 
     let avatarSprite: CardSprite | null = null;
@@ -8290,8 +8620,6 @@ export class PixiStage {
         displaySize: { width: avatarWidth, height: avatarHeight },
       });
       avatarSprite.zIndex = frame.zIndex + 2;
-      avatarSprite.loadInitialTexture();
-      avatarSprite.updateLOD(this.camera?.zoom ?? 0.1);
       this.zoneContainer.addChild(avatarSprite);
       titleX = avatarLeft + avatarWidth + ZONE_DECK_AVATAR_TITLE_GAP;
       deckHeaderTopY = avatarTop;
@@ -8303,7 +8631,7 @@ export class PixiStage {
       style: {
         fontFamily: "Arial",
         fontSize: HEADER_HEIGHT * 0.3,
-        fill: zone.type === "deck" ? 0xa8b5ff : zone.type === "stack" ? 0x9de5ff : 0xf1d6a0,
+        fill: zone.type === "deck" ? MANGA_PALETTE.paper : zone.type === "stack" ? MANGA_PALETTE.paper : 0xf1d6a0,
         fontWeight: "bold",
       },
     }));
@@ -8316,7 +8644,7 @@ export class PixiStage {
         style: {
           fontFamily: "Arial",
           fontSize: 12,
-          fill: 0x9aa6de,
+          fill: MANGA_PALETTE.muted,
           fontWeight: "normal",
         },
       }));
@@ -8374,7 +8702,7 @@ export class PixiStage {
           style: {
             fontFamily: "Arial",
             fontSize: 12,
-            fill: activeVariant?.id === variant.id ? 0xf6f8ff : 0xbfc8f8,
+            fill: activeVariant?.id === variant.id ? MANGA_PALETTE.paper : MANGA_PALETTE.muted,
             fontWeight: activeVariant?.id === variant.id ? "bold" : "normal",
           },
         }));
@@ -8395,12 +8723,12 @@ export class PixiStage {
 
         frame.roundRect(tabCursorX, tabTop, tabWidth, ZONE_DECK_TAB_HEIGHT, 6);
         frame.fill({
-          color: activeVariant?.id === variant.id ? 0x3c4f99 : 0x2a3152,
+          color: activeVariant?.id === variant.id ? MANGA_PALETTE.active : MANGA_PALETTE.raised,
           alpha: activeVariant?.id === variant.id ? 0.96 : 0.9,
         });
         frame.stroke({
           width: 1,
-          color: activeVariant?.id === variant.id ? 0xbecbff : 0x7f8ed0,
+          color: activeVariant?.id === variant.id ? MANGA_PALETTE.gold : MANGA_PALETTE.line,
           alpha: activeVariant?.id === variant.id ? 0.95 : 0.75,
         });
 
@@ -8432,15 +8760,15 @@ export class PixiStage {
             style: {
               fontFamily: "Arial",
               fontSize: 12,
-              fill: 0xf6f8ff,
+              fill: MANGA_PALETTE.paper,
               fontWeight: "bold",
             },
           }));
           fitTabLabel(fallbackText, tabWidth - ZONE_DECK_TAB_PADDING_X * 2);
 
           frame.roundRect(tabCursorX, tabTop, tabWidth, ZONE_DECK_TAB_HEIGHT, 6);
-          frame.fill({ color: 0x3c4f99, alpha: 0.96 });
-          frame.stroke({ width: 1, color: 0xbecbff, alpha: 0.95 });
+          frame.fill({ color: MANGA_PALETTE.active, alpha: 0.96 });
+          frame.stroke({ width: 1, color: MANGA_PALETTE.gold, alpha: 0.95 });
 
           fallbackText.x = tabCursorX + (tabWidth - fallbackText.width) / 2;
           fallbackText.y = tabTop + (ZONE_DECK_TAB_HEIGHT - fallbackText.height) / 2;
@@ -8469,15 +8797,15 @@ export class PixiStage {
           ZONE_DECK_TAB_HEIGHT,
           6,
         );
-        frame.fill({ color: 0x2a3152, alpha: 0.9 });
-        frame.stroke({ width: 1, color: 0x8d9adb, alpha: 0.8 });
+        frame.fill({ color: MANGA_PALETTE.raised, alpha: 0.9 });
+        frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.8 });
 
         const addText = this.configureTextQuality(new Text({
           text: "+",
           style: {
             fontFamily: "Arial",
             fontSize: 16,
-            fill: 0xeef2ff,
+            fill: MANGA_PALETTE.paper,
             fontWeight: "bold",
           },
         }));
@@ -8527,6 +8855,12 @@ export class PixiStage {
     this.clearZoneVisuals();
     if (!this.camera) return;
 
+    let layoutChanged = false;
+    if (this.cards.length > 0) {
+      for (const zone of this.canvasAreas) {
+        if (this.fitDeckSections(zone)) layoutChanged = true;
+      }
+    }
     const filteredDeckCardNameCache = new Map<string, Set<string>>();
     const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     pinnedZones.forEach((zone, zoneIndex) => {
@@ -8592,10 +8926,9 @@ export class PixiStage {
             x: centerX,
             y: centerY,
           });
+          sprite.setNewlyAdded(instance.isNew === true);
           sprite.setSelected(this.selectedZoneCardKeys.has(key));
           sprite.zIndex = frameData.frame.zIndex + 10 + instanceIndex;
-          sprite.loadInitialTexture();
-          sprite.updateLOD(this.camera?.zoom ?? 0.1);
           if (zone.type === "deck" && activeDeckCardIds && !activeDeckCardIds.has(instance.id)) {
             sprite.alpha = 0.46;
           }
@@ -8623,12 +8956,22 @@ export class PixiStage {
     });
 
     this.zoneContainer.sortChildren();
+    this.updateCanvasAreaCardVisibility(this.expandBounds(
+      this.camera.getVisibleBounds(), CULLING_MARGIN, CULLING_MARGIN,
+    ));
+    this.queueVisibleHighDetailPreload();
     this.syncZoneSelectionVisuals();
     this.applyActiveMetricHighlighting();
     this.drawZoneDeleteOverlay();
+    this.rebuildLabelSprites();
+    if (layoutChanged) this.emitCanvasAreasChange();
   }
 
-  private rebuildCardSprites(): void {
+  private rebuildCardSprites(rebuildDecks = true): void {
+    const viewport = this.camera?.getVisibleBounds();
+    const keepDeckInView = !rebuildDecks && viewport && this.canvasAreas.some(area => area.pinned && this.boundsIntersect(viewport, {
+      left: area.bounds.x, top: area.bounds.y, right: area.bounds.x + area.bounds.width, bottom: area.bounds.y + area.bounds.height,
+    }));
     this.setHoveredCard(null);
 
     for (const data of this.cardSprites.values()) {
@@ -8643,27 +8986,23 @@ export class PixiStage {
     this.cardSprites.clear();
     this.cardContainer.removeChildren();
     this.visibleCardNames.clear();
-    this.clearSelection();
+    if (rebuildDecks) this.clearSelection();
+    else this.clearMainSelection();
     this.cardStacks.clear();
 
     if (this.cards.length === 0) {
-      this.rebuildZoneVisuals();
+      if (rebuildDecks) this.rebuildZoneVisuals();
       return;
     }
 
-    const layoutCards = this.cards.map((card) => ({
+    const layoutCards = this.catalogueCards.map((card) => ({
       name: card.name,
       type: card.guardian.type,
       thresholdGroup: getThresholdGroup(card.guardian.thresholds),
-      cost: card.guardian.cost ?? 0,
+      cost: card.guardian.cost,
       isLandscape: card.guardian.type === "Site",
       primarySet: card.sets[0]?.name,
-      rarity: card.guardian.rarity as
-        | "Ordinary"
-        | "Exceptional"
-        | "Elite"
-        | "Unique"
-        | null,
+      rarity: card.guardian.rarity,
     }));
     const layoutVariant = this.getCollectionLayoutVariant();
     this.collectionLayoutVariant = layoutVariant;
@@ -8674,7 +9013,7 @@ export class PixiStage {
       bounds: contentBounds,
     } = calculateCardLayout({
       cards: layoutCards,
-      mode: this.collectionFilteredMode ? "filteredFlat" : "grouped",
+      catalogueLayout: this.catalogueLayout,
       layoutVariant,
     });
 
@@ -8713,7 +9052,7 @@ export class PixiStage {
     this.collectionBounds = shiftedBounds;
 
     // Move camera to content area before creating sprites
-    if (shiftedLayout.length > 0 && this.camera) {
+    if (shiftedLayout.length > 0 && this.camera && !keepDeckInView) {
       this.camera.fitToContent(shiftedBounds, 100);
     }
 
@@ -8725,7 +9064,7 @@ export class PixiStage {
         text: header.label,
         style: {
           fontFamily: "Arial",
-          fontSize: isTypeSubgroup ? subgroupFontSize : HEADER_HEIGHT,
+          fontSize: header.fontSize ?? (isTypeSubgroup ? subgroupFontSize : HEADER_HEIGHT),
           fill: 0x888888,
           fontWeight: isTypeSubgroup ? "normal" : "bold",
         },
@@ -8794,11 +9133,11 @@ export class PixiStage {
     this.rebuildCardStacks();
     this.performCulling();
     this.drawGrid();
-    this.rebuildZoneVisuals();
+    if (rebuildDecks) this.rebuildZoneVisuals();
     this.rebuildAssociationShelfSprites(false);
 
     // Rebuild deck display if a deck is active
-    if (this.activeDeck) {
+    if (rebuildDecks && this.activeDeck) {
       this.rebuildDeckSprites();
     }
     this.applyActiveMetricHighlighting();
@@ -8970,28 +9309,11 @@ export class PixiStage {
     this.performCulling();
   }
 
-  private handleZoomChange(zoom: number): void {
-    for (const name of this.visibleCardNames) {
-      const data = this.cardSprites.get(name);
-      if (data) {
-        data.sprite.updateLOD(zoom);
-      }
-    }
-    // Update deck sprite LODs
-    for (const data of this.deckSprites.values()) {
-      if (data.sprite.visible) {
-        data.sprite.updateLOD(zoom);
-      }
-    }
-    for (const data of this.associationShelfSprites.values()) {
-      if (data.sprite.visible) {
-        data.sprite.updateLOD(zoom);
-      }
-    }
-    for (const data of this.zoneCardSprites.values()) {
-      data.sprite.updateLOD(zoom);
-    }
-    this.queueVisibleHighDetailPreload();
+  private handleZoomChange(): void {
+    // Recompute visibility before promoting textures. A large wheel step can
+    // go from the entire catalogue to a few cards in one event; the previous
+    // visible set must not trigger high-detail downloads for all of them.
+    this.scheduleCulling();
   }
 
   private handleViewportChange(): void {
@@ -9075,25 +9397,28 @@ export class PixiStage {
     if (this.collectionLayoutVariant === nextVariant) return;
 
     this.collectionLayoutVariant = nextVariant;
-    if (this.collectionFilteredMode || this.cards.length === 0) return;
+    if (this.cards.length === 0) return;
 
-    this.rebuildCardSprites();
+    this.rebuildCardSprites(false);
   }
 
   private scheduleCulling(): void {
-    if (this.cullingScheduled) return;
+    if (this.cullingScheduled || this.isDestroyed) return;
 
     const now = performance.now();
     const elapsed = now - this.lastCullingUpdate;
+    this.cullingScheduled = true;
+    const update = () => {
+      this.cullingScheduled = false;
+      if (!this.isDestroyed) this.performCulling();
+    };
 
     if (elapsed >= CULLING_THROTTLE_MS) {
-      this.performCulling();
+      // pixi-viewport emits zoomed before it moves to keep the cursor fixed.
+      // Wait until that event finishes so LOD uses the final camera bounds.
+      queueMicrotask(update);
     } else {
-      this.cullingScheduled = true;
-      setTimeout(() => {
-        this.cullingScheduled = false;
-        this.performCulling();
-      }, CULLING_THROTTLE_MS - elapsed);
+      setTimeout(update, CULLING_THROTTLE_MS - elapsed);
     }
   }
 
@@ -9180,6 +9505,7 @@ export class PixiStage {
       }
     }
 
+    this.updateCanvasAreaCardVisibility(expandedBounds);
     this.visibleCardNames = newVisible;
 
     // During the initial reveal we let `startTextureReveal()` own texture loading so
@@ -9196,6 +9522,26 @@ export class PixiStage {
     this.queueVisibleHighDetailPreload();
     if (this.initialRevealCompleted && !this.isRevealInProgress) {
       this.pruneFullTextureCache();
+    }
+  }
+
+  private *getCanvasAreaCardSprites(): IterableIterator<CardSprite> {
+    for (const data of this.zoneCardSprites.values()) yield data.sprite;
+    for (const frame of this.zoneFrames.values()) {
+      if (frame.avatarSprite) yield frame.avatarSprite;
+    }
+  }
+
+  private updateCanvasAreaCardVisibility(bounds: CameraBounds): void {
+    if (!this.camera) return;
+    // Apply the catalogue's near-viewport policy to saved decks and stacks too.
+    // Distant decks must not compete with the cards the user is zooming into.
+    for (const sprite of this.getCanvasAreaCardSprites()) {
+      sprite.visible = this.boundsIntersect(sprite.getWorldBounds(), bounds);
+      if (sprite.visible) {
+        sprite.loadInitialTexture();
+        sprite.updateLOD(this.camera.zoom);
+      }
     }
   }
 
@@ -9238,9 +9584,9 @@ export class PixiStage {
         names.add(data.layout.name);
       }
     }
-    for (const data of this.zoneCardSprites.values()) {
-      if (data.sprite.visible) {
-        names.add(data.cardName);
+    for (const sprite of this.getCanvasAreaCardSprites()) {
+      if (sprite.visible) {
+        names.add(sprite.cardName);
       }
     }
     return [...names];
@@ -9296,8 +9642,8 @@ export class PixiStage {
     for (const data of this.associationShelfSprites.values()) {
       visit(data.layout.name, data.bounds);
     }
-    for (const data of this.zoneCardSprites.values()) {
-      visit(data.cardName, data.bounds);
+    for (const sprite of this.getCanvasAreaCardSprites()) {
+      visit(sprite.cardName, sprite.getWorldBounds());
     }
 
     return [...exact, ...near, ...directional];
@@ -9387,6 +9733,8 @@ export class PixiStage {
   private queueVisibleHighDetailPreload(): void {
     if (this.isDestroyed) return;
     if (!this.shouldLoadHighDetail()) {
+      this.highDetailPreloadRunId++;
+      this.highDetailPreloadQueued = false;
       this.onBackgroundTextureProgress?.(0, 0);
       return;
     }
@@ -9409,6 +9757,9 @@ export class PixiStage {
     }
 
     if (this.highDetailPreloadRunning) {
+      // Finish in-flight downloads, then replace stale queued work with the
+      // latest viewport. Keep the existing bounded loader and texture cache.
+      this.highDetailPreloadRunId++;
       this.highDetailPreloadQueued = true;
       return;
     }
@@ -9445,7 +9796,7 @@ export class PixiStage {
           );
         },
         onProgress: (loaded, total) => {
-          if (this.isDestroyed) return;
+          if (this.isDestroyed || runId !== this.highDetailPreloadRunId) return;
           this.onBackgroundTextureProgress?.(loaded, total);
         },
       });
@@ -9475,9 +9826,9 @@ export class PixiStage {
         data.sprite.refreshCurrentLOD();
       }
     }
-    for (const data of this.zoneCardSprites.values()) {
-      if (data.sprite.visible) {
-        data.sprite.refreshCurrentLOD();
+    for (const sprite of this.getCanvasAreaCardSprites()) {
+      if (sprite.visible) {
+        sprite.refreshCurrentLOD();
       }
     }
   }
@@ -9497,9 +9848,9 @@ export class PixiStage {
         data.sprite.reloadCurrentTexture();
       }
     }
-    for (const data of this.zoneCardSprites.values()) {
-      if (data.sprite.visible) {
-        data.sprite.reloadCurrentTexture();
+    for (const sprite of this.getCanvasAreaCardSprites()) {
+      if (sprite.visible) {
+        sprite.reloadCurrentTexture();
       }
     }
   }
@@ -9518,6 +9869,31 @@ export class PixiStage {
 
   private update(): void {
     const nowMs = performance.now();
+    if (!this.motionEnabled()) {
+      for (const entry of this.mangaEffects ?? []) entry.effect.destroy();
+      this.mangaEffects = [];
+      for (const entry of this.deletionPuffs) entry.effect.destroy();
+      this.deletionPuffs = [];
+    }
+    if ((this.mangaEffects?.length ?? 0) || this.deletionPuffs.length) this.getMangaEffectLayer();
+    this.mangaEffects = (this.mangaEffects ?? []).filter(entry => entry.effect.update(nowMs - entry.start, this.camera?.zoom ?? 1,
+      entry.follow ? this.getCardsEffectBounds(entry.follow) : undefined));
+    if (this.armedDelete && Date.now() > this.armedDelete.expires) {
+      this.armedDelete = null;
+      this.drawZoneDeleteOverlay();
+    }
+    if (this.dragFeedbackGraphic && this.dragFeedbackBounds) {
+      this.dragFeedbackGraphic.alpha = this.motionEnabled() ? 0.75 + Math.sin(nowMs / 220) * 0.12 : 0.85;
+    }
+    if (this.dragDetachedAt && this.zoneCardDragState.isDragging) {
+      const elapsed = nowMs - this.dragDetachedAt;
+      for (const key of this.zoneCardDragState.cards.keys()) {
+        const sprite = this.zoneCardSprites.get(key)?.sprite;
+        if (sprite) sprite.rotation = this.motionEnabled() && elapsed < 240 ? Math.sin(elapsed / 30) * 0.025 * (1 - elapsed / 240) : 0;
+      }
+      if (elapsed >= 360) this.dragDetachedAt = 0;
+    }
+    this.deletionPuffs = this.deletionPuffs.filter(puff => puff.effect.update(nowMs - puff.start));
     if (
       this.quickTransferState.active &&
       this.lastPointerScreenPos &&

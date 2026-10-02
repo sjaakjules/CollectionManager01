@@ -18,6 +18,7 @@
 
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { useAppState } from "@/app/AppState";
+import { DEFAULT_INTERACTION_EFFECTS } from '@/data/interactionEffects';
 import {
   PixiStage,
   type CardDragDropPayload,
@@ -36,7 +37,6 @@ import {
 import {
   applyCardFilters,
   ensureCardFilterState,
-  isCardFilterActive,
 } from "@/data/cardFilters";
 import {
   loadDeckStyleAssociations,
@@ -52,6 +52,8 @@ interface PixiCanvasProps {
   onAddToDeckRequest?: (cardName: string) => void;
   onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
   onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
+  onDeckLayoutResetRequest?: (canvasAreaId: string) => void;
+  resetDeckLayoutRequest?: { canvasAreaId: string; nonce: number } | null;
   onQuickTransferCreateTarget?: (payload: QuickTransferCreateTargetPayload) => void;
   onCanvasAreasChange?: (canvasAreas: CanvasArea[]) => void;
   onStackHeaderClick?: (stackId: string) => void;
@@ -61,7 +63,7 @@ interface PixiCanvasProps {
     editingFilterIndex: number | null;
     anchorClientRect: { left: number; top: number; right: number; bottom: number };
   }) => void;
-  focusCanvasAreaRequest?: { canvasAreaId: string; nonce: number } | null;
+  focusCanvasAreaRequest?: { canvasAreaId: string; nonce: number; bottomInset?: number } | null;
 }
 
 /**
@@ -85,6 +87,8 @@ export function PixiCanvas({
   onAddToDeckRequest,
   onDeckAddRequest,
   onCardsAddedToCanvasArea,
+  onDeckLayoutResetRequest,
+  resetDeckLayoutRequest,
   onQuickTransferCreateTarget,
   onCanvasAreasChange,
   onStackHeaderClick,
@@ -122,10 +126,6 @@ export function PixiCanvas({
   const filteredCards = useMemo(
     () => applyCardFilters(state.cards, cardFilters),
     [state.cards, cardFilters],
-  );
-  const filteredMode = useMemo(
-    () => isCardFilterActive(cardFilters),
-    [cardFilters],
   );
   const deckTransferTargets = useMemo(
     () => buildQuickTransferDeckTargets(state.userData?.decks ?? [], canvasAreas),
@@ -181,6 +181,8 @@ export function PixiCanvas({
   deckAddRequestRef.current = onDeckAddRequest;
   const cardsAddedToCanvasAreaRef = useRef(onCardsAddedToCanvasArea);
   cardsAddedToCanvasAreaRef.current = onCardsAddedToCanvasArea;
+  const resetLayoutRef = useRef(onDeckLayoutResetRequest);
+  resetLayoutRef.current = onDeckLayoutResetRequest;
   const quickTransferCreateTargetRef = useRef(onQuickTransferCreateTarget);
   quickTransferCreateTargetRef.current = onQuickTransferCreateTarget;
   const canvasAreasChangeRef = useRef(onCanvasAreasChange);
@@ -253,6 +255,7 @@ export function PixiCanvas({
       onCardsAddedToCanvasArea: (canvasAreaId, cardNames) => {
         cardsAddedToCanvasAreaRef.current?.(canvasAreaId, cardNames);
       },
+      onDeckLayoutResetRequest: (canvasAreaId) => resetLayoutRef.current?.(canvasAreaId),
       onQuickTransferCreateTarget: (payload) => {
         quickTransferCreateTargetRef.current?.(payload);
       },
@@ -292,12 +295,27 @@ export function PixiCanvas({
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    stageRef.current?.setInteractionEffects(DEFAULT_INTERACTION_EFFECTS);
+  }, []);
+
+  useEffect(() => {
+    if (!state.ui.canvasGesture) return;
+    const panel = document.querySelector('.bottom-folder-panel.open')?.getBoundingClientRect();
+    const message = stageRef.current?.runCanvasGesture(state.ui.canvasGesture.command, panel ? window.innerHeight - panel.top : 0);
+    if (message) dispatch({ type: 'ADD_NOTIFICATION', notification: { type: 'info', message } });
+  }, [state.ui.canvasGesture, dispatch]);
+
+  useEffect(() => {
+    stageRef.current?.resetSessionGestures();
+  }, [state.userData?.id]);
+
   // Keep rendered cards in sync with active filters.
   useEffect(() => {
     if (!stageRef.current || !state.cardsLoaded) return;
 
-    stageRef.current.setCards(filteredCards, { filteredMode });
-  }, [filteredCards, filteredMode, state.cardsLoaded]);
+    stageRef.current.setCards(state.cards, { catalogueCards: filteredCards, catalogueLayout: state.ui.catalogueLayout });
+  }, [filteredCards, state.cards, state.cardsLoaded, state.ui.catalogueLayout]);
 
   useEffect(() => {
     if (!stageRef.current) return;
@@ -332,10 +350,14 @@ export function PixiCanvas({
 
   useEffect(() => {
     if (!stageRef.current || !focusCanvasAreaRequest) return;
-    stageRef.current.focusZone(focusCanvasAreaRequest.canvasAreaId);
+    stageRef.current.focusZone(focusCanvasAreaRequest.canvasAreaId, focusCanvasAreaRequest.bottomInset);
   }, [focusCanvasAreaRequest]);
 
   // Keep label placement mode in sync with UI toggle.
+  useEffect(() => {
+    if (resetDeckLayoutRequest) stageRef.current?.resetDeckLayout(resetDeckLayoutRequest.canvasAreaId);
+  }, [resetDeckLayoutRequest]);
+
   useEffect(() => {
     if (!stageRef.current) return;
     stageRef.current.setLabelPlacementMode(state.ui.labelPlacementMode);

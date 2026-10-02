@@ -34,6 +34,8 @@ import { BottomPanel } from '@/ui/BottomPanel';
 import { DeckFilterPopover } from '@/ui/DeckFilterPopover';
 import { StacksPanel } from '@/ui/StacksPanel';
 import { DecksPanel } from '@/ui/DecksPanel';
+import { DeckActionDialog } from '@/ui/DeckActionDialog';
+import { getDeckLibraryEntries } from '@/data/deckLibrary';
 import { useResponsiveUiMode } from '@/ui/useResponsiveUiMode';
 import { mirrorUserDataToLocalStorage, saveUserData } from '@/data/userStorage';
 import { queueSync, flushSync } from '@/data/userSync';
@@ -47,12 +49,11 @@ import {
   createLookupDeckZone,
   createZoneCardId,
   cardNameToOrientationMap,
-  moveZoneIntoQuadrantPreservingCards,
-  sanitizeDeckZoneName,
   ZONE_DECK_HEADER_HEIGHT,
   ZONE_HEADER_HEIGHT,
   type CanvasArea,
 } from '@/canvas/canvasAreas';
+import { placeNewDeckCards, getDeckAreaBounds } from '@/canvas/deckBoardLayout';
 import { createLocalDeck } from '@/data/deckCreation';
 import { AVATAR_SHORT_NAMES, getAvatarShortName, type AvatarName } from '@/ui/deckDisplay';
 import { BOARD_CHOICE_OPTIONS, type DeckAddBoard } from '@/ui/boardChoice';
@@ -77,6 +78,8 @@ interface PendingDeckAddRequest {
   cardNames: string[];
   placements?: DeckAddPlacement[];
   deckToCreate?: Deck;
+  board?: ActiveBoard;
+  labelId?: string;
 }
 
 function addCardNamesToDeckBoard(deck: Deck, cardNames: string[], board: DeckAddBoard): Deck {
@@ -135,6 +138,7 @@ export function App() {
   const [focusCanvasAreaRequest, setFocusCanvasAreaRequest] = useState<{
     canvasAreaId: string;
     nonce: number;
+    bottomInset?: number;
   } | null>(null);
   const [openStackRequest, setOpenStackRequest] = useState<{
     stackId: string;
@@ -149,6 +153,8 @@ export function App() {
   const [activePhoneTab, setActivePhoneTab] = useState<PhoneTabId | null>(null);
   const [pendingDeckAdd, setPendingDeckAdd] = useState<PendingDeckAddRequest | null>(null);
   const [lookupDeckArea, setLookupDeckArea] = useState<CanvasArea | null>(null);
+  const [deckAction, setDeckAction] = useState<{ action: 'reset' | 'remove'; id: string } | null>(null);
+  const [resetDeckLayoutRequest, setResetDeckLayoutRequest] = useState<{ canvasAreaId: string; nonce: number } | null>(null);
   const pendingDeckAddIdRef = useRef(0);
   const lastSaveErrorNotifiedAtRef = useRef(0);
   const viewportCenterRef = useRef<{ x: number; y: number } | null>(null);
@@ -171,6 +177,21 @@ export function App() {
     () => cardNameToOrientationMap(state.cards),
     [state.cards],
   );
+  const deckActionName = !deckAction ? undefined : deckAction.action === 'reset'
+    ? visibleCanvasAreas.find((area) => area.id === deckAction.id)?.name
+    : getDeckLibraryEntries(state.userData?.decks ?? [], canvasAreas).find((entry) => entry.id === deckAction?.id)?.deck.name;
+  const requestDeckLayoutReset = useCallback((id: string) => setDeckAction({ action: 'reset', id }), []);
+  const requestRemoveDeck = useCallback((id: string) => setDeckAction({ action: 'remove', id }), []);
+  const confirmDeckAction = useCallback(() => {
+    if (!deckAction) return;
+    if (deckAction.action === 'reset') {
+      setResetDeckLayoutRequest({ canvasAreaId: deckAction.id, nonce: Date.now() });
+    } else {
+      dispatch({ type: 'DELETE_DECK', deckId: deckAction.id });
+      setLookupDeckArea((area) => area?.deckId === deckAction.id ? null : area);
+    }
+    setDeckAction(null);
+  }, [deckAction]);
 
   const handleCanvasAreasChange = useCallback(
     (nextCanvasAreas: CanvasArea[]) => {
@@ -225,37 +246,32 @@ export function App() {
 
   const createDeckZoneFromDeck = useCallback(
     (deck: Deck): string | null => {
-      const deckExists = state.userData?.decks.some((entry) => entry.id === deck.id) ?? false;
-      if (!deckExists) {
+      const savedDeck = state.userData?.decks.find((entry) => entry.id === deck.id);
+      if (!savedDeck || deck.origin === 'user') {
         dispatch({ type: 'CREATE_DECK', deck });
       }
+      const displayedDeck = savedDeck ?? deck;
       dispatch({ type: 'SET_ACTIVE_DECK', deckId: deck.id });
 
       let canvasAreaId: string | null = null;
       const existingCanvasArea = canvasAreas.find(
-        (area) => area.type === 'deck' && area.deckId === deck.id,
+        (area) => area.type === 'deck' && (area.deckId ?? area.id) === deck.id,
       );
       const nextCanvasAreas = existingCanvasArea
         ? canvasAreas.map((area) =>
             area.id === existingCanvasArea.id
               ? {
-                  ...moveZoneIntoQuadrantPreservingCards(
-                    area,
-                    canvasAreas.filter(
-                      (entry) => entry.type === 'deck' && entry.pinned,
-                    ).length,
-                    canvasAreas,
-                  ),
-                  name: sanitizeDeckZoneName(deck.name),
-                  avatarCardName: deck.boards.avatar[0]?.name ?? null,
-                  deckAuthor: deck.author ?? null,
+                  ...area,
+                  deckId: deck.id,
+                  pinned: true,
+                  // Reopening must retain canvas edits, including its avatar.
                 }
               : area,
           )
         : [
             ...canvasAreas,
             createDeckZone(
-              deck,
+              displayedDeck,
               cardOrientationMap,
               canvasAreas.filter((area) => area.type === 'deck').length,
               canvasAreas,
@@ -287,11 +303,11 @@ export function App() {
   );
 
   const saveLookupDeck = useCallback(
-    (deck: Deck) => {
+    (deck: Deck, bottomInset = 0) => {
       const canvasAreaId = createDeckZoneFromDeck(deck);
       setLookupDeckArea(null);
       if (canvasAreaId) {
-        setFocusCanvasAreaRequest({ canvasAreaId, nonce: Date.now() });
+        setFocusCanvasAreaRequest({ canvasAreaId, nonce: Date.now(), bottomInset });
       }
     },
     [createDeckZoneFromDeck],
@@ -301,7 +317,7 @@ export function App() {
     (
       area: CanvasArea,
       cardNames: string[],
-      options?: { board?: DeckAddBoard; placements?: DeckAddPlacement[] },
+      options?: { board?: ActiveBoard; placements?: DeckAddPlacement[]; labelId?: string },
     ): CanvasArea => {
       const existingStackNames =
         area.type === 'stack'
@@ -316,12 +332,15 @@ export function App() {
       }
       const headerHeight =
         area.type === 'deck' ? ZONE_DECK_HEADER_HEIGHT : ZONE_HEADER_HEIGHT;
+      const avatarName = area.type === 'deck' && (!options?.board || options.board === 'mainboard' || options.board === 'avatar')
+        ? cardNames.find((name) => cardOrientationMap.get(name)?.type === 'Avatar') : undefined;
       const startIndex = area.cards.length;
       const additions = cardNames
         .map((cardName, index) => {
           const trimmed = cardName.trim();
           if (!trimmed) return null;
           if (isBlockedTokenCardName(trimmed)) return null;
+          if (avatarName && cardOrientationMap.get(trimmed)?.type === 'Avatar') return null;
           if (
             area.type === 'stack' &&
             (existingStackNames?.has(trimmed) || queuedStackNames.has(trimmed))
@@ -350,11 +369,23 @@ export function App() {
                 36 +
                 Math.floor(slot / 4) * DRAWN_GRID.height * 3,
             board,
+            ...(area.type === 'deck' ? { isNew: true, labelId: options?.labelId } : {}),
           };
         })
         .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
-      if (additions.length === 0) return area;
+      if (additions.length === 0) return avatarName ? { ...area, avatarCardName: avatarName } : area;
+      if (area.type === 'deck') {
+        const isLandscape = (name: string) => cardOrientationMap.get(name)?.isLandscape ?? false;
+        if (!options?.placements?.length) placeNewDeckCards(area, additions, isLandscape);
+        const activeVariantId = area.activeDeckVariantId ?? area.deckVariants?.[0]?.id;
+        const addedMainIds = additions.filter((card) => card.board === 'mainboard').map((card) => card.id);
+        const nextArea = { ...area, cards: [...area.cards, ...additions],
+          deckVariants: area.deckVariants?.map((variant) => variant.id === activeVariantId
+            ? { ...variant, activeCardIds: [...new Set([...variant.activeCardIds, ...addedMainIds])] } : variant),
+          ...(avatarName ? { avatarCardName: avatarName } : {}) };
+        return { ...nextArea, bounds: getDeckAreaBounds(nextArea, ZONE_DECK_HEADER_HEIGHT, isLandscape) };
+      }
 
       const nextBounds = additions.reduce(
         (bounds, card) => {
@@ -387,12 +418,65 @@ export function App() {
     [cardOrientationMap],
   );
 
+  const commitDeckAddRequest = useCallback(
+    (request: Omit<PendingDeckAddRequest, 'id'>, board: ActiveBoard) => {
+
+      if (request.deckToCreate) {
+        const deckWithCards = addCardNamesToDeckBoard(
+          request.deckToCreate,
+          request.cardNames,
+          board === 'avatar' ? 'mainboard' : board,
+        );
+        createDeckZoneFromDeck(deckWithCards);
+        setPendingDeckAdd(null);
+        return;
+      }
+
+      dispatch({
+        type: 'ADD_CARDS_TO_DECK_BY_ID',
+        deckId: request.deckId,
+        cardNames: request.cardNames,
+        board,
+      });
+
+      const canvasAreaId =
+        request.canvasAreaId ??
+        canvasAreas.find(
+          (area) => area.type === 'deck' && area.deckId === request.deckId,
+        )?.id ??
+        null;
+      if (canvasAreaId) {
+        const nextCanvasAreas = canvasAreas.map((area) => {
+          if (area.id !== canvasAreaId || area.type !== 'deck') return area;
+          return addCardsToCanvasAreaModel(area, request.cardNames, {
+            board,
+            placements: request.placements,
+            labelId: request.labelId,
+          });
+        });
+        dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: nextCanvasAreas });
+      }
+
+      setPendingDeckAdd(null);
+    },
+    [
+      addCardsToCanvasAreaModel,
+      canvasAreas,
+      createDeckZoneFromDeck,
+      dispatch,
+    ],
+  );
+
   const queueDeckAddRequest = useCallback(
     (request: Omit<PendingDeckAddRequest, 'id'>) => {
       const cardNames = request.cardNames
         .map((cardName) => cardName.trim())
         .filter((cardName) => !!cardName && !isBlockedTokenCardName(cardName));
       if (cardNames.length === 0) return;
+      if (request.board) {
+        commitDeckAddRequest({ ...request, cardNames }, request.board);
+        return;
+      }
       pendingDeckAddIdRef.current += 1;
       setPendingDeckAdd({
         ...request,
@@ -400,7 +484,7 @@ export function App() {
         id: pendingDeckAddIdRef.current,
       });
     },
-    [],
+    [commitDeckAddRequest],
   );
 
   const handleAddToActiveDeckRequest = useCallback(
@@ -415,6 +499,7 @@ export function App() {
         deckId,
         canvasAreaId,
         cardNames: [cardName],
+        board: 'mainboard',
       });
     },
     [canvasAreas, queueDeckAddRequest, state.editor.activeDeckId],
@@ -426,60 +511,13 @@ export function App() {
         deckId: payload.deckId,
         canvasAreaId: payload.canvasAreaId ?? null,
         cardNames: payload.cardNames,
-        placements: payload.placements,
+        // Only a drop on the canvas supplies meaningful deck coordinates.
+        placements: payload.source === 'canvas-zone' ? payload.placements : undefined,
+        board: payload.board,
+        labelId: payload.labelId,
       });
     },
     [queueDeckAddRequest],
-  );
-
-  const commitPendingDeckAdd = useCallback(
-    (board: DeckAddBoard) => {
-      if (!pendingDeckAdd) return;
-
-      if (pendingDeckAdd.deckToCreate) {
-        const deckWithCards = addCardNamesToDeckBoard(
-          pendingDeckAdd.deckToCreate,
-          pendingDeckAdd.cardNames,
-          board,
-        );
-        createDeckZoneFromDeck(deckWithCards);
-        setPendingDeckAdd(null);
-        return;
-      }
-
-      dispatch({
-        type: 'ADD_CARDS_TO_DECK_BY_ID',
-        deckId: pendingDeckAdd.deckId,
-        cardNames: pendingDeckAdd.cardNames,
-        board,
-      });
-
-      const canvasAreaId =
-        pendingDeckAdd.canvasAreaId ??
-        canvasAreas.find(
-          (area) => area.type === 'deck' && area.deckId === pendingDeckAdd.deckId,
-        )?.id ??
-        null;
-      if (canvasAreaId) {
-        const nextCanvasAreas = canvasAreas.map((area) => {
-          if (area.id !== canvasAreaId || area.type !== 'deck') return area;
-          return addCardsToCanvasAreaModel(area, pendingDeckAdd.cardNames, {
-            board,
-            placements: pendingDeckAdd.placements,
-          });
-        });
-        dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: nextCanvasAreas });
-      }
-
-      setPendingDeckAdd(null);
-    },
-    [
-      addCardsToCanvasAreaModel,
-      canvasAreas,
-      createDeckZoneFromDeck,
-      dispatch,
-      pendingDeckAdd,
-    ],
   );
 
   const handleQuickTransferCreateTarget = useCallback(
@@ -547,17 +585,15 @@ export function App() {
       if (area.pinned === pinned) return area;
       if (!pinned) return { ...area, pinned: false };
 
-      return moveZoneIntoQuadrantPreservingCards(
-        { ...area, pinned: true },
-        canvasAreas.filter((entry) => entry.type === area.type && entry.pinned).length,
-        canvasAreas,
-      );
+      return { ...area, pinned: true };
     });
     dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: nextCanvasAreas });
   }, [canvasAreas, dispatch]);
 
-  const deleteCanvasArea = useCallback((canvasAreaId: string) => {
-    const nextCanvasAreas = canvasAreas.filter((area) => area.id !== canvasAreaId);
+  const hideCanvasArea = useCallback((canvasAreaId: string) => {
+    const nextCanvasAreas = canvasAreas.map((area) =>
+      area.id === canvasAreaId ? { ...area, pinned: false } : area,
+    );
     dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: nextCanvasAreas });
   }, [canvasAreas, dispatch]);
 
@@ -570,11 +606,7 @@ export function App() {
     const nextCanvasAreas = canvasAreas.map((area) => {
       if (area.id !== canvasAreaId) return area;
       if (area.pinned) return area;
-      return moveZoneIntoQuadrantPreservingCards(
-        { ...area, pinned: true },
-        canvasAreas.filter((entry) => entry.type === area.type && entry.pinned).length,
-        canvasAreas,
-      );
+      return { ...area, pinned: true };
     });
     dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: nextCanvasAreas });
     setFocusCanvasAreaRequest({ canvasAreaId, nonce: Date.now() });
@@ -839,7 +871,7 @@ export function App() {
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
-      <div className={`app-container ui-${uiMode}`}>
+      <div className={`app-container ui-${uiMode}`} data-manga-intensity="expressive">
         <PixiCanvas
           splashDone={splashPhase === 'done'}
           canvasAreas={visibleCanvasAreas}
@@ -847,6 +879,8 @@ export function App() {
           onAddToDeckRequest={handleAddToActiveDeckRequest}
           onDeckAddRequest={handleDeckAddRequest}
           onCardsAddedToCanvasArea={handleCardsAddedToCanvasArea}
+          onDeckLayoutResetRequest={requestDeckLayoutReset}
+          resetDeckLayoutRequest={resetDeckLayoutRequest}
           onQuickTransferCreateTarget={handleQuickTransferCreateTarget}
           onStackHeaderClick={(stackId) =>
             setOpenStackRequest({ stackId, nonce: Date.now() })
@@ -876,8 +910,10 @@ export function App() {
           phoneExpanded={activePhoneTab === 'decks'}
           onPhoneTabToggle={() => handlePhoneTabToggle('decks')}
           onCreateDeckZone={createDeckZoneFromDeck}
-          onDeleteCanvasArea={deleteCanvasArea}
+          onHideCanvasArea={hideCanvasArea}
           onFocusCanvasArea={focusCanvasArea}
+          onResetDeckLayout={requestDeckLayoutReset}
+          onRemoveDeck={requestRemoveDeck}
         />
         <BottomPanel
           isPhone={uiMode === 'phone'}
@@ -885,6 +921,7 @@ export function App() {
           onPhoneTabToggle={() => handlePhoneTabToggle('filter')}
           onLoadLookupDeck={loadLookupDeck}
           onSaveLookupDeck={saveLookupDeck}
+          onRemoveDeck={requestRemoveDeck}
         />
         <DeckFilterPopover
           canvasArea={activeDeckFilterArea}
@@ -896,6 +933,10 @@ export function App() {
           onClose={() => setDeckFilterRequest(null)}
         />
         <LoginModal />
+        {deckAction && deckActionName && (
+          <DeckActionDialog action={deckAction.action} deckName={deckActionName}
+            onConfirm={confirmDeckAction} onCancel={() => setDeckAction(null)} />
+        )}
         <Notifications />
         {pendingDeckAdd && (
           <BoardChoiceSheet
@@ -905,7 +946,7 @@ export function App() {
               state.userData?.decks.find((deck) => deck.id === pendingDeckAdd.deckId)?.name ??
               'Deck'
             }
-            onChoose={commitPendingDeckAdd}
+            onChoose={(board) => commitDeckAddRequest(pendingDeckAdd, board)}
             onCancel={() => setPendingDeckAdd(null)}
           />
         )}

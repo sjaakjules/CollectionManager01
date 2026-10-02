@@ -36,6 +36,8 @@ import {
   type CompetitiveDeckResultTag,
 } from "@/data/deckStyleAssociations";
 import type { Deck } from "@/data/dataModels";
+import { getDeckLibraryEntries } from "@/data/deckLibrary";
+import { AddedDecksPanel } from './AddedDecksPanel';
 import { applyCardFilters, ensureCardFilterState } from "@/data/cardFilters";
 import { buildCardFilterOptions } from "@/data/cardService";
 import { CardFilterChipTabs } from "@/ui/CardFilterChipTabs";
@@ -45,12 +47,14 @@ import { describeFilterClause } from "@/ui/cardFilterUi";
 import { useCardFilterEditor } from "@/ui/useCardFilterEditor";
 import { getAvatarShortName } from "@/ui/deckDisplay";
 import { ElementIcon } from "@/ui/ElementIcon";
+import { DeckCreatePanel } from "@/ui/DeckCreatePanel";
+import { CatalogueLayoutPanel } from "@/ui/CatalogueLayoutPanel";
 
-type ToolTab = "filter" | "categories" | "associations" | null;
+type ToolTab = "filter" | "layout" | "categories" | "associations" | null;
 type ActionPanel = "label" | null;
 type FilterPanelMode = "details" | "settings" | null;
 type CategoryDialogMode = "add" | "edit" | null;
-type DeckLookupTab = "styles" | "avatars" | "competitive" | "favourites";
+type DeckLookupTab = "create" | "styles" | "avatars" | "competitive" | "favourites" | "user";
 
 const BOTTOM_EDGE_TRIGGER_PX = 92;
 const EMPTY_ASSOCIATION_STYLES: DeckStyleAssociationData["styles"] = [];
@@ -70,7 +74,8 @@ interface BottomPanelProps {
   phoneExpanded?: boolean;
   onPhoneTabToggle?: () => void;
   onLoadLookupDeck?: (deck: Deck) => void;
-  onSaveLookupDeck?: (deck: Deck) => void;
+  onSaveLookupDeck?: (deck: Deck, bottomInset?: number) => void;
+  onRemoveDeck?: (id: string) => void;
 }
 
 export function BottomPanel({
@@ -79,14 +84,19 @@ export function BottomPanel({
   onPhoneTabToggle,
   onLoadLookupDeck,
   onSaveLookupDeck,
+  onRemoveDeck,
 }: BottomPanelProps) {
   const { state, dispatch } = useAppState();
+  const addedDecks = useMemo(
+    () => getDeckLibraryEntries(state.userData?.decks ?? [], state.userData?.canvasAreas ?? []),
+    [state.userData?.decks, state.userData?.canvasAreas],
+  );
   const [categoryData, setCategoryData] = useState<CardCategoryData | null>(null);
   const [deckStyleData, setDeckStyleData] = useState<DeckStyleAssociationData | null>(null);
   const [activeToolTab, setActiveToolTab] = useState<ToolTab>(null);
   const [pinnedToolTab, setPinnedToolTab] = useState<ToolTab>(null);
   const [activeActionPanel, setActiveActionPanel] = useState<ActionPanel>(null);
-  const [deckLookupTab, setDeckLookupTab] = useState<DeckLookupTab>("styles");
+  const [deckLookupTab, setDeckLookupTab] = useState<DeckLookupTab>("avatars");
   const [selectedLookupAvatar, setSelectedLookupAvatar] = useState<string | null>(null);
   const [selectedAvatarDeckId, setSelectedAvatarDeckId] = useState<string | null>(null);
   const [competitiveSeason, setCompetitiveSeason] = useState<number | null>(2026);
@@ -362,6 +372,16 @@ export function BottomPanel({
     });
   }, [dispatch, displayedToolTab, isPhone, onPhoneTabToggle, phoneExpanded]);
 
+  const openLayoutTab = useCallback(() => {
+    dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
+    setActiveActionPanel(null);
+    setFilterPanelMode(null);
+    setFilterDetailIndex(null);
+    const closing = displayedToolTab === "layout";
+    setActiveToolTab(closing ? null : "layout");
+    if (isPhone && (closing || !phoneExpanded)) onPhoneTabToggle?.();
+  }, [dispatch, displayedToolTab, isPhone, onPhoneTabToggle, phoneExpanded]);
+
   const openCategoriesTab = useCallback(() => {
     dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
     setActiveActionPanel(null);
@@ -382,6 +402,7 @@ export function BottomPanel({
       return;
     }
 
+    setDeckLookupTab("avatars");
     dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: true });
     dispatch({ type: "SET_SELECTED_CARD_CATEGORY", categoryId: null });
     setActiveToolTab("associations");
@@ -784,6 +805,18 @@ export function BottomPanel({
             </>
           )}
 
+          {displayedToolTab === "layout" && (
+            <div className="cards-tools-drawer open">
+              <CatalogueLayoutPanel
+                layout={state.ui.catalogueLayout}
+                onChange={(layout) => dispatch({ type: "SET_CATALOGUE_LAYOUT", layout })}
+                visibleCount={filteredCards.length}
+                totalCount={state.cards.length}
+              />
+
+            </div>
+          )}
+
           {displayedToolTab === "categories" && (
             <div className="cards-tools-drawer open">
               <div className="bottom-tools-content">
@@ -868,44 +901,54 @@ export function BottomPanel({
           {displayedToolTab === "associations" && (
             <div className="cards-tools-drawer open">
               <div className="bottom-tools-content">
-                <div className="bottom-panel-buttons deck-lookup-tabs">
+                <div className="bottom-panel-buttons deck-lookup-tabs" role="toolbar" aria-label="Deck Lookup views">
                   <button
                     type="button"
-                    className={`tool-button ${
-                      deckLookupTab === "styles" ? "active" : ""
-                    }`}
-                    onClick={() => setDeckLookupTab("styles")}
+                    className={`tool-button deck-lookup-add ${deckLookupTab === "create" ? "active" : ""}`}
+                    aria-label="Add deck"
+                    aria-expanded={deckLookupTab === "create"}
+                    aria-controls="deck-lookup-create"
+                    title="Add deck"
+                    onClick={() => setDeckLookupTab((previous) => previous === "create" ? "avatars" : "create")}
                   >
-                    Deck Styles
+                    +
                   </button>
-                  <button
-                    type="button"
-                    className={`tool-button ${
-                      deckLookupTab === "avatars" ? "active" : ""
-                    }`}
-                    onClick={() => setDeckLookupTab("avatars")}
-                  >
-                    Avatars
-                  </button>
-                  <button
-                    type="button"
-                    className={`tool-button ${
-                      deckLookupTab === "competitive" ? "active" : ""
-                    }`}
-                    onClick={() => setDeckLookupTab("competitive")}
-                  >
-                    Competitions
-                  </button>
-                  <button
-                    type="button"
-                    className={`tool-button ${
-                      deckLookupTab === "favourites" ? "active" : ""
-                    }`}
-                    onClick={() => setDeckLookupTab("favourites")}
-                  >
-                    Favourites
-                  </button>
+                  {([
+                    ["avatars", "Avatars"],
+                    ["styles", "Styles"],
+                    ["competitive", "Competitions"],
+                    ["favourites", "Favourites"],
+                    ["user", "Added"],
+                  ] as const).map(([tab, label]) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      className={`tool-button ${deckLookupTab === tab ? "active" : ""}`}
+                      aria-pressed={deckLookupTab === tab}
+                      onClick={() => setDeckLookupTab(tab)}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
+
+                {deckLookupTab === "user" && (
+                  <AddedDecksPanel entries={addedDecks} cards={state.cards} styleData={deckStyleData}
+                    onSelectDeck={onSaveLookupDeck} onRemoveDeck={onRemoveDeck} />
+                )}
+
+                {deckLookupTab === "create" && (
+                  <div className="deck-lookup-create" id="deck-lookup-create">
+                    <DeckCreatePanel onCreateDeck={(deck) => {
+                      if (!onSaveLookupDeck) return false;
+                      onSaveLookupDeck(deck);
+                      setDeckLookupTab("avatars");
+                      setActiveToolTab(null);
+                      if (isPhone && phoneExpanded) onPhoneTabToggle?.();
+                      return true;
+                    }} />
+                  </div>
+                )}
 
                 {deckLookupTab === "styles" && (
                   <>
@@ -1077,7 +1120,7 @@ export function BottomPanel({
                             {selectedAvatarDeck && (
                               <div className="association-deck-style-profile">
                                 <div className="association-deck-lookup-heading">
-                                  Deck Styles
+                                  Styles
                                   <span>{selectedAvatarDeck.source.name}</span>
                                 </div>
                                 {selectedAvatarDeckStyles.length > 0 ? (
@@ -1249,6 +1292,12 @@ export function BottomPanel({
                 >
                   {state.ui.labelPlacementMode ? "Stop Label Placement" : "Start Label Placement"}
                 </button>
+                <ul className="canvas-label-guide">
+                  <li>Choose a spot on the canvas to place a label. Labels inside a deck move with that deck.</li>
+                  <li>Drop a card on a label’s name to join its group. Drag the label to move the whole group.</li>
+                  <li>Shake a card while dragging to detach it. Drop it in another board to transfer it, or on another label’s name to join that group.</li>
+                  <li>Double-click a label to edit it. Leave its name blank to remove only the label; your cards stay.</li>
+                </ul>
               </div>
             </div>
           )}
@@ -1263,6 +1312,14 @@ export function BottomPanel({
             onClick={openFilterTab}
           >
             Filter
+          </button>
+          <button
+            type="button"
+            className={`bottom-folder-tab layout-root-tab ${displayedToolTab === "layout" ? "active" : ""}`}
+            onClick={openLayoutTab}
+            aria-expanded={displayedToolTab === "layout"}
+          >
+            Layout
           </button>
           <button
             type="button"
