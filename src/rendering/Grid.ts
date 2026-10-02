@@ -14,6 +14,7 @@
 
 import type { CardType, ThresholdGroup, CardRarity } from "@/data/dataModels";
 import { buildCatalogueGroups, type CatalogueGroup, type CatalogueLayoutConfig } from '@/data/catalogueLayout';
+import { packOrderedGroups } from './orderedPacking';
 
 // ============================================================================
 // Grid Constants
@@ -385,6 +386,8 @@ export interface LayoutConfig {
   mode?: "grouped" | "filteredFlat" | "preserveFlat" | "typeRows";
   layoutVariant?: CollectionLayoutVariant;
   catalogueLayout?: CatalogueLayoutConfig;
+  /** Available screen aspect; does not change saved grouping/sorting choices. */
+  viewportAspect?: number;
 }
 
 export interface ContentBounds {
@@ -634,9 +637,6 @@ function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLa
   const cards: CardLayoutInfo[] = [];
   const headers: GroupHeader[] = [];
   const columnWidth = preferences.columns * CARD_CELL_SPACING.PORTRAIT.x;
-  const groupsPerRow = config.layoutVariant === 'portrait' ? 1 : 6;
-  let rowY = 0;
-  let rowHeight = 0;
   const bounds: ContentBounds = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
 
   function leaves(group: CatalogueGroup<LayoutCardInput>, path: string[] = []): { label: string; cards: LayoutCardInput[] }[] {
@@ -644,13 +644,11 @@ function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLa
     return group.children.flatMap((child) => leaves(child, [...path, child.label]));
   }
 
-  groups.forEach((group, index) => {
-    if (index > 0 && index % groupsPerRow === 0) {
-      rowY += rowHeight + GROUP_GAP_UNITS;
-      rowHeight = 0;
-    }
-    const startX = (index % groupsPerRow) * (columnWidth + GROUP_GAP_UNITS);
-    let cursorY = rowY;
+  const measured = groups.map((group) => {
+    const cardStart = cards.length;
+    const headerStart = headers.length;
+    const startX = 0;
+    let cursorY = 0;
     if (root.children.length) {
       headers.push({ label: group.label, kind: 'collection', fontSize: Math.min(HEADER_HEIGHT, columnWidth * SNAP_GRID.width / Math.max(1, group.label.length * 0.7)), position: { x: startX * SNAP_GRID.width, y: cursorY * SNAP_GRID.height } });
       cursorY += 4;
@@ -666,7 +664,6 @@ function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLa
         const entries = leaf.cards.filter((card) => card.isLandscape === landscape);
         if (!entries.length) continue;
         const spacing = getCardCellSpacing(landscape);
-        const size = getCardPixelSize(landscape);
         const perRow = Math.max(1, Math.floor(columnWidth / spacing.x));
         entries.forEach((card, cardIndex) => {
           const position = snapGridToPixels(
@@ -675,16 +672,36 @@ function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLa
             landscape,
           );
           cards.push({ name: card.name, position, isLandscape: landscape, type: card.type, thresholdGroup: card.thresholdGroup, cost: card.cost });
-          bounds.left = Math.min(bounds.left, position.x - size.width / 2);
-          bounds.top = Math.min(bounds.top, position.y - size.height / 2);
-          bounds.right = Math.max(bounds.right, position.x + size.width / 2);
-          bounds.bottom = Math.max(bounds.bottom, position.y + size.height / 2);
         });
         cursorY += Math.ceil(entries.length / perRow) * spacing.y + 1;
       }
       cursorY += 1;
     }
-    rowHeight = Math.max(rowHeight, cursorY - rowY);
+    return { width: columnWidth, height: cursorY, cardStart, cardEnd: cards.length, headerStart, headerEnd: headers.length };
+  });
+  const packed = packOrderedGroups(measured, config.viewportAspect ?? (config.layoutVariant === 'portrait' ? 9 / 19.5 : 16 / 9), GROUP_GAP_UNITS);
+  measured.forEach((group, index) => {
+    const box = packed[index]!;
+    const dx = box.x * SNAP_GRID.width, dy = box.y * SNAP_GRID.height;
+    for (let i = group.cardStart; i < group.cardEnd; i++) {
+      const card = cards[i]!;
+      card.position.x += dx;
+      card.position.y += dy;
+      const size = getCardPixelSize(card.isLandscape);
+      bounds.left = Math.min(bounds.left, card.position.x - size.width / 2);
+      bounds.top = Math.min(bounds.top, card.position.y - size.height / 2);
+      bounds.right = Math.max(bounds.right, card.position.x + size.width / 2);
+      bounds.bottom = Math.max(bounds.bottom, card.position.y + size.height / 2);
+    }
+    for (let i = group.headerStart; i < group.headerEnd; i++) {
+      const header = headers[i]!;
+      header.position.x += dx;
+      header.position.y += dy;
+      // Include titles when centering the complete catalogue.
+      bounds.left = Math.min(bounds.left, header.position.x);
+      bounds.top = Math.min(bounds.top, header.position.y);
+      bounds.right = Math.max(bounds.right, header.position.x + columnWidth * SNAP_GRID.width);
+    }
   });
   return { cards, headers, bounds: cards.length ? bounds : { left: 0, top: 0, right: 0, bottom: 0 } };
 }

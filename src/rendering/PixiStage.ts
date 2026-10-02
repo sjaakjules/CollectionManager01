@@ -730,6 +730,7 @@ export class PixiStage {
   private catalogueCards: Card[] = [];
   private catalogueLayout: CatalogueLayoutConfig = createDefaultCatalogueLayout();
   private collectionLayoutVariant: CollectionLayoutVariant | null = null;
+  private collectionLayoutAspect = 0;
 
   // Culling state
   private lastCullingUpdate = 0;
@@ -9076,6 +9077,7 @@ export class PixiStage {
     }));
     const layoutVariant = this.getCollectionLayoutVariant();
     this.collectionLayoutVariant = layoutVariant;
+    this.collectionLayoutAspect = this.getCollectionLayoutAspect();
 
     const {
       cards: layout,
@@ -9085,6 +9087,7 @@ export class PixiStage {
       cards: layoutCards,
       catalogueLayout: this.catalogueLayout,
       layoutVariant,
+      viewportAspect: this.collectionLayoutAspect,
     });
 
     const mainQuadrant = QUADRANT_BOUNDS.main;
@@ -9464,12 +9467,21 @@ export class PixiStage {
 
   private rebuildCollectionForLayoutVariantChange(): void {
     const nextVariant = this.getCollectionLayoutVariant();
-    if (this.collectionLayoutVariant === nextVariant) return;
+    const nextAspect = this.getCollectionLayoutAspect();
+    if (this.collectionLayoutVariant === nextVariant && Math.abs(this.collectionLayoutAspect - nextAspect) < 0.15) return;
 
     this.collectionLayoutVariant = nextVariant;
+    this.collectionLayoutAspect = nextAspect;
     if (this.cards.length === 0) return;
 
     this.rebuildCardSprites(false);
+  }
+
+  private getCollectionLayoutAspect(): number {
+    const viewport = globalThis.window?.visualViewport;
+    const width = viewport?.width ?? this.app.screen.width;
+    const height = viewport?.height ?? this.app.screen.height;
+    return Math.max(0.25, Math.min(4, width / Math.max(1, height - 64)));
   }
 
   private scheduleCulling(): void {
