@@ -18,7 +18,7 @@
 
 export type CardRarity = 'Ordinary' | 'Exceptional' | 'Elite' | 'Unique';
 
-export type CardType = 'Minion' | 'Magic' | 'Aura' | 'Artifact' | 'Site' | 'Avatar';
+export type CardType = string;
 
 export type Element = 'Air' | 'Earth' | 'Fire' | 'Water';
 

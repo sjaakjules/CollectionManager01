@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CardType, ThresholdGroup } from "@/data/dataModels";
 import {
   calculateCardLayout,
+  calculateDeckLayout,
   pixelsToSnapGrid,
   snapCardCenter,
   snapToDrawnGrid,
@@ -45,6 +46,42 @@ function collectionHeader(
 }
 
 describe("calculateCardLayout", () => {
+  it.each([
+    { mode: "grouped", layoutVariant: "wide" },
+    { mode: "grouped", layoutVariant: "portrait" },
+    { mode: "filteredFlat", layoutVariant: "wide" },
+    { mode: "preserveFlat", layoutVariant: "wide" },
+    { mode: "typeRows", layoutVariant: "wide" },
+  ] as const)("keeps unfamiliar types visible in $mode / $layoutVariant", (config) => {
+    const inputs = (["air", "earth", "fire", "water", "multiple", "none"] as const)
+      .flatMap((threshold) => [
+        card(`${threshold} trap`, "Trap", threshold, null),
+        card(`${threshold} future`, "Unannounced Form", threshold),
+        card(`${threshold} artifact`, "Artifact", threshold),
+        card(`${threshold} magic`, "Magic", threshold),
+      ]);
+    const result = calculateCardLayout({ cards: inputs, ...config });
+    expect(result.cards.map((entry) => entry.name).sort()).toEqual(inputs.map((entry) => entry.name).sort());
+    expect(result.cards.every((entry) => Number.isFinite(entry.position.x) && Number.isFinite(entry.position.y))).toBe(true);
+    expect(new Set(result.cards.map((entry) => `${entry.position.x},${entry.position.y}`)).size).toBe(inputs.length);
+    if (config.mode === 'grouped') expect(result.headers.some((header) => header.label.includes('Trap'))).toBe(true);
+  });
+
+  it('lays out unfamiliar types on every deck board', () => {
+    const names = ['Main Trap', 'Side Trap', 'Maybe Trap'];
+    const cardLookup = new Map(names.map((name) => [name, {
+      type: 'Trap', cost: 2, isLandscape: false, thresholdGroup: 'none' as const,
+    }]));
+    const result = calculateDeckLayout({
+      deck: { name: 'Future deck', boards: {
+        avatar: [], mainboard: [{ name: names[0] ?? '', quantity: 2 }],
+        sideboard: [{ name: names[1] ?? '', quantity: 1 }],
+        maybeboard: [{ name: names[2] ?? '', quantity: 1 }],
+      } }, cardLookup, collectionBottom: 0,
+    });
+    expect(result.cards.map((entry) => entry.name).sort()).toEqual([...names].sort());
+    expect(result.headers.some((header) => header.label === 'Trap')).toBe(true);
+  });
   it("keeps shifted cards centered on their snap cells when layout offsets are grid-snapped", () => {
     const result = calculateCardLayout({
       cards: [
@@ -251,5 +288,33 @@ describe("calculateCardLayout", () => {
     expect(collectionHeader(result, "Multi / None")).toBeDefined();
     expect(artifact.position.x).toBeLessThan(multiMinion.position.x);
     expect(noneSite.thresholdGroup).toBe("none");
+  });
+});
+
+describe('catalogue hierarchy geometry', () => {
+  const catalogueLayout = { columns: 6, steps: [
+    { field: 'element', mode: 'group', direction: 'asc' },
+    { field: 'family', mode: 'group', direction: 'asc' },
+    { field: 'cost', mode: 'sort', direction: 'asc' },
+  ] } as const;
+  it.each(['wide', 'portrait'] as const)('keeps every card in non-overlapping snapped cells in %s layout', (layoutVariant) => {
+    const inputs = (['air', 'earth', 'fire', 'water', 'multiple', 'none'] as const).flatMap((element) =>
+      Array.from({ length: 25 }, (_, i) => card(`${element}-${i}`, i % 3 === 0 ? 'Site' : 'Magic', element, i % 6)));
+    const result = calculateCardLayout({ cards: inputs, layoutVariant, catalogueLayout: { ...catalogueLayout, steps: [...catalogueLayout.steps] } });
+    expect(result.cards).toHaveLength(inputs.length);
+    for (const item of result.cards) {
+      expect(snapCardCenter(item.position.x, item.position.y, item.isLandscape)).toEqual(item.position);
+      expect(item.isLandscape).toBe(item.type === 'Site');
+      const width = item.isLandscape ? 140 : 100;
+      const height = item.isLandscape ? 100 : 140;
+      for (const other of result.cards) {
+        if (item === other) continue;
+        const otherWidth = other.isLandscape ? 140 : 100;
+        const otherHeight = other.isLandscape ? 100 : 140;
+        expect(Math.abs(item.position.x - other.position.x) >= (width + otherWidth) / 2 || Math.abs(item.position.y - other.position.y) >= (height + otherHeight) / 2).toBe(true);
+      }
+    }
+    expect(result.headers.some((header) => header.label === 'Air')).toBe(true);
+    expect(result.headers.some((header) => header.label.includes('Atlas'))).toBe(true);
   });
 });

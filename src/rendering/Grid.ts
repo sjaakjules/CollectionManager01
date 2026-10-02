@@ -13,6 +13,7 @@
  */
 
 import type { CardType, ThresholdGroup, CardRarity } from "@/data/dataModels";
+import { buildCatalogueGroups, type CatalogueGroup, type CatalogueLayoutConfig } from '@/data/catalogueLayout';
 
 // ============================================================================
 // Grid Constants
@@ -355,6 +356,18 @@ const TYPE_LABELS: Record<CardType, string> = {
   Site: "Sites",
 };
 
+function orderedTypes(types: Iterable<CardType>, preferred = TYPE_ORDER): CardType[] {
+  const present = new Set(types);
+  return [
+    ...preferred.filter((type) => present.has(type)),
+    ...[...present].filter((type) => !preferred.includes(type)).sort((a, b) => a.localeCompare(b)),
+  ];
+}
+
+function typeLabel(type: CardType): string {
+  return Object.hasOwn(TYPE_LABELS, type) ? TYPE_LABELS[type] ?? type : type;
+}
+
 export type CollectionLayoutVariant = "wide" | "portrait";
 
 export interface LayoutCardInput {
@@ -371,6 +384,7 @@ export interface LayoutConfig {
   cards: LayoutCardInput[];
   mode?: "grouped" | "filteredFlat" | "preserveFlat" | "typeRows";
   layoutVariant?: CollectionLayoutVariant;
+  catalogueLayout?: CatalogueLayoutConfig;
 }
 
 export interface ContentBounds {
@@ -389,6 +403,8 @@ export type HeaderKind =
 
 export interface GroupHeader {
   label: string;
+  /** Optional size for bounded user-defined catalogue group names. */
+  fontSize?: number;
   /** Pixel position for the header text (left edge, above the group) */
   position: GridPosition;
   kind: HeaderKind;
@@ -459,6 +475,7 @@ interface ColumnSplit {
 }
 
 export function calculateCardLayout(config: LayoutConfig): LayoutResult {
+  if (config.catalogueLayout) return layoutCatalogueHierarchy(config, config.catalogueLayout);
   const cards: CardLayoutInfo[] = [];
   const headers: GroupHeader[] = [];
 
@@ -610,6 +627,68 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   return { cards, headers, bounds };
 }
 
+/** Catalogue-only layout: filtered subsets keep their full grouping hierarchy. */
+function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLayoutConfig): LayoutResult {
+  const root = buildCatalogueGroups(config.cards, preferences);
+  const groups = root.children.length ? root.children : [root];
+  const cards: CardLayoutInfo[] = [];
+  const headers: GroupHeader[] = [];
+  const columnWidth = preferences.columns * CARD_CELL_SPACING.PORTRAIT.x;
+  const groupsPerRow = config.layoutVariant === 'portrait' ? 1 : 6;
+  let rowY = 0;
+  let rowHeight = 0;
+  const bounds: ContentBounds = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
+
+  function leaves(group: CatalogueGroup<LayoutCardInput>, path: string[] = []): { label: string; cards: LayoutCardInput[] }[] {
+    if (!group.children.length) return [{ label: path.join(' › '), cards: group.cards }];
+    return group.children.flatMap((child) => leaves(child, [...path, child.label]));
+  }
+
+  groups.forEach((group, index) => {
+    if (index > 0 && index % groupsPerRow === 0) {
+      rowY += rowHeight + GROUP_GAP_UNITS;
+      rowHeight = 0;
+    }
+    const startX = (index % groupsPerRow) * (columnWidth + GROUP_GAP_UNITS);
+    let cursorY = rowY;
+    if (root.children.length) {
+      headers.push({ label: group.label, kind: 'collection', fontSize: Math.min(HEADER_HEIGHT, columnWidth * SNAP_GRID.width / Math.max(1, group.label.length * 0.7)), position: { x: startX * SNAP_GRID.width, y: cursorY * SNAP_GRID.height } });
+      cursorY += 4;
+    }
+    for (const leaf of leaves(group)) {
+      if (leaf.label) {
+        headers.push({ label: leaf.label, kind: 'type-subgroup', fontSize: Math.min(HEADER_HEIGHT * 0.3, columnWidth * SNAP_GRID.width / Math.max(1, leaf.label.length * 0.7)), position: { x: startX * SNAP_GRID.width, y: cursorY * SNAP_GRID.height } });
+        cursorY += 2;
+      }
+      // A mixed group still has separate portrait/landscape lanes. Sorting can
+      // never rotate sites or give landscape cards portrait spacing.
+      for (const landscape of [false, true]) {
+        const entries = leaf.cards.filter((card) => card.isLandscape === landscape);
+        if (!entries.length) continue;
+        const spacing = getCardCellSpacing(landscape);
+        const size = getCardPixelSize(landscape);
+        const perRow = Math.max(1, Math.floor(columnWidth / spacing.x));
+        entries.forEach((card, cardIndex) => {
+          const position = snapGridToPixels(
+            startX + 1 + (cardIndex % perRow) * spacing.x,
+            cursorY + 1 + Math.floor(cardIndex / perRow) * spacing.y,
+            landscape,
+          );
+          cards.push({ name: card.name, position, isLandscape: landscape, type: card.type, thresholdGroup: card.thresholdGroup, cost: card.cost });
+          bounds.left = Math.min(bounds.left, position.x - size.width / 2);
+          bounds.top = Math.min(bounds.top, position.y - size.height / 2);
+          bounds.right = Math.max(bounds.right, position.x + size.width / 2);
+          bounds.bottom = Math.max(bounds.bottom, position.y + size.height / 2);
+        });
+        cursorY += Math.ceil(entries.length / perRow) * spacing.y + 1;
+      }
+      cursorY += 1;
+    }
+    rowHeight = Math.max(rowHeight, cursorY - rowY);
+  });
+  return { cards, headers, bounds: cards.length ? bounds : { left: 0, top: 0, right: 0, bottom: 0 } };
+}
+
 function layoutWideGroupedCards({
   grouped,
   cards,
@@ -639,7 +718,7 @@ function layoutWideGroupedCards({
     let maxGroupGridWidth = 0;
     let currentGridY = startGridY + 2;
 
-    for (const type of TYPE_ORDER) {
+    for (const type of orderedTypes(thresholdCards.keys())) {
       const typeCards = thresholdCards.get(type);
       if (!typeCards || typeCards.length === 0) continue;
 
@@ -651,7 +730,7 @@ function layoutWideGroupedCards({
       const spacing = getCardCellSpacing(isLandscape);
 
       addTypeSubgroupHeader(
-        TYPE_LABELS[type],
+        typeLabel(type),
         currentGridX,
         currentGridY,
         isLandscape,
@@ -716,7 +795,7 @@ function layoutPortraitGroupedCards({
     const leftGroups = [createCardSubgroup(thresholdCards, "Minion")].filter(
       (group): group is CardSubgroup => group !== null,
     );
-    const rightGroups = (["Magic", "Aura", "Site"] as const)
+    const rightGroups = orderedTypes(thresholdCards.keys()).filter((type) => type !== "Minion")
       .map((type) => createCardSubgroup(thresholdCards, type))
       .filter((group): group is CardSubgroup => group !== null);
 
@@ -847,7 +926,7 @@ function layoutTypeRowsCards(
   const rowCards: CardLayoutInfo[] = [];
   let currentGridY = 0;
 
-  for (const type of SHELF_TYPE_ROW_ORDER) {
+  for (const type of orderedTypes(inputCards.map((card) => card.type), SHELF_TYPE_ROW_ORDER)) {
     const typeCards = inputCards.filter((card) => card.type === type);
     if (typeCards.length === 0) continue;
 
@@ -912,11 +991,10 @@ function layoutPortraitArtifactsAndMultiNone({
         ]
       : [];
   const rightGroups = [
-    multiCards ? createCardSubgroup(multiCards, "Minion") : null,
-    multiCards ? createCardSubgroup(multiCards, "Magic") : null,
-    multiCards ? createCardSubgroup(multiCards, "Aura") : null,
-    multiCards ? createCardSubgroup(multiCards, "Site") : null,
-    createCardSubgroup(noneCards, "Site", "None Sites"),
+    ...orderedTypes(multiCards?.keys() ?? []).map((type) => createCardSubgroup(multiCards, type)),
+    ...orderedTypes(noneCards?.keys() ?? [])
+      .filter((type) => type !== "Artifact")
+      .map((type) => createCardSubgroup(noneCards, type, `None ${typeLabel(type)}`)),
   ].filter((group): group is CardSubgroup => group !== null);
 
   if (leftGroups.length === 0 && rightGroups.length === 0) return;
@@ -1028,7 +1106,7 @@ function layoutColumnSubgroups({
 
     if (subgroup.showHeader !== false) {
       addTypeSubgroupHeader(
-        subgroup.label ?? TYPE_LABELS[subgroup.type],
+        subgroup.label ?? typeLabel(subgroup.type),
         startGridX,
         currentGridY,
         isLandscape,
@@ -1333,7 +1411,7 @@ export function calculateDeckLayout(
     const deckTypeFontSize = HEADER_HEIGHT * 0.3;
     const deckTypeHeaderGap = deckTypeFontSize * 0.4;
 
-    for (const type of TYPE_ORDER) {
+    for (const type of orderedTypes(byType.keys())) {
       const typeCards = byType.get(type);
       if (!typeCards?.length) continue;
 
@@ -1346,7 +1424,7 @@ export function calculateDeckLayout(
       const typeHPos = snapGridToPixels(baseGridX, currentY, isLand);
       const cs = isLand ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
       headers.push({
-        label: TYPE_LABELS[type],
+        label: typeLabel(type),
         kind: "type-subgroup",
         position: {
           x: typeHPos.x - cs.width / 2,
@@ -1495,13 +1573,13 @@ export function calculateDeckLayout(
     mainboardMaxGridX = result.maxGridX;
   }
 
-  // === Sideboard (below mainboard) ===
+  // === Collection (below mainboard) ===
   if (deck.boards.sideboard.length > 0) {
     currentGridY += GROUP_GAP_UNITS - SUBGROUP_GAP_UNITS;
 
     const hPos = snapGridToPixels(0, currentGridY, false);
     headers.push({
-      label: "Sideboard",
+      label: "Collection",
       kind: "deck-board",
       position: {
         x: hPos.x - CARD_SIZE.PORTRAIT.width / 2,

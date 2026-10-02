@@ -588,9 +588,9 @@ export function createDeckZone(
       const leftInfo = cardInfoByName.get(left.name);
       const rightInfo = cardInfoByName.get(right.name);
       const leftTypeOrder =
-        leftInfo?.type != null ? DECK_TYPE_ORDER[leftInfo.type] : Number.MAX_SAFE_INTEGER;
+        leftInfo?.type != null ? (DECK_TYPE_ORDER[leftInfo.type] ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
       const rightTypeOrder =
-        rightInfo?.type != null ? DECK_TYPE_ORDER[rightInfo.type] : Number.MAX_SAFE_INTEGER;
+        rightInfo?.type != null ? (DECK_TYPE_ORDER[rightInfo.type] ?? Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
       if (leftTypeOrder !== rightTypeOrder) {
         return leftTypeOrder - rightTypeOrder;
       }
