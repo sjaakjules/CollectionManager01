@@ -13,6 +13,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { readCardCatalog } from './lib/card-catalog.mjs';
 
 const DEFAULT_INPUT = 'docs/Sorcery_CardInfo.json';
 const DEFAULT_OUTPUT = 'public/assets/sorcery_cards.json';
@@ -37,19 +38,13 @@ function parseArgs(argv) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const raw = await fs.readFile(args.input, 'utf8');
-  const cards = JSON.parse(raw);
-  if (!Array.isArray(cards) || cards.length === 0) {
-    throw new Error(`Card snapshot at ${args.input} is not a non-empty array`);
-  }
-  for (const card of cards.slice(0, 5)) {
-    if (typeof card?.name !== 'string' || typeof card?.guardian !== 'object') {
-      throw new Error(`Card snapshot at ${args.input} does not look like Card[]`);
-    }
+  const { cards, issues } = await readCardCatalog(args.input);
+  if (issues.length > 0) {
+    throw new Error(`Snapshot was not replaced. Review catalog issues first:\n${JSON.stringify(issues, null, 2)}`);
   }
   await fs.mkdir(path.dirname(args.output), { recursive: true });
-  await fs.writeFile(args.output, raw);
-  console.log(`Copied ${cards.length} cards: ${args.input} -> ${args.output}`);
+  await fs.writeFile(args.output, `${JSON.stringify(cards, null, 2)}\n`);
+  console.log(`Validated and copied ${cards.length} cards: ${args.input} -> ${args.output}`);
 }
 
 main().catch((error) => {

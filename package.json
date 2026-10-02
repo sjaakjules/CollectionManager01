@@ -20,6 +20,7 @@
     "cards:thumbs+atlas": "pnpm cards:thumbs && pnpm cards:atlas:all",
     "cards:atlas:all": "pnpm cards:atlas && pnpm cards:atlas:medium",
     "cards:snapshot": "node scripts/copy-card-snapshot.mjs",
+    "cards:check": "node scripts/check-card-catalog.mjs",
     "sorcery:request": "node scripts/sorcery-request.mjs",
     "curiosa:decks": "node scripts/fetch-curiosa-decks.mjs",
     "curiosa:seed-decks": "node scripts/build-guest-seed-decks.mjs",

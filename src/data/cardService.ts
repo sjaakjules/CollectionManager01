@@ -4,8 +4,7 @@
  * Fetches card data from the Sorcery TCG API.
  * Caches data in browser storage for offline use.
  *
- * In development, requests are proxied through Vite to avoid CORS issues.
- * In production, requests go directly to the API (requires proper CORS headers).
+ * Requests use the shared SorceryTCG queue and same-origin Vite/PHP proxies.
  *
  * Related files:
  * - `src/app/Startup.ts` (initial load)
@@ -16,6 +15,8 @@
 import type { Card } from "./dataModels";
 import { get, set } from "idb-keyval";
 import { isBlockedTokenCardName } from "@/data/tokenCards";
+import { normalizeCardCatalog, type CardCatalogResult } from './cardCatalog';
+import { sorceryClient } from './sorceryRequest';
 
 // Always fetch via same-origin to avoid CORS.
 // - DEV: Vite should proxy this path (see vite.config.ts).
@@ -26,43 +27,49 @@ const API_URL = "/api/sorcery/cards";
 // Regenerate with `pnpm cards:snapshot` after updating docs/Sorcery_CardInfo.json.
 const LOCAL_SNAPSHOT_URL = "/assets/sorcery_cards.json";
 
-const FETCH_TIMEOUT_MS = 20_000;
-const RETRY_COUNT = 2;
+let pendingCatalogue: Promise<CardCatalogResult> | null = null;
+
+function fetchFreshCatalogue(): Promise<CardCatalogResult> {
+  if (!pendingCatalogue) {
+    pendingCatalogue = (async () => {
+      const response = await sorceryClient.fetch(API_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return normalizeCardCatalog(await response.json());
+    })();
+    void pendingCatalogue.then(
+      () => { pendingCatalogue = null; },
+      () => { pendingCatalogue = null; },
+    );
+  }
+  return pendingCatalogue;
+}
 
 /**
  * Fetch all cards from cache or API with retry/fallback behavior.
  *
  * Inputs:
- * - None.
+ * - Optional `onWarning` callback for catalogue recovery notices.
  *
  * Outputs:
  * - Resolves to a `Card[]` from cache or network.
- * - Throws when both network and cache are unavailable.
+ * - Throws only when the API, cache and bundled snapshot are all unusable.
  */
-export async function fetchCards(): Promise<Card[]> {
+export async function fetchCards(onWarning?: (message: string) => void): Promise<Card[]> {
   // Try cache first
   const cached = await getCachedCards();
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     console.log("Using cached card data");
-    return filterPlayableCards(cached.cards);
+    return playableCatalog(cached.catalog, onWarning);
   }
 
   // Fetch from API
   try {
     console.log("Fetching cards from API...");
-    const response = await fetchWithRetry(API_URL, {
-      timeoutMs: FETCH_TIMEOUT_MS,
-      retries: RETRY_COUNT,
-    });
+    const catalog = await fetchFreshCatalogue();
+    const cards = playableCatalog(catalog, onWarning);
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    const cards = filterPlayableCards((await response.json()) as Card[]);
-
-    // Cache the result
-    await cacheCards(cards);
+    // A partial response must not replace the last complete catalog.
+    if (catalog.issues.length === 0) await cacheCards(cards);
 
     return cards;
   } catch (error) {
@@ -71,14 +78,16 @@ export async function fetchCards(): Promise<Card[]> {
     // Return cached data if available (even if stale)
     if (cached) {
       console.log("Using stale cached data due to API error");
-      return filterPlayableCards(cached.cards);
+      onWarning?.('The latest card catalogue could not be loaded. Using saved cards; newer cards may be unavailable.');
+      return playableCatalog(cached.catalog, onWarning);
     }
 
     // Last resort: the bundled snapshot, so a first-ever run still works
     // fully offline. Not cached, so the next online run fetches fresh data.
-    const bundled = await fetchBundledCards();
+    const bundled = await fetchBundledCards(onWarning);
     if (bundled) {
       console.log("Using bundled card snapshot (offline fallback)");
+      onWarning?.('The latest card catalogue could not be loaded. Using bundled cards; newer cards may be unavailable.');
       return bundled;
     }
 
@@ -86,15 +95,33 @@ export async function fetchCards(): Promise<Card[]> {
   }
 }
 
-async function fetchBundledCards(): Promise<Card[] | null> {
+async function fetchBundledCards(onWarning?: (message: string) => void): Promise<Card[] | null> {
   try {
     const response = await fetch(LOCAL_SNAPSHOT_URL);
     if (!response.ok) return null;
-    return filterPlayableCards((await response.json()) as Card[]);
+    return playableCatalog(normalizeCardCatalog(await response.json()), onWarning);
   } catch (error) {
     console.warn("Bundled card snapshot unavailable:", error);
     return null;
   }
+}
+
+function playableCatalog(catalog: CardCatalogResult, onWarning?: (message: string) => void): Card[] {
+  const cards = filterPlayableCards(catalog.cards);
+  if (cards.length === 0) throw new Error('Card catalog contains no playable cards');
+  if (catalog.issues.length > 0) {
+    console.warn('Card catalogue records needing review:', catalog.issues);
+    const skipped = catalog.issues.filter((issue) => issue.skipped);
+    const repaired = catalog.issues.filter((issue) => !issue.skipped);
+    if (skipped.length > 0) {
+      const names = skipped.slice(0, 5).map((issue) => issue.cardName).join(', ');
+      onWarning?.(`${skipped.length} card record(s) could not be loaded: ${names}${skipped.length > 5 ? ', …' : ''}. Saved decks are unchanged.`);
+    }
+    if (repaired.length > 0) {
+      onWarning?.(`${repaired.length} card(s) are using set metadata because current rules are unavailable.`);
+    }
+  }
+  return cards;
 }
 
 export function filterPlayableCards(cards: Card[]): Card[] {
@@ -159,6 +186,7 @@ export function buildCardFilterOptions(cards: Card[]): CardFilterOptions {
     for (const token of parseSubTypeTokens(card.subTypes)) {
       subTypes.add(token);
     }
+    for (const umbrella of card.umbrellas ?? []) subTypes.add(umbrella);
   }
 
   return {
@@ -184,66 +212,20 @@ export function buildCardFilterOptions(cards: Card[]): CardFilterOptions {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Network helpers
-// ---------------------------------------------------------------------------
-
-interface FetchWithRetryOptions extends RequestInit {
-  timeoutMs?: number;
-  retries?: number;
-}
-
-async function fetchWithRetry(
-  url: string,
-  options: FetchWithRetryOptions = {},
-): Promise<Response> {
-  const { timeoutMs = 20_000, retries = 0, ...init } = options;
-
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-      const res = await fetch(url, {
-        ...init,
-        signal: controller.signal,
-        // Avoid cached CORS failures; let our own caching layer handle persistence.
-        cache: "no-store",
-      });
-      clearTimeout(timeout);
-
-      if (res.ok) return res;
-
-      // Retry on transient upstream errors.
-      if (res.status >= 500 && attempt < retries) {
-        await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
-        continue;
-      }
-
-      return res;
-    } catch (err) {
-      clearTimeout(timeout);
-      lastError = err;
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
-        continue;
-      }
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("Network request failed");
-}
-
 // Cache helpers
 
 async function getCachedCards(): Promise<CachedCards | null> {
   try {
-    return (await get<CachedCards>(CACHE_KEY)) ?? null;
-  } catch {
+    const cached: unknown = await get(CACHE_KEY);
+    if (!cached || typeof cached !== 'object' || !('cards' in cached)) return null;
+    const catalog = normalizeCardCatalog(cached.cards);
+    if (filterPlayableCards(catalog.cards).length === 0) return null;
+    const timestamp = 'timestamp' in cached && typeof cached.timestamp === 'number'
+      && Number.isFinite(cached.timestamp) && cached.timestamp <= Date.now()
+      ? cached.timestamp : 0;
+    return { timestamp, catalog };
+  } catch (error) {
+    console.warn('Card cache unavailable or incompatible; trying a fresh catalog:', error);
     return null;
   }
 }
@@ -264,5 +246,5 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CachedCards {
   timestamp: number;
-  cards: Card[];
+  catalog: CardCatalogResult;
 }

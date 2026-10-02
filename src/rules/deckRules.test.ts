@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Card, CardRarity, CardType } from '@/data/dataModels';
 import { createEmptyDeck } from '@/data/dataModels';
-import { canAddCard, validateDeck } from '@/rules/deckRules';
+import { canAddCard, getRarityLimit, validateDeck } from '@/rules/deckRules';
 
 function card(name: string, type: CardType, rarity: CardRarity): Card {
   return {
@@ -55,5 +55,20 @@ describe('deck validation', () => {
       reason: 'Unique cards limited to 1 copies',
     });
     expect(canAddCard(deck, 'Common Spell', cards)).toEqual({ allowed: true });
+  });
+
+  it('includes new card types in spell totals and applies known rarity limits', () => {
+    const trap = card('New Trap', 'Trap', 'Ordinary');
+    const deck = createEmptyDeck('Future', 'deck-future');
+    deck.boards.mainboard.push({ name: trap.name, quantity: 61 });
+    expect(validateDeck(deck, [trap]).errors.map((error) => error.type))
+      .toEqual(expect.arrayContaining(['TOO_MANY_SPELLS', 'RARITY_LIMIT_EXCEEDED']));
+    expect(canAddCard(deck, trap.name, [trap]).allowed).toBe(false);
+  });
+
+  it('does not invent copy limits for missing or unfamiliar rarity values', () => {
+    expect(getRarityLimit(null)).toBeNull();
+    expect(getRarityLimit('Future Rarity')).toBeNull();
+    expect(getRarityLimit('Unique')).toBe(1);
   });
 });

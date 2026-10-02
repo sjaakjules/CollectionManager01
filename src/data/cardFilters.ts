@@ -359,7 +359,7 @@ function matchesCriteria(card: Card, criteria: CardFilterCriteria): boolean {
   }
 
   if (normalized.subType) {
-    const subTypes = toLowerSafe(card.subTypes);
+    const subTypes = toLowerSafe([card.subTypes, ...(card.umbrellas ?? [])].join(', '));
     if (!subTypes.includes(normalized.subType)) {
       return false;
     }

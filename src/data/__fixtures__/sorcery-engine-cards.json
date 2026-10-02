@@ -1,0 +1,311 @@
+[
+  {
+    "id": "cmt8680sc05hfnwcygr1vcfh5",
+    "name": "Abaddon Succubus",
+    "slug": "abaddon_succubus",
+    "engine": {
+      "type": "Minion",
+      "category": "Spell",
+      "rarity": "Elite",
+      "slot": "Elite",
+      "rules": "Once on your turn, may lure target adjacent enemy minion to take a step closer. When it arrives, it takes 2 damage and you heal 2.",
+      "cost": 4,
+      "attack": 3,
+      "defense": 3,
+      "life": 20,
+      "air": 0,
+      "earth": 0,
+      "fire": 0,
+      "water": 2,
+      "elements": [
+        "Water"
+      ],
+      "subtypes": [
+        "Demon"
+      ],
+      "keywords": [],
+      "umbrellas": [
+        "Evil"
+      ],
+      "back": null
+    },
+    "printings": [
+      {
+        "id": "cmt86824305i4nwcy8i0dw6xo",
+        "slug": "006-abaddon_succubus-b-s",
+        "printedAt": "2025-12-05T07:00:00.000Z",
+        "set": {
+          "name": "Gothic",
+          "code": "006",
+          "releasedAt": "2026-08-25T04:34:36.043Z"
+        },
+        "meta": {
+          "finish": "Standard",
+          "product": "Booster",
+          "typeline": "An Elite Demon of alluring demise",
+          "flavor": null,
+          "artist": {
+            "name": "Elvira Shakirova",
+            "slug": "elvira_shakirova"
+          },
+          "back": null
+        }
+      },
+      {
+        "id": "cmt86818905hpnwcymr4l9c1j",
+        "slug": "006-abaddon_succubus-b-f",
+        "printedAt": "2025-12-05T07:00:00.000Z",
+        "set": {
+          "name": "Gothic",
+          "code": "006",
+          "releasedAt": "2026-08-25T04:34:36.043Z"
+        },
+        "meta": {
+          "finish": "Foil",
+          "product": "Booster",
+          "typeline": "An Elite Demon of alluring demise",
+          "flavor": null,
+          "artist": {
+            "name": "Elvira Shakirova",
+            "slug": "elvira_shakirova"
+          },
+          "back": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "cmt869tfz06gwnwcyhpv39m96",
+    "name": "Accursed Desert",
+    "slug": "accursed_desert",
+    "engine": {
+      "type": "Site",
+      "category": "Site",
+      "rarity": "Ordinary",
+      "slot": "Ordinary",
+      "rules": "Genesis → Break nearby Wards.",
+      "cost": null,
+      "attack": null,
+      "defense": null,
+      "life": 20,
+      "air": 0,
+      "earth": 0,
+      "fire": 1,
+      "water": 0,
+      "elements": [
+        "Fire"
+      ],
+      "subtypes": [],
+      "keywords": [
+        "Genesis",
+        "Ward"
+      ],
+      "umbrellas": [],
+      "back": null
+    },
+    "printings": [
+      {
+        "id": "cmt869utb06hnnwcy9wolyr47",
+        "slug": "006-accursed_desert-b-s",
+        "printedAt": "2025-12-05T07:00:00.000Z",
+        "set": {
+          "name": "Gothic",
+          "code": "006",
+          "releasedAt": "2026-08-25T04:34:36.043Z"
+        },
+        "meta": {
+          "finish": "Standard",
+          "product": "Booster",
+          "typeline": "An Ordinary Site seared by sun and sin",
+          "flavor": null,
+          "artist": {
+            "name": "Emil Idzikowski",
+            "slug": "emil_idzikowski"
+          },
+          "back": null
+        }
+      },
+      {
+        "id": "cmt869txh06h6nwcyinf3e7j4",
+        "slug": "006-accursed_desert-b-f",
+        "printedAt": "2025-12-05T07:00:00.000Z",
+        "set": {
+          "name": "Gothic",
+          "code": "006",
+          "releasedAt": "2026-08-25T04:34:36.043Z"
+        },
+        "meta": {
+          "finish": "Foil",
+          "product": "Booster",
+          "typeline": "An Ordinary Site seared by sun and sin",
+          "flavor": null,
+          "artist": {
+            "name": "Emil Idzikowski",
+            "slug": "emil_idzikowski"
+          },
+          "back": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "cmt85zpmp01ienwcy6yk9fql5",
+    "name": "Apprentice Wizard",
+    "slug": "apprentice_wizard",
+    "engine": {
+      "type": "Minion",
+      "category": "Spell",
+      "rarity": "Ordinary",
+      "slot": "Ordinary",
+      "rules": "Spellcaster\r\nGenesis → Draw a spell.",
+      "cost": 3,
+      "attack": 1,
+      "defense": 1,
+      "life": null,
+      "air": 1,
+      "earth": 0,
+      "fire": 0,
+      "water": 0,
+      "elements": [
+        "Air"
+      ],
+      "subtypes": [
+        "Mortal"
+      ],
+      "keywords": [
+        "Genesis",
+        "Spellcaster"
+      ],
+      "umbrellas": [],
+      "back": null
+    },
+    "printings": [
+      {
+        "id": "cmt86e6nu0838nwcycoq2vepz",
+        "slug": "999-apprentice_wizard-wk-s",
+        "printedAt": "2025-08-01T07:00:00.000Z",
+        "set": {
+          "name": "Promo",
+          "code": "999",
+          "releasedAt": "2026-08-25T04:39:08.860Z"
+        },
+        "meta": {
+          "finish": "Standard",
+          "product": "WelcomeKit",
+          "typeline": "An Ordinary Mortal mew to power.",
+          "flavor": null,
+          "artist": {
+            "name": "Séverine Pineaux",
+            "slug": "severine_pineaux"
+          },
+          "back": null
+        }
+      },
+      {
+        "id": "cmt86e5sg082qnwcyk5q2f8z0",
+        "slug": "999-apprentice_wizard-wk-f",
+        "printedAt": "2025-08-01T07:00:00.000Z",
+        "set": {
+          "name": "Promo",
+          "code": "999",
+          "releasedAt": "2026-08-25T04:39:08.860Z"
+        },
+        "meta": {
+          "finish": "Foil",
+          "product": "WelcomeKit",
+          "typeline": "An Ordinary Mortal mew to power.",
+          "flavor": null,
+          "artist": {
+            "name": "Séverine Pineaux",
+            "slug": "severine_pineaux"
+          },
+          "back": null
+        }
+      },
+      {
+        "id": "cmt863t4q03kknwcy3t9ffwxy",
+        "slug": "002-apprentice_wizard-b-s",
+        "printedAt": "2023-10-06T07:00:00.000Z",
+        "set": {
+          "name": "Beta",
+          "code": "002",
+          "releasedAt": "2026-08-25T04:29:12.082Z"
+        },
+        "meta": {
+          "finish": "Standard",
+          "product": "Booster",
+          "typeline": "An Ordinary Mortal new to power",
+          "flavor": null,
+          "artist": {
+            "name": "Ossi Hiekkala",
+            "slug": "ossi_hiekkala"
+          },
+          "back": null
+        }
+      },
+      {
+        "id": "cmt863s9a03k4nwcy6a1fvio3",
+        "slug": "002-apprentice_wizard-b-f",
+        "printedAt": "2023-10-06T07:00:00.000Z",
+        "set": {
+          "name": "Beta",
+          "code": "002",
+          "releasedAt": "2026-08-25T04:29:12.082Z"
+        },
+        "meta": {
+          "finish": "Foil",
+          "product": "Booster",
+          "typeline": "An Ordinary Mortal new to power",
+          "flavor": null,
+          "artist": {
+            "name": "Ossi Hiekkala",
+            "slug": "ossi_hiekkala"
+          },
+          "back": null
+        }
+      },
+      {
+        "id": "cmt85zr0501j7nwcy6uzz28vi",
+        "slug": "001-apprentice_wizard-b-s",
+        "printedAt": "2023-06-22T07:00:00.000Z",
+        "set": {
+          "name": "Alpha",
+          "code": "001",
+          "releasedAt": "2026-08-25T04:21:27.405Z"
+        },
+        "meta": {
+          "finish": "Standard",
+          "product": "Booster",
+          "typeline": "An Ordinary Mortal new to power",
+          "flavor": null,
+          "artist": {
+            "name": "Ossi Hiekkala",
+            "slug": "ossi_hiekkala"
+          },
+          "back": null
+        }
+      },
+      {
+        "id": "cmt85zq4701ionwcy9h363s55",
+        "slug": "001-apprentice_wizard-b-f",
+        "printedAt": "2023-06-22T07:00:00.000Z",
+        "set": {
+          "name": "Alpha",
+          "code": "001",
+          "releasedAt": "2026-08-25T04:21:27.405Z"
+        },
+        "meta": {
+          "finish": "Foil",
+          "product": "Booster",
+          "typeline": "An Ordinary Mortal new to power",
+          "flavor": null,
+          "artist": {
+            "name": "Ossi Hiekkala",
+            "slug": "ossi_hiekkala"
+          },
+          "back": null
+        }
+      }
+    ]
+  }
+]

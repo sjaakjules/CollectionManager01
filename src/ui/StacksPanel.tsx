@@ -108,7 +108,7 @@ export function StacksPanel({
         thresholdGroup: getThresholdGroup(card.guardian.thresholds),
         isLandscape: card.guardian.type === "Site",
         type: card.guardian.type,
-        manaCost: card.guardian.cost,
+        manaCost: card.guardian.cost ?? 0,
       });
     }
     return map;

@@ -13,10 +13,11 @@
  */
 
 // ============================================================================
-// Card Data Types (from Sorcery API)
+// Normalized Card Data Types (see cardCatalog.ts for upstream API formats)
 // ============================================================================
 
-export type CardRarity = 'Ordinary' | 'Exceptional' | 'Elite' | 'Unique';
+// Catalog values are extensible. New releases must not require a new enum.
+export type CardRarity = string;
 
 export type CardType = string;
 
@@ -30,10 +31,10 @@ export interface Thresholds {
 }
 
 export interface CardStats {
-  rarity: CardRarity;
+  rarity: CardRarity | null;
   type: CardType;
   rulesText: string;
-  cost: number;
+  cost: number | null;
   attack: number | null;
   defence: number | null;
   life: number | null;
@@ -42,7 +43,7 @@ export interface CardStats {
 
 export interface CardVariant {
   slug: string;
-  finish: 'Standard' | 'Foil';
+  finish: string;
   product: string;
   artist: string;
   flavorText: string;
@@ -62,6 +63,9 @@ export interface Card {
   elements: string;
   subTypes: string;
   sets: CardSet[];
+  keywords?: string[];
+  umbrellas?: string[];
+  back?: CardStats;
 }
 
 // ============================================================================
@@ -73,8 +77,8 @@ export type ThresholdGroup = 'air' | 'earth' | 'fire' | 'water' | 'multiple' | '
 export interface CardDisplayInfo {
   name: string;
   type: CardType;
-  rarity: CardRarity;
-  cost: number;
+  rarity: CardRarity | null;
+  cost: number | null;
   thresholdGroup: ThresholdGroup;
   isLandscape: boolean;
   defaultVariantSlug: string;

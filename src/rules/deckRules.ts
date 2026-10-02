@@ -123,15 +123,15 @@ export function validateDeck(deck: Deck, cardDatabase: Card[]): ValidationResult
     if (!card) continue;
 
     const rarity = card.guardian.rarity;
-    const limit = DECK_LIMITS.RARITY_LIMITS[rarity];
+    const limit = getRarityLimit(rarity);
 
-    if (quantity > limit) {
+    if (limit !== null && quantity > limit) {
       errors.push({
         type: 'RARITY_LIMIT_EXCEEDED',
         cardName: card.name,
         message: getRuleMessage('RARITY_LIMIT_EXCEEDED', {
           cardName: card.name,
-          rarity,
+          rarity: rarity ?? '',
           limit,
           count: quantity,
         }),
@@ -179,9 +179,9 @@ export function canAddCard(
 
   // Check rarity limit
   const rarity = card.guardian.rarity;
-  const limit = DECK_LIMITS.RARITY_LIMITS[rarity];
+  const limit = getRarityLimit(rarity);
 
-  if (currentQty >= limit) {
+  if (limit !== null && currentQty >= limit) {
     return {
       allowed: false,
       reason: `${rarity} cards limited to ${limit} copies`,
@@ -198,8 +198,9 @@ export function canAddCard(
  * - `rarity`: Card rarity value.
  *
  * Outputs:
- * - Returns max allowed copies for that rarity.
+ * - Returns max allowed copies, or null when no copy rule is known.
  */
-export function getRarityLimit(rarity: CardRarity): number {
-  return DECK_LIMITS.RARITY_LIMITS[rarity];
+export function getRarityLimit(rarity: CardRarity | null): number | null {
+  const limits: Readonly<Record<string, number>> = DECK_LIMITS.RARITY_LIMITS;
+  return rarity && Object.hasOwn(limits, rarity) ? limits[rarity] ?? null : null;
 }

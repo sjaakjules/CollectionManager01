@@ -854,7 +854,7 @@ export function cardNameToOrientationMap(
     map.set(card.name, {
       isLandscape: card.guardian.type === "Site",
       type: card.guardian.type,
-      cost: Number.isFinite(card.guardian.cost) ? card.guardian.cost : 0,
+      cost: card.guardian.cost ?? 0,
     });
   }
   return map;

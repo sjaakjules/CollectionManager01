@@ -26,6 +26,7 @@ import {
   Text,
   FederatedPointerEvent,
 } from "pixi.js";
+import { getRarityLimit } from "@/rules/deckRules";
 import { Camera, type CameraBounds } from "./Camera";
 import { CardSprite, type CardSpriteState } from "./CardSprite";
 import {
@@ -100,7 +101,7 @@ import {
   isCardFilterCriteriaEmpty,
   type CardFilterState,
 } from "@/data/cardFilters";
-import { DECK_LIMITS, getThresholdGroup } from "@/data/dataModels";
+import { getThresholdGroup } from "@/data/dataModels";
 import { describeFilterButton } from "@/ui/cardFilterUi";
 import {
   QUADRANT_BOUNDS,
@@ -3699,7 +3700,7 @@ export class PixiStage {
       spellTypeCounts[type] += 1;
 
       const cost = Number.isFinite(card.guardian.cost)
-        ? Math.max(0, card.guardian.cost)
+        ? Math.max(0, card.guardian.cost ?? 0)
         : 0;
       const manaCost = Math.max(0, Math.trunc(cost));
       totalSpellMana += cost;
@@ -3755,8 +3756,8 @@ export class PixiStage {
     for (const [name, count] of duplicateCounts) {
       const card = cardLookup.get(name);
       if (!card) continue;
-      const limit = DECK_LIMITS.RARITY_LIMITS[card.guardian.rarity];
-      if (count > limit) {
+      const limit = getRarityLimit(card.guardian.rarity);
+      if (limit !== null && count > limit) {
         duplicateViolations.push({ name, count, limit });
       }
     }
@@ -7770,7 +7771,7 @@ export class PixiStage {
       name: card.name,
       type: card.guardian.type,
       thresholdGroup: getThresholdGroup(card.guardian.thresholds),
-      cost: card.guardian.cost,
+      cost: card.guardian.cost ?? 0,
       isLandscape: card.guardian.type === "Site",
       primarySet: card.sets[0]?.name,
       rarity: card.guardian.rarity as
@@ -8654,7 +8655,7 @@ export class PixiStage {
       name: card.name,
       type: card.guardian.type,
       thresholdGroup: getThresholdGroup(card.guardian.thresholds),
-      cost: card.guardian.cost,
+      cost: card.guardian.cost ?? 0,
       isLandscape: card.guardian.type === "Site",
       primarySet: card.sets[0]?.name,
       rarity: card.guardian.rarity as
@@ -8831,7 +8832,7 @@ export class PixiStage {
     for (const card of this.cards) {
       cardLookup.set(card.name, {
         type: card.guardian.type,
-        cost: card.guardian.cost,
+        cost: card.guardian.cost ?? 0,
         isLandscape: card.guardian.type === "Site",
         thresholdGroup: getThresholdGroup(card.guardian.thresholds),
       });

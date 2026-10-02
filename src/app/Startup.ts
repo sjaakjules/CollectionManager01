@@ -90,7 +90,12 @@ async function loadCards(
   dispatch: React.Dispatch<AppAction>
 ): Promise<StartupResult> {
   try {
-    const cards: Card[] = await fetchCards();
+    const cards: Card[] = await fetchCards((message) => {
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        notification: { type: 'warning', message },
+      });
+    });
     dispatch({ type: 'SET_CARDS', cards });
     return { success: true };
   } catch (error) {
