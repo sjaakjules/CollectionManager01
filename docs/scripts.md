@@ -181,6 +181,29 @@ Deck Lookup, including 416 tagged for the 2026 competition season. Search and
 skip details are recorded in `offlineData/deckArchive.json.search.json` and
 `offlineData/deckArchive.json.skipped.json`.
 
+The 4 October 2026 refresh reused the preset plus the older `place` search:
+
+```sh
+pnpm sorcery:competitive-decks --query place --skip-processed
+```
+
+It searched 37 terms once (79 search pages), found 1,012 unique results, and
+downloaded 21 new valid decks. Two of those downloads came from correcting
+event-name matching in the saved results, without repeating the searches.
+All 100 upstream requests completed successfully, sequentially through the
+shared limiter with at least three seconds after each response. The saved card
+catalogue was reused, and previously processed decklists were not downloaded.
+
+The archive and rebuilt Deck Lookup now contain 652 decks. Reclassification
+from cached titles and primers made another 42 existing decks visible in
+Competitions, for 479 decks in the 2026 season. All 631 previous deck contents
+were retained; only their competition annotations were refreshed locally.
+New event facets are Ed Beard Jr Championship, Elemental Series, Fall Classic,
+Forja Hobby Store 1K, Sin City Open, Sorcerers at the Core, Tournament Grounds,
+Twin Cities Peasant League, and Unland Cup. Invercargill, London, and Oulu also
+now appear as location facets. Event seasons written directly after a name,
+such as `SorceryCon26`, take priority over historical years in a primer.
+
 ### `pnpm curiosa:search-decks`
 
 Searches SorceryTCG, saves a search snapshot, then downloads matching decklists

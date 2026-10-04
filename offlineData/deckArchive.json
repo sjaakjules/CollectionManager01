@@ -94,6 +94,32 @@
           "Ghostfire": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          4
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:scg-con",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -177,6 +203,32 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "4-2"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:scg-con",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -276,6 +328,32 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "6-0"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:scg-con",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -361,6 +439,38 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed",
+          "record"
+        ],
+        "placements": [
+          3
+        ],
+        "topCuts": [],
+        "records": [
+          "5-1"
+        ],
+        "matchedQueries": [
+          "place"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "result:placed",
+          "result:record"
+        ],
+        "likes": 27,
+        "views": 2411
       }
     }
   },
@@ -634,7 +744,8 @@
         "matchedQueries": [
           "Grand Contest",
           "GC",
-          "SCGCon"
+          "SCGCon",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -644,7 +755,7 @@
           "result:placed"
         ],
         "likes": 77,
-        "views": 6490
+        "views": 6523
       }
     }
   },
@@ -762,7 +873,7 @@
           "result:top-cut"
         ],
         "likes": 18,
-        "views": 1827
+        "views": 1828
       }
     }
   },
@@ -880,7 +991,8 @@
         "matchedQueries": [
           "SorceryCon",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
@@ -889,7 +1001,7 @@
           "season:2026"
         ],
         "likes": 201,
-        "views": 23442
+        "views": 23566
       }
     }
   },
@@ -1153,7 +1265,7 @@
           "result:top-cut"
         ],
         "likes": 6,
-        "views": 830
+        "views": 831
       }
     }
   },
@@ -1367,6 +1479,46 @@
           "Searing Truth": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2025,
+          2026
+        ],
+        "events": [],
+        "locations": [
+          "Melbourne"
+        ],
+        "resultTags": [
+          "placed",
+          "record"
+        ],
+        "placements": [
+          2,
+          4,
+          5
+        ],
+        "topCuts": [],
+        "records": [
+          "1-2",
+          "1-3",
+          "2-3",
+          "2-4",
+          "5-6"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "location:melbourne",
+          "result:placed",
+          "result:record",
+          "season:2025",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -1901,7 +2053,8 @@
         ],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -1912,7 +2065,7 @@
           "result:winner"
         ],
         "likes": 64,
-        "views": 4682
+        "views": 4732
       }
     }
   },
@@ -2004,6 +2157,33 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          4
+        ],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event-alias:sorcerers-summit",
+          "event:sorcerers-summit",
+          "result:top-cut"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -2335,6 +2515,47 @@
           "Wave of Eviction": 1,
           "Winter Nymph": 3
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Gen Con",
+          "SorceryCon"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed",
+          "top-cut",
+          "record"
+        ],
+        "placements": [
+          2,
+          3,
+          8
+        ],
+        "topCuts": [
+          8
+        ],
+        "records": [
+          "4-6",
+          "5-1"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:gen-con",
+          "event:sorcerycon",
+          "result:placed",
+          "result:record",
+          "result:top-cut",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -2624,7 +2845,7 @@
           "season:2026"
         ],
         "likes": 82,
-        "views": 8529
+        "views": 8597
       }
     }
   },
@@ -2802,7 +3023,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:sorcerers-summit",
@@ -2811,7 +3033,7 @@
           "result:winner"
         ],
         "likes": 64,
-        "views": 5907
+        "views": 5925
       }
     }
   },
@@ -2937,14 +3159,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "SorceryCon"
+          "SorceryCon",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
           "result:placed"
         ],
         "likes": 91,
-        "views": 8790
+        "views": 8798
       }
     }
   },
@@ -3052,7 +3275,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:sorcerers-summit",
@@ -3061,7 +3285,7 @@
           "result:winner"
         ],
         "likes": 20,
-        "views": 1458
+        "views": 1466
       }
     }
   },
@@ -3269,7 +3493,7 @@
           "season:2026"
         ],
         "likes": 99,
-        "views": 7066
+        "views": 7088
       }
     }
   },
@@ -3370,7 +3594,8 @@
         "records": [],
         "matchedQueries": [
           "SCG CON",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:scg-con",
@@ -3379,7 +3604,7 @@
           "result:winner"
         ],
         "likes": 162,
-        "views": 12604
+        "views": 12644
       }
     }
   },
@@ -3622,7 +3847,7 @@
           "result:record"
         ],
         "likes": 142,
-        "views": 11073
+        "views": 11098
       }
     }
   },
@@ -3816,6 +4041,32 @@
           "Eclipse": 1,
           "The Malleus Maleficarum": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "3-5"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:record",
+          "result:winner"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -3947,6 +4198,57 @@
           "Failed Mutation": 1,
           "Lilith": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2025,
+          2026
+        ],
+        "events": [
+          "SCG CON",
+          "SorceryCon",
+          "Sorcerers at the Core",
+          "Unland Cup"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed",
+          "top-cut",
+          "record"
+        ],
+        "placements": [
+          1,
+          2,
+          12,
+          14
+        ],
+        "topCuts": [
+          8,
+          16
+        ],
+        "records": [
+          "4-2",
+          "5-6"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:scg-con",
+          "event:sorcerers-at-the-core",
+          "event:sorcerycon",
+          "event:unland-cup",
+          "result:placed",
+          "result:record",
+          "result:top-cut",
+          "result:winner",
+          "season:2025",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -4145,7 +4447,8 @@
         "matchedQueries": [
           "Battle for Midland",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:battle-for-midland",
@@ -4495,7 +4798,7 @@
           "season:2026"
         ],
         "likes": 23,
-        "views": 2786
+        "views": 2792
       }
     }
   },
@@ -4890,6 +5193,32 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SorceryCon"
+        ],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "5-3"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:sorcerycon",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -4992,6 +5321,38 @@
           "Into the Abyss": 1,
           "Scatter": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [
+          "Washington, DC"
+        ],
+        "resultTags": [
+          "placed",
+          "record"
+        ],
+        "placements": [
+          3
+        ],
+        "topCuts": [],
+        "records": [
+          "9-2"
+        ],
+        "matchedQueries": [
+          "place"
+        ],
+        "matchedSignals": [
+          "location:washington-dc",
+          "result:placed",
+          "result:record"
+        ],
+        "likes": 3,
+        "views": 254
       }
     }
   },
@@ -5085,6 +5446,33 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "place"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed",
+          "season:2026"
+        ],
+        "likes": 26,
+        "views": 1595
       }
     }
   },
@@ -6095,6 +6483,32 @@
           "Pebbled Paths": 1,
           "Silver Bullet": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "2-3",
+          "4-5"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:record",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -6403,14 +6817,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "SorceryCon"
+          "SorceryCon",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
           "result:placed"
         ],
         "likes": 21,
-        "views": 2190
+        "views": 2191
       }
     }
   },
@@ -6516,7 +6931,8 @@
         "matchedQueries": [
           "SCG CON",
           "2026",
-          "Top 8"
+          "Top 8",
+          "place"
         ],
         "matchedSignals": [
           "event:scg-con",
@@ -6525,7 +6941,7 @@
           "season:2026"
         ],
         "likes": 30,
-        "views": 2170
+        "views": 2171
       }
     }
   },
@@ -6845,7 +7261,8 @@
         "matchedQueries": [
           "SCRCON",
           "2026",
-          "Champion"
+          "Champion",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -6854,7 +7271,7 @@
           "season:2026"
         ],
         "likes": 34,
-        "views": 3119
+        "views": 3123
       }
     }
   },
@@ -7070,6 +7487,50 @@
           "Mix Terra": 1,
           "Landmass": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2023,
+          2024,
+          2025,
+          2026
+        ],
+        "events": [
+          "Cornerstone",
+          "Gen Con",
+          "Sin City Open"
+        ],
+        "locations": [
+          "Las Vegas"
+        ],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1,
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:cornerstone",
+          "event:gen-con",
+          "event:sin-city-open",
+          "location:las-vegas",
+          "result:placed",
+          "result:winner",
+          "season:2023",
+          "season:2024",
+          "season:2025",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -7788,6 +8249,30 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "3-5"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -7966,6 +8451,44 @@
           "Hellhounds": 2
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed",
+          "record"
+        ],
+        "placements": [
+          12
+        ],
+        "topCuts": [],
+        "records": [
+          "6-2",
+          "0-1",
+          "0-2",
+          "1-0",
+          "1-1",
+          "2-0",
+          "2-1",
+          "4-1"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event-alias:sorcerers-summit",
+          "event:sorcerers-summit",
+          "result:placed",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -9129,7 +9652,8 @@
         ],
         "matchedQueries": [
           "GC",
-          "SCGCon"
+          "SCGCon",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -9138,7 +9662,7 @@
           "result:record"
         ],
         "likes": 92,
-        "views": 6900
+        "views": 6905
       }
     }
   },
@@ -10050,6 +10574,32 @@
           "Sir Priamus": 1,
           "Wizard's Den": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [
+          "Las Vegas"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          10
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "location:las-vegas",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -10169,7 +10719,7 @@
           "result:placed"
         ],
         "likes": 21,
-        "views": 2305
+        "views": 2306
       }
     }
   },
@@ -10354,6 +10904,27 @@
           "Ghoul": 4
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:cornerstone"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -11187,6 +11758,43 @@
           "Led Astray": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers at the Core",
+          "Unland Cup"
+        ],
+        "locations": [],
+        "resultTags": [
+          "top-cut",
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [
+          8
+        ],
+        "records": [
+          "4-0",
+          "4-2",
+          "5-0",
+          "6-2",
+          "8-3"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:sorcerers-at-the-core",
+          "event:unland-cup",
+          "result:record",
+          "result:top-cut"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -11715,6 +12323,30 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          5
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -12034,6 +12666,32 @@
           "Doctor Demetrius": 1,
           "Mount Ussar Sanctuary": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "1-3",
+          "3-0",
+          "3-5"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -12155,6 +12813,38 @@
           "Order of the White Wing": 3,
           "Sawbones": 2
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2025,
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [
+          "Baltimore"
+        ],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "2-3"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:scg-con",
+          "location:baltimore",
+          "result:record",
+          "season:2025",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -12447,6 +13137,36 @@
           "Murder of Crows": 2
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "placed",
+          "record"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [
+          "1-2",
+          "2-3",
+          "4-6"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -12758,6 +13478,31 @@
           "Archangel Gabriel": 1,
           "Toolbox": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "1-2",
+          "2-3"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -13985,6 +14730,36 @@
           "Vast Desert": 1,
           "Zap!": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "2-3",
+          "4-5"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event-alias:sorcerers-summit",
+          "event:sorcerers-summit",
+          "result:record",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -14106,6 +14881,35 @@
           "The Doom of Dilmun": 1,
           "The Hexham Haunts": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SorceryCon"
+        ],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "6-2"
+        ],
+        "matchedQueries": [
+          "SorceryCon"
+        ],
+        "matchedSignals": [
+          "event:sorcerycon",
+          "result:record",
+          "season:2026"
+        ],
+        "likes": 13,
+        "views": 980
       }
     }
   },
@@ -14784,6 +15588,35 @@
           "Lacuna Entity": 2,
           "Winter Nymph": 3
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2025,
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "3-1"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:cornerstone",
+          "result:record",
+          "season:2025",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -16225,6 +17058,30 @@
           "Pilgrim's Shrine": 2,
           "Renatus Trueblood": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "0-2"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -16412,6 +17269,27 @@
           "Makeshift Barricade": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SorceryCon"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:sorcerycon"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -17255,6 +18133,34 @@
           "Muirid Fomorians": 1,
           "Nommo Monitor": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          32
+        ],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event-alias:sorcerers-summit",
+          "event:sorcerers-summit",
+          "result:top-cut"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -17576,7 +18482,8 @@
         "records": [],
         "matchedQueries": [
           "2026",
-          "Champion"
+          "Champion",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -18341,6 +19248,37 @@
           "Hellhounds": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed",
+          "record"
+        ],
+        "placements": [
+          7
+        ],
+        "topCuts": [],
+        "records": [
+          "4-2"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:scg-con",
+          "result:placed",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -18464,7 +19402,8 @@
         ],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -18474,7 +19413,7 @@
           "result:winner"
         ],
         "likes": 38,
-        "views": 2052
+        "views": 2056
       }
     }
   },
@@ -18593,6 +19532,29 @@
           "Meat Hook": 1,
           "Winter Nymph": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:sorcerers-summit",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -18677,6 +19639,28 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SorceryCon"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "event:sorcerycon",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -19066,6 +20050,30 @@
           "Virgin in Prayer": 1,
           "Wreathed in Righteousness": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "7-9"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -21669,6 +22677,46 @@
           "Doctor Demetrius": 1,
           "Garden of Eden": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SorceryCon"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "placed",
+          "top-cut",
+          "record"
+        ],
+        "placements": [
+          1,
+          2,
+          12
+        ],
+        "topCuts": [
+          8
+        ],
+        "records": [
+          "5-2",
+          "6-1"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:sorcerycon",
+          "result:placed",
+          "result:record",
+          "result:top-cut",
+          "result:winner"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -21905,6 +22953,31 @@
           "Minor Explosion": 2,
           "Brother Knight": 2
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers at the Core"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:sorcerers-at-the-core",
+          "result:winner"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -22006,6 +23079,38 @@
           "Mester Stoor Worm": 2,
           "Abaddon Succubus": 2
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers at the Core"
+        ],
+        "locations": [],
+        "resultTags": [
+          "winner",
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "3-0",
+          "4-0",
+          "5-0",
+          "5-6"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:sorcerers-at-the-core",
+          "result:record",
+          "result:winner"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -22579,6 +23684,63 @@
           "Thin Ice": 1,
           "Wuthering Heights": 1
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2025,
+          2026
+        ],
+        "events": [
+          "Cornerstone",
+          "SCG CON",
+          "Sorcerers Summit"
+        ],
+        "locations": [
+          "Las Vegas"
+        ],
+        "resultTags": [
+          "winner",
+          "placed",
+          "top-cut",
+          "record"
+        ],
+        "placements": [
+          1,
+          2,
+          3,
+          4,
+          6
+        ],
+        "topCuts": [
+          4,
+          8,
+          16
+        ],
+        "records": [
+          "1-3",
+          "10-2",
+          "3-4",
+          "5-0",
+          "5-6"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:cornerstone",
+          "event:scg-con",
+          "event:sorcerers-summit",
+          "location:las-vegas",
+          "result:placed",
+          "result:record",
+          "result:top-cut",
+          "result:winner",
+          "season:2025",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -23732,6 +24894,33 @@
           "Landmass": 2,
           "Silver Bullet": 2
         }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Tournament Grounds"
+        ],
+        "locations": [],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "5-6"
+        ],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "event:tournament-grounds",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -24096,7 +25285,7 @@
           "result:record"
         ],
         "likes": 22,
-        "views": 1647
+        "views": 1650
       }
     }
   },
@@ -24643,6 +25832,30 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          5
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -25321,7 +26534,8 @@
         "matchedQueries": [
           "Cornerstone",
           "1st Place",
-          "Winner"
+          "Winner",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -25331,7 +26545,7 @@
           "result:winner"
         ],
         "likes": 9,
-        "views": 823
+        "views": 824
       }
     }
   },
@@ -25773,11 +26987,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Ed Beard Jr Championship"
+        ],
         "locations": [],
         "resultTags": [
           "winner",
@@ -25790,15 +27006,17 @@
         "records": [],
         "matchedQueries": [
           "1st Place",
-          "Champion"
+          "Champion",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:ed-beard-jr-championship",
           "result:placed",
           "result:winner"
         ],
         "likes": 9,
-        "views": 463
+        "views": 465
       }
     }
   },
@@ -26040,7 +27258,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Ascanrask"
+          "Ascanrask",
+          "place"
         ],
         "matchedSignals": [
           "event:ascanrask",
@@ -26158,7 +27377,8 @@
         "records": [],
         "matchedQueries": [
           "Cold Foil Heroes",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cold-foil-heroes",
@@ -26279,7 +27499,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Battle for Midland"
+          "Battle for Midland",
+          "place"
         ],
         "matchedSignals": [
           "event:battle-for-midland",
@@ -26402,7 +27623,8 @@
         "matchedQueries": [
           "GC",
           "SCGCon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:scg-con",
@@ -26646,7 +27868,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:covo-del-nerd",
@@ -26654,7 +27877,7 @@
           "result:winner"
         ],
         "likes": 5,
-        "views": 249
+        "views": 251
       }
     }
   },
@@ -26861,7 +28084,8 @@
         "records": [],
         "matchedQueries": [
           "Lincon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:lincon",
@@ -26869,7 +28093,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 134
+        "views": 136
       }
     }
   },
@@ -27195,7 +28419,8 @@
         "records": [],
         "matchedQueries": [
           "Lincon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:lincon",
@@ -27324,7 +28549,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Lincon"
+          "Lincon",
+          "place"
         ],
         "matchedSignals": [
           "event:lincon",
@@ -27457,14 +28683,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Lincon"
+          "Lincon",
+          "place"
         ],
         "matchedSignals": [
           "event:lincon",
           "result:placed"
         ],
         "likes": 7,
-        "views": 334
+        "views": 336
       }
     }
   },
@@ -27583,7 +28810,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Lincon"
+          "Lincon",
+          "place"
         ],
         "matchedSignals": [
           "event:lincon",
@@ -27685,6 +28913,30 @@
           "Zap!": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          6
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 0
       }
     }
   },
@@ -27892,6 +29144,32 @@
           "Savior": 1
         },
         "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "place"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed"
+        ],
+        "likes": 16,
+        "views": 1037
       }
     }
   },
@@ -28015,7 +29293,8 @@
         ],
         "matchedQueries": [
           "Explorer Series",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:explorer-series",
@@ -28024,7 +29303,7 @@
           "result:winner"
         ],
         "likes": 5,
-        "views": 450
+        "views": 451
       }
     }
   },
@@ -28145,14 +29424,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Ascanrask"
+          "Ascanrask",
+          "place"
         ],
         "matchedSignals": [
           "event:ascanrask",
           "result:placed"
         ],
         "likes": 2,
-        "views": 223
+        "views": 225
       }
     }
   },
@@ -28274,7 +29554,8 @@
         "records": [],
         "matchedQueries": [
           "Gothcon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:gothcon",
@@ -28282,7 +29563,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 266
+        "views": 268
       }
     }
   },
@@ -28398,7 +29679,8 @@
         "records": [],
         "matchedQueries": [
           "Gothcon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:gothcon",
@@ -28406,7 +29688,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 210
+        "views": 211
       }
     }
   },
@@ -28517,7 +29799,8 @@
         "records": [],
         "matchedQueries": [
           "Gothcon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:gothcon",
@@ -28655,7 +29938,8 @@
         "matchedQueries": [
           "Gothcon",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:gothcon",
@@ -28665,7 +29949,7 @@
           "season:2026"
         ],
         "likes": 12,
-        "views": 619
+        "views": 621
       }
     }
   },
@@ -28793,7 +30077,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Ascanrask"
+          "Ascanrask",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -28927,7 +30212,8 @@
           "5-1"
         ],
         "matchedQueries": [
-          "Ascanrask"
+          "Ascanrask",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -29062,7 +30348,8 @@
         "records": [],
         "matchedQueries": [
           "Ascanrask",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:ascanrask",
@@ -29070,7 +30357,7 @@
           "result:winner"
         ],
         "likes": 5,
-        "views": 714
+        "views": 715
       }
     }
   },
@@ -29192,7 +30479,8 @@
         "records": [],
         "matchedQueries": [
           "SorceryCon",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
@@ -29306,7 +30594,8 @@
         "records": [],
         "matchedQueries": [
           "Ascanrask",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:ascanrask",
@@ -30047,7 +31336,8 @@
           "6-2"
         ],
         "matchedQueries": [
-          "SorceryCon"
+          "SorceryCon",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
@@ -30172,7 +31462,8 @@
           "6-2"
         ],
         "matchedQueries": [
-          "SorceryCon"
+          "SorceryCon",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
@@ -30181,7 +31472,7 @@
           "season:2026"
         ],
         "likes": 4,
-        "views": 595
+        "views": 597
       }
     }
   },
@@ -30308,7 +31599,8 @@
           "6-2"
         ],
         "matchedQueries": [
-          "SorceryCon"
+          "SorceryCon",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -30441,7 +31733,8 @@
         ],
         "matchedQueries": [
           "SorceryCon",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
@@ -30539,11 +31832,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Elemental Series"
+        ],
         "locations": [
           "Sydney"
         ],
@@ -30559,10 +31854,12 @@
           "5-6"
         ],
         "matchedQueries": [
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:elemental-series",
           "location:sydney",
           "result:placed",
           "result:record",
@@ -30672,11 +31969,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Forja Hobby Store 1K"
+        ],
         "locations": [],
         "resultTags": [
           "placed"
@@ -30687,10 +31986,12 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Sorcery 1K"
+          "Sorcery 1K",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:forja-hobby-store-1k",
           "result:placed"
         ],
         "likes": 1,
@@ -30872,11 +32173,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Forja Hobby Store 1K"
+        ],
         "locations": [],
         "resultTags": [
           "winner",
@@ -30889,10 +32192,12 @@
         "records": [],
         "matchedQueries": [
           "Sorcery 1K",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:forja-hobby-store-1k",
           "result:placed",
           "result:winner"
         ],
@@ -31004,7 +32309,8 @@
         "records": [],
         "matchedQueries": [
           "War of the Four Elements",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:war-of-the-four-elements",
@@ -31368,7 +32674,8 @@
         "records": [],
         "matchedQueries": [
           "SCG CON",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:scg-con",
@@ -31377,7 +32684,7 @@
           "season:2026"
         ],
         "likes": 6,
-        "views": 399
+        "views": 402
       }
     }
   },
@@ -31555,11 +32862,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Sin City Open"
+        ],
         "locations": [
           "Las Vegas"
         ],
@@ -31575,10 +32884,12 @@
           "3-1"
         ],
         "matchedQueries": [
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:sin-city-open",
           "location:las-vegas",
           "result:placed",
           "result:record",
@@ -32256,7 +33567,7 @@
           "season:2026"
         ],
         "likes": 9,
-        "views": 1024
+        "views": 1026
       }
     }
   },
@@ -32396,7 +33707,8 @@
         ],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -32407,7 +33719,7 @@
           "result:winner"
         ],
         "likes": 20,
-        "views": 2129
+        "views": 2177
       }
     }
   },
@@ -32624,8 +33936,8 @@
           "event:gen-con",
           "result:record"
         ],
-        "likes": 11,
-        "views": 812
+        "likes": 12,
+        "views": 888
       }
     }
   },
@@ -32751,8 +34063,8 @@
           "location:auckland",
           "season:2026"
         ],
-        "likes": 8,
-        "views": 792
+        "likes": 9,
+        "views": 843
       }
     }
   },
@@ -32896,7 +34208,7 @@
           "location:leeuwarden"
         ],
         "likes": 4,
-        "views": 393
+        "views": 396
       }
     }
   },
@@ -33003,7 +34315,8 @@
         "records": [],
         "matchedQueries": [
           "GC",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -33012,8 +34325,8 @@
           "result:placed",
           "season:2026"
         ],
-        "likes": 17,
-        "views": 1359
+        "likes": 18,
+        "views": 1484
       }
     }
   },
@@ -33138,7 +34451,7 @@
           "result:top-cut"
         ],
         "likes": 2,
-        "views": 155
+        "views": 157
       }
     }
   },
@@ -33269,7 +34582,7 @@
           "season:2026"
         ],
         "likes": 16,
-        "views": 892
+        "views": 915
       }
     }
   },
@@ -33388,7 +34701,7 @@
           "result:top-cut"
         ],
         "likes": 5,
-        "views": 182
+        "views": 184
       }
     }
   },
@@ -33517,7 +34830,8 @@
           "5-0"
         ],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -33525,7 +34839,7 @@
           "result:record"
         ],
         "likes": 1,
-        "views": 117
+        "views": 121
       }
     }
   },
@@ -33633,7 +34947,7 @@
           "result:top-cut"
         ],
         "likes": 1,
-        "views": 44
+        "views": 45
       }
     }
   },
@@ -33759,7 +35073,7 @@
           "result:winner"
         ],
         "likes": 7,
-        "views": 332
+        "views": 336
       }
     }
   },
@@ -33881,7 +35195,7 @@
           "season:2026"
         ],
         "likes": 15,
-        "views": 962
+        "views": 978
       }
     }
   },
@@ -34002,7 +35316,8 @@
         "matchedQueries": [
           "Cornerstone",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34011,8 +35326,8 @@
           "result:winner",
           "season:2026"
         ],
-        "likes": 3,
-        "views": 135
+        "likes": 4,
+        "views": 137
       }
     }
   },
@@ -34117,7 +35432,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34125,7 +35441,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 98
+        "views": 112
       }
     }
   },
@@ -34234,7 +35550,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34242,7 +35559,7 @@
           "season:2026"
         ],
         "likes": 3,
-        "views": 201
+        "views": 217
       }
     }
   },
@@ -34354,7 +35671,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34362,7 +35680,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 67
+        "views": 70
       }
     }
   },
@@ -34476,7 +35794,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34484,7 +35803,7 @@
           "season:2026"
         ],
         "likes": 3,
-        "views": 173
+        "views": 181
       }
     }
   },
@@ -34602,7 +35921,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34610,7 +35930,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 106
+        "views": 116
       }
     }
   },
@@ -34711,7 +36031,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34719,7 +36040,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 191
+        "views": 216
       }
     }
   },
@@ -34834,7 +36155,8 @@
         "matchedQueries": [
           "Cornerstone",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34843,7 +36165,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 175
+        "views": 181
       }
     }
   },
@@ -34964,7 +36286,8 @@
           "Cornerstone",
           "2026",
           "1st Place",
-          "Champion"
+          "Champion",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -34973,7 +36296,7 @@
           "season:2026"
         ],
         "likes": 8,
-        "views": 495
+        "views": 531
       }
     }
   },
@@ -35195,7 +36518,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -35203,7 +36527,7 @@
           "result:winner"
         ],
         "likes": 6,
-        "views": 331
+        "views": 352
       }
     }
   },
@@ -35467,7 +36791,7 @@
           "event:cornerstone"
         ],
         "likes": 0,
-        "views": 56
+        "views": 58
       }
     }
   },
@@ -35702,7 +37026,8 @@
         "matchedQueries": [
           "Cornerstone",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -35711,7 +37036,7 @@
           "season:2026"
         ],
         "likes": 3,
-        "views": 110
+        "views": 116
       }
     }
   },
@@ -35849,14 +37174,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
           "result:placed"
         ],
-        "likes": 10,
-        "views": 833
+        "likes": 11,
+        "views": 909
       }
     }
   },
@@ -35984,7 +37310,7 @@
           "result:top-cut"
         ],
         "likes": 1,
-        "views": 87
+        "views": 90
       }
     }
   },
@@ -36329,7 +37655,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cold-foil-heroes",
@@ -36337,7 +37664,7 @@
           "result:placed"
         ],
         "likes": 0,
-        "views": 61
+        "views": 63
       }
     }
   },
@@ -36910,7 +38237,8 @@
         ],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -36922,8 +38250,8 @@
           "result:winner",
           "season:2026"
         ],
-        "likes": 55,
-        "views": 3624
+        "likes": 61,
+        "views": 3925
       }
     }
   },
@@ -37045,11 +38373,10 @@
         "matchedSignals": [
           "event:cornerstone",
           "location:portland",
-          "result:top-cut",
-          "season:2026"
+          "result:top-cut"
         ],
-        "likes": 1,
-        "views": 97
+        "likes": 2,
+        "views": 103
       }
     }
   },
@@ -37181,7 +38508,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -37189,7 +38517,7 @@
           "season:2026"
         ],
         "likes": 7,
-        "views": 368
+        "views": 381
       }
     }
   },
@@ -37319,8 +38647,8 @@
           "event:cornerstone",
           "result:record"
         ],
-        "likes": 5,
-        "views": 361
+        "likes": 6,
+        "views": 396
       }
     }
   },
@@ -37451,7 +38779,8 @@
         "matchedQueries": [
           "Cornerstone",
           "1st Place",
-          "Winner"
+          "Winner",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -37461,7 +38790,7 @@
           "result:winner"
         ],
         "likes": 41,
-        "views": 3010
+        "views": 3175
       }
     }
   },
@@ -37569,7 +38898,8 @@
         "records": [],
         "matchedQueries": [
           "GC",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -37579,7 +38909,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 74
+        "views": 76
       }
     }
   },
@@ -37981,7 +39311,8 @@
         "records": [],
         "matchedQueries": [
           "GC",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -37991,7 +39322,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 80
+        "views": 82
       }
     }
   },
@@ -38111,7 +39442,8 @@
         "matchedQueries": [
           "GC",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -38121,8 +39453,8 @@
           "result:winner",
           "season:2026"
         ],
-        "likes": 57,
-        "views": 4690
+        "likes": 58,
+        "views": 5009
       }
     }
   },
@@ -38225,7 +39557,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Grand Contest"
+          "Grand Contest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -38467,7 +39800,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Grand Contest"
+          "Grand Contest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -38476,7 +39810,7 @@
           "result:placed"
         ],
         "likes": 14,
-        "views": 782
+        "views": 795
       }
     }
   },
@@ -38593,7 +39927,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -38601,7 +39936,7 @@
           "result:placed"
         ],
         "likes": 5,
-        "views": 294
+        "views": 301
       }
     }
   },
@@ -38844,7 +40179,7 @@
           "event:sorcerers-summit"
         ],
         "likes": 3,
-        "views": 723
+        "views": 731
       }
     }
   },
@@ -38962,7 +40297,7 @@
           "result:placed"
         ],
         "likes": 1,
-        "views": 31
+        "views": 32
       }
     }
   },
@@ -39097,7 +40432,7 @@
           "result:winner"
         ],
         "likes": 0,
-        "views": 86
+        "views": 87
       }
     }
   },
@@ -39256,8 +40591,8 @@
           "event:gen-con",
           "season:2026"
         ],
-        "likes": 11,
-        "views": 1437
+        "likes": 12,
+        "views": 1478
       }
     }
   },
@@ -39683,7 +41018,7 @@
           "event:sorcerycon"
         ],
         "likes": 0,
-        "views": 42
+        "views": 43
       }
     }
   },
@@ -39926,7 +41261,8 @@
         "matchedQueries": [
           "GC",
           "GenCon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -40183,7 +41519,7 @@
           "result:record"
         ],
         "likes": 13,
-        "views": 1798
+        "views": 1799
       }
     }
   },
@@ -40313,7 +41649,7 @@
           "season:2026"
         ],
         "likes": 9,
-        "views": 548
+        "views": 575
       }
     }
   },
@@ -40800,7 +42136,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 33
+        "views": 34
       }
     }
   },
@@ -40934,7 +42270,8 @@
         "records": [],
         "matchedQueries": [
           "GC",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -41184,7 +42521,8 @@
         "records": [],
         "matchedQueries": [
           "GC",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -41314,7 +42652,8 @@
         "matchedQueries": [
           "GC",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -41324,7 +42663,7 @@
           "season:2026"
         ],
         "likes": 6,
-        "views": 191
+        "views": 198
       }
     }
   },
@@ -41420,7 +42759,8 @@
           2026
         ],
         "events": [
-          "Gen Con"
+          "Gen Con",
+          "Fall Classic"
         ],
         "locations": [],
         "resultTags": [
@@ -41443,16 +42783,18 @@
         ],
         "matchedQueries": [
           "Gen Con",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
+          "event:fall-classic",
           "event:gen-con",
           "result:placed",
           "result:record",
           "result:winner"
         ],
         "likes": 24,
-        "views": 1560
+        "views": 1580
       }
     }
   },
@@ -41587,7 +42929,7 @@
           "season:2026"
         ],
         "likes": 4,
-        "views": 469
+        "views": 472
       }
     }
   },
@@ -41725,8 +43067,8 @@
           "result:top-cut",
           "season:2026"
         ],
-        "likes": 43,
-        "views": 2463
+        "likes": 44,
+        "views": 2538
       }
     }
   },
@@ -41845,7 +43187,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -41854,7 +43197,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 156
+        "views": 161
       }
     }
   },
@@ -41961,7 +43304,8 @@
         "records": [],
         "matchedQueries": [
           "Gen Con",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:gen-con",
@@ -41969,7 +43313,7 @@
           "season:2026"
         ],
         "likes": 24,
-        "views": 2291
+        "views": 2310
       }
     }
   },
@@ -42218,7 +43562,8 @@
         "matchedQueries": [
           "Cornerstone",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -42228,7 +43573,7 @@
           "season:2026"
         ],
         "likes": 15,
-        "views": 721
+        "views": 727
       }
     }
   },
@@ -42581,7 +43926,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Grand Contest"
+          "Grand Contest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -42589,7 +43935,7 @@
           "result:placed"
         ],
         "likes": 2,
-        "views": 73
+        "views": 74
       }
     }
   },
@@ -42841,7 +44187,7 @@
           "season:2026"
         ],
         "likes": 38,
-        "views": 2099
+        "views": 2128
       }
     }
   },
@@ -42957,7 +44303,8 @@
         "records": [],
         "matchedQueries": [
           "GenCon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:gen-con",
@@ -42965,7 +44312,7 @@
           "season:2026"
         ],
         "likes": 17,
-        "views": 1396
+        "views": 1410
       }
     }
   },
@@ -43413,7 +44760,8 @@
         "matchedQueries": [
           "Gen Con",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:gen-con",
@@ -43422,7 +44770,7 @@
           "season:2026"
         ],
         "likes": 53,
-        "views": 4476
+        "views": 4544
       }
     }
   },
@@ -43538,7 +44886,7 @@
           "season:2026"
         ],
         "likes": 9,
-        "views": 580
+        "views": 594
       }
     }
   },
@@ -43666,7 +45014,8 @@
         "records": [],
         "matchedQueries": [
           "GenCon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:gen-con",
@@ -43674,7 +45023,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 37
+        "views": 38
       }
     }
   },
@@ -43813,7 +45162,7 @@
           "result:placed"
         ],
         "likes": 3,
-        "views": 346
+        "views": 348
       }
     }
   },
@@ -44283,7 +45632,7 @@
           "season:2026"
         ],
         "likes": 6,
-        "views": 653
+        "views": 663
       }
     }
   },
@@ -44397,7 +45746,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -44657,7 +46007,7 @@
           "result:top-cut"
         ],
         "likes": 3,
-        "views": 549
+        "views": 550
       }
     }
   },
@@ -44778,7 +46128,8 @@
         "matchedQueries": [
           "Cornerstone",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -44789,7 +46140,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 122
+        "views": 123
       }
     }
   },
@@ -45178,7 +46529,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -45188,7 +46540,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 72
+        "views": 73
       }
     }
   },
@@ -45292,7 +46644,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 29
+        "views": 30
       }
     }
   },
@@ -45666,7 +47018,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -45797,7 +47150,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -46269,14 +47623,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Explorer Series"
+          "Explorer Series",
+          "place"
         ],
         "matchedSignals": [
           "event:explorer-series",
           "result:placed"
         ],
         "likes": 0,
-        "views": 36
+        "views": 38
       }
     }
   },
@@ -46406,7 +47761,7 @@
           "season:2026"
         ],
         "likes": 16,
-        "views": 1021
+        "views": 1054
       }
     }
   },
@@ -46529,7 +47884,8 @@
         ],
         "matchedQueries": [
           "Grand Contest",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -46914,7 +48270,7 @@
           "season:2026"
         ],
         "likes": 3,
-        "views": 364
+        "views": 365
       }
     }
   },
@@ -47061,7 +48417,7 @@
           "result:record"
         ],
         "likes": 1,
-        "views": 147
+        "views": 148
       }
     }
   },
@@ -47570,7 +48926,7 @@
           "season:2026"
         ],
         "likes": 36,
-        "views": 2385
+        "views": 2429
       }
     }
   },
@@ -47695,7 +49051,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -47705,7 +49062,7 @@
           "result:winner"
         ],
         "likes": 1,
-        "views": 531
+        "views": 539
       }
     }
   },
@@ -47821,7 +49178,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -47952,7 +49310,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 397
+        "views": 403
       }
     }
   },
@@ -48324,14 +49682,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
           "result:placed"
         ],
         "likes": 1,
-        "views": 123
+        "views": 124
       }
     }
   },
@@ -48588,11 +49947,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Excalibur Events"
+        ],
         "locations": [
           "Pittsburgh"
         ],
@@ -48609,12 +49970,13 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:excalibur-events",
           "location:pittsburgh",
           "result:top-cut",
           "season:2026"
         ],
         "likes": 4,
-        "views": 760
+        "views": 761
       }
     }
   },
@@ -48740,7 +50102,7 @@
           "season:2026"
         ],
         "likes": 7,
-        "views": 729
+        "views": 733
       }
     }
   },
@@ -48855,7 +50217,8 @@
           "4-1"
         ],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -48979,7 +50342,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -48987,7 +50351,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 63
+        "views": 65
       }
     }
   },
@@ -49117,7 +50481,7 @@
           "result:top-cut"
         ],
         "likes": 5,
-        "views": 274
+        "views": 279
       }
     }
   },
@@ -49235,7 +50599,7 @@
           "event:cornerstone"
         ],
         "likes": 0,
-        "views": 42
+        "views": 43
       }
     }
   },
@@ -49357,7 +50721,8 @@
           "8-10"
         ],
         "matchedQueries": [
-          "SorceryFest"
+          "SorceryFest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -49729,7 +51094,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "SorceryFest"
+          "SorceryFest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -49741,7 +51107,7 @@
           "season:2026"
         ],
         "likes": 31,
-        "views": 1779
+        "views": 1786
       }
     }
   },
@@ -49861,7 +51227,8 @@
           "4-2"
         ],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -49869,7 +51236,7 @@
           "result:record"
         ],
         "likes": 0,
-        "views": 70
+        "views": 71
       }
     }
   },
@@ -49985,7 +51352,7 @@
           "result:record"
         ],
         "likes": 0,
-        "views": 252
+        "views": 253
       }
     }
   },
@@ -50099,7 +51466,8 @@
         "matchedQueries": [
           "GC",
           "SorceryFest",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -50108,8 +51476,8 @@
           "result:placed",
           "result:winner"
         ],
-        "likes": 51,
-        "views": 5018
+        "likes": 52,
+        "views": 5053
       }
     }
   },
@@ -50226,14 +51594,16 @@
           "5-2"
         ],
         "matchedQueries": [
-          "SorceryFest"
+          "SorceryFest",
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:sorceryfest",
           "result:record"
         ],
         "likes": 1,
-        "views": 61
+        "views": 80
       }
     }
   },
@@ -51854,7 +53224,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:sorceryfest",
@@ -52108,14 +53479,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "SorceryFest"
+          "SorceryFest",
+          "place"
         ],
         "matchedSignals": [
           "event:sorceryfest",
           "result:placed"
         ],
         "likes": 0,
-        "views": 127
+        "views": 129
       }
     }
   },
@@ -52612,7 +53984,8 @@
         "records": [],
         "matchedQueries": [
           "SorceryFest",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:sorceryfest",
@@ -52620,7 +53993,7 @@
           "season:2026"
         ],
         "likes": 10,
-        "views": 630
+        "views": 631
       }
     }
   },
@@ -52728,7 +54101,7 @@
           "result:top-cut"
         ],
         "likes": 7,
-        "views": 469
+        "views": 470
       }
     }
   },
@@ -52824,11 +54197,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "SCG CON"
+        ],
         "locations": [
           "Las Vegas"
         ],
@@ -52844,11 +54219,12 @@
           "Top 8"
         ],
         "matchedSignals": [
+          "event:scg-con",
           "location:las-vegas",
           "result:top-cut"
         ],
         "likes": 7,
-        "views": 714
+        "views": 716
       }
     }
   },
@@ -52978,7 +54354,7 @@
           "season:2026"
         ],
         "likes": 22,
-        "views": 1708
+        "views": 1713
       }
     }
   },
@@ -53101,7 +54477,7 @@
           "result:placed"
         ],
         "likes": 33,
-        "views": 2019
+        "views": 2022
       }
     }
   },
@@ -53222,7 +54598,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 38
+        "views": 39
       }
     }
   },
@@ -53698,7 +55074,8 @@
         "records": [],
         "matchedQueries": [
           "SCG CON",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:scg-con",
@@ -53707,7 +55084,7 @@
           "season:2026"
         ],
         "likes": 8,
-        "views": 842
+        "views": 843
       }
     }
   },
@@ -54216,7 +55593,7 @@
           "season:2026"
         ],
         "likes": 3,
-        "views": 553
+        "views": 558
       }
     }
   },
@@ -54484,7 +55861,7 @@
           "result:top-cut"
         ],
         "likes": 19,
-        "views": 1181
+        "views": 1186
       }
     }
   },
@@ -54605,7 +55982,7 @@
           "location:washington-dc"
         ],
         "likes": 6,
-        "views": 568
+        "views": 569
       }
     }
   },
@@ -56129,7 +57506,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Grand Contest"
+          "Grand Contest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -57196,11 +58574,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -57215,6 +58595,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 10,
@@ -57313,11 +58694,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -57332,6 +58715,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 1,
@@ -57421,11 +58805,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -57440,6 +58826,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 2,
@@ -57541,11 +58928,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -57560,6 +58949,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 1,
@@ -57658,11 +59048,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -57677,6 +59069,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 0,
@@ -57774,11 +59167,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -57793,6 +59188,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 6,
@@ -57891,11 +59287,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -57910,6 +59308,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 3,
@@ -58014,11 +59413,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [],
         "resultTags": [
           "top-cut"
@@ -58033,6 +59434,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "result:top-cut"
         ],
         "likes": 2,
@@ -58163,7 +59565,7 @@
           "result:winner"
         ],
         "likes": 7,
-        "views": 545
+        "views": 546
       }
     }
   },
@@ -58287,7 +59689,7 @@
           "result:record"
         ],
         "likes": 14,
-        "views": 1232
+        "views": 1235
       }
     }
   },
@@ -58399,7 +59801,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "SCG CON"
+          "SCG CON",
+          "place"
         ],
         "matchedSignals": [
           "event:scg-con",
@@ -59154,7 +60557,7 @@
           "result:record"
         ],
         "likes": 5,
-        "views": 278
+        "views": 280
       }
     }
   },
@@ -59393,7 +60796,7 @@
           "event:sorcerycon"
         ],
         "likes": 6,
-        "views": 151
+        "views": 152
       }
     }
   },
@@ -59615,7 +61018,7 @@
           "event:sorcerycon"
         ],
         "likes": 1,
-        "views": 188
+        "views": 190
       }
     }
   },
@@ -59734,7 +61137,7 @@
           "event:sorcerycon"
         ],
         "likes": 6,
-        "views": 320
+        "views": 324
       }
     }
   },
@@ -61139,11 +62542,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Sin City Open"
+        ],
         "locations": [
           "Las Vegas"
         ],
@@ -61160,6 +62565,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:sin-city-open",
           "location:las-vegas",
           "result:placed",
           "season:2026"
@@ -61266,11 +62672,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Sin City Open"
+        ],
         "locations": [
           "Las Vegas"
         ],
@@ -61291,6 +62699,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:sin-city-open",
           "location:las-vegas",
           "result:placed",
           "result:record",
@@ -61423,7 +62832,8 @@
           "8-0"
         ],
         "matchedQueries": [
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:excalibur-events",
@@ -61433,7 +62843,7 @@
           "result:winner"
         ],
         "likes": 5,
-        "views": 462
+        "views": 468
       }
     }
   },
@@ -61796,7 +63206,7 @@
           "event:grand-contest"
         ],
         "likes": 0,
-        "views": 35
+        "views": 36
       }
     }
   },
@@ -61916,7 +63326,8 @@
         "records": [],
         "matchedQueries": [
           "Ropecon",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:ropecon",
@@ -62159,7 +63570,7 @@
           "result:top-cut"
         ],
         "likes": 1,
-        "views": 131
+        "views": 133
       }
     }
   },
@@ -62484,7 +63895,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -62612,7 +64024,8 @@
         ],
         "matchedQueries": [
           "Spielefest",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:spielefest",
@@ -63010,7 +64423,7 @@
           "result:top-cut"
         ],
         "likes": 3,
-        "views": 204
+        "views": 206
       }
     }
   },
@@ -63130,7 +64543,8 @@
           "6-13"
         ],
         "matchedQueries": [
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -63675,7 +65089,7 @@
           "result:top-cut"
         ],
         "likes": 0,
-        "views": 128
+        "views": 129
       }
     }
   },
@@ -63792,7 +65206,7 @@
           "result:top-cut"
         ],
         "likes": 5,
-        "views": 353
+        "views": 355
       }
     }
   },
@@ -64248,11 +65662,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Tournament Grounds"
+        ],
         "locations": [
           "Montreal"
         ],
@@ -64266,6 +65682,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:tournament-grounds",
           "location:montreal",
           "season:2026"
         ],
@@ -64743,7 +66160,7 @@
           "result:top-cut"
         ],
         "likes": 1,
-        "views": 158
+        "views": 159
       }
     }
   },
@@ -67689,7 +69106,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 39
+        "views": 43
       }
     }
   },
@@ -67800,7 +69217,7 @@
           "season:2026"
         ],
         "likes": 10,
-        "views": 535
+        "views": 536
       }
     }
   },
@@ -68149,7 +69566,7 @@
           "event:cornerstone"
         ],
         "likes": 0,
-        "views": 38
+        "views": 64
       }
     }
   },
@@ -68281,7 +69698,8 @@
         ],
         "matchedQueries": [
           "Cornerstone",
-          "Gen Con"
+          "Gen Con",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -68291,8 +69709,8 @@
           "result:record",
           "season:2026"
         ],
-        "likes": 8,
-        "views": 801
+        "likes": 9,
+        "views": 853
       }
     }
   },
@@ -68426,7 +69844,7 @@
           "location:italy"
         ],
         "likes": 0,
-        "views": 23
+        "views": 30
       }
     }
   },
@@ -68540,7 +69958,9 @@
         "records": [],
         "matchedQueries": [
           "Grand Contest",
-          "Winner"
+          "Winner",
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -68548,8 +69968,8 @@
           "location:italy",
           "result:winner"
         ],
-        "likes": 0,
-        "views": 43
+        "likes": 1,
+        "views": 161
       }
     }
   },
@@ -68658,7 +70078,7 @@
           "location:italy"
         ],
         "likes": 1,
-        "views": 29
+        "views": 33
       }
     }
   },
@@ -68784,7 +70204,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Grand Contest"
+          "Grand Contest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -68793,7 +70214,7 @@
           "result:placed"
         ],
         "likes": 1,
-        "views": 59
+        "views": 61
       }
     }
   },
@@ -68887,14 +70308,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:poorcery",
           "season:2026"
         ],
         "likes": 2,
-        "views": 104
+        "views": 122
       }
     }
   },
@@ -69029,7 +70451,8 @@
         "matchedQueries": [
           "Cornerstone",
           "1st Place",
-          "Winner"
+          "Winner",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -69039,7 +70462,7 @@
           "result:winner"
         ],
         "likes": 0,
-        "views": 31
+        "views": 44
       }
     }
   },
@@ -69160,7 +70583,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "SorceryFest"
+          "SorceryFest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -69172,7 +70596,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 18
+        "views": 19
       }
     }
   },
@@ -69300,7 +70724,7 @@
           "event:cornerstone"
         ],
         "likes": 0,
-        "views": 19
+        "views": 21
       }
     }
   },
@@ -69405,11 +70829,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "Twin Cities Peasant League"
+        ],
         "locations": [],
         "resultTags": [
           "placed",
@@ -69427,6 +70853,7 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:twin-cities-peasant-league",
           "result:placed",
           "result:top-cut"
         ],
@@ -69541,14 +70968,15 @@
         "records": [],
         "matchedQueries": [
           "GC",
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
           "result:placed"
         ],
         "likes": 0,
-        "views": 23
+        "views": 25
       }
     }
   },
@@ -69665,7 +71093,7 @@
           "event:cornerstone"
         ],
         "likes": 1,
-        "views": 23
+        "views": 25
       }
     }
   },
@@ -69790,14 +71218,15 @@
         "records": [],
         "matchedQueries": [
           "GC",
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
           "result:placed"
         ],
-        "likes": 3,
-        "views": 78
+        "likes": 4,
+        "views": 99
       }
     }
   },
@@ -70039,7 +71468,8 @@
           "5-0"
         ],
         "matchedQueries": [
-          "Explorer Series"
+          "Explorer Series",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -70048,7 +71478,7 @@
           "result:record"
         ],
         "likes": 0,
-        "views": 56
+        "views": 75
       }
     }
   },
@@ -70325,7 +71755,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:covo-del-nerd",
@@ -70333,7 +71764,7 @@
           "result:winner"
         ],
         "likes": 0,
-        "views": 108
+        "views": 110
       }
     }
   },
@@ -70466,8 +71897,8 @@
           "result:winner",
           "season:2026"
         ],
-        "likes": 1,
-        "views": 104
+        "likes": 2,
+        "views": 112
       }
     }
   },
@@ -70562,7 +71993,8 @@
           2026
         ],
         "events": [
-          "Grand Contest"
+          "Grand Contest",
+          "SCG CON"
         ],
         "locations": [
           "Dallas"
@@ -70581,11 +72013,12 @@
         "matchedSignals": [
           "competition:noun",
           "event:grand-contest",
+          "event:scg-con",
           "location:dallas",
           "result:top-cut"
         ],
         "likes": 2,
-        "views": 175
+        "views": 181
       }
     }
   },
@@ -70696,7 +72129,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Grand Contest"
+          "Grand Contest",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -70704,7 +72138,7 @@
           "result:placed"
         ],
         "likes": 2,
-        "views": 203
+        "views": 217
       }
     }
   },
@@ -70830,7 +72264,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 73
+        "views": 77
       }
     }
   },
@@ -70959,7 +72393,7 @@
           "result:winner"
         ],
         "likes": 3,
-        "views": 135
+        "views": 156
       }
     }
   },
@@ -71093,7 +72527,7 @@
           "location:baltimore"
         ],
         "likes": 0,
-        "views": 19
+        "views": 22
       }
     }
   },
@@ -71361,7 +72795,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 46
+        "views": 47
       }
     }
   },
@@ -71490,14 +72924,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "SorceryCon"
+          "SorceryCon",
+          "place"
         ],
         "matchedSignals": [
           "event:sorcerycon",
           "result:placed"
         ],
         "likes": 0,
-        "views": 14
+        "views": 15
       }
     }
   },
@@ -71621,7 +73056,7 @@
           "result:record"
         ],
         "likes": 2,
-        "views": 214
+        "views": 221
       }
     }
   },
@@ -71733,7 +73168,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "GC"
+          "GC",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:grand-contest",
@@ -71741,7 +73177,7 @@
           "result:placed"
         ],
         "likes": 0,
-        "views": 201
+        "views": 202
       }
     }
   },
@@ -71852,11 +73288,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "SCG CON"
+        ],
         "locations": [
           "Dallas"
         ],
@@ -71872,11 +73310,12 @@
           "Top 8"
         ],
         "matchedSignals": [
+          "event:scg-con",
           "location:dallas",
           "result:top-cut"
         ],
         "likes": 1,
-        "views": 197
+        "views": 208
       }
     }
   },
@@ -72262,7 +73701,7 @@
           "event:grand-contest"
         ],
         "likes": 0,
-        "views": 71
+        "views": 72
       }
     }
   },
@@ -72416,7 +73855,8 @@
         "records": [],
         "matchedQueries": [
           "Grand Contest",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -72427,7 +73867,7 @@
           "season:2026"
         ],
         "likes": 3,
-        "views": 239
+        "views": 246
       }
     }
   },
@@ -72717,7 +74157,7 @@
           "season:2026"
         ],
         "likes": 4,
-        "views": 177
+        "views": 196
       }
     }
   },
@@ -72859,7 +74299,7 @@
           "result:winner"
         ],
         "likes": 14,
-        "views": 1124
+        "views": 1226
       }
     }
   },
@@ -72993,7 +74433,7 @@
           "result:record"
         ],
         "likes": 1,
-        "views": 195
+        "views": 208
       }
     }
   },
@@ -73129,7 +74569,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 62
+        "views": 63
       }
     }
   },
@@ -73225,7 +74665,8 @@
           2026
         ],
         "events": [
-          "Grand Contest"
+          "Grand Contest",
+          "SCG CON"
         ],
         "locations": [
           "Dallas"
@@ -73244,11 +74685,12 @@
         "matchedSignals": [
           "competition:noun",
           "event:grand-contest",
+          "event:scg-con",
           "location:dallas",
           "result:top-cut"
         ],
-        "likes": 7,
-        "views": 578
+        "likes": 9,
+        "views": 627
       }
     }
   },
@@ -73356,15 +74798,16 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
           "result:placed",
           "result:winner"
         ],
-        "likes": 1,
-        "views": 225
+        "likes": 2,
+        "views": 267
       }
     }
   },
@@ -73500,7 +74943,7 @@
           "location:dallas"
         ],
         "likes": 0,
-        "views": 90
+        "views": 97
       }
     }
   },
@@ -73616,7 +75059,7 @@
           "result:winner"
         ],
         "likes": 0,
-        "views": 17
+        "views": 19
       }
     }
   },
@@ -73735,7 +75178,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -73743,7 +75187,7 @@
           "result:winner"
         ],
         "likes": 2,
-        "views": 319
+        "views": 325
       }
     }
   },
@@ -73878,7 +75322,7 @@
           "result:record"
         ],
         "likes": 0,
-        "views": 91
+        "views": 92
       }
     }
   },
@@ -74004,7 +75448,8 @@
         "records": [],
         "matchedQueries": [
           "Grand Contest",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -74013,7 +75458,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 182
+        "views": 187
       }
     }
   },
@@ -74134,7 +75579,8 @@
         "matchedQueries": [
           "Cornerstone",
           "2026",
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -74144,7 +75590,7 @@
           "season:2026"
         ],
         "likes": 8,
-        "views": 870
+        "views": 929
       }
     }
   },
@@ -74375,14 +75821,15 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "Cornerstone"
+          "Cornerstone",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
           "result:placed"
         ],
         "likes": 4,
-        "views": 157
+        "views": 161
       }
     }
   },
@@ -74497,7 +75944,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -74505,7 +75953,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 189
+        "views": 190
       }
     }
   },
@@ -74681,7 +76129,8 @@
         ],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "competition:noun",
@@ -74691,7 +76140,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 180
+        "views": 186
       }
     }
   },
@@ -74798,7 +76247,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -74806,7 +76256,7 @@
           "season:2026"
         ],
         "likes": 1,
-        "views": 86
+        "views": 89
       }
     }
   },
@@ -74914,7 +76364,8 @@
         "topCuts": [],
         "records": [],
         "matchedQueries": [
-          "1st Place"
+          "1st Place",
+          "place"
         ],
         "matchedSignals": [
           "event-alias:sorcerers-summit",
@@ -74923,7 +76374,7 @@
           "result:winner"
         ],
         "likes": 20,
-        "views": 1124
+        "views": 1263
       }
     }
   },
@@ -75042,7 +76493,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -75050,7 +76502,7 @@
           "season:2026"
         ],
         "likes": 2,
-        "views": 98
+        "views": 102
       }
     }
   },
@@ -75182,7 +76634,8 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
@@ -75190,7 +76643,7 @@
           "season:2026"
         ],
         "likes": 0,
-        "views": 147
+        "views": 149
       }
     }
   },
@@ -75337,15 +76790,16 @@
         "records": [],
         "matchedQueries": [
           "Cornerstone",
-          "2026"
+          "2026",
+          "place"
         ],
         "matchedSignals": [
           "event:cornerstone",
           "result:placed",
           "season:2026"
         ],
-        "likes": 2,
-        "views": 233
+        "likes": 3,
+        "views": 237
       }
     }
   },
@@ -75690,11 +77144,13 @@
       },
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
+        "events": [
+          "SCG CON"
+        ],
         "locations": [
           "Las Vegas"
         ],
@@ -75710,11 +77166,2711 @@
           "Top 8"
         ],
         "matchedSignals": [
+          "event:scg-con",
           "location:las-vegas",
           "result:top-cut"
         ],
         "likes": 11,
         "views": 757
+      }
+    }
+  },
+  "cmut0k3ac000206nswym26xut": {
+    "deckinfo": {
+      "id": "cmut0k3ac000206nswym26xut",
+      "createdAt": "2026-10-03T23:18:56.676Z",
+      "updatedAt": "2026-10-03T23:21:22.200Z",
+      "name": "Deathspeaker Matchstick Games Cornerstone",
+      "format": "Constructed",
+      "primer": "Just a villain on the run from the law\nThe Synth Wars - Jack O’Reilly",
+      "hotscore": 3.9884016667638718,
+      "user": {
+        "id": "cmt86stvw00392wcyw2haatdm",
+        "username": "CosmicWayfarer"
+      },
+      "elements": [
+        "Earth",
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Deathspeaker",
+      "cards": {
+        "spellbook": {
+          "Cemetery Rats": 2,
+          "Arjaro Exorcist": 2,
+          "Common Sense": 3,
+          "Firebolts": 2,
+          "Land Surveyor": 4,
+          "Mover of Mountains": 1,
+          "Sister Stefánia": 1,
+          "Toolbox": 2,
+          "Vile Imp": 4,
+          "Autumn Unicorn": 3,
+          "Bury": 1,
+          "Colicky Dragonettes": 3,
+          "Landmass": 1,
+          "Minor Explosion": 2,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 2,
+          "Root Spider": 3,
+          "Angry Mob": 2,
+          "Gargantula": 2,
+          "Gigantism": 1,
+          "Paladins of Bazia": 2,
+          "The Great Famine": 1,
+          "Archangel Michael": 1,
+          "Atlas Wanderers": 2,
+          "Courtesan Thaïs": 1,
+          "Earthquake": 2,
+          "Poison Nova": 2,
+          "Balor of the Evil Eye": 1,
+          "Death Dealer": 1,
+          "Major Explosion": 2,
+          "Craterize": 2,
+          "Assorted Animals": 1
+        },
+        "atlas": {
+          "Fertile Earth": 3,
+          "Fields of Camlann": 1,
+          "Forgotten Tomb": 2,
+          "Funeral Pyre": 1,
+          "Garden of Eden": 1,
+          "Mirror Realm": 1,
+          "Pebbled Paths": 3,
+          "Rift Valley": 2,
+          "River of Blood": 2,
+          "Shallow Grave": 3,
+          "Sinkhole": 2,
+          "Steppe": 3,
+          "Temple of Moloch": 1,
+          "Vast Desert": 4,
+          "Vindictive Nation": 1
+        },
+        "collection": {
+          "Carrion Beetles": 1,
+          "Dispel": 1,
+          "Firebolts": 1,
+          "Vandal Imp": 1,
+          "Bury": 1,
+          "Landmass": 1,
+          "Makeshift Barricade": 1,
+          "Minor Explosion": 1,
+          "Angry Mob": 1,
+          "Flayer": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone"
+        ],
+        "likes": 0,
+        "views": 4
+      }
+    }
+  },
+  "cmujpck9b000009gmubx2tunu": {
+    "deckinfo": {
+      "id": "cmujpck9b000009gmubx2tunu",
+      "createdAt": "2026-09-27T10:55:14.064Z",
+      "updatedAt": "2026-10-03T23:18:49.355Z",
+      "name": "OULU CORNERSTONE 26 MIST DRUID",
+      "format": "Constructed",
+      "primer": "gibe ring",
+      "hotscore": 150.54338777593063,
+      "user": {
+        "id": "cmldb65n7000004l767oi0kzd",
+        "username": "HZN"
+      },
+      "elements": [
+        "Water",
+        "None",
+        "Air"
+      ],
+      "cardCount": {
+        "spellbook": 61,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Druid",
+      "cards": {
+        "spellbook": {
+          "Torshammar Trinket": 2,
+          "Adept Illusionist": 2,
+          "Geyser": 1,
+          "Lightning Bolt": 1,
+          "Polar Explorers": 2,
+          "Pollimorph": 2,
+          "Riptide": 3,
+          "The Rack": 1,
+          "Toolbox": 2,
+          "Acid Rain": 1,
+          "Brobdingnag Bullfrog": 1,
+          "Coy Nixie": 3,
+          "Fey Changeling": 2,
+          "Grapple Shot": 3,
+          "Lugbog Cat": 3,
+          "Order of the Sacred Oak": 3,
+          "Scatter": 1,
+          "Sir Pelleas": 1,
+          "Swap": 2,
+          "Abaddon Succubus": 2,
+          "Avenging Angel": 2,
+          "Failed Mutation": 3,
+          "Hyperparasite": 1,
+          "Meat Hook": 1,
+          "Mesmerism": 1,
+          "Ruler of Thul": 1,
+          "Sacred Stag": 2,
+          "Selfsame Simulacrum": 1,
+          "Archangel Raphael": 1,
+          "Atlantean Fate": 1,
+          "Daperyll Vampire": 3,
+          "Drums of Doom": 1,
+          "Hounds of Ondaros": 2,
+          "Questing Beast": 1,
+          "Whirling Blades": 2
+        },
+        "atlas": {
+          "Dark Tower": 1,
+          "Floodplain": 3,
+          "Garden of Eden": 1,
+          "Gothic Tower": 1,
+          "Innsmouth Dock": 1,
+          "Joyous Garde": 1,
+          "Lighthouse": 3,
+          "Lone Tower": 1,
+          "Mirror Realm": 1,
+          "Mismanaged Mortuary": 1,
+          "Mock Court": 2,
+          "Pond": 2,
+          "River Rapids": 2,
+          "Thin Ice": 3,
+          "Troll Bridge": 3,
+          "Watchtower": 2,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Lure": 1,
+          "Zap!": 1,
+          "Blink": 1,
+          "Disenchant": 1,
+          "Led Astray": 1,
+          "Lightning Bolt": 1,
+          "Riptide": 1,
+          "Tactical Move": 1,
+          "Drown": 1,
+          "Grapple Shot": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu"
+        ],
+        "likes": 0,
+        "views": 177
+      }
+    }
+  },
+  "cmty058h300000agmcvmgge3d": {
+    "deckinfo": {
+      "id": "cmty058h300000agmcvmgge3d",
+      "createdAt": "2026-09-12T06:26:32.103Z",
+      "updatedAt": "2026-10-03T23:07:14.181Z",
+      "name": "JPW6 - Fire - Necro - GC London 2026 2nd Place",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 9.615308194971245,
+      "user": {
+        "id": "cmt8efm6q3evm92cymam2129a",
+        "username": "jorvik6"
+      },
+      "elements": [
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Necromancer",
+      "cards": {
+        "spellbook": {
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 3,
+          "Firebolts": 3,
+          "Gift of the Serpent": 2,
+          "Jihad": 1,
+          "Toolbox": 3,
+          "Vile Imp": 4,
+          "War Horse": 3,
+          "Wild Fanatic": 4,
+          "Barging Barghest": 3,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Màzuj Ifrit": 1,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Slobbermaw": 3,
+          "Boudicca": 1,
+          "Clamor of Harpies": 3,
+          "Infiltrate": 2,
+          "Saracen Raiders": 3,
+          "Siege Giant": 3,
+          "Lava Flow": 3,
+          "Poison Nova": 3
+        },
+        "atlas": {
+          "Active Volcano": 3,
+          "Arid Desert": 1,
+          "Boulevard of Bones": 2,
+          "Court of Equity": 2,
+          "Mirror Realm": 1,
+          "Mobbed Court": 2,
+          "Red Desert": 4,
+          "Remote Desert": 4,
+          "River of Blood": 3,
+          "River of Flame": 1,
+          "Shifting Sands": 2,
+          "Sinkhole": 2,
+          "Temple of Moloch": 1,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Charge": 1,
+          "Dispel": 1,
+          "Entombed": 1,
+          "Firebolts": 1,
+          "Gift of the Serpent": 1,
+          "Mad Dash": 1,
+          "Vandal Imp": 1,
+          "Boil": 1,
+          "Bury": 1,
+          "Minor Explosion": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Grand Contest"
+        ],
+        "locations": [
+          "London"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "GC",
+          "2026",
+          "place"
+        ],
+        "matchedSignals": [
+          "event-alias:grand-contest",
+          "event:grand-contest",
+          "location:london",
+          "result:placed",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 20
+      }
+    }
+  },
+  "cmult05ke00000agmz53lif8w": {
+    "deckinfo": {
+      "id": "cmult05ke00000agmz53lif8w",
+      "createdAt": "2026-09-28T22:13:05.967Z",
+      "updatedAt": "2026-10-03T22:06:42.277Z",
+      "name": "Mr Lava Lava [London 2026 GC 1st Place]",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 56.09618999543888,
+      "user": {
+        "id": "cmt8arw7h09w692cyb3nmz8sp",
+        "username": "KingSky"
+      },
+      "elements": [
+        "Fire",
+        "Earth",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 4
+      },
+      "avatar": "Imposter",
+      "cards": {
+        "spellbook": {
+          "Onyx Core": 1,
+          "Ring of Morrigan": 1,
+          "Ruby Core": 1,
+          "Torshammar Trinket": 1,
+          "Arjaro Exorcist": 2,
+          "Firebolts": 3,
+          "Gift of the Serpent": 2,
+          "Kettletop Leprechaun": 3,
+          "Sister Stefánia": 1,
+          "Vile Imp": 3,
+          "Autumn Unicorn": 3,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Disintegrate": 2,
+          "Morgana le Fay": 1,
+          "Order of the White Wing": 3,
+          "Quarrelsome Kobolds": 3,
+          "Root Spider": 3,
+          "Gargantula": 2,
+          "Paladins of Bazia": 2,
+          "The Great Famine": 1,
+          "Wildfire": 3,
+          "Archangel Michael": 1,
+          "Courtesan Thaïs": 1,
+          "Earthquake": 2,
+          "Lava Flow": 2,
+          "Peasant Revolt": 1,
+          "Poison Nova": 2,
+          "The Inquisition": 1,
+          "Balor of the Evil Eye": 1,
+          "Infernal Legion": 2,
+          "Major Explosion": 2
+        },
+        "atlas": {
+          "Active Volcano": 3,
+          "Arid Desert": 1,
+          "Briar Patch": 1,
+          "Fertile Earth": 3,
+          "Fields of Camlann": 1,
+          "Funeral Pyre": 3,
+          "Gnome Hollows": 3,
+          "Mirror Realm": 1,
+          "Mount Ussar Sanctuary": 1,
+          "Pebbled Paths": 3,
+          "Purgatory": 1,
+          "Red Desert": 4,
+          "Steppe": 3,
+          "Valley of Delight": 2
+        },
+        "collection": {
+          "Archimago": 1,
+          "Avatar of Earth": 1,
+          "Deathspeaker": 1,
+          "Enchantress": 1,
+          "Flamecaller": 1,
+          "Interrogator": 1,
+          "Ironclad": 1,
+          "Pathfinder": 1,
+          "Sorcerer": 1,
+          "Witch": 1
+        },
+        "maybe": {
+          "Slumbering Giantess": 1,
+          "Warp Spasm": 1,
+          "Torrid Omphalos": 1,
+          "Returned King": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Grand Contest"
+        ],
+        "locations": [
+          "London"
+        ],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "GC",
+          "2026",
+          "1st Place",
+          "place"
+        ],
+        "matchedSignals": [
+          "event-alias:grand-contest",
+          "event:grand-contest",
+          "location:london",
+          "result:placed",
+          "result:winner",
+          "season:2026"
+        ],
+        "likes": 1,
+        "views": 60
+      }
+    }
+  },
+  "cmuqxny3z000a06qo64rycffq": {
+    "deckinfo": {
+      "id": "cmuqxny3z000a06qo64rycffq",
+      "createdAt": "2026-10-02T12:22:25.391Z",
+      "updatedAt": "2026-10-03T20:41:14.294Z",
+      "name": "3-2 Cornerstone Oulu, Finland",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 9.886331145880309,
+      "user": {
+        "id": "cmt8dl9ny2jni92cyn6eseqze",
+        "username": "RaspuTim"
+      },
+      "elements": [
+        "Fire",
+        "Earth",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 1
+      },
+      "avatar": "Geomancer",
+      "cards": {
+        "spellbook": {
+          "Ring of Morrigan": 1,
+          "Arjaro Exorcist": 2,
+          "Bosk Troll": 2,
+          "Common Sense": 2,
+          "Crusade": 1,
+          "Dispel": 1,
+          "Gift of the Wolf": 2,
+          "Mover of Mountains": 1,
+          "Redmane Hyena": 1,
+          "Saint of Redemption": 1,
+          "Silver Bullet": 2,
+          "Sister Stefánia": 1,
+          "Autumn Unicorn": 3,
+          "Bury": 1,
+          "Heat Ray": 1,
+          "Landmass": 3,
+          "Onslaught": 1,
+          "Order of the White Wing": 3,
+          "Quarrelsome Kobolds": 3,
+          "Root Spider": 2,
+          "Scorched Earth": 1,
+          "Cave-In": 1,
+          "Dalcean Phalanx": 2,
+          "Gargantula": 2,
+          "Gigantism": 1,
+          "Paladins of Bazia": 2,
+          "Pudge Butcher": 2,
+          "Archangel Michael": 1,
+          "Atlas Wanderers": 1,
+          "Book of the Dead": 1,
+          "Earthquake": 2,
+          "Poison Nova": 2,
+          "Balor of the Evil Eye": 1,
+          "Rhitta Gawr of Snowdonia": 1,
+          "King of the Realm": 1,
+          "Major Explosion": 2,
+          "Craterize": 2,
+          "Assorted Animals": 1
+        },
+        "atlas": {
+          "Active Volcano": 1,
+          "Boulevard of Bones": 2,
+          "Common Village": 4,
+          "Desert Bloom": 3,
+          "Funeral Pyre": 1,
+          "Garden of Eden": 1,
+          "Haystack": 1,
+          "Humble Village": 4,
+          "Mount Ussar Sanctuary": 1,
+          "Pebbled Paths": 2,
+          "Pillar of Zeiros": 1,
+          "Rift Valley": 2,
+          "River of Flame": 1,
+          "Roots of Yggdrasil": 1,
+          "Sinkhole": 2,
+          "Steppe": 3
+        },
+        "collection": {
+          "Divine Healing": 1,
+          "Redmane Hyena": 1,
+          "Harpyon Urge": 1,
+          "Onslaught": 1,
+          "Searing Truth": 1,
+          "Tragedy Worrywart": 1,
+          "Cave-In": 1,
+          "Drought": 1,
+          "Raze": 1,
+          "Poison Nova": 1
+        },
+        "maybe": {
+          "Torrid Omphalos": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [
+          "record"
+        ],
+        "placements": [],
+        "topCuts": [],
+        "records": [
+          "3-2"
+        ],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu",
+          "result:record"
+        ],
+        "likes": 0,
+        "views": 11
+      }
+    }
+  },
+  "cmuspk3mr000606lcok5kywe6": {
+    "deckinfo": {
+      "id": "cmuspk3mr000606lcok5kywe6",
+      "createdAt": "2026-10-03T18:11:01.347Z",
+      "updatedAt": "2026-10-03T18:11:41.483Z",
+      "name": "Steaming Savior (Oulu FI, Cornerstone)",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 16.53547076963075,
+      "user": {
+        "id": "cmt8by1vk10cj92cykkh8um2z",
+        "username": "Grumzh"
+      },
+      "elements": [
+        "Fire",
+        "Water",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 20
+      },
+      "avatar": "Savior",
+      "cards": {
+        "spellbook": {
+          "Philosopher's Stone": 1,
+          "Plague of Frogs": 1,
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 1,
+          "Adept Illusionist": 2,
+          "Jihad": 1,
+          "Pied Piper of Hameln": 1,
+          "Pnakotic Manuscript": 1,
+          "Toolbox": 2,
+          "War Horse": 3,
+          "Wild Fanatic": 4,
+          "Acid Rain": 1,
+          "Blaze of Glory": 1,
+          "Lugbog Cat": 3,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Sir Agravaine": 1,
+          "Swap": 1,
+          "The Lady of the Lake": 1,
+          "Tufted Turtles": 4,
+          "Boudicca": 1,
+          "Captain Baldassare": 1,
+          "Doctor Demetrius": 1,
+          "Hillock Basilisk": 2,
+          "Infiltrate": 1,
+          "Monstrous Lion": 2,
+          "Ruler of Thul": 1,
+          "Sacred Stag": 2,
+          "Saracen Raiders": 3,
+          "Selfsame Simulacrum": 2,
+          "Siege Giant": 2,
+          "Atlantean Fate": 1,
+          "Panorama Manticore": 2,
+          "Questing Beast": 1,
+          "Death Dealer": 1
+        },
+        "atlas": {
+          "Active Volcano": 2,
+          "Fields of Camlann": 1,
+          "Floodplain": 2,
+          "Kor Crematory": 1,
+          "Mismanaged Mortuary": 2,
+          "Oasis": 3,
+          "Plague Pits": 2,
+          "Pond": 3,
+          "River of Blood": 2,
+          "River Rapids": 2,
+          "Sea of Ash": 1,
+          "Smokestacks of Gnaak": 1,
+          "Tadpole Pool": 1,
+          "Troll Bridge": 2,
+          "Vesuvius": 1,
+          "Vindictive Nation": 2,
+          "Wizard's Den": 2
+        },
+        "collection": {
+          "Detonate": 1,
+          "Just a Rock": 1,
+          "Gift of the Serpent": 1,
+          "Boil": 1,
+          "Burning Hands": 1,
+          "Drown": 1,
+          "Makeshift Barricade": 1,
+          "Minor Explosion": 1,
+          "Angry Mob": 1,
+          "Flayer": 1
+        },
+        "maybe": {
+          "Adept Illusionist": 2,
+          "Colicky Dragonettes": 2,
+          "Swap": 1,
+          "Captain Baldassare": 1,
+          "Mesmerism": 1,
+          "Sacred Stag": 2,
+          "Sir Gaheris": 1,
+          "The Great Famine": 1,
+          "Archangel Samael": 1,
+          "Maiden, Mother, Crone": 1,
+          "Rebecks": 1,
+          "Balor of the Evil Eye": 1,
+          "The Green Knight": 1,
+          "Garden of Eden": 1,
+          "Kelp Cavern": 2,
+          "Purgatory": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu"
+        ],
+        "likes": 0,
+        "views": 17
+      }
+    }
+  },
+  "cmusnpu6q000c06p1t0rqnbb9": {
+    "deckinfo": {
+      "id": "cmusnpu6q000c06p1t0rqnbb9",
+      "createdAt": "2026-10-03T17:19:29.810Z",
+      "updatedAt": "2026-10-03T17:46:23.579Z",
+      "name": "Fake it till you flame it, Cornerstone Oulu 2nd place 3.10.26",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 19.584196925405195,
+      "user": {
+        "id": "cmt8ab2ph08br92cymkcg84sp",
+        "username": "Jaakko"
+      },
+      "elements": [
+        "Fire",
+        "Air",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 61,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Imposter",
+      "cards": {
+        "spellbook": {
+          "Mix Ignis": 2,
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 1,
+          "Blink": 2,
+          "Gift of the Serpent": 2,
+          "Jihad": 1,
+          "Redmane Hyena": 2,
+          "Sinterfee": 2,
+          "Vile Imp": 3,
+          "War Horse": 3,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Grapple Shot": 2,
+          "Màzuj Ifrit": 2,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Sphere of Animosity": 1,
+          "Warp Spasm": 1,
+          "Angry Mob": 1,
+          "Boudicca": 1,
+          "Infiltrate": 2,
+          "Salt the Earth": 1,
+          "Saracen Raiders": 2,
+          "Siege Giant": 2,
+          "Sir Lamorak": 1,
+          "The Great Famine": 1,
+          "Betrayal": 2,
+          "Courtesan Thaïs": 1,
+          "Panorama Manticore": 2,
+          "Poison Nova": 2,
+          "Rebecks": 1,
+          "Whirling Blades": 2,
+          "Balor of the Evil Eye": 1,
+          "Infernal Legion": 2,
+          "Sir Pellinore": 1
+        },
+        "atlas": {
+          "Active Volcano": 3,
+          "Arid Desert": 1,
+          "Dark Tower": 1,
+          "Funeral Pyre": 3,
+          "Gothic Tower": 1,
+          "Horns of Behemoth": 1,
+          "Lone Tower": 1,
+          "Mirror Realm": 1,
+          "Mock Court": 2,
+          "Mountain Peaks": 1,
+          "Red Desert": 1,
+          "Remote Desert": 2,
+          "River of Blood": 3,
+          "River of Flame": 1,
+          "Ruins": 3,
+          "Vesuvius": 1,
+          "Vindictive Nation": 2,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Archimago": 1,
+          "Avatar of Fire": 1,
+          "Deathspeaker": 1,
+          "Enchantress": 1,
+          "Flamecaller": 1,
+          "Interrogator": 1,
+          "Ironclad": 1,
+          "Pathfinder": 1,
+          "Sorcerer": 1,
+          "Witch": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone",
+          "place"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 20
+      }
+    }
+  },
+  "cmusk197c000006k3lht84ujy": {
+    "deckinfo": {
+      "id": "cmusk197c000006k3lht84ujy",
+      "createdAt": "2026-10-03T15:36:24.025Z",
+      "updatedAt": "2026-10-03T17:30:17.779Z",
+      "name": "2026 Oulu Cornerstone 6th place necromancer",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 15.581512578883897,
+      "user": {
+        "id": "cmt8ck2g11kaf92cy5xxam6jq",
+        "username": "Puakki"
+      },
+      "elements": [
+        "Water",
+        "Air",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 26
+      },
+      "avatar": "Necromancer",
+      "cards": {
+        "spellbook": {
+          "Amethyst Core": 1,
+          "Aquamarine Core": 1,
+          "Browse": 1,
+          "Ring of Morrigan": 1,
+          "Polar Explorers": 2,
+          "Riptide": 2,
+          "Toolbox": 2,
+          "Coy Nixie": 3,
+          "Drown": 2,
+          "Grapple Shot": 2,
+          "Lugbog Cat": 3,
+          "Nelly Longarms": 1,
+          "Order of the Sacred Oak": 1,
+          "Sir Pelleas": 1,
+          "Swap": 3,
+          "Abaddon Succubus": 2,
+          "Bane of Aventis": 1,
+          "Dank Omphalos": 1,
+          "Failed Mutation": 3,
+          "Hyperparasite": 2,
+          "Selfsame Simulacrum": 1,
+          "Shapeshift": 2,
+          "Daperyll Vampire": 3,
+          "Gloam Toads": 2,
+          "Hounds of Ondaros": 1,
+          "Lacuna Entity": 1,
+          "Lilith": 1,
+          "Maiden, Mother, Crone": 1,
+          "Questing Beast": 1,
+          "Whirling Blades": 2,
+          "Call of the Sea": 2,
+          "Gnarled Wendigo": 2,
+          "Grandmaster Wizard": 1,
+          "Lord of Lies": 1,
+          "Dormant Monstrosity": 2,
+          "The Great Drowning of Men": 1,
+          "Yog-Sothoth": 1
+        },
+        "atlas": {
+          "Babbling Brook": 2,
+          "Bottomless Pit": 2,
+          "Deep Sea": 3,
+          "Elder Ruins": 1,
+          "Floodplain": 1,
+          "Innsmouth Dock": 1,
+          "Joyous Garde": 1,
+          "Lighthouse": 3,
+          "Maelström": 1,
+          "Mirror Realm": 1,
+          "Mountain Peaks": 2,
+          "Observatory": 1,
+          "Perilous Bridge": 2,
+          "Thin Ice": 2,
+          "Troll Bridge": 3,
+          "Valley of Delight": 2,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Just a Rock": 1,
+          "Zap!": 1,
+          "Blink": 1,
+          "Disenchant": 1,
+          "Gift of the Frog": 1,
+          "Lightning Bolt": 1,
+          "Riptide": 1,
+          "Teleport": 1,
+          "Drown": 1,
+          "Shoggoth": 1
+        },
+        "maybe": {
+          "Blink": 3,
+          "Gift of the Frog": 1,
+          "Gift of the Raven": 1,
+          "Grim Reaper": 1,
+          "Lucid Dreamers": 1,
+          "Fey Changeling": 3,
+          "Order of the Sacred Oak": 2,
+          "Overflow": 3,
+          "The Lady of the Lake": 1,
+          "Sacred Stag": 2,
+          "Selfsame Simulacrum": 1,
+          "Lacuna Entity": 1,
+          "Mother Nature": 1,
+          "The Flood": 1,
+          "Draconian Bonekite": 1,
+          "Nightmare": 1,
+          "Dark Tower": 1,
+          "Island Leviathan": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          6
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone",
+          "2026",
+          "place"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu",
+          "result:placed",
+          "season:2026"
+        ],
+        "likes": 1,
+        "views": 16
+      }
+    }
+  },
+  "cmul7oupr00000agmyi9elzuh": {
+    "deckinfo": {
+      "id": "cmul7oupr00000agmyi9elzuh",
+      "createdAt": "2026-09-28T12:16:26.751Z",
+      "updatedAt": "2026-10-03T17:24:42.867Z",
+      "name": "Oulu Finland Cornerstone 1st (27 players)",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 160.89492157436848,
+      "user": {
+        "id": "cmt88bg9401eb92cy9dvq0czo",
+        "username": "Tunkio"
+      },
+      "elements": [
+        "Earth",
+        "None",
+        "Fire"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 73
+      },
+      "avatar": "Sorcerer",
+      "cards": {
+        "spellbook": {
+          "Divine Healing": 2,
+          "Ring of Morrigan": 1,
+          "Arjaro Exorcist": 2,
+          "Bosk Troll": 4,
+          "Firebolts": 2,
+          "Frontier Settlers": 3,
+          "Gift of the Wolf": 3,
+          "Mover of Mountains": 1,
+          "Sister Stefánia": 1,
+          "Toolbox": 3,
+          "Autumn Unicorn": 3,
+          "Blaze of Glory": 1,
+          "Landmass": 3,
+          "Onslaught": 3,
+          "Order of the White Wing": 3,
+          "Quarrelsome Kobolds": 3,
+          "Root Spider": 3,
+          "Cave-In": 1,
+          "Gargantula": 2,
+          "Paladins of Bazia": 2,
+          "Pudge Butcher": 3,
+          "Archangel Michael": 1,
+          "Atlas Wanderers": 2,
+          "Earthquake": 2,
+          "Panorama Manticore": 2,
+          "Balor of the Evil Eye": 1,
+          "Death Dealer": 1,
+          "Major Explosion": 2
+        },
+        "atlas": {
+          "Active Volcano": 3,
+          "Boulevard of Bones": 2,
+          "Common Village": 4,
+          "Fertile Earth": 3,
+          "Imperial Road": 2,
+          "Mirror Realm": 1,
+          "Mount Ussar Sanctuary": 1,
+          "Pillar of Zeiros": 1,
+          "Remote Desert": 4,
+          "Rift Valley": 2,
+          "Sinkhole": 2,
+          "Steppe": 3,
+          "Valley of Delight": 2
+        },
+        "collection": {
+          "Dispel": 1,
+          "Entombed": 1,
+          "Firebolts": 1,
+          "Gift of the Wolf": 1,
+          "Scent Hounds": 1,
+          "Boil": 1,
+          "Bury": 1,
+          "Landmass": 1,
+          "Minor Explosion": 1,
+          "Angry Mob": 1
+        },
+        "maybe": {
+          "Key to the City": 1,
+          "Onyx Core": 1,
+          "Philosopher's Stone": 1,
+          "Ring of Morrigan": 1,
+          "Ruby Core": 1,
+          "Summoning Sphere": 1,
+          "Torshammar Trinket": 2,
+          "Zap!": 1,
+          "Arjaro Exorcist": 1,
+          "Bosk Troll": 1,
+          "Clairvoyant": 1,
+          "Common Sense": 1,
+          "Gift of the Serpent": 1,
+          "Highland Princess": 1,
+          "Kettletop Leprechaun": 1,
+          "Mover of Mountains": 1,
+          "Shrine of the Dragonlord": 1,
+          "Sister Stefánia": 1,
+          "Angel's Egg": 1,
+          "Bury": 1,
+          "Jack the Ripper": 1,
+          "Order of the White Wing": 1,
+          "Shield Maidens": 1,
+          "Yellow Knight": 1,
+          "Cave-In": 1,
+          "Dalcean Phalanx": 1,
+          "Hillock Basilisk": 1,
+          "Infiltrate": 1,
+          "Royal Bodyguard": 1,
+          "Sand Worm": 1,
+          "Siege Giant": 1,
+          "Smite": 1,
+          "Sow the Earth": 1,
+          "The Great Famine": 1,
+          "Witherwing Hero": 1,
+          "Atlas Wanderers": 1,
+          "Poison Nova": 1,
+          "Sir Galahad": 1,
+          "Stone-gaze Gorgons": 1,
+          "The Inquisition": 1,
+          "Grandmaster Wizard": 1,
+          "Malakhim": 1,
+          "Returned King": 1,
+          "Death Dealer": 1,
+          "King of the Realm": 1,
+          "Wraetannis Titan": 1,
+          "Conqueror Worm": 1,
+          "Craterize": 1,
+          "Beacon": 1,
+          "City of Souls": 1,
+          "Court of Equity": 1,
+          "Dark Tower": 1,
+          "Desert Bloom": 1,
+          "Fields of Phyxis": 1,
+          "Gnome Hollows": 1,
+          "Gothic Tower": 1,
+          "Heirloom Lost": 1,
+          "Hillside Chapel": 1,
+          "Humble Village": 1,
+          "Leadworks": 1,
+          "Lone Tower": 1,
+          "Mirror Realm": 1,
+          "Mock Court": 1,
+          "Mountain Peaks": 1,
+          "Mount Ussar Sanctuary": 1,
+          "No Man's Land": 1,
+          "Pilgrim's Shrine": 1,
+          "River of Flame": 1,
+          "Roots of Yggdrasil": 1,
+          "Temple of Moloch": 1,
+          "Valley of Delight": 1,
+          "Wizard's Den": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 3,
+        "views": 169
+      }
+    }
+  },
+  "cmusmqtq5000006mhk3nymhdg": {
+    "deckinfo": {
+      "id": "cmusmqtq5000006mhk3nymhdg",
+      "createdAt": "2026-10-03T16:52:16.253Z",
+      "updatedAt": "2026-10-03T17:02:48.298Z",
+      "name": "Pathfinder - 2026 Grand Contest, Toscana",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 13.434491172016521,
+      "user": {
+        "id": "aM77iS9WkDUJTtVIWcAzbRnA5gZC1hiS",
+        "username": "Demian"
+      },
+      "elements": [
+        "None",
+        "Fire"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 0,
+        "maybe": 0
+      },
+      "avatar": "Pathfinder",
+      "cards": {
+        "spellbook": {
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 3,
+          "Gift of the Serpent": 3,
+          "Jihad": 1,
+          "Redmane Hyena": 3,
+          "Sinterfee": 3,
+          "Vile Imp": 4,
+          "War Horse": 3,
+          "Wild Fanatic": 3,
+          "Barging Barghest": 3,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Màzuj Ifrit": 2,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Scorched Earth": 2,
+          "Searing Truth": 2,
+          "Boudicca": 1,
+          "Infiltrate": 2,
+          "Monstrous Lion": 1,
+          "Saracen Raiders": 3,
+          "Siege Giant": 3,
+          "The Great Famine": 1,
+          "Betrayal": 1,
+          "Rebecks": 1,
+          "Balor of the Evil Eye": 1,
+          "Infernal Legion": 2
+        },
+        "atlas": {
+          "Accursed Desert": 1,
+          "Active Volcano": 1,
+          "Arid Desert": 1,
+          "Bonfire": 1,
+          "Bureau of Occult Control": 1,
+          "Desert Bloom": 1,
+          "Forge": 1,
+          "Funeral Pyre": 1,
+          "Hellmouth": 1,
+          "Horns of Behemoth": 1,
+          "Kor Crematory": 1,
+          "Leadworks": 1,
+          "Mismanaged Mortuary": 1,
+          "Mobbed Court": 1,
+          "Mock Court": 1,
+          "Molten Maar": 1,
+          "Oasis": 1,
+          "Plague Pits": 1,
+          "Poisoned Well": 1,
+          "Red Desert": 1,
+          "Remote Desert": 1,
+          "River of Blood": 1,
+          "River of Flame": 1,
+          "Road to Perdition": 1,
+          "Ruins": 1,
+          "Sea of Ash": 1,
+          "Shifting Sands": 1,
+          "Vast Desert": 1,
+          "Vesuvius": 1,
+          "Vindictive Nation": 1
+        },
+        "collection": {},
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Grand Contest"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Grand Contest",
+          "2026"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "event:grand-contest",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 14
+      }
+    }
+  },
+  "cmj64wmfs28r01afq5j7v6vfk": {
+    "deckinfo": {
+      "id": "cmj64wmfs28r01afq5j7v6vfk",
+      "createdAt": "2025-12-14T19:45:12.088Z",
+      "updatedAt": "2026-10-03T16:24:49.983Z",
+      "name": "FAST SAVIOR: Cornerstone Oulu 3rd place",
+      "format": "Constructed",
+      "primer": "1. PLAY DOOD\n2. BUBBLE DOOD\n3. TAP DOOD\n4. ?????\n5. PROFIT",
+      "hotscore": 35.40473803537014,
+      "user": {
+        "id": "cmt8by2bm10cp92cymwx4160b",
+        "username": "SongWithinaSong"
+      },
+      "elements": [
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 2
+      },
+      "avatar": "Savior",
+      "cards": {
+        "spellbook": {
+          "Mix Ignis": 1,
+          "Pit Vipers": 3,
+          "Ruby Core": 1,
+          "Gift of the Serpent": 3,
+          "Jihad": 1,
+          "Sinterfee": 3,
+          "Sirocco Scorpions": 1,
+          "Toolbox": 3,
+          "War Horse": 3,
+          "Wild Fanatic": 4,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Disintegrate": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Warp Spasm": 1,
+          "Boudicca": 1,
+          "Brother Knight": 2,
+          "Char Omphalos": 1,
+          "Hillock Basilisk": 3,
+          "Infiltrate": 2,
+          "Monstrous Lion": 2,
+          "Saracen Raiders": 3,
+          "Siege Giant": 3,
+          "Betrayal": 1,
+          "Courtesan Thaïs": 1,
+          "Lava Flow": 3,
+          "Poison Nova": 2,
+          "Balor of the Evil Eye": 1
+        },
+        "atlas": {
+          "Active Volcano": 2,
+          "Funeral Pyre": 2,
+          "Kor Crematory": 1,
+          "Mobbed Court": 2,
+          "Purgatory": 1,
+          "Remote Desert": 3,
+          "Rift Valley": 2,
+          "River of Blood": 3,
+          "Sinkhole": 2,
+          "Smokestacks of Gnaak": 1,
+          "Town": 3,
+          "Vast Desert": 3,
+          "Vesuvius": 1,
+          "Vindictive Nation": 2,
+          "Wizard's Den": 2
+        },
+        "collection": {
+          "Just a Rock": 1,
+          "Critical Strike": 1,
+          "Gift of the Serpent": 1,
+          "Mad Dash": 1,
+          "Boil": 1,
+          "Hamlet's Ablaze!": 1,
+          "Heat Ray": 1,
+          "Minor Explosion": 1,
+          "Angry Mob": 2
+        },
+        "maybe": {
+          "Truesight Crossbow": 1,
+          "The Inquisition": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          3
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone",
+          "place"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 195
+      }
+    }
+  },
+  "cmuskrsqz000204i7xr0sfjax": {
+    "deckinfo": {
+      "id": "cmuskrsqz000204i7xr0sfjax",
+      "createdAt": "2026-10-03T15:57:02.411Z",
+      "updatedAt": "2026-10-03T16:19:57.444Z",
+      "name": "Pathfinder(F) cornerstone Oulu TOP 4",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 23.36494813264929,
+      "user": {
+        "id": "cmt8by1fk10ce92cyzjsyywkn",
+        "username": "Hiipivatiikeri"
+      },
+      "elements": [
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Pathfinder",
+      "cards": {
+        "spellbook": {
+          "Immolation": 1,
+          "Ruby Core": 1,
+          "Torshammar Trinket": 2,
+          "Gift of the Serpent": 2,
+          "Jihad": 1,
+          "Redmane Hyena": 2,
+          "Sinterfee": 3,
+          "Toolbox": 2,
+          "Vile Imp": 4,
+          "War Horse": 3,
+          "Wild Fanatic": 2,
+          "Blaze": 1,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Disintegrate": 2,
+          "Màzuj Ifrit": 1,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Searing Truth": 2,
+          "Warp Spasm": 1,
+          "Boudicca": 1,
+          "Char Omphalos": 1,
+          "Monstrous Lion": 1,
+          "Saracen Raiders": 3,
+          "Shatter Strike": 1,
+          "Siege Giant": 3,
+          "The Great Famine": 1,
+          "Betrayal": 2,
+          "Courtesan Thaïs": 1,
+          "Rebecks": 1,
+          "The Inquisition": 1,
+          "Infernal Legion": 2,
+          "I Am Colossus!": 1
+        },
+        "atlas": {
+          "Active Volcano": 1,
+          "Arid Desert": 1,
+          "Baba Yaga's Hut": 1,
+          "Bonfire": 1,
+          "Bureau of Occult Control": 1,
+          "Desert Bloom": 1,
+          "Fields of Camlann": 1,
+          "Forge": 1,
+          "Funeral Pyre": 1,
+          "Hellmouth": 1,
+          "Horns of Behemoth": 1,
+          "Kor Crematory": 1,
+          "Leadworks": 1,
+          "Mirror Realm": 1,
+          "Molten Maar": 1,
+          "Plague Pits": 1,
+          "Poisoned Well": 1,
+          "Red Desert": 1,
+          "Remote Desert": 1,
+          "River of Blood": 1,
+          "River of Flame": 1,
+          "Road to Perdition": 1,
+          "Ruins": 1,
+          "Shifting Sands": 1,
+          "Steppe": 1,
+          "Vast Desert": 1,
+          "Vesuvius": 1,
+          "Vindictive Nation": 1,
+          "Wizard's Den": 1,
+          "Wuthering Heights": 1
+        },
+        "collection": {
+          "Zap!": 1,
+          "Firebolts": 1,
+          "Vandal Imp": 1,
+          "Boil": 1,
+          "Grapple Shot": 1,
+          "Hellhounds": 1,
+          "Minor Explosion": 1,
+          "Spin Attack": 1,
+          "Angry Mob": 1,
+          "Flayer": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Oulu"
+        ],
+        "resultTags": [
+          "top-cut"
+        ],
+        "placements": [],
+        "topCuts": [
+          4
+        ],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:oulu",
+          "result:top-cut"
+        ],
+        "likes": 0,
+        "views": 24
+      }
+    }
+  },
+  "cmus1cxn0000a06p4cqc99f0w": {
+    "deckinfo": {
+      "id": "cmus1cxn0000a06p4cqc99f0w",
+      "createdAt": "2026-10-03T06:53:36.204Z",
+      "updatedAt": "2026-10-03T07:01:15.910Z",
+      "name": "NECRO FIRE GC LONDON",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 11.41074588702567,
+      "user": {
+        "id": "cmt8arvxp09w492cy0vw8jdhk"
+      },
+      "elements": [
+        "Fire",
+        "None",
+        "Earth"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Necromancer",
+      "cards": {
+        "spellbook": {
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 3,
+          "Firebolts": 3,
+          "Gift of the Serpent": 2,
+          "Jihad": 1,
+          "Toolbox": 3,
+          "Vile Imp": 4,
+          "War Horse": 3,
+          "Wild Fanatic": 4,
+          "Barging Barghest": 3,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Màzuj Ifrit": 2,
+          "Morgana le Fay": 1,
+          "Onslaught": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Slobbermaw": 3,
+          "Clamor of Harpies": 3,
+          "Infiltrate": 2,
+          "Saracen Raiders": 3,
+          "Siege Giant": 3,
+          "Lava Flow": 3,
+          "Poison Nova": 2
+        },
+        "atlas": {
+          "Active Volcano": 3,
+          "Arid Desert": 4,
+          "Boulevard of Bones": 2,
+          "Court of Equity": 2,
+          "Mirror Realm": 1,
+          "Mobbed Court": 2,
+          "Poisoned Well": 1,
+          "Red Desert": 4,
+          "Rift Valley": 2,
+          "River of Blood": 3,
+          "River of Flame": 1,
+          "Sinkhole": 2,
+          "Temple of Moloch": 1,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Charge": 1,
+          "Dispel": 1,
+          "Entombed": 1,
+          "Firebolts": 1,
+          "Gift of the Serpent": 1,
+          "Mad Dash": 1,
+          "Vandal Imp": 1,
+          "Boil": 1,
+          "Bury": 1,
+          "Minor Explosion": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Grand Contest"
+        ],
+        "locations": [
+          "London"
+        ],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "GC"
+        ],
+        "matchedSignals": [
+          "event-alias:grand-contest",
+          "event:grand-contest",
+          "location:london"
+        ],
+        "likes": 0,
+        "views": 12
+      }
+    }
+  },
+  "cmuotc7hi000306ohwjgmzdmy": {
+    "deckinfo": {
+      "id": "cmuotc7hi000306ohwjgmzdmy",
+      "createdAt": "2026-10-01T00:45:46.854Z",
+      "updatedAt": "2026-10-01T12:26:31.002Z",
+      "name": "poorcery torneo milano 2026",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 7.206691440492378,
+      "user": {
+        "id": "cmt88ho1g01xb92cy2zvptr3t",
+        "username": "Davilunio"
+      },
+      "elements": [
+        "Earth",
+        "Water",
+        "Air",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 61,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Sorcerer",
+      "cards": {
+        "spellbook": {
+          "Freeze": 1,
+          "Common Sense": 4,
+          "Kettletop Leprechaun": 3,
+          "Lightning Bolt": 3,
+          "Magic Missiles": 1,
+          "Pith Imp": 4,
+          "Sleep": 2,
+          "Toolbox": 3,
+          "Border Militia": 1,
+          "Bury": 1,
+          "Drown": 1,
+          "Fey Changeling": 3,
+          "Grapple Shot": 3,
+          "Iron Shackles": 3,
+          "Landmass": 4,
+          "Overflow": 4,
+          "Root Spider": 3,
+          "Tax Collector": 4,
+          "Smite": 1,
+          "Daperyll Vampire": 3,
+          "Whirling Blades": 3,
+          "Dirium Fomorians": 3,
+          "Muirid Fomorians": 3
+        },
+        "atlas": {
+          "Algae Bloom": 4,
+          "Aqueduct": 3,
+          "Autumn Bloom": 2,
+          "Briar Patch": 2,
+          "Dark Tower": 1,
+          "Deep Sea": 3,
+          "Fertile Earth": 3,
+          "Floodplain": 1,
+          "Gothic Tower": 1,
+          "Haystack": 1,
+          "Lighthouse": 3,
+          "Troll Bridge": 3,
+          "Windmill": 3
+        },
+        "collection": {
+          "Freeze": 1,
+          "Zap!": 1,
+          "Dispel": 1,
+          "Exorcism": 1,
+          "Unravel": 1,
+          "Virgin in Prayer": 1,
+          "Bury": 1,
+          "Drown": 1,
+          "Extinguish": 1,
+          "Murder of Crows": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Poorcery"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "2026"
+        ],
+        "matchedSignals": [
+          "event:poorcery",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 9
+      }
+    }
+  },
+  "cmt86mwax009904l4hom394cl": {
+    "deckinfo": {
+      "id": "cmt86mwax009904l4hom394cl",
+      "createdAt": "2026-08-25T04:46:13.223Z",
+      "updatedAt": "2026-09-30T22:17:47.221Z",
+      "name": "Rabid Portals - Poorcery 2026",
+      "format": "Constructed",
+      "primer": "This is a Poorcery Deck - All cards are either Ordinary or Exceptional",
+      "hotscore": 14.759973584206906,
+      "user": {
+        "id": "cmt8aveby0a8i92cybpgad5sq",
+        "username": "LadyNymm"
+      },
+      "elements": [
+        "Air",
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 61,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Harbinger",
+      "cards": {
+        "spellbook": {
+          "Awakened Mummies": 3,
+          "Detonate": 2,
+          "Blink": 3,
+          "Critical Strike": 3,
+          "Sacred Scarabs": 3,
+          "Toolbox": 3,
+          "Tooth Faeries": 3,
+          "War Horse": 3,
+          "Blaze": 3,
+          "Grapple Shot": 3,
+          "Headless Haunt": 3,
+          "Spin Attack": 3,
+          "Vanishment": 3,
+          "Avenging Angel": 3,
+          "Leap Attack": 3,
+          "Saracen Raiders": 3,
+          "Bladderblimp": 3,
+          "Poison Nova": 2,
+          "Vesper Swarm": 3,
+          "Whirling Blades": 3,
+          "Highland Clansmen": 3
+        },
+        "atlas": {
+          "Accursed Desert": 2,
+          "Accursed Tower": 1,
+          "Dark Alley": 3,
+          "Dark Tower": 1,
+          "Fields of Phyxis": 3,
+          "Forge": 3,
+          "Gothic Tower": 1,
+          "Lone Tower": 1,
+          "Remote Desert": 4,
+          "River of Blood": 2,
+          "Ruins": 3,
+          "Shifting Sands": 3,
+          "Treetop Hideout": 3
+        },
+        "collection": {
+          "Detonate": 1,
+          "Zap!": 1,
+          "Disenchant": 1,
+          "Gift of the Serpent": 1,
+          "Noxious Corpse": 1,
+          "Boil": 1,
+          "Grapple Shot": 1,
+          "Minor Explosion": 1,
+          "Murder of Crows": 1,
+          "Roaming Monster": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Poorcery"
+        ],
+        "locations": [],
+        "resultTags": [],
+        "placements": [],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "2026"
+        ],
+        "matchedSignals": [
+          "event:poorcery",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 30
+      }
+    }
+  },
+  "cmu6t6r0a000309gmbnyy1zv4": {
+    "deckinfo": {
+      "id": "cmu6t6r0a000309gmbnyy1zv4",
+      "createdAt": "2026-09-18T10:21:41.050Z",
+      "updatedAt": "2026-09-30T22:15:29.263Z",
+      "name": "Smack that pitch up - 2nd Invercargill Cornerstone",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 6.465748355980403,
+      "user": {
+        "id": "cmt8aveby0a8i92cybpgad5sq",
+        "username": "LadyNymm"
+      },
+      "elements": [
+        "Air",
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 61,
+        "atlas": 30,
+        "collection": 0,
+        "maybe": 0
+      },
+      "avatar": "Interrogator",
+      "cards": {
+        "spellbook": {
+          "Charge": 3,
+          "Mix Ignis": 2,
+          "Philosopher's Stone": 1,
+          "Displace": 2,
+          "Highland Princess": 1,
+          "Jihad": 1,
+          "Men of Leng": 3,
+          "The Rack": 1,
+          "War Horse": 3,
+          "Barging Barghest": 3,
+          "Blaze of Glory": 1,
+          "Grapple Shot": 4,
+          "Headless Haunt": 3,
+          "Phase Assassin": 3,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Sphere of Animosity": 2,
+          "Sturmgeist": 2,
+          "Warp Spasm": 1,
+          "Infiltrate": 2,
+          "Leap Attack": 3,
+          "Saracen Raiders": 3,
+          "Shatter Strike": 2,
+          "Sir Lamorak": 1,
+          "Poison Nova": 2,
+          "Whirling Blades": 3,
+          "Infernal Legion": 2,
+          "Sir Pellinore": 1
+        },
+        "atlas": {
+          "Active Volcano": 3,
+          "Darkest Dungeon": 1,
+          "Dark Tower": 1,
+          "Fields of Phyxis": 3,
+          "Gothic Tower": 1,
+          "Lone Tower": 1,
+          "Mirror Realm": 1,
+          "Mountain Peaks": 3,
+          "Observatory": 2,
+          "Plague Pits": 2,
+          "Poisoned Well": 3,
+          "Purgatory": 1,
+          "River of Blood": 2,
+          "Vast Desert": 2,
+          "Vindictive Nation": 2,
+          "Wuthering Heights": 2
+        },
+        "collection": {},
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Cornerstone"
+        ],
+        "locations": [
+          "Invercargill"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "Cornerstone"
+        ],
+        "matchedSignals": [
+          "event:cornerstone",
+          "location:invercargill",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 12
+      }
+    }
+  },
+  "cmtbpaiup00oi04i4ofi64248": {
+    "deckinfo": {
+      "id": "cmtbpaiup00oi04i4ofi64248",
+      "createdAt": "2026-08-27T15:51:47.172Z",
+      "updatedAt": "2026-09-30T21:24:11.086Z",
+      "name": "Rage Against the Variance Machine [Summit Season 6 2nd Place]",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 23.90723300668901,
+      "user": {
+        "id": "cmt8arw7h09w692cyb3nmz8sp",
+        "username": "KingSky"
+      },
+      "elements": [
+        "Earth",
+        "Air",
+        "Water",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Pathfinder",
+      "cards": {
+        "spellbook": {
+          "Divine Healing": 2,
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 1,
+          "Arjaro Exorcist": 2,
+          "Blink": 3,
+          "Common Sense": 2,
+          "Crusade": 1,
+          "Dispel": 1,
+          "Gift of the Wolf": 1,
+          "Lightning Bolt": 1,
+          "Shrine of the Dragonlord": 1,
+          "Sister Stefánia": 1,
+          "Toolbox": 3,
+          "Autumn Unicorn": 3,
+          "Bury": 1,
+          "Flanking Maneuver": 2,
+          "Grapple Shot": 3,
+          "Order of the White Wing": 3,
+          "Root Spider": 3,
+          "Dalcean Phalanx": 3,
+          "Gargantula": 2,
+          "Gigantism": 1,
+          "Paladins of Bazia": 2,
+          "Pudge Butcher": 3,
+          "Smite": 1,
+          "Archangel Michael": 1,
+          "Atlas Wanderers": 2,
+          "Daperyll Vampire": 3,
+          "Earthquake": 2,
+          "Whirling Blades": 1,
+          "King of the Realm": 1,
+          "Talamh Dreig": 1,
+          "Craterize": 2
+        },
+        "atlas": {
+          "Autumn Bloom": 1,
+          "Blessed Village": 1,
+          "Boulevard of Bones": 1,
+          "Briar Patch": 1,
+          "Common Village": 1,
+          "Dark Tower": 1,
+          "Endless Fence": 1,
+          "Garden of Eden": 1,
+          "Gothic Tower": 1,
+          "Haystack": 1,
+          "Hillside Chapel": 1,
+          "Holy Ground": 1,
+          "Humble Village": 1,
+          "Lone Tower": 1,
+          "Mirror Realm": 1,
+          "Mount Ussar Sanctuary": 1,
+          "Observatory": 1,
+          "Open Grave": 1,
+          "Open Mausoleum": 1,
+          "Pebbled Paths": 1,
+          "Pilgrim's Shrine": 1,
+          "Pillar of Zeiros": 1,
+          "Rift Valley": 1,
+          "Rustic Village": 1,
+          "Silent Hills": 1,
+          "Sinkhole": 1,
+          "Twilight Bloom": 1,
+          "Varmint Warrens": 1,
+          "Windmill": 1,
+          "Wuthering Heights": 1
+        },
+        "collection": {
+          "Carrion Beetles": 1,
+          "Zap!": 1,
+          "Dispel": 1,
+          "Gift of the Wolf": 1,
+          "Lightning Bolt": 1,
+          "Magic Missiles": 1,
+          "Tactical Move": 1,
+          "Bury": 1,
+          "Duel": 1,
+          "Grapple Shot": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Sorcerers Summit"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          2
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "place"
+        ],
+        "matchedSignals": [
+          "event-alias:sorcerers-summit",
+          "event:sorcerers-summit",
+          "result:placed"
+        ],
+        "likes": 0,
+        "views": 77
+      }
+    }
+  },
+  "cmr27tflk00sd04l5koja4ti0": {
+    "deckinfo": {
+      "id": "cmr27tflk00sd04l5koja4ti0",
+      "createdAt": "2026-07-01T15:13:16.075Z",
+      "updatedAt": "2026-09-27T19:59:12.732Z",
+      "name": "5th place SCG Dallas: Self Destruct",
+      "format": "Constructed",
+      "primer": "Idk how I got here",
+      "hotscore": 97.22728339801077,
+      "user": {
+        "id": "cmt8a0x9v078y92cys98jjpqp",
+        "username": "Tofu"
+      },
+      "elements": [
+        "Fire",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Bladedancer",
+      "cards": {
+        "spellbook": {
+          "Detonate": 2,
+          "Immolation": 1,
+          "Key to the City": 1,
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 3,
+          "Gift of the Serpent": 3,
+          "Jihad": 1,
+          "Poisonous Dagger": 2,
+          "Sacred Scarabs": 4,
+          "The Rack": 1,
+          "Toolbox": 2,
+          "War Horse": 3,
+          "Blaze": 3,
+          "Blaze of Glory": 1,
+          "Cerberus in Chains": 1,
+          "Colicky Dragonettes": 3,
+          "Crown of the Victor": 1,
+          "Disintegrate": 2,
+          "Minor Explosion": 3,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Sword and Shield": 3,
+          "Boudicca": 1,
+          "Monstrous Lion": 2,
+          "Saracen Raiders": 3,
+          "Siege Giant": 3,
+          "The Great Famine": 1,
+          "Wildfire": 2
+        },
+        "atlas": {
+          "Arid Desert": 3,
+          "Bureau of Occult Control": 1,
+          "Dwarven Forge": 2,
+          "Forge": 4,
+          "Funeral Pyre": 3,
+          "Leadworks": 2,
+          "Mobbed Court": 2,
+          "Poisoned Well": 3,
+          "River of Blood": 3,
+          "River of Flame": 1,
+          "Smokestacks of Gnaak": 1,
+          "Vindictive Nation": 2,
+          "Wizard's Den": 1,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Detonate": 1,
+          "Just a Rock": 1,
+          "Critical Strike": 1,
+          "Firebolts": 1,
+          "Gift of the Serpent": 1,
+          "Mad Dash": 1,
+          "Vile Imp": 1,
+          "Heat Ray": 1,
+          "Minor Explosion": 1,
+          "Angry Mob": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "SCG CON"
+        ],
+        "locations": [
+          "Dallas"
+        ],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          5
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "place"
+        ],
+        "matchedSignals": [
+          "event:scg-con",
+          "location:dallas",
+          "result:placed"
+        ],
+        "likes": 3,
+        "views": 427
+      }
+    }
+  },
+  "cmpt7zg12002j04lb8c0ij4mp": {
+    "deckinfo": {
+      "id": "cmpt7zg12002j04lb8c0ij4mp",
+      "createdAt": "2026-05-31T03:28:18.638Z",
+      "updatedAt": "2026-09-08T17:56:45.027Z",
+      "name": "EnchAWntress 4th Place TX League S2",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 6.359268266787802,
+      "user": {
+        "id": "cmt89hkj305ax92cyg36f6gau",
+        "username": "TheMurderBurger"
+      },
+      "elements": [
+        "Air",
+        "None",
+        "Water"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 4
+      },
+      "avatar": "Enchantress",
+      "cards": {
+        "spellbook": {
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 2,
+          "Blink": 2,
+          "Magic Missiles": 3,
+          "Riptide": 2,
+          "Toolbox": 2,
+          "Acid Rain": 2,
+          "Lugbog Cat": 3,
+          "Mariner's Curse": 3,
+          "Order of the Sacred Oak": 2,
+          "Silence": 2,
+          "Sphere of Animosity": 2,
+          "Sturmgeist": 2,
+          "Abaddon Succubus": 2,
+          "Dank Omphalos": 1,
+          "Hyperparasite": 2,
+          "Mesmerism": 1,
+          "Ruler of Thul": 1,
+          "Sacred Stag": 2,
+          "Selfsame Simulacrum": 2,
+          "The Black Plague": 1,
+          "Thunderstorm": 3,
+          "Abundance": 2,
+          "Archangel Raphael": 1,
+          "Atlantean Fate": 1,
+          "Daperyll Vampire": 3,
+          "Lilith": 1,
+          "Maiden, Mother, Crone": 1,
+          "Questing Beast": 1,
+          "Whirling Blades": 2,
+          "Call of the Sea": 2,
+          "Lord of Lies": 2,
+          "The Green Knight": 1
+        },
+        "atlas": {
+          "Dark Tower": 1,
+          "Deep Sea": 2,
+          "Fields of Phyxis": 1,
+          "Floodplain": 3,
+          "Gothic Tower": 1,
+          "Innsmouth Dock": 1,
+          "Lighthouse": 3,
+          "Lone Tower": 1,
+          "Mismanaged Mortuary": 2,
+          "Mountain Peaks": 3,
+          "River Rapids": 2,
+          "The Manor at Daperyll Hill": 1,
+          "Thin Ice": 3,
+          "Tintagel": 1,
+          "Troll Bridge": 3,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Zap!": 1,
+          "Disenchant": 1,
+          "Gift of the Raven": 1,
+          "Led Astray": 1,
+          "Lightning Bolt": 1,
+          "Magic Missiles": 1,
+          "Scarecrow": 1,
+          "Drown": 1,
+          "Grapple Shot": 1,
+          "Murder of Crows": 1
+        },
+        "maybe": {
+          "Aino": 1,
+          "Flood": 1,
+          "Lord of Unland": 1,
+          "Seirawan Hydra": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "medium",
+        "seasons": [
+          2026
+        ],
+        "events": [],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          4
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "place"
+        ],
+        "matchedSignals": [
+          "competition:noun",
+          "result:placed"
+        ],
+        "likes": 2,
+        "views": 178
+      }
+    }
+  },
+  "cmu3w3607000f0agmfinkkaa4": {
+    "deckinfo": {
+      "id": "cmu3w3607000f0agmfinkkaa4",
+      "createdAt": "2026-09-16T09:19:34.183Z",
+      "updatedAt": "2026-09-16T09:19:42.854Z",
+      "name": "GermanyGranContest_1st Place_Necromancer (Copy)",
+      "format": "Constructed",
+      "primer": null,
+      "hotscore": 28.351977598452557,
+      "user": {
+        "id": "cmt8chs721i8292cyyix4clqn",
+        "username": "MissCappaLorina"
+      },
+      "elements": [
+        "Fire",
+        "None",
+        "Earth",
+        "Air"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 0
+      },
+      "avatar": "Necromancer",
+      "cards": {
+        "spellbook": {
+          "Ring of Morrigan": 1,
+          "Torshammar Trinket": 3,
+          "Firebolts": 3,
+          "Gift of the Serpent": 2,
+          "Jihad": 1,
+          "Toolbox": 3,
+          "Vile Imp": 4,
+          "War Horse": 3,
+          "Wild Fanatic": 4,
+          "Barging Barghest": 3,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 3,
+          "Màzuj Ifrit": 2,
+          "Morgana le Fay": 1,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 3,
+          "Slobbermaw": 3,
+          "Clamor of Harpies": 3,
+          "Infiltrate": 2,
+          "Saracen Raiders": 3,
+          "Siege Giant": 3,
+          "Lava Flow": 3,
+          "Poison Nova": 3
+        },
+        "atlas": {
+          "Active Volcano": 3,
+          "Arid Desert": 4,
+          "Boulevard of Bones": 2,
+          "Court of Equity": 2,
+          "Mirror Realm": 1,
+          "Mobbed Court": 2,
+          "Poisoned Well": 1,
+          "Red Desert": 4,
+          "Rift Valley": 2,
+          "River of Blood": 3,
+          "River of Flame": 1,
+          "Sinkhole": 2,
+          "Temple of Moloch": 1,
+          "Wuthering Heights": 2
+        },
+        "collection": {
+          "Charge": 1,
+          "Dispel": 1,
+          "Entombed": 1,
+          "Firebolts": 1,
+          "Gift of the Serpent": 1,
+          "Mad Dash": 1,
+          "Vandal Imp": 1,
+          "Boil": 1,
+          "Bury": 1,
+          "Minor Explosion": 1
+        },
+        "maybe": {}
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Grand Contest"
+        ],
+        "locations": [
+          "Germany"
+        ],
+        "resultTags": [
+          "winner",
+          "placed"
+        ],
+        "placements": [
+          1
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "1st Place",
+          "place"
+        ],
+        "matchedSignals": [
+          "event:grand-contest",
+          "location:germany",
+          "result:placed",
+          "result:winner"
+        ],
+        "likes": 2,
+        "views": 78
+      }
+    }
+  },
+  "cmtl14pi4000409jjxfw0pv6f": {
+    "deckinfo": {
+      "id": "cmtl14pi4000409jjxfw0pv6f",
+      "createdAt": "2026-09-03T04:33:06.844Z",
+      "updatedAt": "2026-09-07T21:33:03.052Z",
+      "name": "4th Place - Fall Classic (Beasts of the Bay) 2026 Deck",
+      "format": "Constructed",
+      "primer": "MY DECK",
+      "hotscore": 21.83190545393078,
+      "user": {
+        "id": "cmt8840zn00pt92cyx8bpm88n",
+        "username": "Eadric the Unwise"
+      },
+      "elements": [
+        "Fire",
+        "Water",
+        "None"
+      ],
+      "cardCount": {
+        "spellbook": 60,
+        "atlas": 30,
+        "collection": 10,
+        "maybe": 17
+      },
+      "avatar": "Interrogator",
+      "cards": {
+        "spellbook": {
+          "Dodge Roll": 1,
+          "Aquamarine Core": 1,
+          "Ruby Core": 1,
+          "Gift of the Serpent": 1,
+          "Magellan Globe": 1,
+          "Polar Explorers": 2,
+          "Toolbox": 3,
+          "War Horse": 3,
+          "Wild Fanatic": 2,
+          "Acid Rain": 2,
+          "Aino": 1,
+          "Blaze": 1,
+          "Blaze of Glory": 1,
+          "Colicky Dragonettes": 2,
+          "Fey Changeling": 3,
+          "Lugbog Cat": 3,
+          "Màzuj Ifrit": 2,
+          "Quarrelsome Kobolds": 3,
+          "Redcap Powries": 2,
+          "Sir Agravaine": 1,
+          "Swap": 2,
+          "Firebreathing": 1,
+          "Hotwheel": 3,
+          "Hyperparasite": 2,
+          "Infiltrate": 2,
+          "Monstrous Lion": 2,
+          "Ruler of Thul": 1,
+          "Sacred Stag": 2,
+          "Saracen Raiders": 3,
+          "Shatter Strike": 2,
+          "Atlantean Fate": 1,
+          "Lava Flow": 3
+        },
+        "atlas": {
+          "Active Volcano": 2,
+          "Arid Desert": 4,
+          "Darkest Dungeon": 1,
+          "Deep Sea": 2,
+          "Mismanaged Mortuary": 2,
+          "Oasis": 3,
+          "Pond": 3,
+          "River of Blood": 3,
+          "River Rapids": 2,
+          "Troll Bridge": 3,
+          "Valley of Delight": 2,
+          "Vesuvius": 1,
+          "Vindictive Nation": 2
+        },
+        "collection": {
+          "Charge": 1,
+          "Critical Strike": 1,
+          "Firebolts": 1,
+          "Gift of the Serpent": 1,
+          "Return to Nature": 1,
+          "Vandal Imp": 1,
+          "Wild Fanatic": 1,
+          "Ice Lance": 1,
+          "Minor Explosion": 1,
+          "Angry Mob": 1
+        },
+        "maybe": {
+          "Charge": 1,
+          "Detonate": 1,
+          "Ring of Morrigan": 1,
+          "Geyser": 1,
+          "Ignited": 1,
+          "Coy Nixie": 1,
+          "Disintegrate": 1,
+          "Màzuj Ifrit": 1,
+          "Order of the Sacred Oak": 1,
+          "Orm Infestor": 1,
+          "Peacemaker Arbalest": 1,
+          "Abaddon Succubus": 1,
+          "Saracen Raiders": 1,
+          "Poison Nova": 1,
+          "Questing Beast": 1,
+          "Thin Ice": 1,
+          "Winter River": 1
+        }
+      },
+      "competitive": {
+        "isCompetitive": true,
+        "confidence": "high",
+        "seasons": [
+          2026
+        ],
+        "events": [
+          "Fall Classic"
+        ],
+        "locations": [],
+        "resultTags": [
+          "placed"
+        ],
+        "placements": [
+          4
+        ],
+        "topCuts": [],
+        "records": [],
+        "matchedQueries": [
+          "2026",
+          "place"
+        ],
+        "matchedSignals": [
+          "event:fall-classic",
+          "result:placed",
+          "season:2026"
+        ],
+        "likes": 0,
+        "views": 103
       }
     }
   }
