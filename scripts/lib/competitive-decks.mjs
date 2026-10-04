@@ -85,6 +85,7 @@ const STRONG_EVENTS = [
   ['fall-classic', 'Fall Classic', /\bfall\s+classic\b/gu],
   ['ed-beard-jr-championship', 'Ed Beard Jr Championship', /\bed\s+beard\s+jr\.?\s+championship\b/gu],
   ['twin-cities-peasant-league', 'Twin Cities Peasant League', /\btwin\s+cities\s+peasant\s+league\b/gu],
+  ['texas-league', 'Texas League', /\b(?:texas|tx)\s+league\b/gu],
   ['forja-hobby-store-1k', 'Forja Hobby Store 1K', /\bforja\s+hobby\s+store\s+(?:sorcery\s+)?1\s*k\b/gu],
 ];
 
@@ -113,6 +114,9 @@ const LOCATIONS = [
   ['hartford', 'Hartford', /\bhartford\b/gu],
   ['germany', 'Germany', /\b(?:germany|deutschland)\b|\bgermany(?=grand?contest\b)/gu],
   ['italy', 'Italy', /\b(?:italy|italia)\b/gu],
+  ['milan', 'Milan', /\b(?:milan|milano)\b/gu],
+  ['tuscany', 'Tuscany', /\b(?:tuscany|toscana)\b/gu],
+  ['texas', 'Texas', /\btexas\b|\btx(?=\s+league\b)/gu],
   ['united-kingdom', 'United Kingdom', /\b(?:united\s+kingdom|uk|brighton)\b/gu],
   ['sydney', 'Sydney', /\bsydney\b/gu],
   ['new-york-city', 'New York City', /\b(?:new\s+york(?:\s+city)?|nyc)\b/gu],

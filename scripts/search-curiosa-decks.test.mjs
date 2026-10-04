@@ -508,6 +508,7 @@ describe('competitive deck classification', () => {
     ['4th Place - Fall Classic (Beasts of the Bay) 2026 Deck', 'Fall Classic'],
     ['1st Place - Ed Beard Jr Championship - Fire in the Sky', 'Ed Beard Jr Championship'],
     ['Twin Cities Peasant League Top 8 - 7th', 'Twin Cities Peasant League'],
+    ['EnchAWntress 4th Place TX League S2', 'Texas League'],
     ['1st Place Forja Hobby Store Sorcery 1K', 'Forja Hobby Store 1K'],
     ['4 Big BOOOOMS - SCG Vegas top 8', 'SCG CON'],
     ['necromancer SCG Dallas Top 8', 'SCG CON'],
@@ -529,6 +530,14 @@ describe('competitive deck classification', () => {
       .toMatchObject({isCompetitive: true, events: ['SorceryCon'], seasons: [2026], explicitSeasonMismatch: false});
     expect(classifyCompetitiveDeck({name: 'Lincon2025 3rd Place', updatedAt: '2026-10-04'}, {season: 2026}))
       .toMatchObject({isCompetitive: true, events: ['Lincon'], seasons: [2025], explicitSeasonMismatch: true});
+  });
+
+  it.each([
+    ['poorcery torneo milano 2026', 'Milan'],
+    ['Pathfinder - 2026 Grand Contest, Toscana', 'Tuscany'],
+    ['EnchAWntress 4th Place TX League S2', 'Texas'],
+  ])('recognizes the location in the newly discovered deck %s', (name, location) => {
+    expect(classifyCompetitiveDeck({name}).locations).toContain(location);
   });
 
   it('does not treat routine game wins or contractions as event wins', () => {

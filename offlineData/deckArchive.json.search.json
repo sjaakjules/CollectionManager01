@@ -663,7 +663,9 @@
         "events": [
           "Grand Contest"
         ],
-        "locations": [],
+        "locations": [
+          "Tuscany"
+        ],
         "resultTags": [],
         "placements": [],
         "topCuts": [],
@@ -675,6 +677,7 @@
         "matchedSignals": [
           "competition:noun",
           "event:grand-contest",
+          "location:tuscany",
           "season:2026"
         ],
         "likes": 0,
@@ -1518,7 +1521,9 @@
         "events": [
           "Poorcery"
         ],
-        "locations": [],
+        "locations": [
+          "Milan"
+        ],
         "resultTags": [],
         "placements": [],
         "topCuts": [],
@@ -1528,6 +1533,7 @@
         ],
         "matchedSignals": [
           "event:poorcery",
+          "location:milan",
           "season:2026"
         ],
         "likes": 0,
@@ -5656,12 +5662,16 @@
       ],
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
-        "locations": [],
+        "events": [
+          "Texas League"
+        ],
+        "locations": [
+          "Texas"
+        ],
         "resultTags": [
           "placed"
         ],
@@ -5675,6 +5685,8 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:texas-league",
+          "location:texas",
           "result:placed"
         ],
         "likes": 2,
@@ -57414,7 +57426,9 @@
         "events": [
           "Grand Contest"
         ],
-        "locations": [],
+        "locations": [
+          "Tuscany"
+        ],
         "resultTags": [],
         "placements": [],
         "topCuts": [],
@@ -57426,6 +57440,7 @@
         "matchedSignals": [
           "competition:noun",
           "event:grand-contest",
+          "location:tuscany",
           "season:2026"
         ],
         "likes": 0,
@@ -57799,7 +57814,9 @@
         "events": [
           "Poorcery"
         ],
-        "locations": [],
+        "locations": [
+          "Milan"
+        ],
         "resultTags": [],
         "placements": [],
         "topCuts": [],
@@ -57809,6 +57826,7 @@
         ],
         "matchedSignals": [
           "event:poorcery",
+          "location:milan",
           "season:2026"
         ],
         "likes": 0,
@@ -60703,12 +60721,16 @@
       ],
       "competitive": {
         "isCompetitive": true,
-        "confidence": "medium",
+        "confidence": "high",
         "seasons": [
           2026
         ],
-        "events": [],
-        "locations": [],
+        "events": [
+          "Texas League"
+        ],
+        "locations": [
+          "Texas"
+        ],
         "resultTags": [
           "placed"
         ],
@@ -60722,6 +60744,8 @@
         ],
         "matchedSignals": [
           "competition:noun",
+          "event:texas-league",
+          "location:texas",
           "result:placed"
         ],
         "likes": 2,
@@ -113067,5 +113091,5 @@
       ]
     }
   ],
-  "reclassifiedAt": "2026-10-04T05:42:42.747Z"
+  "reclassifiedAt": "2026-10-04T05:48:09.705Z"
 }

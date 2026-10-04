@@ -199,9 +199,12 @@ from cached titles and primers made another 42 existing decks visible in
 Competitions, for 479 decks in the 2026 season. All 631 previous deck contents
 were retained; only their competition annotations were refreshed locally.
 New event facets are Ed Beard Jr Championship, Elemental Series, Fall Classic,
-Forja Hobby Store 1K, Sin City Open, Sorcerers at the Core, Tournament Grounds,
-Twin Cities Peasant League, and Unland Cup. Invercargill, London, and Oulu also
-now appear as location facets. Event seasons written directly after a name,
+Forja Hobby Store 1K, Sin City Open, Sorcerers at the Core, Texas League,
+Tournament Grounds, Twin Cities Peasant League, and Unland Cup. Invercargill,
+London, Milan, Oulu, Texas, and Tuscany also now appear as location facets.
+The newly discovered Texas League, Milano, and Toscana titles supplied the
+additional labels; reviewing them required no further upstream calls.
+Event seasons written directly after a name,
 such as `SorceryCon26`, take priority over historical years in a primer.
 
 ### `pnpm curiosa:search-decks`
