@@ -501,6 +501,36 @@ describe('competitive deck classification', () => {
     });
   });
 
+  it.each([
+    ['2026 Sin City Open - 4th Place 3-1', 'Sin City Open'],
+    ['TAA Tournament Grounds Top8 - Jeremy', 'Tournament Grounds'],
+    ['3rd Place Elemental Series Q1 2026 (Sydney, Australia)', 'Elemental Series'],
+    ['4th Place - Fall Classic (Beasts of the Bay) 2026 Deck', 'Fall Classic'],
+    ['1st Place - Ed Beard Jr Championship - Fire in the Sky', 'Ed Beard Jr Championship'],
+    ['Twin Cities Peasant League Top 8 - 7th', 'Twin Cities Peasant League'],
+    ['1st Place Forja Hobby Store Sorcery 1K', 'Forja Hobby Store 1K'],
+    ['4 Big BOOOOMS - SCG Vegas top 8', 'SCG CON'],
+    ['necromancer SCG Dallas Top 8', 'SCG CON'],
+    ['Top 8 Pittsburgh Excalibur - Maidenless Motherless Croneless', 'Excalibur Events'],
+  ])('gives the saved result %s its named event category', (name, event) => {
+    expect(classifyCompetitiveDeck({name})).toMatchObject({isCompetitive: true, events: [event]});
+  });
+
+  it('does not infer a named event from generic themes or shop names', () => {
+    for (const name of ['Classic control', 'League control', 'Ed Beard Jr art favourites', 'Forja Hobby Store collection']) {
+      expect(classifyCompetitiveDeck({name}).isCompetitive).toBe(false);
+    }
+  });
+
+  it('recognizes compact event wording without dropping its explicit season', () => {
+    expect(classifyCompetitiveDeck({name: 'GermanyGranContest_1st Place_Necromancer (Copy)'}))
+      .toMatchObject({isCompetitive: true, events: ['Grand Contest'], locations: ['Germany']});
+    expect(classifyCompetitiveDeck({name: 'Masked Circus [6-2 SorceryCon26’]', primer: 'Hazard circus simulator 2000; earlier version from 2025.'}, {season: 2026}))
+      .toMatchObject({isCompetitive: true, events: ['SorceryCon'], seasons: [2026], explicitSeasonMismatch: false});
+    expect(classifyCompetitiveDeck({name: 'Lincon2025 3rd Place', updatedAt: '2026-10-04'}, {season: 2026}))
+      .toMatchObject({isCompetitive: true, events: ['Lincon'], seasons: [2025], explicitSeasonMismatch: true});
+  });
+
   it('does not treat routine game wins or contractions as event wins', () => {
     expect(classifyCompetitiveDeck({
       name: '20th Place Grand Contest Melbourne 2026',

@@ -50,12 +50,12 @@ export const COMPETITIVE_PRESETS = {
 };
 
 const STRONG_EVENTS = [
-  ['grand-contest', 'Grand Contest', /(?:\bgrand\s*contests?\b|\b20\d{2}grandcontest\b)/gu],
+  ['grand-contest', 'Grand Contest', /(?:\b(?:germany)?grand?\s*contests?\b|\b20\d{2}grandcontest\b)/gu],
   ['cornerstone', 'Cornerstone', /\bcornerst(?:one|ore)(?:\s+championship)?s?\b/gu],
-  ['scg-con', 'SCG CON', /\bscg(?:\s*con|\s+(?:atl|dc|hou|dfw|dal|balt|la|lv))\b/gu],
+  ['scg-con', 'SCG CON', /\bscg(?:\s*con|\s+(?:atl(?:anta)?|dc|hou(?:ston)?|dfw|dal(?:las)?|balt(?:imore)?|la|lv|vegas))\b/gu],
   ['gen-con', 'Gen Con', /\bgen\s*con(?:\s*\d+)?\b/gu],
   ['sorceryfest', 'SorceryFest', /\bsorcery\s*fest\b/gu],
-  ['sorcerycon', 'SorceryCon', /\bsorcery\s*con\b/gu],
+  ['sorcerycon', 'SorceryCon', /\bsorcery\s*con(?:\d{2}(?:\d{2})?)?\b/gu],
   ['scrcon', 'SCRCON', /\bscr\s*con\b/gu],
   ['avatar-of-the-realm', 'Avatar of the Realm', /\b(?:avatar\s+of\s+the\s+realm|aotr)\b/gu],
   ['sorcerers-at-the-core', 'Sorcerers at the Core', /\bsorcerers?\s+at\s+the\s+core\b/gu],
@@ -68,15 +68,24 @@ const STRONG_EVENTS = [
   ['ascanrask', 'Ascanrask', /\bascanrask(?:\s+[ivx]+)?\b/gu],
   ['war-of-the-four-elements', 'War of the Four Elements', /\bwar\s+of\s+the\s+four\s+elements\b/gu],
   ['spielefest', 'Spielefest', /\bspielefest\b/gu],
-  ['excalibur-events', 'Excalibur Events', /\bexcalibur(?:\s+events?|\s+pittsburgh|\s+pgh)\b/gu],
+  ['excalibur-events', 'Excalibur Events', /\b(?:excalibur(?:\s+events?|\s+pittsburgh|\s+pgh)|(?:pittsburgh|pgh)\s+excalibur)\b/gu],
   ['tumatarau', 'Tumatarau Whakataetae', /\btumatarau\s+whakataetae\b/gu],
   ['contesting-lincon', 'Contesting Lincon', /\bcontesting\s+lincon\b/gu],
   ['covo-del-nerd', 'Covo del Nerd', /\bcovo\s+del\s+nerd\b/gu],
   ['pikazard-dust-challenge', 'Pikazard Dust Challenge', /\bpikazard(?:\s+\d+k)?\s+dust\s+challenge\b/gu],
   ['cold-foil-heroes', 'Cold Foil Heroes', /\b(?:cold\s+foil\s+heroes|cfh)\b/gu],
-  ['lincon', 'Lincon', /\blincon\b/gu],
+  ['lincon', 'Lincon', /\blincon(?:\d{2}(?:\d{2})?)?\b/gu],
   ['tournament-of-champions', 'Tournament of Champions', /\b(?:tournament\s+of\s+champions|t\.?\s*o\.?\s*c\.?)\b/gu],
   ['poorcery', 'Poorcery', /\bpoorcery\b/gu],
+  // Named events found in saved deck titles; keep broad words like "classic"
+  // or "league" out of this list so casual decks are not promoted as results.
+  ['sin-city-open', 'Sin City Open', /\bsin\s+city\s+open\b/gu],
+  ['tournament-grounds', 'Tournament Grounds', /\btournament\s+grounds\b/gu],
+  ['elemental-series', 'Elemental Series', /\belemental\s+series\b/gu],
+  ['fall-classic', 'Fall Classic', /\bfall\s+classic\b/gu],
+  ['ed-beard-jr-championship', 'Ed Beard Jr Championship', /\bed\s+beard\s+jr\.?\s+championship\b/gu],
+  ['twin-cities-peasant-league', 'Twin Cities Peasant League', /\btwin\s+cities\s+peasant\s+league\b/gu],
+  ['forja-hobby-store-1k', 'Forja Hobby Store 1K', /\bforja\s+hobby\s+store\s+(?:sorcery\s+)?1\s*k\b/gu],
 ];
 
 const SUPPORTING_EVENTS = [
@@ -102,7 +111,7 @@ const LOCATIONS = [
   ['los-angeles', 'Los Angeles', /\blos\s+angeles\b/gu],
   ['montreal', 'Montreal', /\b(?:montreal|mtl)\b/gu],
   ['hartford', 'Hartford', /\bhartford\b/gu],
-  ['germany', 'Germany', /\b(?:germany|deutschland)\b/gu],
+  ['germany', 'Germany', /\b(?:germany|deutschland)\b|\bgermany(?=grand?contest\b)/gu],
   ['italy', 'Italy', /\b(?:italy|italia)\b/gu],
   ['united-kingdom', 'United Kingdom', /\b(?:united\s+kingdom|uk|brighton)\b/gu],
   ['sydney', 'Sydney', /\bsydney\b/gu],
@@ -189,6 +198,11 @@ function readYears(text) {
   const years = [];
   for (const match of text.matchAll(/\b(20\d{2})\b/gu)) {
     years.push(Number(match[1]));
+  }
+  // Titles sometimes attach the season directly: "SorceryCon26" or "Lincon2025".
+  for (const match of text.matchAll(/\b(?:sorcery\s*con|lincon|gen\s*con)(20\d{2}|\d{2})\b/gu)) {
+    const year = Number(match[1]);
+    years.push(year < 100 ? 2000 + year : year);
   }
   return sortUnique(years, (left, right) => left - right);
 }
@@ -287,7 +301,10 @@ export function classifyCompetitiveDeck(deck, options = {}) {
   const hasStrongEvent = strongEventMatches.length > 0;
   const hasGcAlias = supportingEventMatches.some((entry) => entry.id === 'grand-contest');
   const hasNamedSupportingEvent = supportingEventMatches.some((entry) => entry.id !== 'grand-contest');
-  const explicitYears = readYears(text);
+  // A title's season identifies this result; primer history or flavour text
+  // such as "simulator 2000" must not override an explicit SorceryCon26 title.
+  const titleYears = readYears(nameText);
+  const explicitYears = titleYears.length ? titleYears : readYears(primerText);
   const inferred = inferredYear(deck ?? {});
   const seasons = explicitYears.length > 0
     ? explicitYears
