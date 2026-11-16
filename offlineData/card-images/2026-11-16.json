@@ -1,0 +1,668 @@
+{
+  "importedAt": "2026-11-16",
+  "source": "User-downloaded SorceryTCG Frost Mage Vs. Lavamancer WebPs",
+  "catalogue": "docs/Sorcery_CardInfo.json",
+  "sourceOriginals": "tmp/imported-card-originals-2026-11-16 (local, not deployed)",
+  "retainedPhotoCards": [
+    "Permafrost"
+  ],
+  "cards": [
+    {
+      "name": "A Yeti So Shy",
+      "printing": "008-a_yeti_so_shy-pd-s",
+      "file": "a_yeti_so_shy.webp",
+      "rotation": 0,
+      "sourceSha256": "c9d71356a90797654a2f4499014a877b319875f3ca69c8940957c6d8a218e12f",
+      "sha256": "c9d71356a90797654a2f4499014a877b319875f3ca69c8940957c6d8a218e12f",
+      "previousSha256": "3046aa038c0ed53299a694532dde48fded3ba9f643400f826f66558a799b21e5"
+    },
+    {
+      "name": "Ancient Thaw",
+      "printing": "008-ancient_thaw-pd-s",
+      "file": "ancient_thaw.webp",
+      "rotation": 0,
+      "sourceSha256": "bb12307a67e1edaead266c6e322b1a4a7fac6a675aa48b6f4c30aa9e24d27705",
+      "sha256": "bb12307a67e1edaead266c6e322b1a4a7fac6a675aa48b6f4c30aa9e24d27705",
+      "previousSha256": "557d244f72dafe1db32f3b7aa95133eac759217a45a43af8be89c1062ea6cf2c"
+    },
+    {
+      "name": "Arctic Fox",
+      "printing": "008-arctic_fox-pd-s",
+      "file": "arctic_fox.webp",
+      "rotation": 0,
+      "sourceSha256": "562c69253bba69ed54e9c977c74f751a7a6383c8ef967e1e0aabb84a90f38f39",
+      "sha256": "562c69253bba69ed54e9c977c74f751a7a6383c8ef967e1e0aabb84a90f38f39",
+      "previousSha256": "2d17ee2b44d62699362f4f72099667be2817541fa87bc61605b2147003316b35"
+    },
+    {
+      "name": "Aria Wraith",
+      "printing": "008-aria_wraith-pd-s",
+      "file": "aria_wraith.webp",
+      "rotation": 0,
+      "sourceSha256": "295f953ec6139133f91e9f2b321088d587e2b3406b015b6bd8c490fb2128fd6c",
+      "sha256": "295f953ec6139133f91e9f2b321088d587e2b3406b015b6bd8c490fb2128fd6c",
+      "previousSha256": "f4988939814b89be1420faccea2f4b9060ca70ed6c94d1e53545774e9b58d197"
+    },
+    {
+      "name": "Ash of Effort",
+      "printing": "008-ash_of_effort-pd-s",
+      "file": "ash_of_effort.webp",
+      "rotation": 0,
+      "sourceSha256": "5d47bb694f3dd4cfd63bc597793d80f43b2c705630fcbf36bd716584a8666941",
+      "sha256": "5d47bb694f3dd4cfd63bc597793d80f43b2c705630fcbf36bd716584a8666941",
+      "previousSha256": "613248e2ad8d788879f0dbcdf935a8f3a071a1464f3870dadbe98072960a9dfd"
+    },
+    {
+      "name": "Avalanche",
+      "printing": "008-avalanche-pd-s",
+      "file": "avalanche.webp",
+      "rotation": 90,
+      "sourceSha256": "ab4189d85c0f0b8e2e2dfab14dcfe94f642c06e5559864ed6ec37732a5621db6",
+      "sha256": "9634486928aecc4ba02e856d73851d6722bea01a9d6aeb8df5db68d3fce49e31",
+      "previousSha256": "9398f4426958dff478172ccab98a78122c70e55c487cb01857f39155567e8400"
+    },
+    {
+      "name": "Bearserker",
+      "printing": "008-bearserker-pd-s",
+      "file": "bearserker.webp",
+      "rotation": 0,
+      "sourceSha256": "52691f2d022c804755e7f784c902cc989d2b9ceeb5df8f1dd5aa2ac6b33ef1d7",
+      "sha256": "52691f2d022c804755e7f784c902cc989d2b9ceeb5df8f1dd5aa2ac6b33ef1d7",
+      "previousSha256": "9d183302ca06545678d4250648ed11036c1b3b4da71baba0e03ee90b587e2067"
+    },
+    {
+      "name": "Bouldermaw",
+      "printing": "008-bouldermaw-pd-s",
+      "file": "bouldermaw.webp",
+      "rotation": 90,
+      "sourceSha256": "f89ffa77229fb43864f68955cbff9b8b86892281b78039d8bc118a7c58a52ac6",
+      "sha256": "3906cbae029c50c4b20a914449422d3cd8a4f1556eeb2aaa2b0384c62d8da76c",
+      "previousSha256": "2b899ebc63208152c872e9b87403d9a3921ba6d43412de6d259dc5426e84efd1"
+    },
+    {
+      "name": "Chart",
+      "printing": "008-chart-pd-s",
+      "file": "chart.webp",
+      "rotation": 0,
+      "sourceSha256": "c43d6ebd5e040a546019e914ec4933a7aa2d5b71ae5dafa0e12f16159cdf02cb",
+      "sha256": "c43d6ebd5e040a546019e914ec4933a7aa2d5b71ae5dafa0e12f16159cdf02cb",
+      "previousSha256": "f513a4cbd9821d0b51de1a468c3a23a8e8229d3d00e6d50ba8610349629481c1"
+    },
+    {
+      "name": "Combusting Busts",
+      "printing": "008-combusting_busts-pd-s",
+      "file": "combusting_busts.webp",
+      "rotation": 90,
+      "sourceSha256": "bd236d64f0b213faaccc8437d256794d846feaa5cc8b8af37376cf50953bb5ef",
+      "sha256": "050876c0ebba032dbc8ad6bfe713eb51d32a2f1fb0ed7e9ea25fe869530d2427",
+      "previousSha256": "6355babd89357494d133bbce0409a4ed171c4857ca582acea4abf02a3ccebe9d"
+    },
+    {
+      "name": "Deep Snow",
+      "printing": "008-deep_snow-pd-s",
+      "file": "deep_snow.webp",
+      "rotation": 90,
+      "sourceSha256": "ed40ed7bc6a6848b608a860ca348430e9b1b00420bc30b661796aaa6d991fa6d",
+      "sha256": "03cd795979225333721e16d5ca4790361d314c6892deb7757c8276bb23efd3bc",
+      "previousSha256": "772c52f1a75a279fa1af59ed912d099561abb3ba785f7fae51e3b0734d7d0847"
+    },
+    {
+      "name": "Dust Devil",
+      "printing": "008-dust_devil-pd-s",
+      "file": "dust_devil.webp",
+      "rotation": 0,
+      "sourceSha256": "20e8c98110f216a4b944e3879ea2a7a36adc44215d2eb83a0238a32194e44a2c",
+      "sha256": "20e8c98110f216a4b944e3879ea2a7a36adc44215d2eb83a0238a32194e44a2c",
+      "previousSha256": "a74b4813b5814b8d327b4f138ed42ca859393a7faec90c000535d03b1791e793"
+    },
+    {
+      "name": "Emberleaf Dryad",
+      "printing": "008-emberleaf_dryad-pd-s",
+      "file": "emberleaf_dryad.webp",
+      "rotation": 0,
+      "sourceSha256": "6b350ed00006aeca3fef44a0f38192bae4bed95bd02353ed989f1b27a21d3c2e",
+      "sha256": "6b350ed00006aeca3fef44a0f38192bae4bed95bd02353ed989f1b27a21d3c2e",
+      "previousSha256": "871065b2814d63c965305133c09df2fbfc9d55d7b5e1a67cb5c11fe765b89209"
+    },
+    {
+      "name": "Fireball",
+      "printing": "008-fireball-pd-s",
+      "file": "fireball.webp",
+      "rotation": 0,
+      "sourceSha256": "11a69bf72dd0db6b78279a97b2314f65e9511474b4534a08a92161d6556e963f",
+      "sha256": "11a69bf72dd0db6b78279a97b2314f65e9511474b4534a08a92161d6556e963f",
+      "previousSha256": "e200a5d3532a80d70c03ba0e726993d6ed2421548d47e465d0b1b583ac3e537e"
+    },
+    {
+      "name": "Flame Wave",
+      "printing": "008-flame_wave-pd-s",
+      "file": "flame_wave.webp",
+      "rotation": 0,
+      "sourceSha256": "a14c3b0a00124b39c5c89fb35fcdb5b63336b111b68871c31f2ba52d07cc1733",
+      "sha256": "a14c3b0a00124b39c5c89fb35fcdb5b63336b111b68871c31f2ba52d07cc1733",
+      "previousSha256": "452bdecec33dc76269b107469bce23c663b50957de9eeb3bae8953b1c6fffd91"
+    },
+    {
+      "name": "Flametongue Newt",
+      "printing": "008-flametongue_newt-pd-s",
+      "file": "flametongue_newt.webp",
+      "rotation": 0,
+      "sourceSha256": "083b49f39f72af4328f1cda35b99ea3108992240ebe79b27d1dac5a002a5a3b1",
+      "sha256": "083b49f39f72af4328f1cda35b99ea3108992240ebe79b27d1dac5a002a5a3b1",
+      "previousSha256": "c7bfe55eda2950b7968848a67fbc2c7a30286b8181102f7ce77ad887e32578f0"
+    },
+    {
+      "name": "Flat Realm Society",
+      "printing": "008-flat_realm_society-pd-s",
+      "file": "flat_realm_society.webp",
+      "rotation": 0,
+      "sourceSha256": "278f1aacd5bb48875638f5957f08825ce033168cdff65ac2002895c9c7c537fe",
+      "sha256": "278f1aacd5bb48875638f5957f08825ce033168cdff65ac2002895c9c7c537fe",
+      "previousSha256": "ff1d0df3af7e78c426e056e3920b6cb2bbba522b6bcdf2aa9d577918a1d5c4a4"
+    },
+    {
+      "name": "Frost Breath",
+      "printing": "008-frost_breath-pd-s",
+      "file": "frost_breath.webp",
+      "rotation": 0,
+      "sourceSha256": "7acdc3cb380334aef79b9c08fb3831ffdc69e2e4e4d5f9b8229345ef40450a74",
+      "sha256": "7acdc3cb380334aef79b9c08fb3831ffdc69e2e4e4d5f9b8229345ef40450a74",
+      "previousSha256": "a5f23dfaf40f3f742226e8694d8911fe399c62ff22f5fb82fd5a901367ad38e6"
+    },
+    {
+      "name": "Frost Elemental",
+      "printing": "008-frost_elemental-pd-s",
+      "file": "frost_elemental.webp",
+      "rotation": 0,
+      "sourceSha256": "391aea10856afafae81c75bca8a2f2ec853fe616fb52eca7dead196efcfb770e",
+      "sha256": "391aea10856afafae81c75bca8a2f2ec853fe616fb52eca7dead196efcfb770e",
+      "previousSha256": "5c7cf99cb08c534e330f0c97ceb7f3ef8b5d7b3ed5174eb6124fb7e4ed676f28"
+    },
+    {
+      "name": "Frost Mage",
+      "printing": "008-frost_mage-pd-s",
+      "file": "frost_mage.webp",
+      "rotation": 0,
+      "sourceSha256": "77f4b3f17f2eaa8a5183179444c042a81e6d40062ed4d5330ff413d76f6fd012",
+      "sha256": "77f4b3f17f2eaa8a5183179444c042a81e6d40062ed4d5330ff413d76f6fd012",
+      "previousSha256": "1fe45905b016c6019cabc74642c76d1a655c28d0dceee24616c896acd4396e8a"
+    },
+    {
+      "name": "Frostbolt",
+      "printing": "008-frostbolt-pd-s",
+      "file": "frostbolt.webp",
+      "rotation": 0,
+      "sourceSha256": "57c71c927b52eeb526ec7a747e91c7dd2d7ba2d85c5152281de0c5698ea09fcd",
+      "sha256": "57c71c927b52eeb526ec7a747e91c7dd2d7ba2d85c5152281de0c5698ea09fcd",
+      "previousSha256": "1abcbd5cef35e551fe318e61ad66160589b779dca5948d15d6d943957734b0d3"
+    },
+    {
+      "name": "Full-tilt Goliaths",
+      "printing": "008-full_tilt_goliaths-pd-s",
+      "file": "full_tilt_goliaths.webp",
+      "rotation": 0,
+      "sourceSha256": "c67d370476a7315e4ee50a561fff27ad417df3675b33ff39f2df5eff4a3febbc",
+      "sha256": "c67d370476a7315e4ee50a561fff27ad417df3675b33ff39f2df5eff4a3febbc",
+      "previousSha256": "7d1e722a2b0bc7196f9e2127363dcecb1f9cd1c3e7d3446499c184d4200e9cf9"
+    },
+    {
+      "name": "Gnarled Laborers",
+      "printing": "008-gnarled_laborers-pd-s",
+      "file": "gnarled_laborers.webp",
+      "rotation": 0,
+      "sourceSha256": "7fe1570bee6ccbd8195e3ab98114198f1f9ddd7d9ad4d63ecbe50556c9e67959",
+      "sha256": "7fe1570bee6ccbd8195e3ab98114198f1f9ddd7d9ad4d63ecbe50556c9e67959",
+      "previousSha256": "612aadc873d23a3c398ba17343d239ca4ac48c4a5af2f32acb1870659cb91561"
+    },
+    {
+      "name": "Ground Slam",
+      "printing": "008-ground_slam-pd-s",
+      "file": "ground_slam.webp",
+      "rotation": 0,
+      "sourceSha256": "239d7b4077839f9b92895dfd66e55a0d8b9fbbe423a887119c73869262fdc6f6",
+      "sha256": "239d7b4077839f9b92895dfd66e55a0d8b9fbbe423a887119c73869262fdc6f6",
+      "previousSha256": "06fae07645aaa9840b2c566cdb370aec06e7e77d227585591d79f4bd302c2d2e"
+    },
+    {
+      "name": "Hailstriker",
+      "printing": "008-hailstriker-pd-s",
+      "file": "hailstriker.webp",
+      "rotation": 0,
+      "sourceSha256": "cb5d2802a0820210bc347daaa2cc31c0a1f9f4d9f996bf88581871b5377c5a10",
+      "sha256": "cb5d2802a0820210bc347daaa2cc31c0a1f9f4d9f996bf88581871b5377c5a10",
+      "previousSha256": "be788e51f6ff381b84514ba1db34f7086626598ca3f5e8e4ab75cf0a979da5a3"
+    },
+    {
+      "name": "Hibernal Legion",
+      "printing": "008-hibernal_legion-pd-s",
+      "file": "hibernal_legion.webp",
+      "rotation": 0,
+      "sourceSha256": "a334c97cc350b1b737a4b54abe2f1b7d6c38d4e32ff29c6a522b4a32785fa17c",
+      "sha256": "a334c97cc350b1b737a4b54abe2f1b7d6c38d4e32ff29c6a522b4a32785fa17c",
+      "previousSha256": "bde4159d3c2d1f3fb5c6481cf261dddcd6ee8614edfce6f2aeb51f808d929bf8"
+    },
+    {
+      "name": "Highgate Guide",
+      "printing": "008-highgate_guide-pd-s",
+      "file": "highgate_guide.webp",
+      "rotation": 0,
+      "sourceSha256": "841de17ba9f488b1e0e460ebea906a2fe6285c1bb34e69e0a0bd6e74ae8556fa",
+      "sha256": "841de17ba9f488b1e0e460ebea906a2fe6285c1bb34e69e0a0bd6e74ae8556fa",
+      "previousSha256": "de8385d3ab6c4dd2feaf7a3f6aeb38899d599c65de91107a02cf067f31c77933"
+    },
+    {
+      "name": "Humming Hummocks",
+      "printing": "008-humming_hummocks-pd-s",
+      "file": "humming_hummocks.webp",
+      "rotation": 90,
+      "sourceSha256": "adc0a5bf78a9c68cfc841832ba3a677926bf02c338eb31bd3e7d31f1827e57f5",
+      "sha256": "9c3029f319e813d547e519ed543dc3cfc221b1b17a9831cb7e2b00980979e553",
+      "previousSha256": "544368dd9fb03e7bdc18abe35f5eb33fe96917e0fc0b09f48b89951431f9849d"
+    },
+    {
+      "name": "Icicle Dome",
+      "printing": "008-icicle_dome-pd-s",
+      "file": "icicle_dome.webp",
+      "rotation": 90,
+      "sourceSha256": "eb3dcbc3dff117f19d16e264cccf894c395fac5a80930ef6622b3cb36ee1f0c1",
+      "sha256": "5310f49d711975ee3561fd791bf29d4c56b17577d8370efbabdfd323dd49b651",
+      "previousSha256": "2ccebb5d10185b942d880f0ac59b40de0f06acf565bd4e9443c46272c01dbe48"
+    },
+    {
+      "name": "Jormungand",
+      "printing": "008-jormungand-pd-s",
+      "file": "jormungand.webp",
+      "rotation": 0,
+      "sourceSha256": "0a31e9d939f2330408782653ca781c5fffcc6af5cd2932d574a85c4fe034b6e4",
+      "sha256": "0a31e9d939f2330408782653ca781c5fffcc6af5cd2932d574a85c4fe034b6e4",
+      "previousSha256": "ad6b780e856ac59cb4779f159f6ef658f81d13ca8a68a53251c70f784c0a0f76"
+    },
+    {
+      "name": "Jussi Puffins",
+      "printing": "008-jussi_puffins-pd-s",
+      "file": "jussi_puffins.webp",
+      "rotation": 0,
+      "sourceSha256": "9760e7375094467153a3516102ca6d171d6fd025e5190b70545ec68e65f5e1da",
+      "sha256": "9760e7375094467153a3516102ca6d171d6fd025e5190b70545ec68e65f5e1da",
+      "previousSha256": "7c884b098604505b39833fc157708b783e3f031f327452a9eb19c1ba53cd642d"
+    },
+    {
+      "name": "King Krakalak",
+      "printing": "008-king_krakalak-pd-s",
+      "file": "king_krakalak.webp",
+      "rotation": 0,
+      "sourceSha256": "d0f0fdc8016e8f5a9be0c655043d0b841695703e38f34a51c8bf1cca81ba979d",
+      "sha256": "d0f0fdc8016e8f5a9be0c655043d0b841695703e38f34a51c8bf1cca81ba979d",
+      "previousSha256": "a066d28f0b400c603e6647868757fe91fa14da454df391dd96a68c5f9eeee26e"
+    },
+    {
+      "name": "Landslide",
+      "printing": "008-landslide-pd-s",
+      "file": "landslide.webp",
+      "rotation": 90,
+      "sourceSha256": "c5d5d8e7dc4faaba3b259977b493a94ebcf7825a81130d38aafbb0c452ee739c",
+      "sha256": "b722e8a35ed1e37f959d07ddd9a45f5303ea74a93f2fab3e56a162985f459a32",
+      "previousSha256": "fcb126ef8c9e05f1c18919aef5191cfd4e71f2c3d0c7d03f4e4dbba2566d7dbb"
+    },
+    {
+      "name": "Lava Elemental",
+      "printing": "008-lava_elemental-pd-s",
+      "file": "lava_elemental.webp",
+      "rotation": 0,
+      "sourceSha256": "5fe302e344bab446a23d0cde452869c106d7abd2b8f9626f8173295f9a0951d9",
+      "sha256": "5fe302e344bab446a23d0cde452869c106d7abd2b8f9626f8173295f9a0951d9",
+      "previousSha256": "9c87f6262435d45e97364c9c09a684fb5753bea529362662ddc54197cd80ed8c"
+    },
+    {
+      "name": "Lavamancer",
+      "printing": "008-lavamancer-pd-s",
+      "file": "lavamancer.webp",
+      "rotation": 0,
+      "sourceSha256": "3dcdd9b9156990042252ee7c9e63fb3b9da470e238a18c067cb7c01f46139179",
+      "sha256": "3dcdd9b9156990042252ee7c9e63fb3b9da470e238a18c067cb7c01f46139179",
+      "previousSha256": "c0e324f49e80bb67bf4e45cdabd4d7c20aea8a9e72a3cb93d5b22f16a6666938"
+    },
+    {
+      "name": "Lone Wolf",
+      "printing": "008-lone_wolf-pd-s",
+      "file": "lone_wolf.webp",
+      "rotation": 0,
+      "sourceSha256": "0504bf3166703194ee56d42dcc05d505f3da0e83a9818251e811726a51ed2250",
+      "sha256": "0504bf3166703194ee56d42dcc05d505f3da0e83a9818251e811726a51ed2250",
+      "previousSha256": "eafc0ab277014b148845063ee677e2f0c422664f1e83c71228754c2e0e33a81f"
+    },
+    {
+      "name": "Man-made Ice Age",
+      "printing": "008-man_made_ice_age-pd-s",
+      "file": "man_made_ice_age.webp",
+      "rotation": 0,
+      "sourceSha256": "b69a343d00dcd59b63b5c12a0ce1d6f997cacc11563bde746d3dd30bf409342f",
+      "sha256": "b69a343d00dcd59b63b5c12a0ce1d6f997cacc11563bde746d3dd30bf409342f",
+      "previousSha256": "c0597a9deb32214c72ac810dbc65326292c13ded923976aa3989d8dc0b2fc2a8"
+    },
+    {
+      "name": "Myrmidons",
+      "printing": "008-myrmidons-pd-s",
+      "file": "myrmidons.webp",
+      "rotation": 0,
+      "sourceSha256": "46ab6c96d8900da2e946e120acaa34b1afeea3087aecb0214bc39ac92176d7d7",
+      "sha256": "46ab6c96d8900da2e946e120acaa34b1afeea3087aecb0214bc39ac92176d7d7",
+      "previousSha256": "2e255bbeb59e93fbe9cdf7dec06930a0e1018befb879f5394cf181643f7220f6"
+    },
+    {
+      "name": "Namira Cheetah",
+      "printing": "008-namira_cheetah-pd-s",
+      "file": "namira_cheetah.webp",
+      "rotation": 0,
+      "sourceSha256": "3110bbc55651a2e3438c5edf3e2bb99855e0d29e2c42de435e0ce63657cb4f38",
+      "sha256": "3110bbc55651a2e3438c5edf3e2bb99855e0d29e2c42de435e0ce63657cb4f38",
+      "previousSha256": "9757e00c3380686c93e194c7c7eb55ce5ab5bb3468df05b0e8d9ed0209eed39f"
+    },
+    {
+      "name": "Nanurluk",
+      "printing": "008-nanurluk-pd-s",
+      "file": "nanurluk.webp",
+      "rotation": 0,
+      "sourceSha256": "cb1341e73cc48c3cfebbfedb5a02d86415cebd31eeae479afa76900c75e987b8",
+      "sha256": "cb1341e73cc48c3cfebbfedb5a02d86415cebd31eeae479afa76900c75e987b8",
+      "previousSha256": "df6a5db1a87b0b6d6f19c4648b478ecacf5227916f78ef41cb5421d23c3d6ca5"
+    },
+    {
+      "name": "None Survive the Sun",
+      "printing": "008-none_survive_the_sun-pd-s",
+      "file": "none_survive_the_sun.webp",
+      "rotation": 0,
+      "sourceSha256": "0c66645ba3677ee5d4afd79cf1a2ef8397e8a8f2b376a32538491d5eaa7df556",
+      "sha256": "0c66645ba3677ee5d4afd79cf1a2ef8397e8a8f2b376a32538491d5eaa7df556",
+      "previousSha256": "52085fea7c236edd259ebff5511f2f630b00e6c465662287eadc46a58045cc89"
+    },
+    {
+      "name": "Pass-plug Serpent",
+      "printing": "008-pass_plug_serpent-pd-s",
+      "file": "pass_plug_serpent.webp",
+      "rotation": 0,
+      "sourceSha256": "0a8c4136f790eb6d39b7fcb581666ac5f6b02482ac0391686599ef19840636aa",
+      "sha256": "0a8c4136f790eb6d39b7fcb581666ac5f6b02482ac0391686599ef19840636aa",
+      "previousSha256": "84d895f685aa0234ecd124e082d80be39a616bf0d307f6c515ae3eb147eb3683"
+    },
+    {
+      "name": "Polar Bears",
+      "printing": "008-polar_bears-pd-s",
+      "file": "polar_bears.webp",
+      "rotation": 0,
+      "sourceSha256": "f996400506067020875bc5eb887e0d3e9ef3c59a90cdab018be37a112ef91cd5",
+      "sha256": "f996400506067020875bc5eb887e0d3e9ef3c59a90cdab018be37a112ef91cd5",
+      "previousSha256": "5a8f512c6ceb9112ffd16a09f42c7ad0f785325ea9704e92219cdb8a4ccec12b"
+    },
+    {
+      "name": "Polar Shift",
+      "printing": "008-polar_shift-pd-s",
+      "file": "polar_shift.webp",
+      "rotation": 0,
+      "sourceSha256": "6ab7625c1f1278ff0b2b0a3e03367865fbfc9949c4481011c6029a434c06feaa",
+      "sha256": "6ab7625c1f1278ff0b2b0a3e03367865fbfc9949c4481011c6029a434c06feaa",
+      "previousSha256": "9b9d76b0211b3376dce1b1cc599ff078f614fc640053e649bcc7bb22374d02e7"
+    },
+    {
+      "name": "Reed Cord Measurer",
+      "printing": "008-reed_cord_measurer-pd-s",
+      "file": "reed_cord_measurer.webp",
+      "rotation": 0,
+      "sourceSha256": "44d3e5cb90c5481f1930b5a1dc19ec841b4b862ac7354e4400d33299fef0b53b",
+      "sha256": "44d3e5cb90c5481f1930b5a1dc19ec841b4b862ac7354e4400d33299fef0b53b",
+      "previousSha256": "53851e45e41592eb1a10c3454ff17b3f801ab659950abe5c1acd22546064a583"
+    },
+    {
+      "name": "Research",
+      "printing": "008-research-pd-s",
+      "file": "research.webp",
+      "rotation": 0,
+      "sourceSha256": "969dcebb281d51ab15f326ccbb3052da6287fc77ba34bd703f14b3f1b87293e0",
+      "sha256": "969dcebb281d51ab15f326ccbb3052da6287fc77ba34bd703f14b3f1b87293e0",
+      "previousSha256": "26dccf9e3a2344d51f98bc57509fc5d4a3836002d7be202447df28f779f1ee23"
+    },
+    {
+      "name": "Rite of Eruption",
+      "printing": "008-rite_of_eruption-pd-s",
+      "file": "rite_of_eruption.webp",
+      "rotation": 0,
+      "sourceSha256": "cec48aebff3f904b8d629ab7ca7a49ecfc8bbdaaae4ddb8dfa88c5d122cd8a3a",
+      "sha256": "cec48aebff3f904b8d629ab7ca7a49ecfc8bbdaaae4ddb8dfa88c5d122cd8a3a",
+      "previousSha256": "86ffbe77b99897aa9abbe88b3178964c2f5ece4596319a964cacd4581664dac4"
+    },
+    {
+      "name": "Rubble",
+      "printing": "008-rubble-pd-s",
+      "file": "rubble.webp",
+      "rotation": 90,
+      "sourceSha256": "a15e5329135eb1d50013d166f3190c16761679d8f2ef2d6fd552de34c842b219",
+      "sha256": "e0f6f74028c21b89db0acd3acfc92c13537c41b456f86ac3e6a23f8bf878c361",
+      "previousSha256": "67d3ec4f4ded2222b5697e8e9a4bc176ddd886db550328bc183f544ed8d029eb"
+    },
+    {
+      "name": "Runeling",
+      "printing": "008-runeling-pd-s",
+      "file": "runeling.webp",
+      "rotation": 0,
+      "sourceSha256": "b6c4f614a7c28c1e3d915a1e98d54a4846dda1f282a3f9b0a3401c41993617f5",
+      "sha256": "b6c4f614a7c28c1e3d915a1e98d54a4846dda1f282a3f9b0a3401c41993617f5",
+      "previousSha256": "4e80bc5244c00e4d2cac96f6e8e37c9622abe94f9ea9ce0c29f2d22d73f93f61"
+    },
+    {
+      "name": "Scoria",
+      "printing": "008-scoria-pd-s",
+      "file": "scoria.webp",
+      "rotation": 90,
+      "sourceSha256": "f608c594829eaadd1d418e77fbc5846c3a00ff78ea8bb4c5042ade8beeb5023b",
+      "sha256": "b947e478084f19564dcb08597d90469c81932184795bdd6d881f1fd69f0a3447",
+      "previousSha256": "9f6941c82c1199d4a37466a69109ac5a1f4d17ac8e8dd6a814dc1b4086d0597c"
+    },
+    {
+      "name": "Shatter",
+      "printing": "008-shatter-pd-s",
+      "file": "shatter.webp",
+      "rotation": 0,
+      "sourceSha256": "b31aa8a7db5f388a0b65fcbd0c11a869b3132695cfd7c0f4783af96aeaba6a92",
+      "sha256": "b31aa8a7db5f388a0b65fcbd0c11a869b3132695cfd7c0f4783af96aeaba6a92",
+      "previousSha256": "bb05075ed08d50835e35eb44d99a996982e067ce659bf14b6ce6c3577b0ae5f6"
+    },
+    {
+      "name": "Sissi Marksmen",
+      "printing": "008-sissi_marksmen-pd-s",
+      "file": "sissi_marksmen.webp",
+      "rotation": 0,
+      "sourceSha256": "ace3cd20dad9fdb9b524dc01e750731f87c423bda0e0722328fe0545cd533b97",
+      "sha256": "ace3cd20dad9fdb9b524dc01e750731f87c423bda0e0722328fe0545cd533b97",
+      "previousSha256": "8e5fa49f138d3007a8b11e2055c4f0ce2d9ddbe865cfced6a71893973574be9e"
+    },
+    {
+      "name": "Slag Slug",
+      "printing": "008-slag_slug-pd-s",
+      "file": "slag_slug.webp",
+      "rotation": 0,
+      "sourceSha256": "bf5e0409528635bd18bbd31e3f7f4d04f8c49c786f35e4c3468848b716d65621",
+      "sha256": "bf5e0409528635bd18bbd31e3f7f4d04f8c49c786f35e4c3468848b716d65621",
+      "previousSha256": "c55c0894d231e1e62f35c09679295206cae441bdbfe4b13e1eef356824d4855d"
+    },
+    {
+      "name": "Slide",
+      "printing": "008-slide-pd-s",
+      "file": "slide.webp",
+      "rotation": 0,
+      "sourceSha256": "fb8de94ca37b483fb76ac17b32f78427550484549cdb08a089fb49939d1cdd8c",
+      "sha256": "fb8de94ca37b483fb76ac17b32f78427550484549cdb08a089fb49939d1cdd8c",
+      "previousSha256": "c932a0c3eb113820aa65c838b35a730a7bc8937ea14631c2a102c6c535c85767"
+    },
+    {
+      "name": "Smoldering Hollow",
+      "printing": "008-smoldering_hollow-pd-s",
+      "file": "smoldering_hollow.webp",
+      "rotation": 90,
+      "sourceSha256": "ec62178cc404d046f5b29c3a4dc5a76ca1bb070b6c59dc5d26729c7eae37cba8",
+      "sha256": "1f52c1f03436fb43313973c8abff5d9a4f5988fa6aee36ce8316ae4d99962b87",
+      "previousSha256": "dff62c92140565d173820e35ad669c6e104643ea92d4f0d4f6f102780bba1a65"
+    },
+    {
+      "name": "Snapjaw Raptor",
+      "printing": "008-snapjaw_raptor-pd-s",
+      "file": "snapjaw_raptor.webp",
+      "rotation": 0,
+      "sourceSha256": "a346c996135aa51b376010417654f7f1ac196390edca4b6d69f50290d28310e4",
+      "sha256": "a346c996135aa51b376010417654f7f1ac196390edca4b6d69f50290d28310e4",
+      "previousSha256": "2efb724aedb9e064f8a6bfd2b18d3d8c9def4d9e84a1f9b8ee44055f916530c9"
+    },
+    {
+      "name": "Southpaw Dyrodor",
+      "printing": "008-southpaw_dyrodor-pd-s",
+      "file": "southpaw_dyrodor.webp",
+      "rotation": 0,
+      "sourceSha256": "ec4547dea3094083e16d7cc547a994bb90fd60d5139b8d28f48c5772514e685a",
+      "sha256": "ec4547dea3094083e16d7cc547a994bb90fd60d5139b8d28f48c5772514e685a",
+      "previousSha256": "0e96aba4e6ea4ad54182739f09af5814d682bba4f94e63f872a67bce3fafbafc"
+    },
+    {
+      "name": "Spike Trap",
+      "printing": "008-spike_trap-pd-s",
+      "file": "spike_trap.webp",
+      "rotation": 90,
+      "sourceSha256": "2d92a929d8815f9582746a4e2c2a35f7599a172c56ac903edb2c37ee2c9cce12",
+      "sha256": "f585fbfbe1eb298b1fc524cb71726a70503c5303b3c45a5a5cf41d9c746b62a6",
+      "previousSha256": "396acb3d3dbb3827293dd1ce2594c2d2361e3e6ad2a3939a24faaa8ecf0e3377"
+    },
+    {
+      "name": "Springstem Meadow",
+      "printing": "008-springstem_meadow-pd-s",
+      "file": "springstem_meadow.webp",
+      "rotation": 90,
+      "sourceSha256": "b41347899786ac6d9188afbce5d6179ff5911c38bfc20179a622dccea7c3d724",
+      "sha256": "63b37b6c5135fdb9141a86f6ceca737d8d8e4f0da7431dac5074993576cb931f",
+      "previousSha256": "4b80297546e844ab3f69039cb62c6d38584828955494c935b4c61210f6ba9bcb"
+    },
+    {
+      "name": "Stiff-pitch Witch",
+      "printing": "008-stiff_pitch_witch-pd-s",
+      "file": "stiff_pitch_witch.webp",
+      "rotation": 0,
+      "sourceSha256": "f62405f175d9b9faf1fca88739e96277e780d59485ebbf3821baec08a7294e8d",
+      "sha256": "f62405f175d9b9faf1fca88739e96277e780d59485ebbf3821baec08a7294e8d",
+      "previousSha256": "de41dcd226997117c2558870f526c8b9179aa59fab7ac0165c05e6bd086e1a4c"
+    },
+    {
+      "name": "Stomping Mammoth",
+      "printing": "008-stomping_mammoth-pd-s",
+      "file": "stomping_mammoth.webp",
+      "rotation": 0,
+      "sourceSha256": "d96aec24f5601094357b5137fc9f7760595a4942bb7a0a27b73c8dd82e969600",
+      "sha256": "d96aec24f5601094357b5137fc9f7760595a4942bb7a0a27b73c8dd82e969600",
+      "previousSha256": "3a7f26dbd8f48bd28ca601a07ee0024968812bf8eb34bc5dcf2965c3907eaab3"
+    },
+    {
+      "name": "Sulfur Vents",
+      "printing": "008-sulfur_vents-pd-s",
+      "file": "sulfur_vents.webp",
+      "rotation": 90,
+      "sourceSha256": "cda0e8a828084464df786b8d577a8f9c8c6e8ba84b02b865af3ffec94207f8b6",
+      "sha256": "63e8b5a8e2a3d7f4e245bc78b80b0c6d79016cdf514dce97ee76ddacf535c57e",
+      "previousSha256": "38f173b4e11594eece34080df36b99846393affe8053d5a4468861a92b6f4f81"
+    },
+    {
+      "name": "Sunspear Tribe",
+      "printing": "008-sunspear_tribe-pd-s",
+      "file": "sunspear_tribe.webp",
+      "rotation": 0,
+      "sourceSha256": "43c5d75e9f5dc679368be3c27d247a0962d0b95ea8bf83d19bad9f50c5b77241",
+      "sha256": "43c5d75e9f5dc679368be3c27d247a0962d0b95ea8bf83d19bad9f50c5b77241",
+      "previousSha256": "13a43eaa8793445136a4b1dc018e49f546332fbbf03dcfd1f34a2052b4ff144a"
+    },
+    {
+      "name": "Supervolcano",
+      "printing": "008-supervolcano-pd-s",
+      "file": "supervolcano.webp",
+      "rotation": 90,
+      "sourceSha256": "f6889b5ec5829ed7202a9b13b72e483cca184b5ee906b8b6c8544ad17d5d9e45",
+      "sha256": "df720c256736f3e1256f656f21343804ac9205685b93198fb08946d2ae9f3e6d",
+      "previousSha256": "e151a941eb88e2c856d38a35821b7c2aac5ecb4eba8aa7bb2fe39969af89a4fc"
+    },
+    {
+      "name": "Swealand Longship",
+      "printing": "008-swealand_longship-pd-s",
+      "file": "swealand_longship.webp",
+      "rotation": 0,
+      "sourceSha256": "fb813d9614bab16402b98d958c708cb4ef21cfd94c04852d1d8fca5f7ea31a0d",
+      "sha256": "fb813d9614bab16402b98d958c708cb4ef21cfd94c04852d1d8fca5f7ea31a0d",
+      "previousSha256": "99f8fb1ff61510133203fefa79baaf61d7ed98a6b08b61ab8c6c53f4ed5ea65c"
+    },
+    {
+      "name": "Terraform",
+      "printing": "008-terraform-pd-s",
+      "file": "terraform.webp",
+      "rotation": 0,
+      "sourceSha256": "364d0c70a9fac12b5c9e130cdea1842923c42c656f633ca8f9873a039866a8fd",
+      "sha256": "364d0c70a9fac12b5c9e130cdea1842923c42c656f633ca8f9873a039866a8fd",
+      "previousSha256": "e1277c083b594231a13e44cc85bd5ec9d7ad47b647b65d66e34206cd0c3f0549"
+    },
+    {
+      "name": "The White Death",
+      "printing": "008-the_white_death-pd-s",
+      "file": "the_white_death.webp",
+      "rotation": 0,
+      "sourceSha256": "88bdf6cbe02f2adacaa1fcbf2bbad4bfbf52693290196fed134296602b97b183",
+      "sha256": "88bdf6cbe02f2adacaa1fcbf2bbad4bfbf52693290196fed134296602b97b183",
+      "previousSha256": "59c07ed5daaea474eefdf1d5c04ac360264a1cd405a81642dcf9c6dcb46cd6fa"
+    },
+    {
+      "name": "Trapper's Rest",
+      "printing": "008-trappers_rest-pd-s",
+      "file": "trappers_rest.webp",
+      "rotation": 90,
+      "sourceSha256": "af663a22bbc637de2f1161a0d9671ef6f1963e50f3d92da424091301bce4623f",
+      "sha256": "5617721b80340a5a3d80f0a16b7e6412973f9107194446214b5825c4c3076025",
+      "previousSha256": "43db00e121f2270465d262de5e52b8a7ba080b4bf9092dda65055546242b96dd"
+    },
+    {
+      "name": "Tundra",
+      "printing": "008-tundra-pd-s",
+      "file": "tundra.webp",
+      "rotation": 90,
+      "sourceSha256": "353c2411055bd6d0cb7634776b6699519b4977c2e7621eef1426d51083cadb68",
+      "sha256": "c7fdc9d0bce1b13dff45ca8a198e0ad871949c2752aaf2253c3dd581df5e78dc",
+      "previousSha256": "9300ee47f2e4919da8978ee413feabaf22a1f2dd895e4a71da106710008e5b16"
+    },
+    {
+      "name": "Tusslin' Trolls",
+      "printing": "008-tusslin_trolls-pd-s",
+      "file": "tusslin_trolls.webp",
+      "rotation": 0,
+      "sourceSha256": "a550bb231a6737aacc3d0c3aef06f73df4e05c93d027ab96ce26dbd1752d87ae",
+      "sha256": "a550bb231a6737aacc3d0c3aef06f73df4e05c93d027ab96ce26dbd1752d87ae",
+      "previousSha256": "3e80966023be34ce1e5f9f727c3920b4ec01c3dbd533dcebb083d3a6da5a1d6e"
+    },
+    {
+      "name": "Volcanic Eruption",
+      "printing": "008-volcanic_eruption-pd-s",
+      "file": "volcanic_eruption.webp",
+      "rotation": 90,
+      "sourceSha256": "632edba301b82ec26b51f038a513f5674914efaefe04a3bb7633af388f5c7297",
+      "sha256": "1dca17b298d3c6b715c0a9bb37897ca977f225b75475cbc8851932bf1abd5ca3",
+      "previousSha256": "722293af46a84dee8ebd2084f70187f072acc71e4df7862bee24da9754716b6a"
+    },
+    {
+      "name": "When the Peaks Fell",
+      "printing": "008-when_the_peaks_fell-pd-s",
+      "file": "when_the_peaks_fell.webp",
+      "rotation": 0,
+      "sourceSha256": "da4461f1892e26ef24e91d79695a9c94895f1cc67a808f77f64809209beee29f",
+      "sha256": "da4461f1892e26ef24e91d79695a9c94895f1cc67a808f77f64809209beee29f",
+      "previousSha256": "858082903756b06ca501eb675f5e43033622738675551264921d23b898895957"
+    },
+    {
+      "name": "Winter River",
+      "printing": "008-winter_river-pd-s",
+      "file": "winter_river.webp",
+      "rotation": 90,
+      "sourceSha256": "7db34c0cb390e52753ac948bf9ce9d30e977f94c5abdbcda9c5678ed78455b6a",
+      "sha256": "1e5f85d81c57eabf30f58223bb0ac685437010d95d080a1f852398a997bd68d1",
+      "previousSha256": "41bfb2e3930dad882f24361443d011780b56dfec0587c255f52eb86f62b55605"
+    }
+  ]
+}

@@ -315,6 +315,10 @@ describe('catalogue hierarchy geometry', () => {
     expect(onlyAvatars.bounds.bottom).toBe(lastAvatarEdge);
     const onlySpells = calculateCardLayout({ cards: inputs.filter(entry => entry.type !== 'Avatar'), catalogueLayout: { columns: 6, steps: [] } });
     expect(onlySpells.headers.some(header => header.label === 'Avatars')).toBe(false);
+    const singleAvatar = calculateCardLayout({ cards: [card('Frost Mage', 'Avatar', 'none', null)], catalogueLayout: { columns: 1, steps: [] } });
+    const title = singleAvatar.headers[0];
+    expect(title).toBeDefined();
+    expect((title?.fontSize ?? 0) * 'Avatars'.length * 0.7).toBeLessThanOrEqual(singleAvatar.bounds.right);
   });
   it.each(['wide', 'portrait'] as const)('keeps every card in non-overlapping snapped cells in %s layout', (layoutVariant) => {
     const inputs = (['air', 'earth', 'fire', 'water', 'multiple', 'none'] as const).flatMap((element) =>

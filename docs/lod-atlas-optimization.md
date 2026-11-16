@@ -16,12 +16,13 @@ pages and do not request individual full card files.
 
 ## Current Asset Tiers
 
-Full detail stays as individual files in `public/assets/Cards`. The source
-catalog currently includes mixed source sizes:
+Full detail stays as individual files in `public/assets/Cards`. After the
+16 November 2026 official image import, the 1,177 sources include:
 
-- 668 cards at `744x1039`
-- 429 cards at `380x531`
-- 7 cards around `700px` high
+- 721 cards at `744x1039`
+- 24 landscape sites at `1039x744`
+- 425 cards at `380x531`
+- 6 cards around `700x960` and one at `375x525`
 
 Generated LOD tiers:
 
@@ -47,12 +48,12 @@ After the current rebuild:
 
 | Output | Pages/files | Wire size | Decoded RGBA total | Largest page |
 | --- | ---: | ---: | ---: | ---: |
-| `CardsThumb` | 1,104 files | 4.4 MB on disk | per-file fallback | n/a |
-| `CardsThumbAtlas` | 16 pages | 2.90 MiB | 52.1 MiB | `944x912` |
-| `CardsMediumAtlas` | 92 pages | 19.88 MiB | 452.7 MiB | `1112x1160` |
+| `CardsThumb` | 1,177 files | 3.28 MiB | per-file fallback | n/a |
+| `CardsThumbAtlas` | 17 pages | 3.10 MiB | 55.4 MiB | `944x912` |
+| `CardsMediumAtlas` | 99 pages | 21.30 MiB | 482.6 MiB | `1112x1160` |
 
 Each full medium atlas page decodes to about `4.92 MiB` of RGBA pixels. The
-wire size is only about 20 MiB, but the decoded total is roughly 450 MiB before
+wire size is only about 21 MiB, but the decoded total is roughly 483 MiB before
 runtime copies, so phone loading must stay relevance-driven.
 
 ## Runtime Policy
@@ -134,6 +135,10 @@ Atlas and full-image loading:
 - Full detail is not atlased. On desktop/tablet-rich devices, full requests
   load individual `public/assets/Cards/<slug>.webp` files for visible,
   near-visible, hovered, or selected cards that cross the full threshold.
+- Individual full/fallback image URLs include each source's content hash from
+  `src/data/cardImageVersions.json`. The canvas, HTML hover preview and stack
+  panel share this URL builder. `pnpm build` and `pnpm cards:atlas:all` regenerate
+  hashes; unchanged cards retain their cached URLs when another card changes.
 - The React hover-preview `<img>` is desktop/tablet-rich only. It uses
   `decoding="async"` and `loading="lazy"`, but that browser hint does not
   replace the app-managed Pixi atlas queue.
@@ -173,7 +178,8 @@ Atlas generation is deterministic and canvas-local:
   then threshold groups, then type groups, then cost/name order.
 - Pages are filled sequentially from that order, so cards near each other in
   the collection layout tend to share the same or adjacent atlas pages.
-- Every manifest must map all 1,104 source cards exactly once.
+- Every manifest must map all 1,177 source cards exactly once, including archived
+  token artwork retained outside the active playable catalogue.
 
 ## Rebuild Workflow
 
@@ -193,8 +199,8 @@ pnpm cards:atlas:medium --dry-run
 
 Expected dry-run shape:
 
-- Thumbnail atlas: 16 pages, 1,104 images, max page under `1024x1024`.
-- Medium atlas: 92 pages, 1,104 images, max page `1112x1160`.
+- Thumbnail atlas: 17 pages, 1,177 images, max page under `1024x1024`.
+- Medium atlas: 99 pages, 1,177 images, max page `1112x1160`.
 
 ## Retuning Notes
 

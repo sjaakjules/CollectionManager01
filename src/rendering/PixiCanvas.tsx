@@ -25,7 +25,7 @@ import {
   type DeckAddRequestPayload,
   type QuickTransferCreateTargetPayload,
 } from "./PixiStage";
-import { cardNameToSlug } from "./LODManager";
+import { getCardImageUrl } from "./LODManager";
 import { shouldRotateCardImage } from "./cardOrientation";
 import { shouldUseFullCardHoverPreview } from "./deviceProfile";
 import {
@@ -447,7 +447,7 @@ export function PixiCanvas({
     backgroundLoadProgress.total > 0 &&
     backgroundLoadProgress.loaded < backgroundLoadProgress.total;
   const hoveredCardPreviewSrc = hoveredCardName && useFullCardHoverPreview
-    ? `/assets/Cards/${cardNameToSlug(hoveredCardName)}.webp`
+    ? getCardImageUrl(hoveredCardName)
     : null;
   const hoveredCardIsLandscape = useMemo(() => {
     if (!hoveredCardName) return false;

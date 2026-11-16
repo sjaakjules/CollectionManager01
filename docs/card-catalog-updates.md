@@ -25,9 +25,26 @@ The published set name is retained exactly, as is the API's `Promo` set name.
 The browser cache revision is `2026-11-16`; earlier caches refresh once and
 prefer the newer bundled snapshot on failure. Guest/account data is not reset.
 
-**Artwork is still the supplied photographic WebPs.** Keep the existing
-thumbnails/atlases until the owner confirms the official image upload is done.
-Do not regenerate atlases as part of a metadata-only refresh.
+The owner's **73 downloaded official WebPs** were imported on 16 November from
+the project-local `tmp/New Cards/` directory. Exact printing slugs were matched
+to the official catalogue before renaming into `public/assets/Cards`. Fifty-five
+files retain their original bytes; 18 sideways sites were rotated clockwise
+into landscape WebPs with lossless encoding and verified visible pixels/alpha.
+The import record and hashes are in `offlineData/card-images/2026-11-16.json`.
+Original downloads remain locally in `tmp/imported-card-originals-2026-11-16`.
+
+These replace 70 photo scans plus Flame Wave, Polar Bears and Rubble. Permafrost
+was absent from the downloads and keeps its photo image with official metadata.
+Reprints use current engine rules/statistics: Polar Bears is cost 3, power 3;
+Fireball uses the updated explosion text. No older printing overrides the
+current rules. All standalone thumbnails and both atlas tiers are current:
+1,177 source images, 17 thumbnail pages and 99 medium pages. Existing archived
+token images account for the image count exceeding the active catalogue.
+
+Individual image URLs now include a per-card content hash, shared by canvas,
+hover previews and stack panels. Builds and `cards:atlas:all` refresh these
+hashes automatically so old immutable browser images cannot replace the latest
+artwork. Atlas page URLs remain tied to their manifest revision.
 
 ## Runtime contract
 
@@ -97,6 +114,11 @@ decks, deduplicates simultaneous catalogue loads and retains its 24-hour cache.
    date so older browser catalogues refresh without clearing saved user data.
 4. Add images to `public/assets/Cards`, then regenerate thumbnails and atlases
    with `pnpm cards:thumbs+atlas`. Metadata updates do not download artwork.
+   Match incoming official printing slugs against `sets[].variants[].slug`;
+   use the latest supplied printing for an existing name. Preserve original
+   pixels and alpha, correcting sideways Site orientation where needed.
+   The combined atlas command and every build refresh
+   `src/data/cardImageVersions.json`; individual URLs use these content hashes.
    Rebuild category/deck association assets as needed using their existing
    workflows. Missing artwork displays a named placeholder and does not block
    startup; a successfully loaded image replaces it when available.

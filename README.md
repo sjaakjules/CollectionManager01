@@ -69,6 +69,9 @@ pnpm cards:atlas:all
 ```
 
 Re-run atlas commands whenever source card images change so atlas pages stay in sync.
+The combined atlas command and production build also regenerate per-card image
+content hashes. Canvas images and HTML previews share these versioned URLs, so
+replacement artwork appears without clearing browser storage.
 
 Default thumbnail settings are tuned for startup speed:
 

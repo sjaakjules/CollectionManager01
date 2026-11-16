@@ -22,6 +22,7 @@
  */
 
 import { Assets, Rectangle, Texture, TextureSource } from 'pixi.js';
+import cardImageVersions from '@/data/cardImageVersions.json';
 import {
   getMediumAtlasPageBudget,
   isConstrainedTextureDevice,
@@ -221,6 +222,14 @@ export function cardNameToSlug(cardName: string): string {
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '')
     .trim();
+}
+
+/** Use the same versioned URL for Pixi textures, hover previews and panels. */
+export function getCardImageUrl(cardNameOrSlug: string, imagePath = FULL_IMAGE_PATH): string {
+  const slug = cardNameToSlug(cardNameOrSlug);
+  const versions: Readonly<Record<string, string>> = cardImageVersions;
+  const version = versions[slug];
+  return `${imagePath}/${slug}.webp${version ? `?v=${version}` : ''}`;
 }
 
 function waitAnimationFrames(frameCount: number): Promise<void> {
@@ -799,11 +808,11 @@ export class LODManager {
   }
 
   private getImageUrls(slug: string, lod: LODLevel): string[] {
-    const fullUrl = `${FULL_IMAGE_PATH}/${slug}.webp`;
-    const thumbUrl = `${THUMBNAIL_IMAGE_PATH}/${slug}.webp`;
+    const fullUrl = getCardImageUrl(slug);
+    const thumbUrl = getCardImageUrl(slug, THUMBNAIL_IMAGE_PATH);
     const constrained = isConstrainedTextureDevice();
     const mediumUrl = MEDIUM_IMAGE_PATH
-      ? `${MEDIUM_IMAGE_PATH}/${slug}.webp`
+      ? getCardImageUrl(slug, MEDIUM_IMAGE_PATH)
       : null;
 
     if (constrained && isLowDetailTextureDevice()) {

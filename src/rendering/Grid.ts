@@ -652,12 +652,13 @@ function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLa
     for (const header of rest.headers) header.position.y += offsetY;
     const avatarRight = Math.max(...avatarCards.map(card => card.position.x + CARD_SIZE.PORTRAIT.width / 2));
     const avatarBottom = Math.max(...avatarCards.map(card => card.position.y + CARD_SIZE.PORTRAIT.height / 2));
+    const columnWidth = preferences.columns * spacing.x * SNAP_GRID.width;
     return {
       cards: [...avatarCards, ...rest.cards],
-      headers: [{ label: 'Avatars', kind: 'collection', fontSize: HEADER_HEIGHT, position: { x: 0, y: 0 } }, ...rest.headers],
+      headers: [{ label: 'Avatars', kind: 'collection', fontSize: Math.min(HEADER_HEIGHT, columnWidth / (7 * 0.7)), position: { x: 0, y: 0 } }, ...rest.headers],
       bounds: {
         left: Math.min(0, rest.bounds.left), top: 0,
-        right: Math.max(avatarRight, rest.bounds.right),
+        right: Math.max(avatarRight, columnWidth, rest.bounds.right),
         bottom: rest.cards.length ? Math.max(avatarBottom, rest.bounds.bottom + offsetY) : avatarBottom,
       },
     };

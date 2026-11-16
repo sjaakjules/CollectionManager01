@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Assets, Texture } from "pixi.js";
-import { LOD_LEVELS, LODManager } from "./LODManager";
+import { getCardImageUrl, LOD_LEVELS, LODManager } from "./LODManager";
 
 interface TestDevice {
   width: number;
@@ -56,6 +56,18 @@ afterEach(() => {
 });
 
 describe("LODManager", () => {
+  it('loads replacement full images with the same content version as HTML previews', async () => {
+    useDevice({ width: 1440, height: 900, userAgent: 'Macintosh', maxTouchPoints: 0 });
+    const loadImage = vi.spyOn(Assets, 'load').mockImplementation(async <T>() => Texture.WHITE as T);
+    const manager = new LODManager();
+    const previewUrl = getCardImageUrl('Frost Mage');
+    expect(previewUrl).toMatch(/^\/assets\/Cards\/frost_mage\.webp\?v=[a-f0-9]{16}$/);
+    expect(getCardImageUrl('frost_mage', '/assets/CardsThumb')).toBe(previewUrl.replace('/Cards/', '/CardsThumb/'));
+    await manager.getTexture('Frost Mage', LOD_LEVELS.FULL);
+    await manager.getTexture('Frost Mage', LOD_LEVELS.FULL);
+    expect(loadImage).toHaveBeenCalledExactlyOnceWith(previewUrl);
+  });
+
   it('revalidates atlas coordinates and loads the image from the same generated revision', async () => {
     useDevice({ width: 1440, height: 900, userAgent: 'Macintosh', maxTouchPoints: 0 });
     const generatedAt = '2026-08-27T17:49:06.274Z';

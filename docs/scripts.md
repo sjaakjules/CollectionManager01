@@ -12,7 +12,7 @@ These are the scripts currently exposed through `package.json`:
 | Command | Underlying command | Purpose |
 | --- | --- | --- |
 | `pnpm dev` | `vite` | Start the local development server. |
-| `pnpm build` | `tsc` and `vite build` | Typecheck and build production assets into `dist`. |
+| `pnpm build` | Image versions, `tsc` and `vite build` | Refresh image cache versions, typecheck and build production assets into `dist`. |
 | `pnpm preview` | `vite preview` | Serve the built `dist` output locally. |
 | `pnpm lint` | `eslint src --ext .ts,.tsx` | Lint source files. |
 | `pnpm test` | `vitest run` | Run tests. |
@@ -24,8 +24,9 @@ These are the scripts currently exposed through `package.json`:
 | `pnpm cards:thumbs:force` | `scripts/generate-card-thumbs.mjs --force` | Regenerate all standalone card thumbnails. |
 | `pnpm cards:atlas` | `scripts/generate-card-thumb-atlases.mjs` | Generate the thumbnail atlas tier. |
 | `pnpm cards:atlas:medium` | `scripts/generate-card-thumb-atlases.mjs` | Generate the medium atlas tier. |
-| `pnpm cards:atlas:all` | `cards:atlas` and `cards:atlas:medium` | Generate both atlas tiers. |
+| `pnpm cards:atlas:all` | Image versions, `cards:atlas` and `cards:atlas:medium` | Refresh image cache versions and generate both atlas tiers. |
 | `pnpm cards:thumbs+atlas` | `cards:thumbs` and `cards:atlas:all` | Generate standalone thumbnails and both atlas tiers. |
+| `pnpm cards:images:versions` | `scripts/generate-card-image-versions.mjs` | Generate per-card content hashes for cache-safe full and fallback image URLs. |
 | `pnpm sorcery:request` | `scripts/sorcery-request.mjs` | Download one response through the shared host throttle. |
 | `pnpm sorcery:decks` | `scripts/fetch-sorcery-decks.mjs` | Download decklists through the shared host throttle. |
 | `pnpm sorcery:search-decks` | `scripts/search-sorcery-decks.mjs` | Search SorceryTCG sequentially and archive matching decks. |

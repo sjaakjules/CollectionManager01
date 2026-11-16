@@ -1,6 +1,7 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
@@ -40,6 +41,26 @@ const PROMOS = [
 async function readJson(relativePath) {
   return JSON.parse(await readFile(path.join(ROOT, relativePath), 'utf8'));
 }
+
+it('uses the validated official downloads and current rules for reprinted cards', async () => {
+  const [catalog, imports, versions] = await Promise.all([
+    readJson('docs/Sorcery_CardInfo.json'),
+    readJson('offlineData/card-images/2026-11-16.json'),
+    readJson('src/data/cardImageVersions.json'),
+  ]);
+  expect(imports.cards).toHaveLength(73);
+  for (const record of imports.cards) {
+    const card = catalog.find(entry => entry.name === record.name);
+    expect(card?.sets.flatMap(set => set.variants.map(variant => variant.slug))).toContain(record.printing);
+    const bytes = await readFile(path.join(ROOT, 'public/assets/Cards', record.file));
+    const hash = createHash('sha256').update(bytes).digest('hex');
+    expect(hash).toBe(record.sha256);
+    expect(versions[record.file.slice(0, -5)]).toBe(hash.slice(0, 16));
+    if (!record.rotation) expect(hash).toBe(record.sourceSha256);
+  }
+  expect(catalog.find(card => card.name === 'Polar Bears')?.guardian).toMatchObject({ cost: 3, attack: 3 });
+  expect(catalog.find(card => card.name === 'Fireball')?.guardian.rulesText).toContain('affected locations');
+});
 
 describe('promotional Court card assets', () => {
   it('keeps the bundled snapshot identical to the canonical card catalog', async () => {

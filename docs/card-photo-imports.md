@@ -8,9 +8,13 @@ name is `Reed Cord Measurer`; saved uses of the photographed hyphenated name
 migrate automatically. Humming Hummocks' artist is confirmed as **Jeff A.
 Menges**. The historical uncertainty below describes the initial photo import.
 
-The photo WebPs and existing thumbnail/medium atlases remain in use. Official
-image uploads and the next atlas rebuild are pending the owner's signal; the
-16 November metadata refresh did not download artwork or regenerate atlases.
+The owner subsequently supplied 73 official WebPs on 16 November. These replace
+70 of the 71 photo images, plus the earlier Flame Wave, Polar Bears and Rubble
+images. **Permafrost keeps its photo image** because no official download was
+supplied. All thumbnails and both atlas tiers have been rebuilt. See the
+[current import record](../offlineData/card-images/2026-11-16.json) and
+[catalogue update notes](card-catalog-updates.md). The photos and transcriptions
+below remain an archive of the initial import, not the active metadata source.
 
 The 13 November 2026 import contains **71 distinct photographed cards**: 35 on
 the Frost Mage side and 36 on the Lavamancer side. It adds 69 new names and the

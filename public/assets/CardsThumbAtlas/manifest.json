@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-11-13T10:52:56.584Z",
+  "generatedAt": "2026-11-16T01:42:52.566Z",
   "order": "canvas",
   "metadataPath": "docs/Sorcery_CardInfo.json",
   "atlasCount": 17,
@@ -549,231 +549,231 @@
       "w": 92,
       "h": 128
     },
-    "aethermoeba": {
+    "a_yeti_so_shy": {
       "atlasId": "atlas-1",
       "x": 660,
+      "y": 2,
+      "w": 92,
+      "h": 128
+    },
+    "aethermoeba": {
+      "atlasId": "atlas-1",
+      "x": 754,
       "y": 2,
       "w": 92,
       "h": 128
     },
     "apprentice_wizard": {
       "atlasId": "atlas-1",
-      "x": 754,
+      "x": 848,
       "y": 2,
       "w": 92,
       "h": 128
     },
     "aria_wraith": {
       "atlasId": "atlas-1",
-      "x": 848,
-      "y": 2,
+      "x": 2,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "band_of_thieves": {
       "atlasId": "atlas-1",
-      "x": 2,
+      "x": 96,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "candlemas_monks": {
       "atlasId": "atlas-1",
-      "x": 96,
+      "x": 190,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "castle_haunt": {
       "atlasId": "atlas-1",
-      "x": 190,
+      "x": 284,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "earl_of_the_ivory_towers": {
       "atlasId": "atlas-1",
-      "x": 284,
+      "x": 378,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "ghoul": {
       "atlasId": "atlas-1",
-      "x": 378,
+      "x": 472,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "gibbous_nightgaunts": {
       "atlasId": "atlas-1",
-      "x": 472,
+      "x": 566,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "haast_eagle": {
       "atlasId": "atlas-1",
-      "x": 566,
+      "x": 660,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "headless_haunt": {
       "atlasId": "atlas-1",
-      "x": 660,
+      "x": 754,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "hollow_one": {
       "atlasId": "atlas-1",
-      "x": 754,
+      "x": 848,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "jack_the_ripper": {
       "atlasId": "atlas-1",
-      "x": 848,
-      "y": 132,
+      "x": 2,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "kite_archer": {
       "atlasId": "atlas-1",
-      "x": 2,
+      "x": 96,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "lone_wolf": {
       "atlasId": "atlas-1",
-      "x": 96,
+      "x": 190,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "merlin": {
       "atlasId": "atlas-1",
-      "x": 190,
+      "x": 284,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "midnight_rogue": {
       "atlasId": "atlas-1",
-      "x": 284,
+      "x": 378,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "moon_clan_werewolf": {
       "atlasId": "atlas-1",
-      "x": 378,
+      "x": 472,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "order_of_the_pale_worm": {
       "atlasId": "atlas-1",
-      "x": 472,
+      "x": 566,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "peregrine_apparition": {
       "atlasId": "atlas-1",
-      "x": 566,
+      "x": 660,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "phantasmal_shade": {
       "atlasId": "atlas-1",
-      "x": 660,
+      "x": 754,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "phantom_steed": {
       "atlasId": "atlas-1",
-      "x": 754,
+      "x": 848,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "phase_assassin": {
       "atlasId": "atlas-1",
-      "x": 848,
-      "y": 262,
-      "w": 92,
-      "h": 128
-    },
-    "plumed_pegasus": {
-      "atlasId": "atlas-1",
       "x": 2,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "screamer": {
+    "plumed_pegasus": {
       "atlasId": "atlas-1",
       "x": 96,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "snallygaster": {
+    "screamer": {
       "atlasId": "atlas-1",
       "x": 190,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "spire_lich": {
+    "snallygaster": {
       "atlasId": "atlas-1",
       "x": 284,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "stagecoach": {
+    "spire_lich": {
       "atlasId": "atlas-1",
       "x": 378,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "sturmgeist": {
+    "stagecoach": {
       "atlasId": "atlas-1",
       "x": 472,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "stygian_archers": {
+    "sturmgeist": {
       "atlasId": "atlas-1",
       "x": 566,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "the_hexham_haunts": {
+    "stygian_archers": {
       "atlasId": "atlas-1",
       "x": 660,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "weightless_squire": {
+    "the_hexham_haunts": {
       "atlasId": "atlas-1",
       "x": 754,
       "y": 392,
       "w": 92,
       "h": 128
     },
-    "a_yeti_so_shy": {
+    "weightless_squire": {
       "atlasId": "atlas-1",
       "x": 848,
       "y": 392,
@@ -4980,224 +4980,224 @@
       "w": 92,
       "h": 128
     },
-    "polar_bears": {
-      "atlasId": "atlas-10",
-      "x": 2,
-      "y": 132,
-      "w": 92,
-      "h": 128
-    },
     "polar_explorers": {
       "atlasId": "atlas-10",
-      "x": 96,
+      "x": 2,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "sea_witch": {
       "atlasId": "atlas-10",
-      "x": 190,
+      "x": 96,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "shellycoat": {
       "atlasId": "atlas-10",
-      "x": 284,
+      "x": 190,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "sneak_thief": {
       "atlasId": "atlas-10",
-      "x": 378,
+      "x": 284,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "sugarplum_pixies": {
       "atlasId": "atlas-10",
-      "x": 472,
+      "x": 378,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "survivors_of_serava": {
       "atlasId": "atlas-10",
-      "x": 566,
+      "x": 472,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "swan_maidens": {
       "atlasId": "atlas-10",
-      "x": 660,
+      "x": 566,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "tide_naiads": {
       "atlasId": "atlas-10",
-      "x": 754,
+      "x": 660,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "unland_eel": {
       "atlasId": "atlas-10",
-      "x": 848,
+      "x": 754,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "winter_nymph": {
       "atlasId": "atlas-10",
-      "x": 2,
-      "y": 262,
+      "x": 848,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "accursed_albatross": {
       "atlasId": "atlas-10",
-      "x": 96,
+      "x": 2,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "aino": {
       "atlasId": "atlas-10",
-      "x": 190,
+      "x": 96,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "brobdingnag_bullfrog": {
       "atlasId": "atlas-10",
-      "x": 284,
+      "x": 190,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "coral_reef_kelpie": {
       "atlasId": "atlas-10",
-      "x": 378,
+      "x": 284,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "court_jester": {
       "atlasId": "atlas-10",
-      "x": 472,
+      "x": 378,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "coy_nixie": {
       "atlasId": "atlas-10",
-      "x": 566,
+      "x": 472,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "deep_sea_mermaids": {
       "atlasId": "atlas-10",
-      "x": 660,
+      "x": 566,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "estranged_loner": {
       "atlasId": "atlas-10",
-      "x": 754,
+      "x": 660,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "fey_changeling": {
       "atlasId": "atlas-10",
-      "x": 848,
+      "x": 754,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "giant_killer": {
       "atlasId": "atlas-10",
-      "x": 2,
-      "y": 392,
+      "x": 848,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "guile_sirens": {
       "atlasId": "atlas-10",
-      "x": 96,
+      "x": 2,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "heretics_of_seth": {
       "atlasId": "atlas-10",
-      "x": 190,
+      "x": 96,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "horrible_hybrids": {
       "atlasId": "atlas-10",
-      "x": 284,
+      "x": 190,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "lugbog_cat": {
       "atlasId": "atlas-10",
-      "x": 378,
+      "x": 284,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "megamoeba": {
       "atlasId": "atlas-10",
-      "x": 472,
+      "x": 378,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "mesmer_demon": {
       "atlasId": "atlas-10",
-      "x": 566,
+      "x": 472,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "moss_troll": {
       "atlasId": "atlas-10",
-      "x": 660,
+      "x": 566,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "nelly_longarms": {
       "atlasId": "atlas-10",
-      "x": 754,
+      "x": 660,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "nommo_monitor": {
       "atlasId": "atlas-10",
-      "x": 848,
+      "x": 754,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "order_of_the_sacred_oak": {
       "atlasId": "atlas-10",
+      "x": 848,
+      "y": 392,
+      "w": 92,
+      "h": 128
+    },
+    "orm_infestor": {
+      "atlasId": "atlas-10",
       "x": 2,
       "y": 522,
       "w": 92,
       "h": 128
     },
-    "orm_infestor": {
+    "polar_bears": {
       "atlasId": "atlas-10",
       "x": 96,
       "y": 522,
@@ -6310,1939 +6310,1939 @@
       "w": 92,
       "h": 128
     },
-    "foot_soldier_english": {
-      "atlasId": "atlas-12",
-      "x": 2,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "foot_soldier_saracen": {
-      "atlasId": "atlas-12",
-      "x": 96,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "foot_soldier_1": {
-      "atlasId": "atlas-12",
-      "x": 190,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "foot_soldier_2": {
-      "atlasId": "atlas-12",
-      "x": 284,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "foot_soldier_3": {
-      "atlasId": "atlas-12",
-      "x": 378,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "foot_soldiers": {
-      "atlasId": "atlas-12",
-      "x": 472,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
     "frog": {
       "atlasId": "atlas-12",
-      "x": 566,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "frog_blue": {
-      "atlasId": "atlas-12",
-      "x": 660,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "frog_green": {
-      "atlasId": "atlas-12",
-      "x": 754,
-      "y": 782,
-      "w": 92,
-      "h": 128
-    },
-    "frog_red": {
-      "atlasId": "atlas-12",
-      "x": 848,
+      "x": 2,
       "y": 782,
       "w": 92,
       "h": 128
     },
     "skeleton": {
-      "atlasId": "atlas-13",
-      "x": 2,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 96,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "tawny": {
-      "atlasId": "atlas-13",
-      "x": 96,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 190,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "blacksmith_family": {
-      "atlasId": "atlas-13",
-      "x": 190,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 284,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "castle_servants": {
-      "atlasId": "atlas-13",
-      "x": 284,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 378,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "common_cottagers": {
-      "atlasId": "atlas-13",
-      "x": 378,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 472,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "fishermans_family": {
-      "atlasId": "atlas-13",
-      "x": 472,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 566,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "lance": {
-      "atlasId": "atlas-13",
-      "x": 566,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 660,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "amethyst_core": {
-      "atlasId": "atlas-13",
-      "x": 660,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 754,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "amulet_of_niniane": {
-      "atlasId": "atlas-13",
-      "x": 754,
-      "y": 2,
+      "atlasId": "atlas-12",
+      "x": 848,
+      "y": 782,
       "w": 92,
       "h": 128
     },
     "aquamarine_core": {
       "atlasId": "atlas-13",
-      "x": 848,
+      "x": 2,
       "y": 2,
       "w": 92,
       "h": 128
     },
     "cold_iron_rod": {
       "atlasId": "atlas-13",
-      "x": 2,
-      "y": 132,
+      "x": 96,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "eerie_coral": {
       "atlasId": "atlas-13",
-      "x": 96,
-      "y": 132,
+      "x": 190,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "eriks_curiosa": {
       "atlasId": "atlas-13",
-      "x": 190,
-      "y": 132,
+      "x": 284,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "ether_core": {
       "atlasId": "atlas-13",
-      "x": 284,
-      "y": 132,
+      "x": 378,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "ferrymans_coin": {
       "atlasId": "atlas-13",
-      "x": 378,
-      "y": 132,
+      "x": 472,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "fourberie_knot": {
       "atlasId": "atlas-13",
-      "x": 472,
-      "y": 132,
+      "x": 566,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "hand_of_glory": {
       "atlasId": "atlas-13",
-      "x": 566,
-      "y": 132,
+      "x": 660,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "just_a_rock": {
       "atlasId": "atlas-13",
-      "x": 660,
-      "y": 132,
+      "x": 754,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "key_to_the_city": {
       "atlasId": "atlas-13",
-      "x": 754,
-      "y": 132,
+      "x": 848,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "kythera_mechanism": {
       "atlasId": "atlas-13",
-      "x": 848,
+      "x": 2,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "lucky_charm": {
       "atlasId": "atlas-13",
-      "x": 2,
-      "y": 262,
+      "x": 96,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "mandrake_jars": {
       "atlasId": "atlas-13",
-      "x": 96,
-      "y": 262,
+      "x": 190,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "mix_aer": {
       "atlasId": "atlas-13",
-      "x": 190,
-      "y": 262,
+      "x": 284,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "mix_aqua": {
       "atlasId": "atlas-13",
-      "x": 284,
-      "y": 262,
+      "x": 378,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "mix_ignis": {
       "atlasId": "atlas-13",
-      "x": 378,
-      "y": 262,
+      "x": 472,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "mix_terra": {
       "atlasId": "atlas-13",
-      "x": 472,
-      "y": 262,
+      "x": 566,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "onyx_core": {
       "atlasId": "atlas-13",
-      "x": 566,
-      "y": 262,
+      "x": 660,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "philosophers_stone": {
       "atlasId": "atlas-13",
-      "x": 660,
-      "y": 262,
+      "x": 754,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "ring_of_morrigan": {
       "atlasId": "atlas-13",
-      "x": 754,
-      "y": 262,
+      "x": 848,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "ruby_core": {
       "atlasId": "atlas-13",
-      "x": 848,
+      "x": 2,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "sensu_of_the_fang": {
       "atlasId": "atlas-13",
-      "x": 2,
-      "y": 392,
+      "x": 96,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "torshammar_trinket": {
       "atlasId": "atlas-13",
-      "x": 96,
-      "y": 392,
+      "x": 190,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "wicker_manikin": {
       "atlasId": "atlas-13",
-      "x": 190,
-      "y": 392,
+      "x": 284,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "battering_ram": {
       "atlasId": "atlas-13",
-      "x": 284,
-      "y": 392,
+      "x": 378,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "cradle_of_etherrum": {
       "atlasId": "atlas-13",
-      "x": 378,
-      "y": 392,
+      "x": 472,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "excalibur": {
       "atlasId": "atlas-13",
-      "x": 472,
-      "y": 392,
+      "x": 566,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "flame_of_the_first_ones": {
       "atlasId": "atlas-13",
-      "x": 566,
-      "y": 392,
+      "x": 660,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "four_waters_of_paradise": {
       "atlasId": "atlas-13",
-      "x": 660,
-      "y": 392,
+      "x": 754,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "gilded_aegis": {
       "atlasId": "atlas-13",
-      "x": 754,
-      "y": 392,
+      "x": 848,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "holy_water": {
       "atlasId": "atlas-13",
-      "x": 848,
+      "x": 2,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "iron_maiden": {
       "atlasId": "atlas-13",
-      "x": 2,
-      "y": 522,
+      "x": 96,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "magellan_globe": {
       "atlasId": "atlas-13",
-      "x": 96,
-      "y": 522,
+      "x": 190,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "magnetic_muzzle": {
       "atlasId": "atlas-13",
-      "x": 190,
-      "y": 522,
+      "x": 284,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "merlins_staff": {
       "atlasId": "atlas-13",
-      "x": 284,
-      "y": 522,
+      "x": 378,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "pnakotic_manuscript": {
       "atlasId": "atlas-13",
-      "x": 378,
-      "y": 522,
+      "x": 472,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "poisonous_dagger": {
       "atlasId": "atlas-13",
-      "x": 472,
-      "y": 522,
+      "x": 566,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "scarecrow": {
       "atlasId": "atlas-13",
-      "x": 566,
-      "y": 522,
+      "x": 660,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "shrine_of_the_dragonlord": {
       "atlasId": "atlas-13",
-      "x": 660,
-      "y": 522,
+      "x": 754,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "silver_bullet": {
       "atlasId": "atlas-13",
-      "x": 754,
-      "y": 522,
+      "x": 848,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "tabula_rasa": {
       "atlasId": "atlas-13",
-      "x": 848,
+      "x": 2,
       "y": 522,
       "w": 92,
       "h": 128
     },
     "the_rack": {
       "atlasId": "atlas-13",
-      "x": 2,
-      "y": 652,
+      "x": 96,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "thumb_screws": {
       "atlasId": "atlas-13",
-      "x": 96,
-      "y": 652,
+      "x": 190,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "toolbox": {
       "atlasId": "atlas-13",
-      "x": 190,
-      "y": 652,
+      "x": 284,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "truesight_crossbow": {
       "atlasId": "atlas-13",
-      "x": 284,
-      "y": 652,
+      "x": 378,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "wiccan_tools": {
       "atlasId": "atlas-13",
-      "x": 378,
-      "y": 652,
+      "x": 472,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "wings_of_invention": {
       "atlasId": "atlas-13",
-      "x": 472,
-      "y": 652,
+      "x": 566,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "all_terrain_vestments": {
       "atlasId": "atlas-13",
-      "x": 566,
-      "y": 652,
+      "x": 660,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "angels_egg": {
       "atlasId": "atlas-13",
-      "x": 660,
-      "y": 652,
+      "x": 754,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "arcade_of_bones": {
       "atlasId": "atlas-13",
-      "x": 754,
-      "y": 652,
+      "x": 848,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "bailey": {
       "atlasId": "atlas-13",
-      "x": 848,
+      "x": 2,
       "y": 652,
       "w": 92,
       "h": 128
     },
     "belfry": {
       "atlasId": "atlas-13",
-      "x": 2,
-      "y": 782,
+      "x": 96,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "black_obelisk": {
       "atlasId": "atlas-13",
-      "x": 96,
-      "y": 782,
+      "x": 190,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "blade_of_thorns": {
       "atlasId": "atlas-13",
-      "x": 190,
-      "y": 782,
+      "x": 284,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "blasted_oak": {
       "atlasId": "atlas-13",
-      "x": 284,
-      "y": 782,
+      "x": 378,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "blightstone": {
       "atlasId": "atlas-13",
-      "x": 378,
-      "y": 782,
+      "x": 472,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "book_of_blessings": {
       "atlasId": "atlas-13",
-      "x": 472,
-      "y": 782,
+      "x": 566,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "buried_treasure": {
       "atlasId": "atlas-13",
-      "x": 566,
-      "y": 782,
+      "x": 660,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "cage_of_sidrak": {
       "atlasId": "atlas-13",
-      "x": 660,
-      "y": 782,
+      "x": 754,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "crown_of_the_victor": {
       "atlasId": "atlas-13",
+      "x": 848,
+      "y": 652,
+      "w": 92,
+      "h": 128
+    },
+    "crucifix": {
+      "atlasId": "atlas-13",
+      "x": 2,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "de_vermis_mysteriis": {
+      "atlasId": "atlas-13",
+      "x": 96,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "devils_egg": {
+      "atlasId": "atlas-13",
+      "x": 190,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "driftwood_marrows": {
+      "atlasId": "atlas-13",
+      "x": 284,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "golden_harp": {
+      "atlasId": "atlas-13",
+      "x": 378,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "goswhit_helmet": {
+      "atlasId": "atlas-13",
+      "x": 472,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "grim_guisarme": {
+      "atlasId": "atlas-13",
+      "x": 566,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "hemogoblet": {
+      "atlasId": "atlas-13",
+      "x": 660,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "iron_shackles": {
+      "atlasId": "atlas-13",
       "x": 754,
       "y": 782,
       "w": 92,
       "h": 128
     },
-    "crucifix": {
+    "makeshift_barricade": {
       "atlasId": "atlas-13",
       "x": 848,
       "y": 782,
       "w": 92,
       "h": 128
     },
-    "de_vermis_mysteriis": {
-      "atlasId": "atlas-14",
-      "x": 2,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "devils_egg": {
-      "atlasId": "atlas-14",
-      "x": 96,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "driftwood_marrows": {
-      "atlasId": "atlas-14",
-      "x": 190,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "golden_harp": {
-      "atlasId": "atlas-14",
-      "x": 284,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "goswhit_helmet": {
-      "atlasId": "atlas-14",
-      "x": 378,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "grim_guisarme": {
-      "atlasId": "atlas-14",
-      "x": 472,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "hemogoblet": {
-      "atlasId": "atlas-14",
-      "x": 566,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "iron_shackles": {
-      "atlasId": "atlas-14",
-      "x": 660,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "makeshift_barricade": {
-      "atlasId": "atlas-14",
-      "x": 754,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
     "nadir_seed": {
       "atlasId": "atlas-14",
-      "x": 848,
+      "x": 2,
       "y": 2,
       "w": 92,
       "h": 128
     },
     "panpipes_of_pnom": {
       "atlasId": "atlas-14",
-      "x": 2,
-      "y": 132,
+      "x": 96,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "peacemaker_arbalest": {
       "atlasId": "atlas-14",
-      "x": 96,
-      "y": 132,
+      "x": 190,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "red_rock_of_ravannis": {
       "atlasId": "atlas-14",
-      "x": 190,
-      "y": 132,
+      "x": 284,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "screaming_skull": {
       "atlasId": "atlas-14",
-      "x": 284,
-      "y": 132,
+      "x": 378,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "seven_league_boots": {
       "atlasId": "atlas-14",
-      "x": 378,
-      "y": 132,
+      "x": 472,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "siege_ballista": {
       "atlasId": "atlas-14",
-      "x": 472,
-      "y": 132,
+      "x": 566,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "sunken_treasure": {
       "atlasId": "atlas-14",
-      "x": 566,
-      "y": 132,
+      "x": 660,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "sword_and_shield": {
       "atlasId": "atlas-14",
-      "x": 660,
-      "y": 132,
+      "x": 754,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "the_round_table": {
       "atlasId": "atlas-14",
-      "x": 754,
-      "y": 132,
+      "x": 848,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "tombstone_wardens": {
       "atlasId": "atlas-14",
-      "x": 848,
+      "x": 2,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "13_treasures_of_britain": {
       "atlasId": "atlas-14",
-      "x": 2,
-      "y": 262,
+      "x": 96,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "alabaster_box": {
       "atlasId": "atlas-14",
-      "x": 96,
-      "y": 262,
+      "x": 190,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "algor_omphalos": {
       "atlasId": "atlas-14",
-      "x": 190,
-      "y": 262,
+      "x": 284,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "bleeding_skull": {
       "atlasId": "atlas-14",
-      "x": 284,
-      "y": 262,
+      "x": 378,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "bull_whip": {
       "atlasId": "atlas-14",
-      "x": 378,
-      "y": 262,
+      "x": 472,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "chains_of_prometheus": {
       "atlasId": "atlas-14",
-      "x": 472,
-      "y": 262,
+      "x": 566,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "char_omphalos": {
       "atlasId": "atlas-14",
-      "x": 566,
-      "y": 262,
+      "x": 660,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "clay_golem": {
       "atlasId": "atlas-14",
-      "x": 660,
-      "y": 262,
+      "x": 754,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "crave_golem": {
       "atlasId": "atlas-14",
-      "x": 754,
-      "y": 262,
+      "x": 848,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "dank_omphalos": {
       "atlasId": "atlas-14",
-      "x": 848,
+      "x": 2,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "doomsday_device": {
       "atlasId": "atlas-14",
-      "x": 2,
-      "y": 392,
+      "x": 96,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "fail_not_bow": {
       "atlasId": "atlas-14",
-      "x": 96,
-      "y": 392,
+      "x": 190,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "flaming_sword": {
       "atlasId": "atlas-14",
-      "x": 190,
-      "y": 392,
+      "x": 284,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "hemogolem": {
       "atlasId": "atlas-14",
-      "x": 284,
-      "y": 392,
+      "x": 378,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "horn_of_caerleon": {
       "atlasId": "atlas-14",
-      "x": 378,
-      "y": 392,
+      "x": 472,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "iron_man_talus": {
       "atlasId": "atlas-14",
-      "x": 472,
-      "y": 392,
+      "x": 566,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "land_deed": {
       "atlasId": "atlas-14",
-      "x": 566,
-      "y": 392,
+      "x": 660,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "maddening_bells": {
       "atlasId": "atlas-14",
-      "x": 660,
-      "y": 392,
+      "x": 754,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "mask_of_mayhem": {
       "atlasId": "atlas-14",
-      "x": 754,
-      "y": 392,
+      "x": 848,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "meat_hook": {
       "atlasId": "atlas-14",
-      "x": 848,
+      "x": 2,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "pendragon_banner": {
       "atlasId": "atlas-14",
-      "x": 2,
-      "y": 522,
+      "x": 96,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "plate_of_the_whale": {
       "atlasId": "atlas-14",
-      "x": 96,
-      "y": 522,
+      "x": 190,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "rhongomyniad": {
       "atlasId": "atlas-14",
-      "x": 190,
-      "y": 522,
+      "x": 284,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "rolling_boulder": {
       "atlasId": "atlas-14",
-      "x": 284,
-      "y": 522,
+      "x": 378,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "sentinel_trap": {
       "atlasId": "atlas-14",
-      "x": 378,
-      "y": 522,
+      "x": 472,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "the_immortal_throne": {
       "atlasId": "atlas-14",
-      "x": 472,
-      "y": 522,
+      "x": 566,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "the_pallid_bust": {
       "atlasId": "atlas-14",
-      "x": 566,
-      "y": 522,
+      "x": 660,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "torch_and_pitchfork": {
       "atlasId": "atlas-14",
-      "x": 660,
-      "y": 522,
+      "x": 754,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "torrid_omphalos": {
       "atlasId": "atlas-14",
-      "x": 754,
-      "y": 522,
+      "x": 848,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "book_of_the_dead": {
       "atlasId": "atlas-14",
-      "x": 848,
+      "x": 2,
       "y": 522,
       "w": 92,
       "h": 128
     },
     "corpse_catapult": {
       "atlasId": "atlas-14",
-      "x": 2,
-      "y": 652,
+      "x": 96,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "drums_of_doom": {
       "atlasId": "atlas-14",
-      "x": 96,
-      "y": 652,
+      "x": 190,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "orb_of_baal_berith": {
       "atlasId": "atlas-14",
-      "x": 190,
-      "y": 652,
+      "x": 284,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "payload_trebuchet": {
       "atlasId": "atlas-14",
-      "x": 284,
-      "y": 652,
+      "x": 378,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "pile_of_skulls": {
       "atlasId": "atlas-14",
-      "x": 378,
-      "y": 652,
+      "x": 472,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "spear_of_destiny": {
       "atlasId": "atlas-14",
-      "x": 472,
-      "y": 652,
+      "x": 566,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "the_malleus_maleficarum": {
       "atlasId": "atlas-14",
-      "x": 566,
-      "y": 652,
+      "x": 660,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "false_idol": {
       "atlasId": "atlas-14",
-      "x": 660,
-      "y": 652,
+      "x": 754,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "love_potion": {
       "atlasId": "atlas-14",
-      "x": 754,
-      "y": 652,
+      "x": 848,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "pendulum_of_peril": {
       "atlasId": "atlas-14",
-      "x": 848,
+      "x": 2,
       "y": 652,
       "w": 92,
       "h": 128
     },
     "purge_juggernaut": {
       "atlasId": "atlas-14",
-      "x": 2,
-      "y": 782,
+      "x": 96,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "kairos_the_archivist": {
       "atlasId": "atlas-14",
-      "x": 96,
-      "y": 782,
+      "x": 190,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "koscheis_egg": {
       "atlasId": "atlas-14",
-      "x": 190,
-      "y": 782,
+      "x": 284,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "undertaker_engine": {
       "atlasId": "atlas-14",
-      "x": 284,
-      "y": 782,
+      "x": 378,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "i_am_colossus": {
       "atlasId": "atlas-14",
-      "x": 378,
-      "y": 782,
+      "x": 472,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "altar_of_malachai": {
       "atlasId": "atlas-14",
-      "x": 472,
-      "y": 782,
+      "x": 566,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "ancient_thaw": {
       "atlasId": "atlas-14",
-      "x": 566,
-      "y": 782,
+      "x": 660,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "annual_fair": {
       "atlasId": "atlas-14",
-      "x": 660,
-      "y": 782,
+      "x": 754,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "astral_alcazar": {
       "atlasId": "atlas-14",
+      "x": 848,
+      "y": 652,
+      "w": 92,
+      "h": 128
+    },
+    "baba_yagas_hut": {
+      "atlasId": "atlas-14",
+      "x": 2,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "battlefield": {
+      "atlasId": "atlas-14",
+      "x": 96,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "boneyard": {
+      "atlasId": "atlas-14",
+      "x": 190,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "bottomless_pit": {
+      "atlasId": "atlas-14",
+      "x": 284,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "bower_of_bliss": {
+      "atlasId": "atlas-14",
+      "x": 378,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "broceliande": {
+      "atlasId": "atlas-14",
+      "x": 472,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "bureau_of_occult_control": {
+      "atlasId": "atlas-14",
+      "x": 566,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "camelot": {
+      "atlasId": "atlas-14",
+      "x": 660,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "city_of_glass": {
+      "atlasId": "atlas-14",
       "x": 754,
       "y": 782,
       "w": 92,
       "h": 128
     },
-    "baba_yagas_hut": {
+    "city_of_plenty": {
       "atlasId": "atlas-14",
       "x": 848,
       "y": 782,
       "w": 92,
       "h": 128
     },
-    "battlefield": {
-      "atlasId": "atlas-15",
-      "x": 2,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "boneyard": {
-      "atlasId": "atlas-15",
-      "x": 96,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "bottomless_pit": {
-      "atlasId": "atlas-15",
-      "x": 190,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "bower_of_bliss": {
-      "atlasId": "atlas-15",
-      "x": 284,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "broceliande": {
-      "atlasId": "atlas-15",
-      "x": 378,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "bureau_of_occult_control": {
-      "atlasId": "atlas-15",
-      "x": 472,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "camelot": {
-      "atlasId": "atlas-15",
-      "x": 566,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "city_of_glass": {
-      "atlasId": "atlas-15",
-      "x": 660,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "city_of_plenty": {
-      "atlasId": "atlas-15",
-      "x": 754,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
     "city_of_souls": {
       "atlasId": "atlas-15",
-      "x": 848,
+      "x": 2,
       "y": 2,
       "w": 92,
       "h": 128
     },
     "city_of_traitors": {
       "atlasId": "atlas-15",
-      "x": 2,
-      "y": 132,
+      "x": 96,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "cornerstone": {
       "atlasId": "atlas-15",
-      "x": 96,
-      "y": 132,
+      "x": 190,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "crossroads": {
       "atlasId": "atlas-15",
-      "x": 190,
-      "y": 132,
+      "x": 284,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "darkest_dungeon": {
       "atlasId": "atlas-15",
-      "x": 284,
-      "y": 132,
+      "x": 378,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "dome_of_osiros": {
       "atlasId": "atlas-15",
-      "x": 378,
-      "y": 132,
+      "x": 472,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "donnybrook_inn": {
       "atlasId": "atlas-15",
-      "x": 472,
-      "y": 132,
+      "x": 566,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "dragonlords_lair": {
       "atlasId": "atlas-15",
-      "x": 566,
-      "y": 132,
+      "x": 660,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "edge_of_the_world": {
       "atlasId": "atlas-15",
-      "x": 660,
-      "y": 132,
+      "x": 754,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "ersatz_platz": {
       "atlasId": "atlas-15",
-      "x": 754,
-      "y": 132,
+      "x": 848,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "free_city": {
       "atlasId": "atlas-15",
-      "x": 848,
+      "x": 2,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "ghost_town": {
       "atlasId": "atlas-15",
-      "x": 2,
-      "y": 262,
+      "x": 96,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "great_wall": {
       "atlasId": "atlas-15",
-      "x": 96,
-      "y": 262,
+      "x": 190,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "hamlet": {
       "atlasId": "atlas-15",
-      "x": 190,
-      "y": 262,
+      "x": 284,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "heirloom_lost": {
       "atlasId": "atlas-15",
-      "x": 284,
-      "y": 262,
+      "x": 378,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "imperial_road": {
       "atlasId": "atlas-15",
-      "x": 378,
-      "y": 262,
+      "x": 472,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "infusion_factory": {
       "atlasId": "atlas-15",
-      "x": 472,
-      "y": 262,
+      "x": 566,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "leyline_henge": {
       "atlasId": "atlas-15",
-      "x": 566,
-      "y": 262,
+      "x": 660,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "major_city": {
       "atlasId": "atlas-15",
-      "x": 660,
-      "y": 262,
+      "x": 754,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "mirror_realm": {
       "atlasId": "atlas-15",
-      "x": 754,
-      "y": 262,
+      "x": 848,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "mismanaged_mortuary": {
       "atlasId": "atlas-15",
-      "x": 848,
+      "x": 2,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "mudflow": {
       "atlasId": "atlas-15",
-      "x": 2,
-      "y": 392,
+      "x": 96,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "myrrhs_trophy_room": {
       "atlasId": "atlas-15",
-      "x": 96,
-      "y": 392,
+      "x": 190,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "old_mortimers_den": {
       "atlasId": "atlas-15",
-      "x": 190,
-      "y": 392,
+      "x": 284,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "planar_gate": {
       "atlasId": "atlas-15",
-      "x": 284,
-      "y": 392,
+      "x": 378,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "postern_gate": {
       "atlasId": "atlas-15",
-      "x": 378,
-      "y": 392,
+      "x": 472,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "primordial_spring": {
       "atlasId": "atlas-15",
-      "x": 472,
-      "y": 392,
+      "x": 566,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "roots_of_yggdrasil": {
       "atlasId": "atlas-15",
-      "x": 566,
-      "y": 392,
+      "x": 660,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "rubble": {
       "atlasId": "atlas-15",
-      "x": 660,
-      "y": 392,
+      "x": 754,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "saintweald": {
       "atlasId": "atlas-15",
-      "x": 754,
-      "y": 392,
+      "x": 848,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "scoria": {
       "atlasId": "atlas-15",
-      "x": 848,
+      "x": 2,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "sea_of_ash": {
       "atlasId": "atlas-15",
-      "x": 2,
-      "y": 522,
+      "x": 96,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "sinkhole": {
       "atlasId": "atlas-15",
-      "x": 96,
-      "y": 522,
+      "x": 190,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "sphinx_sarcophagus": {
       "atlasId": "atlas-15",
-      "x": 190,
-      "y": 522,
+      "x": 284,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "standing_stones": {
       "atlasId": "atlas-15",
-      "x": 284,
-      "y": 522,
+      "x": 378,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "the_empyrean": {
       "atlasId": "atlas-15",
-      "x": 378,
-      "y": 522,
+      "x": 472,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "the_geistwood": {
       "atlasId": "atlas-15",
-      "x": 472,
-      "y": 522,
+      "x": 566,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "the_void": {
       "atlasId": "atlas-15",
-      "x": 566,
-      "y": 522,
+      "x": 660,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "tournament_grounds": {
       "atlasId": "atlas-15",
-      "x": 660,
-      "y": 522,
+      "x": 754,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "town": {
       "atlasId": "atlas-15",
-      "x": 754,
-      "y": 522,
+      "x": 848,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "trade_encampment": {
       "atlasId": "atlas-15",
-      "x": 848,
+      "x": 2,
       "y": 522,
       "w": 92,
       "h": 128
     },
     "troubled_town": {
       "atlasId": "atlas-15",
-      "x": 2,
-      "y": 652,
+      "x": 96,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "tundra": {
       "atlasId": "atlas-15",
-      "x": 96,
-      "y": 652,
+      "x": 190,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "valley_of_delight": {
       "atlasId": "atlas-15",
-      "x": 190,
-      "y": 652,
+      "x": 284,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "vaults_of_zul": {
       "atlasId": "atlas-15",
-      "x": 284,
-      "y": 652,
+      "x": 378,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "wizards_den": {
       "atlasId": "atlas-15",
-      "x": 378,
-      "y": 652,
+      "x": 472,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "emberleaf_dryad": {
       "atlasId": "atlas-15",
-      "x": 472,
-      "y": 652,
+      "x": 566,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "jussi_puffins": {
       "atlasId": "atlas-15",
-      "x": 566,
-      "y": 652,
+      "x": 660,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "sir_tom_thumb": {
       "atlasId": "atlas-15",
-      "x": 660,
-      "y": 652,
+      "x": 754,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "blue_knight": {
       "atlasId": "atlas-15",
-      "x": 754,
-      "y": 652,
+      "x": 848,
+      "y": 522,
       "w": 92,
       "h": 128
     },
     "moonsong_talagelum": {
       "atlasId": "atlas-15",
-      "x": 848,
+      "x": 2,
       "y": 652,
       "w": 92,
       "h": 128
     },
     "purple_knight": {
       "atlasId": "atlas-15",
-      "x": 2,
-      "y": 782,
+      "x": 96,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "sir_agravaine": {
       "atlasId": "atlas-15",
-      "x": 96,
-      "y": 782,
+      "x": 190,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "sir_bors_the_younger": {
       "atlasId": "atlas-15",
-      "x": 190,
-      "y": 782,
+      "x": 284,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "sir_pelleas": {
       "atlasId": "atlas-15",
-      "x": 284,
-      "y": 782,
+      "x": 378,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "verdant_knight": {
       "atlasId": "atlas-15",
-      "x": 378,
-      "y": 782,
+      "x": 472,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "yellow_knight": {
       "atlasId": "atlas-15",
-      "x": 472,
-      "y": 782,
+      "x": 566,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "frost_elemental": {
       "atlasId": "atlas-15",
-      "x": 566,
-      "y": 782,
+      "x": 660,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "hailstriker": {
       "atlasId": "atlas-15",
-      "x": 660,
-      "y": 782,
+      "x": 754,
+      "y": 652,
       "w": 92,
       "h": 128
     },
     "king_arthur": {
       "atlasId": "atlas-15",
+      "x": 848,
+      "y": 652,
+      "w": 92,
+      "h": 128
+    },
+    "lava_elemental": {
+      "atlasId": "atlas-15",
+      "x": 2,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "queen_guinevere": {
+      "atlasId": "atlas-15",
+      "x": 96,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "sir_balin": {
+      "atlasId": "atlas-15",
+      "x": 190,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "sir_bedivere": {
+      "atlasId": "atlas-15",
+      "x": 284,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "sir_gaheris": {
+      "atlasId": "atlas-15",
+      "x": 378,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "sir_gareth": {
+      "atlasId": "atlas-15",
+      "x": 472,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "sir_gawain": {
+      "atlasId": "atlas-15",
+      "x": 566,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "sir_ironside": {
+      "atlasId": "atlas-15",
+      "x": 660,
+      "y": 782,
+      "w": 92,
+      "h": 128
+    },
+    "sir_kay": {
+      "atlasId": "atlas-15",
       "x": 754,
       "y": 782,
       "w": 92,
       "h": 128
     },
-    "lava_elemental": {
+    "sir_lamorak": {
       "atlasId": "atlas-15",
       "x": 848,
       "y": 782,
       "w": 92,
       "h": 128
     },
-    "queen_guinevere": {
-      "atlasId": "atlas-16",
-      "x": 2,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_balin": {
-      "atlasId": "atlas-16",
-      "x": 96,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_bedivere": {
-      "atlasId": "atlas-16",
-      "x": 190,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_gaheris": {
-      "atlasId": "atlas-16",
-      "x": 284,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_gareth": {
-      "atlasId": "atlas-16",
-      "x": 378,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_gawain": {
-      "atlasId": "atlas-16",
-      "x": 472,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_ironside": {
-      "atlasId": "atlas-16",
-      "x": 566,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_kay": {
-      "atlasId": "atlas-16",
-      "x": 660,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
-    "sir_lamorak": {
-      "atlasId": "atlas-16",
-      "x": 754,
-      "y": 2,
-      "w": 92,
-      "h": 128
-    },
     "sir_morien": {
       "atlasId": "atlas-16",
-      "x": 848,
+      "x": 2,
       "y": 2,
       "w": 92,
       "h": 128
     },
     "sir_perceval": {
       "atlasId": "atlas-16",
-      "x": 2,
-      "y": 132,
+      "x": 96,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "sir_priamus": {
       "atlasId": "atlas-16",
-      "x": 96,
-      "y": 132,
+      "x": 190,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "slag_slug": {
       "atlasId": "atlas-16",
-      "x": 190,
-      "y": 132,
+      "x": 284,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "black_knight": {
       "atlasId": "atlas-16",
-      "x": 284,
-      "y": 132,
+      "x": 378,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "dame_britomart": {
       "atlasId": "atlas-16",
-      "x": 378,
-      "y": 132,
+      "x": 472,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "sir_galahad": {
       "atlasId": "atlas-16",
-      "x": 472,
-      "y": 132,
+      "x": 566,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "sir_tristan": {
       "atlasId": "atlas-16",
-      "x": 566,
-      "y": 132,
+      "x": 660,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "sir_yvain": {
       "atlasId": "atlas-16",
-      "x": 660,
-      "y": 132,
+      "x": 754,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "white_knight": {
       "atlasId": "atlas-16",
-      "x": 754,
-      "y": 132,
+      "x": 848,
+      "y": 2,
       "w": 92,
       "h": 128
     },
     "sir_lancelot": {
       "atlasId": "atlas-16",
-      "x": 848,
+      "x": 2,
       "y": 132,
       "w": 92,
       "h": 128
     },
     "sir_mordred": {
       "atlasId": "atlas-16",
-      "x": 2,
-      "y": 262,
+      "x": 96,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "sir_pellinore": {
       "atlasId": "atlas-16",
-      "x": 96,
-      "y": 262,
+      "x": 190,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "caelestis": {
       "atlasId": "atlas-16",
-      "x": 190,
-      "y": 262,
+      "x": 284,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "draco_corvus": {
       "atlasId": "atlas-16",
-      "x": 284,
-      "y": 262,
+      "x": 378,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "xeraphine_konrul": {
       "atlasId": "atlas-16",
-      "x": 378,
-      "y": 262,
+      "x": 472,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "fatality": {
       "atlasId": "atlas-16",
-      "x": 472,
-      "y": 262,
+      "x": 566,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "frostbolt": {
       "atlasId": "atlas-16",
-      "x": 566,
-      "y": 262,
+      "x": 660,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "harvest_festival": {
       "atlasId": "atlas-16",
-      "x": 660,
-      "y": 262,
+      "x": 754,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "invigorate": {
       "atlasId": "atlas-16",
-      "x": 754,
-      "y": 262,
+      "x": 848,
+      "y": 132,
       "w": 92,
       "h": 128
     },
     "onslaught": {
       "atlasId": "atlas-16",
-      "x": 848,
+      "x": 2,
       "y": 262,
       "w": 92,
       "h": 128
     },
     "polar_shift": {
       "atlasId": "atlas-16",
-      "x": 2,
-      "y": 392,
+      "x": 96,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "scatter": {
       "atlasId": "atlas-16",
-      "x": 96,
-      "y": 392,
+      "x": 190,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "apply_alkahest": {
       "atlasId": "atlas-16",
-      "x": 190,
-      "y": 392,
+      "x": 284,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "ground_slam": {
       "atlasId": "atlas-16",
-      "x": 284,
-      "y": 392,
+      "x": 378,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "blasphemy": {
       "atlasId": "atlas-16",
-      "x": 378,
-      "y": 392,
+      "x": 472,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "chaoswish": {
       "atlasId": "atlas-16",
-      "x": 472,
-      "y": 392,
+      "x": 566,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "deathwish": {
       "atlasId": "atlas-16",
-      "x": 566,
-      "y": 392,
+      "x": 660,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "lifewish": {
       "atlasId": "atlas-16",
-      "x": 660,
-      "y": 392,
+      "x": 754,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "powerwish": {
       "atlasId": "atlas-16",
-      "x": 754,
-      "y": 392,
+      "x": 848,
+      "y": 262,
       "w": 92,
       "h": 128
     },
     "divine_intervention": {
       "atlasId": "atlas-16",
-      "x": 848,
+      "x": 2,
       "y": 392,
       "w": 92,
       "h": 128
     },
     "armageddon": {
       "atlasId": "atlas-16",
-      "x": 2,
-      "y": 522,
+      "x": 96,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "rite_of_eruption": {
       "atlasId": "atlas-16",
-      "x": 96,
-      "y": 522,
+      "x": 190,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "aqueduct": {
       "atlasId": "atlas-16",
-      "x": 190,
-      "y": 522,
+      "x": 284,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "avalon": {
       "atlasId": "atlas-16",
-      "x": 284,
-      "y": 522,
+      "x": 378,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "caerleon_upon_usk": {
       "atlasId": "atlas-16",
-      "x": 378,
-      "y": 522,
+      "x": 472,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "garden_of_eden": {
       "atlasId": "atlas-16",
-      "x": 472,
-      "y": 522,
+      "x": 566,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "glastonbury_tor": {
       "atlasId": "atlas-16",
-      "x": 566,
-      "y": 522,
+      "x": 660,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "joyous_garde": {
       "atlasId": "atlas-16",
-      "x": 660,
-      "y": 522,
+      "x": 754,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "lighthouse": {
       "atlasId": "atlas-16",
-      "x": 754,
-      "y": 522,
+      "x": 848,
+      "y": 392,
       "w": 92,
       "h": 128
     },
     "oasis": {
       "atlasId": "atlas-16",
-      "x": 848,
+      "x": 2,
       "y": 522,
       "w": 92,
       "h": 128
     },
     "pristine_paradise": {
       "atlasId": "atlas-16",
+      "x": 96,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "ruins": {
+      "atlasId": "atlas-16",
+      "x": 190,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "steppe": {
+      "atlasId": "atlas-16",
+      "x": 284,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "the_colour_out_of_space": {
+      "atlasId": "atlas-16",
+      "x": 378,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "tintagel": {
+      "atlasId": "atlas-16",
+      "x": 472,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "wedding_hall": {
+      "atlasId": "atlas-16",
+      "x": 566,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "windmill": {
+      "atlasId": "atlas-16",
+      "x": 660,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "foot_soldier_1": {
+      "atlasId": "atlas-16",
+      "x": 754,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "foot_soldier_2": {
+      "atlasId": "atlas-16",
+      "x": 848,
+      "y": 522,
+      "w": 92,
+      "h": 128
+    },
+    "foot_soldier_3": {
+      "atlasId": "atlas-16",
       "x": 2,
       "y": 652,
       "w": 92,
       "h": 128
     },
-    "ruins": {
+    "foot_soldier_english": {
       "atlasId": "atlas-16",
       "x": 96,
       "y": 652,
       "w": 92,
       "h": 128
     },
-    "steppe": {
+    "foot_soldier_saracen": {
       "atlasId": "atlas-16",
       "x": 190,
       "y": 652,
       "w": 92,
       "h": 128
     },
-    "the_colour_out_of_space": {
+    "foot_soldiers": {
       "atlasId": "atlas-16",
       "x": 284,
       "y": 652,
       "w": 92,
       "h": 128
     },
-    "tintagel": {
+    "frog_blue": {
       "atlasId": "atlas-16",
       "x": 378,
       "y": 652,
       "w": 92,
       "h": 128
     },
-    "wedding_hall": {
+    "frog_green": {
       "atlasId": "atlas-16",
       "x": 472,
       "y": 652,
       "w": 92,
       "h": 128
     },
-    "windmill": {
+    "frog_red": {
       "atlasId": "atlas-16",
       "x": 566,
       "y": 652,

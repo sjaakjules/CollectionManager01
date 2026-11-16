@@ -18,7 +18,7 @@ import {
   type CardType,
   type ThresholdGroup,
 } from "@/data/dataModels";
-import { cardNameToSlug } from "@/rendering/LODManager";
+import { getCardImageUrl } from "@/rendering/LODManager";
 import { useAppState } from "@/app/AppState";
 import type { CanvasArea } from "@/canvas/canvasAreas";
 import { ElementIcon } from "@/ui/ElementIcon";
@@ -388,7 +388,7 @@ export function StacksPanel({
                   {visibleStackCards.map((card) => {
                     const metadata = cardMetadata.get(card.cardName);
                     const isLandscape = metadata?.isLandscape ?? false;
-                    const imageSrc = `/assets/Cards/${cardNameToSlug(card.cardName)}.webp`;
+                    const imageSrc = getCardImageUrl(card.cardName);
                     return (
                       <div
                         key={card.id}
