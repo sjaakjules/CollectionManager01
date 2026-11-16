@@ -1,0 +1,808 @@
+{
+  "source": "photo-4.jpg",
+  "sourceSize": [
+    2880,
+    3840
+  ],
+  "rotate": 0,
+  "portraitSize": [
+    744,
+    1039
+  ],
+  "cornersOrder": "top-left, top-right, bottom-right, bottom-left, after rotation",
+  "cards": [
+    {
+      "name": "Fireball",
+      "corners": [
+        [
+          79,
+          118
+        ],
+        [
+          480,
+          118
+        ],
+        [
+          475,
+          696
+        ],
+        [
+          74,
+          698
+        ]
+      ],
+      "landscape": false,
+      "existing": true
+    },
+    {
+      "name": "Tusslin' Trolls",
+      "corners": [
+        [
+          480,
+          113
+        ],
+        [
+          881,
+          110
+        ],
+        [
+          881,
+          672
+        ],
+        [
+          475,
+          672
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Ash of Effort",
+      "corners": [
+        [
+          883,
+          113
+        ],
+        [
+          1284,
+          106
+        ],
+        [
+          1284,
+          672
+        ],
+        [
+          881,
+          672
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Namira Cheetah",
+      "corners": [
+        [
+          1284,
+          103
+        ],
+        [
+          1692,
+          101
+        ],
+        [
+          1694,
+          665
+        ],
+        [
+          1284,
+          670
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Ground Slam",
+      "corners": [
+        [
+          1697,
+          96
+        ],
+        [
+          2107,
+          86
+        ],
+        [
+          2105,
+          662
+        ],
+        [
+          1694,
+          670
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Snapjaw Raptor",
+      "corners": [
+        [
+          2107,
+          79
+        ],
+        [
+          2518,
+          65
+        ],
+        [
+          2522,
+          648
+        ],
+        [
+          2107,
+          658
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Reed-cord Measurer",
+      "corners": [
+        [
+          70,
+          694
+        ],
+        [
+          473,
+          682
+        ],
+        [
+          468,
+          1272
+        ],
+        [
+          67,
+          1282
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Sunspear Tribe",
+      "corners": [
+        [
+          473,
+          677
+        ],
+        [
+          876,
+          674
+        ],
+        [
+          874,
+          1243
+        ],
+        [
+          470,
+          1246
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Emberleaf Dryad",
+      "corners": [
+        [
+          878,
+          672
+        ],
+        [
+          1284,
+          674
+        ],
+        [
+          1284,
+          1243
+        ],
+        [
+          874,
+          1243
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Terraform",
+      "corners": [
+        [
+          1284,
+          667
+        ],
+        [
+          1690,
+          667
+        ],
+        [
+          1692,
+          1243
+        ],
+        [
+          1284,
+          1243
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Rite of Eruption",
+      "corners": [
+        [
+          1692,
+          665
+        ],
+        [
+          2098,
+          665
+        ],
+        [
+          2100,
+          1236
+        ],
+        [
+          1692,
+          1243
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Chart",
+      "corners": [
+        [
+          2105,
+          658
+        ],
+        [
+          2518,
+          655
+        ],
+        [
+          2522,
+          1234
+        ],
+        [
+          2105,
+          1234
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Lava Elemental",
+      "corners": [
+        [
+          65,
+          1282
+        ],
+        [
+          466,
+          1274
+        ],
+        [
+          466,
+          1805
+        ],
+        [
+          62,
+          1810
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Southpaw Dyrodor",
+      "corners": [
+        [
+          468,
+          1248
+        ],
+        [
+          871,
+          1248
+        ],
+        [
+          869,
+          1817
+        ],
+        [
+          466,
+          1810
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Flametongue Newt",
+      "corners": [
+        [
+          876,
+          1246
+        ],
+        [
+          1282,
+          1246
+        ],
+        [
+          1279,
+          1822
+        ],
+        [
+          869,
+          1814
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Myrmidons",
+      "corners": [
+        [
+          1284,
+          1243
+        ],
+        [
+          1690,
+          1241
+        ],
+        [
+          1692,
+          1817
+        ],
+        [
+          1279,
+          1824
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "King Krakalak",
+      "corners": [
+        [
+          1694,
+          1238
+        ],
+        [
+          2100,
+          1236
+        ],
+        [
+          2102,
+          1814
+        ],
+        [
+          1692,
+          1817
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Dust Devil",
+      "corners": [
+        [
+          2105,
+          1234
+        ],
+        [
+          2525,
+          1231
+        ],
+        [
+          2527,
+          1800
+        ],
+        [
+          2102,
+          1810
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Flat Realm Society",
+      "corners": [
+        [
+          60,
+          1805
+        ],
+        [
+          466,
+          1805
+        ],
+        [
+          458,
+          2374
+        ],
+        [
+          55,
+          2381
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Slag Slug",
+      "corners": [
+        [
+          466,
+          1817
+        ],
+        [
+          869,
+          1819
+        ],
+        [
+          871,
+          2381
+        ],
+        [
+          458,
+          2381
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Gnarled Laborers",
+      "corners": [
+        [
+          871,
+          1819
+        ],
+        [
+          1284,
+          1824
+        ],
+        [
+          1270,
+          2386
+        ],
+        [
+          869,
+          2386
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Pass-plug Serpent",
+      "corners": [
+        [
+          1284,
+          1822
+        ],
+        [
+          1690,
+          1822
+        ],
+        [
+          1692,
+          2388
+        ],
+        [
+          1274,
+          2388
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "None Survive the Sun",
+      "corners": [
+        [
+          1692,
+          1819
+        ],
+        [
+          2105,
+          1814
+        ],
+        [
+          2112,
+          2390
+        ],
+        [
+          1692,
+          2390
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Stiff-pitch Witch",
+      "corners": [
+        [
+          2105,
+          1805
+        ],
+        [
+          2532,
+          1802
+        ],
+        [
+          2534,
+          2386
+        ],
+        [
+          2114,
+          2388
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Spike Trap",
+      "corners": [
+        [
+          58,
+          2376
+        ],
+        [
+          638,
+          2386
+        ],
+        [
+          624,
+          2810
+        ],
+        [
+          55,
+          2794
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Landslide",
+      "corners": [
+        [
+          641,
+          2386
+        ],
+        [
+          1214,
+          2390
+        ],
+        [
+          1202,
+          2818
+        ],
+        [
+          629,
+          2806
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Smoldering Hollow",
+      "corners": [
+        [
+          1214,
+          2390
+        ],
+        [
+          1793,
+          2398
+        ],
+        [
+          1793,
+          2818
+        ],
+        [
+          1207,
+          2815
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Lavamancer",
+      "corners": [
+        [
+          2402,
+          2419
+        ],
+        [
+          2825,
+          2431
+        ],
+        [
+          2825,
+          3019
+        ],
+        [
+          2398,
+          3010
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Combusting Busts",
+      "corners": [
+        [
+          53,
+          2801
+        ],
+        [
+          626,
+          2818
+        ],
+        [
+          622,
+          3221
+        ],
+        [
+          48,
+          3214
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Scoria",
+      "corners": [
+        [
+          626,
+          2813
+        ],
+        [
+          1202,
+          2825
+        ],
+        [
+          1195,
+          3235
+        ],
+        [
+          622,
+          3223
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Sulfur Vents",
+      "corners": [
+        [
+          1205,
+          2822
+        ],
+        [
+          1795,
+          2818
+        ],
+        [
+          1788,
+          3240
+        ],
+        [
+          1200,
+          3235
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Trapper's Rest",
+      "corners": [
+        [
+          1795,
+          2820
+        ],
+        [
+          2374,
+          2825
+        ],
+        [
+          2369,
+          3240
+        ],
+        [
+          1793,
+          3240
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Volcanic Eruption",
+      "corners": [
+        [
+          48,
+          3226
+        ],
+        [
+          622,
+          3233
+        ],
+        [
+          614,
+          3653
+        ],
+        [
+          41,
+          3641
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Supervolcano",
+      "corners": [
+        [
+          624,
+          3230
+        ],
+        [
+          1200,
+          3238
+        ],
+        [
+          1200,
+          3658
+        ],
+        [
+          619,
+          3653
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Humming Hummocks",
+      "corners": [
+        [
+          1205,
+          3242
+        ],
+        [
+          1781,
+          3242
+        ],
+        [
+          1759,
+          3674
+        ],
+        [
+          1202,
+          3662
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Bouldermaw",
+      "corners": [
+        [
+          1786,
+          3247
+        ],
+        [
+          2362,
+          3250
+        ],
+        [
+          2352,
+          3682
+        ],
+        [
+          1759,
+          3674
+        ]
+      ],
+      "landscape": true
+    }
+  ]
+}

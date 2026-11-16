@@ -7,8 +7,7 @@ This folder is copied into the deployed web root as `/api`. It preserves the sam
 - `GET /api/user/{userId}/data`
 - `PUT /api/user/{userId}/data`
 - `GET/POST /api/decks/*` — forwards to `https://sorcerytcg.com/*` with shared throttling
-- `GET/POST /api/curiosa/*` — compatibility alias for the same deck proxy
-- `GET/POST /api/sorcery/*`
+- `GET /api/sorcery/cards` — public catalogue with shared daily caching
 
 `shared/user-data.php` normalizes the shared guest/account JSON contract.
 Preserve `removedDecks` (deck ID → ISO removal time) when saving accounts;
@@ -17,7 +16,11 @@ The backend stores this field with the JSON blob; no database migration is neede
 `scripts/user-data.test.mjs` checks round-trip compatibility using local PHP.
 
 Both upstream proxies enforce the [SorceryTCG request policy](../../docs/sorcery-request-policy.md).
-Cards, decks, search and the legacy alias share the `sorcerytcg` file-lock namespace:
+The catalogue route also uses a shared 24-hour response cache and a single
+refresh lock. It serves the deployed snapshot or last good cache during an
+outage and backs off failed refreshes for an hour. Deck requests still use the
+same mandatory upstream throttle; there are no retired proxy aliases.
+Cards, decks and search share the `sorcerytcg` file-lock namespace:
 one request at a time, at least 3000ms after completion or failure, and the longer
 of `Retry-After` and a low-budget reset. The PHP proxy never retries or follows
 redirects. A required wait above 8000ms returns 429 with `Retry-After` without

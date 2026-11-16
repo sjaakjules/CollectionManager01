@@ -633,6 +633,35 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
 
 /** Catalogue-only layout: filtered subsets keep their full grouping hierarchy. */
 function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLayoutConfig): LayoutResult {
+  // Keep avatars discoverable above the element/type hierarchy, as in the
+  // original catalogue. They have no casting threshold or cost to group by.
+  const avatars = config.cards.filter(card => card.type === 'Avatar');
+  if (avatars.length) {
+    const rest = layoutCatalogueHierarchy({ ...config, cards: config.cards.filter(card => card.type !== 'Avatar') }, preferences);
+    const sorted = buildCatalogueGroups(avatars, {
+      ...preferences, steps: preferences.steps.filter(step => step.mode === 'sort'),
+    }).cards;
+    const spacing = CARD_CELL_SPACING.PORTRAIT;
+    const avatarCards = sorted.map((card, index): CardLayoutInfo => ({
+      ...card,
+      position: snapGridToPixels(1 + (index % preferences.columns) * spacing.x,
+        5 + Math.floor(index / preferences.columns) * spacing.y, false),
+    }));
+    const offsetY = (5 + Math.ceil(avatars.length / preferences.columns) * spacing.y + GROUP_GAP_UNITS) * SNAP_GRID.height;
+    for (const card of rest.cards) card.position.y += offsetY;
+    for (const header of rest.headers) header.position.y += offsetY;
+    const avatarRight = Math.max(...avatarCards.map(card => card.position.x + CARD_SIZE.PORTRAIT.width / 2));
+    const avatarBottom = Math.max(...avatarCards.map(card => card.position.y + CARD_SIZE.PORTRAIT.height / 2));
+    return {
+      cards: [...avatarCards, ...rest.cards],
+      headers: [{ label: 'Avatars', kind: 'collection', fontSize: HEADER_HEIGHT, position: { x: 0, y: 0 } }, ...rest.headers],
+      bounds: {
+        left: Math.min(0, rest.bounds.left), top: 0,
+        right: Math.max(avatarRight, rest.bounds.right),
+        bottom: rest.cards.length ? Math.max(avatarBottom, rest.bounds.bottom + offsetY) : avatarBottom,
+      },
+    };
+  }
   const root = buildCatalogueGroups(config.cards, preferences);
   const groups = root.children.length ? root.children : [root];
   const cards: CardLayoutInfo[] = [];

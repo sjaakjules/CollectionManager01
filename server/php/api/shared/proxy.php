@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/json.php';
+require_once __DIR__ . '/catalogue-cache.php';
 
 function sorcery_proxy_path(): string
 {
@@ -310,10 +311,6 @@ function sorcery_proxy_rate_limit_abort(?array $limiter): void
 
 function sorcery_proxy_request(string $baseUrl, array $headers = [], array $options = []): void
 {
-    if (!function_exists('curl_init')) {
-        sorcery_error('PHP cURL extension is required', 500);
-    }
-
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     if ($method === 'OPTIONS') {
         http_response_code(204);
@@ -324,7 +321,18 @@ function sorcery_proxy_request(string $baseUrl, array $headers = [], array $opti
         sorcery_error('Method not allowed', 405);
     }
 
-    $targetUrl = rtrim($baseUrl, '/') . '/' . sorcery_proxy_path() . sorcery_proxy_query();
+    $path = sorcery_proxy_path();
+    $cache = null;
+    if (isset($options['catalogue_snapshot']) && $path === 'cards') {
+        if ($method !== 'GET' || array_diff(array_keys($_GET), ['path'])) sorcery_error('The catalogue accepts GET without query parameters', 400);
+        $cache = sorcery_catalogue_begin($options['catalogue_snapshot']);
+        if (!$cache['refresh']) sorcery_catalogue_respond($cache);
+    }
+    if (!function_exists('curl_init')) {
+        if ($cache !== null) sorcery_catalogue_respond(sorcery_catalogue_finish($cache, '', 500));
+        sorcery_error('PHP cURL extension is required', 500);
+    }
+    $targetUrl = rtrim($baseUrl, '/') . '/' . $path . sorcery_proxy_query();
     $body = file_get_contents('php://input');
     $requestHeaders = $headers;
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
@@ -364,6 +372,7 @@ function sorcery_proxy_request(string $baseUrl, array $headers = [], array $opti
         $error = curl_error($curl);
         curl_close($curl);
         sorcery_proxy_rate_limit_abort($limiter);
+        if ($cache !== null) sorcery_catalogue_respond(sorcery_catalogue_finish($cache, '', 502));
         sorcery_error('Proxy request failed: ' . $error, 502);
     }
 
@@ -375,6 +384,7 @@ function sorcery_proxy_request(string $baseUrl, array $headers = [], array $opti
     $rawHeaders = substr((string)$response, 0, $headerSize);
     $responseBody = substr((string)$response, $headerSize);
     sorcery_proxy_rate_limit_finish($limiter, $rawHeaders, (int)$status);
+    if ($cache !== null) sorcery_catalogue_respond(sorcery_catalogue_finish($cache, $responseBody, (int)$status));
 
     $safeContentType = preg_replace('/[\r\n].*/', '', (string)$contentType);
     if (!is_string($safeContentType) || trim($safeContentType) === '') {

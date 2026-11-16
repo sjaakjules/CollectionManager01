@@ -131,6 +131,7 @@ interface PreloadOptions {
 
 interface AtlasManifest {
   version: number;
+  generatedAt?: string;
   atlasCount: number;
   atlases: AtlasPage[];
   cards: Record<string, AtlasCard>;
@@ -987,7 +988,8 @@ export class LODManager {
     }
 
     const promise = fetch(state.manifestUrl, {
-      cache: 'force-cache',
+      // The manifest has a stable filename but its frame coordinates can change.
+      cache: 'no-cache',
     }).then(async (response) => {
       if (!response.ok) {
         throw new Error(
@@ -1003,7 +1005,13 @@ export class LODManager {
         throw new Error('Atlas manifest missing required fields');
       }
 
-      state.pages = new Map(manifest.atlases.map((atlas) => [atlas.id, atlas]));
+      // Atlas images have long-lived HTTP caches. Couple each page to the
+      // manifest revision so old pixels cannot be read with new coordinates.
+      const revision = typeof manifest.generatedAt === 'string' ? manifest.generatedAt : '';
+      state.pages = new Map(manifest.atlases.map((atlas) => [atlas.id, revision ? {
+        ...atlas,
+        image: `${atlas.image}${atlas.image.includes('?') ? '&' : '?'}atlas=${encodeURIComponent(revision)}`,
+      } : atlas]));
       state.manifest = manifest;
       return manifest;
     }).catch((error) => {

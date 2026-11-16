@@ -56,6 +56,25 @@ afterEach(() => {
 });
 
 describe("LODManager", () => {
+  it('revalidates atlas coordinates and loads the image from the same generated revision', async () => {
+    useDevice({ width: 1440, height: 900, userAgent: 'Macintosh', maxTouchPoints: 0 });
+    const generatedAt = '2026-08-27T17:49:06.274Z';
+    const fetchManifest = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+      version: 2, generatedAt, atlasCount: 1,
+      atlases: [{ id: 'atlas-0', image: '/assets/CardsMediumAtlas/atlas-0.webp', width: 1, height: 1, count: 1 }],
+      cards: { spell: { atlasId: 'atlas-0', x: 0, y: 0, w: 1, h: 1 } },
+    }) });
+    vi.stubGlobal('fetch', fetchManifest);
+    const loadImage = vi.spyOn(Assets, 'load').mockImplementation(async <T>() => Texture.WHITE as T);
+    const manager = new LODManager();
+    await manager.getTexture('spell', LOD_LEVELS.MEDIUM);
+    expect(fetchManifest).toHaveBeenCalledWith('/assets/CardsMediumAtlas/manifest.json', { cache: 'no-cache' });
+    expect(loadImage).toHaveBeenCalledWith(`/assets/CardsMediumAtlas/atlas-0.webp?atlas=${encodeURIComponent(generatedAt)}`);
+    await manager.getTexture('spell', LOD_LEVELS.MEDIUM);
+    expect(fetchManifest).toHaveBeenCalledTimes(1);
+    expect(loadImage).toHaveBeenCalledTimes(1);
+  });
+
   it("uses on-screen card height for richer desktop LODs", () => {
     useDevice({
       width: 1440,

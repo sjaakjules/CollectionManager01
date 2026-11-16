@@ -34,12 +34,15 @@ import { ArrivalPop } from './ArrivalPop';
 import { getArrivalCardPose } from './arrivalPopTimeline';
 import { MangaEffect, type EffectBounds } from './MangaEffect';
 import { drawMangaOutline, MANGA_PALETTE, unionEffectBounds } from './mangaStyle';
+import { getDeckHeadingStyle, getLabelHeadingStyle } from './deckHeadingStyle';
 import { DEFAULT_INTERACTION_EFFECTS, ensureInteractionEffects, MangaEffectGate, MAX_MANGA_EFFECTS, type InteractionEffectsSettings, type MangaEffectKind, type CanvasGestureCommand } from '@/data/interactionEffects';
 import { outlineSelectedStack } from './stackSelectionOutline';
-import { openCanvasLabelEditor } from "@/ui/canvasLabelEditor";
+import { openCanvasLabelEditor, type CanvasLabelEditor } from "@/ui/canvasLabelEditor";
+import { LabelStatisticsCache } from '@/canvas/labelStatistics';
 import { createDefaultCatalogueLayout, type CatalogueLayoutConfig } from "@/data/catalogueLayout";
-import { getLabelFamily, getLabelCards, getLabelRegionBounds, repositionLabelsAfterCardLayout, ShakeDetector } from "@/canvas/labelRegions";
+import { getLabelFamily, getLabelCards, getLabelRegionBounds, placeCardsBelowLabel, repositionLabelsAfterCardLayout, ShakeDetector } from "@/canvas/labelRegions";
 import { getCardClickSelection } from "./cardSelection";
+import type { CardQuickAddDeck, CardQuickAddTarget, QuickAddBoard, QuickAddScope } from './cardQuickAdd';
 import { CardSprite, type CardSpriteState } from "./CardSprite";
 import {
   calculateCardLayout,
@@ -150,6 +153,7 @@ export interface PixiStageConfig {
   onTextureProgress?: (loaded: number, total: number) => void;
   onBackgroundTextureProgress?: (loaded: number, total: number) => void;
   onSelectionChange?: (selectedCardNames: string[]) => void;
+  onCardQuickAddTargetsChange?: (targets: CardQuickAddTarget[]) => void;
   onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   onLabelPlacementConsumed?: () => void;
   onHoveredCardChange?: (cardName: string | null) => void;
@@ -266,6 +270,7 @@ interface PendingZoneCardClickState {
 interface LabelSpriteData {
   label: CanvasLabel;
   text: Text;
+  statistics?: Text;
   bounds: { left: number; top: number; right: number; bottom: number };
 }
 
@@ -355,6 +360,7 @@ type TouchCanvasTarget =
   | ({ kind: "zone-header"; zoneId: string } & TouchGestureTarget)
   | ({ kind: "zone"; zoneId: string } & TouchGestureTarget)
   | ({ kind: "label"; labelId: string } & TouchGestureTarget)
+  | ({ kind: "label-delete"; labelId: string } & TouchGestureTarget)
   | ({ kind: "zone-sort"; zoneId: string } & TouchGestureTarget)
   | ({ kind: "zone-filter"; zoneId: string } & TouchGestureTarget)
   | ({ kind: "zone-close"; zoneId: string } & TouchGestureTarget)
@@ -852,7 +858,13 @@ export class PixiStage {
 
   // Label state
   private labelPlacementMode = false;
-  private closeLabelEditor: (() => void) | null = null;
+  private labelEditor: CanvasLabelEditor | null = null;
+  private labelEditorAnchor: { x: number; y: number; labelId?: string } | null = null;
+  private selectedLabelId: string | null = null;
+  private labelDeleteGraphic: Graphics | null = null;
+  private labelStatistics = new LabelStatisticsCache();
+  private lastEmptyCanvasClick: { x: number; y: number; time: number } | null = null;
+  private pendingEmptyCanvasClick: { x: number; y: number } | null = null;
   private labelDragState: LabelDragState = {
     isDragging: false,
     labelId: null,
@@ -914,6 +926,7 @@ export class PixiStage {
   private onTextureProgress?: (loaded: number, total: number) => void;
   private onBackgroundTextureProgress?: (loaded: number, total: number) => void;
   private onSelectionChange?: (selectedCardNames: string[]) => void;
+  private onCardQuickAddTargetsChange?: (targets: CardQuickAddTarget[]) => void;
   private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   private onLabelPlacementConsumed?: () => void;
   private onHoveredCardChange?: (cardName: string | null) => void;
@@ -952,6 +965,7 @@ export class PixiStage {
     this.onTextureProgress = config.onTextureProgress;
     this.onBackgroundTextureProgress = config.onBackgroundTextureProgress;
     this.onSelectionChange = config.onSelectionChange;
+    this.onCardQuickAddTargetsChange = config.onCardQuickAddTargetsChange;
     this.onCanvasLabelsChange = config.onCanvasLabelsChange;
     this.onLabelPlacementConsumed = config.onLabelPlacementConsumed;
     this.onHoveredCardChange = config.onHoveredCardChange;
@@ -1344,6 +1358,8 @@ export class PixiStage {
   }
 
   private getTouchTarget(worldPos: { x: number; y: number }): TouchCanvasTarget {
+    const labelDelete = this.getLabelDeleteTarget(worldPos);
+    if (labelDelete) return { kind: 'label-delete', key: `label-delete:${labelDelete}`, labelId: labelDelete };
     const variantTab = this.getZoneVariantTabTargetAtPosition(worldPos);
     if (variantTab) {
       return {
@@ -1625,6 +1641,8 @@ export class PixiStage {
     }
 
     if (target.kind === "label") {
+      this.clearSelection();
+      this.selectLabel(target.labelId);
       if (isDoubleTap) {
         this.editLabel(target.labelId);
       }
@@ -1650,6 +1668,7 @@ export class PixiStage {
 
     if (target.kind === "zone") {
       this.clearSelection();
+      if (isDoubleTap) this.addLabelAtPosition(worldPos);
       this.updateHoveredFromWorldPos(worldPos);
       return;
     }
@@ -1675,6 +1694,7 @@ export class PixiStage {
     }
 
     this.clearSelection();
+    if (target.kind === 'empty' && isDoubleTap) this.addLabelAtPosition(worldPos);
     this.setHoveredCard(null);
     this.hoveredZoneCardKey = null;
     this.drawZoneDeleteOverlay();
@@ -1685,6 +1705,10 @@ export class PixiStage {
     target: TouchCanvasTarget,
     worldPos: { x: number; y: number },
   ): boolean {
+    if (target.kind === 'label-delete') {
+      this.deleteLabel(target.labelId);
+      return true;
+    }
     if (target.kind === "zone-variant-tab") {
       if (target.isAdd) {
         void this.createDeckZoneVariant(target.zoneId).then((changed) => {
@@ -2574,13 +2598,14 @@ export class PixiStage {
     worldPos: { x: number; y: number };
     screenPos: { x: number; y: number };
     source: DeckAddRequestPayload["source"];
+    board?: QuickAddBoard;
   }): void {
     if (payload.cardNames.length === 0) return;
     const rect = this.app.canvas.getBoundingClientRect();
     const zone = this.canvasAreas.find(area => area.id === payload.canvasAreaId);
     const label = payload.source === 'canvas-zone' ? this.getLabelTarget(payload.worldPos) : null;
     this.onDeckAddRequest?.({
-      board: payload.source === 'canvas-zone' && zone ? label?.board ?? (this.getDeckBoardForPosition(zone, payload.worldPos) ?? 'mainboard') : undefined,
+      board: payload.board ?? (payload.source === 'canvas-zone' && zone ? label?.board ?? (this.getDeckBoardForPosition(zone, payload.worldPos) ?? 'mainboard') : undefined),
       labelId: label?.id,
       deckId: payload.deckId,
       canvasAreaId: payload.canvasAreaId ?? null,
@@ -5174,6 +5199,9 @@ export class PixiStage {
     this.pendingCardClick = null;
     this.pendingZoneCardClick = null;
 
+    const previousEmptyClick = this.lastEmptyCanvasClick;
+    this.lastEmptyCanvasClick = null;
+    this.pendingEmptyCanvasClick = null;
     if (event.button !== 0 || this.spacePanHeld) {
       this.desktopPanStart = this.getPointerScreenPosition(event);
       return;
@@ -5186,6 +5214,17 @@ export class PixiStage {
     const worldPos = this.camera.screenToWorld(event.globalX, event.globalY);
     this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
     this.clearZoneDropPreview();
+    const labelDelete = this.getLabelDeleteTarget(worldPos);
+    if (labelDelete) {
+      this.cancelSelectionBox();
+      this.deleteLabel(labelDelete);
+      return;
+    }
+    const clickedLabel = this.getLabelAtPosition(worldPos);
+    if (!clickedLabel) {
+      this.selectLabel(null);
+      this.lastClickedLabel = null;
+    }
     const clickedZoneVariantTab = this.getZoneVariantTabTargetAtPosition(worldPos);
     if (clickedZoneVariantTab) {
       this.cancelSelectionBox();
@@ -5291,16 +5330,18 @@ export class PixiStage {
       }
     }
 
-    const clickedLabel = this.getLabelAtPosition(worldPos);
-
     // Label placement mode: next left-click places a label.
     if (this.labelPlacementMode) {
+      event.preventDefault();
       this.addLabelAtPosition(worldPos);
       this.consumeLabelPlacementMode();
       return;
     }
 
     if (clickedLabel) {
+      this.cancelSelectionBox();
+      this.clearSelection();
+      this.selectLabel(clickedLabel);
       const now = Date.now();
       const isDoubleClick =
         now - this.lastLabelClickTime < DOUBLE_CLICK_TIME_MS &&
@@ -5310,6 +5351,7 @@ export class PixiStage {
       this.lastClickedLabel = clickedLabel;
 
       if (isDoubleClick) {
+        event.preventDefault();
         this.editLabel(clickedLabel);
         return;
       }
@@ -5359,7 +5401,8 @@ export class PixiStage {
 
     this.pointerDownOnSelectedCard = false;
 
-    const clickedCard = this.getCardAtPosition(worldPos);
+    // An opaque deck region owns its empty space even if the catalogue is behind it.
+    const clickedCard = this.getZoneAtPosition(worldPos) ? null : this.getCardAtPosition(worldPos);
 
     if (clickedCard) {
       if (isCtrlHeld) {
@@ -5378,6 +5421,17 @@ export class PixiStage {
       };
       this.camera.pauseDrag();
     } else {
+      const screen = this.getPointerScreenPosition(event);
+      if (!isCtrlHeld && !isShiftHeld && previousEmptyClick &&
+        Date.now() - previousEmptyClick.time < DOUBLE_CLICK_TIME_MS &&
+        !this.movedBeyondDesktopClickSlop(previousEmptyClick, screen)) {
+        // Keep the browser's default canvas focus from immediately blurring
+        // the native input created during this pointerdown.
+        event.preventDefault();
+        this.addLabelAtPosition(worldPos);
+        return;
+      }
+      if (!isCtrlHeld && !isShiftHeld) this.pendingEmptyCanvasClick = screen;
       if (!isShiftHeld) this.clearSelection();
       this.startSelectionBox(worldPos, isShiftHeld);
       this.camera.pauseDrag();
@@ -5402,6 +5456,9 @@ export class PixiStage {
     this.lastPointerScreenPos = { x: event.globalX, y: event.globalY };
     const screenPos = this.getPointerScreenPosition(event);
 
+    if (this.pendingEmptyCanvasClick && this.movedBeyondDesktopClickSlop(this.pendingEmptyCanvasClick, screenPos)) {
+      this.pendingEmptyCanvasClick = null;
+    }
     if (
       this.pendingCardClick &&
       this.movedBeyondDesktopClickSlop(
@@ -5544,17 +5601,6 @@ export class PixiStage {
       const clickedLabel = this.getLabelAtPosition(worldPos);
       const now = Date.now();
 
-      if (
-        clickedLabel &&
-        now - this.lastLabelClickTime < DOUBLE_CLICK_TIME_MS &&
-        this.lastClickedLabel === clickedLabel
-      ) {
-        this.deleteLabel(clickedLabel);
-      }
-
-      this.lastLabelClickTime = now;
-      this.lastClickedLabel = clickedLabel;
-
       if (clickedLabel) {
         return;
       }
@@ -5582,6 +5628,12 @@ export class PixiStage {
     }
 
     const screenPos = this.getPointerScreenPosition(event);
+    if (this.pendingEmptyCanvasClick) {
+      if (!this.movedBeyondDesktopClickSlop(this.pendingEmptyCanvasClick, screenPos)) {
+        this.lastEmptyCanvasClick = { ...screenPos, time: Date.now() };
+      }
+      this.pendingEmptyCanvasClick = null;
+    }
     if (this.pendingZoneCardClick) {
       const pending = this.pendingZoneCardClick;
       this.pendingZoneCardClick = null;
@@ -5748,15 +5800,42 @@ export class PixiStage {
   private getPopulatedLabelBounds(zone: CanvasArea, board?: DeckZoneBoard): CanvasArea["bounds"][] {
     return (this.canvasLabels ?? []).filter(label => label.areaId === zone.id && (!board || this.normalizeDeckBoard(label.board) === board))
       .flatMap(label => {
-        const bounds = getLabelRegionBounds(this.canvasLabels, label, this.canvasAreas,
-          name => this.isLandscapeCard(name), id => {
-            const text = this.labelSprites?.get(id)?.text;
-            return { width: text?.width ?? 160, height: text?.height ?? 36 };
-          });
+        const bounds = getLabelRegionBounds(this.canvasLabels, label, [zone],
+          name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
         if (bounds) return [bounds];
-        const text = this.labelSprites?.get(label.id)?.text;
-        return [{ x: label.x - 14, y: label.y - 14, width: (text?.width ?? 160) + 28, height: (text?.height ?? 36) + 28 }];
+        const size = this.getLabelTitleSize(label.id);
+        return [{ x: label.x - 14, y: label.y - 14, width: size.width + 28, height: size.height + 28 }];
       });
+  }
+
+  private getLabelTitleSize(id: string): { width: number; height: number } {
+    const data = this.labelSprites?.get(id);
+    if (data) return { width: data.text.width + (data.statistics ? 12 + data.statistics.width : 0),
+      height: Math.max(data.text.height, data.statistics?.height ?? 0) };
+    const label = this.canvasLabels?.find(entry => entry.id === id);
+    const fontSize = label ? Number(getLabelHeadingStyle(label, this.canvasLabels).fontSize) : 14;
+    return { width: (label?.text.length ?? 10) * fontSize * 0.65, height: fontSize * 1.3 + 2 };
+  }
+
+  private getMainDeckLabelBounds(zone: CanvasArea) {
+    const bounds: Partial<Record<'spellbook' | 'atlas', CanvasArea['bounds'][]>> = {};
+    for (const label of this.canvasLabels ?? []) {
+      if (label.areaId !== zone.id || normalizeDeckBoard(label.board) !== 'mainboard') continue;
+      const members = getLabelCards(this.canvasLabels, label.id, [zone]);
+      if (!members.length) continue;
+      const landscape = this.isLandscapeCard(required(members[0]).cardName);
+      // A label mixing sites and spells belongs directly to Main.
+      if (!members.every(card => this.isLandscapeCard(card.cardName) === landscape)) continue;
+      const rect = getLabelRegionBounds(this.canvasLabels, label, [zone],
+        name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
+      if (rect) (bounds[landscape ? 'atlas' : 'spellbook'] ??= []).push(rect);
+    }
+    return bounds;
+  }
+
+  private getDeckSectionRects(zone: CanvasArea) {
+    return getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name),
+      zone.deckRegionBounds, this.getMainDeckLabelBounds(zone));
   }
 
   private fitLabelRegionBounds(zone: CanvasArea): boolean {
@@ -5778,10 +5857,7 @@ export class PixiStage {
     for (const label of this.canvasLabels) {
       if (!label.areaId || !this.canvasAreas.some(area => area.id === label.areaId && area.pinned)) continue;
       const bounds = getLabelRegionBounds(this.canvasLabels, label, this.canvasAreas,
-        name => this.isLandscapeCard(name), id => {
-          const text = this.labelSprites.get(id)?.text;
-          return { width: text?.width ?? 160, height: text?.height ?? 36 };
-        });
+        name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
       if (!bounds) continue;
       const graphic = new Graphics();
       graphic.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, 12);
@@ -5868,7 +5944,7 @@ export class PixiStage {
   }
 
   private applyLabelDrop(cards: CanvasCardInstance[], sourceZone: CanvasArea, targetZone: CanvasArea,
-    worldPos: { x: number; y: number }, mixedBoards: boolean): void {
+    worldPos: { x: number; y: number }, mixedBoards: boolean, positionCards = true): CanvasLabel | null {
     const target = this.dragDetached || mixedBoards ? null : this.getLabelTarget(worldPos);
     if (target && (!target.areaId || target.areaId === targetZone.id)) {
       target.areaId = targetZone.id;
@@ -5881,14 +5957,18 @@ export class PixiStage {
         card.board = target.board;
         if (targetZone.type === 'deck' && oldBoard !== this.normalizeDeckBoard(card.board)) this.syncDeckVariantForBoardChange(targetZone, card.id, this.normalizeDeckBoard(card.board));
       }
+      if (positionCards) placeCardsBelowLabel(cards, target, targetZone, this.canvasLabels,
+        name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
       this.playMangaEffect('attach', this.labelSprites?.get(target.id)?.bounds);
       this.emitCanvasLabelsChange();
+      return target;
     } else {
       for (const card of cards) {
         const label = this.canvasLabels?.find(label => label.id === card.labelId);
         if (this.dragDetached || sourceZone.id !== targetZone.id || (label && this.normalizeDeckBoard(label.board) !== this.normalizeDeckBoard(card.board))) delete card.labelId;
       }
     }
+    return null;
   }
 
   private setCanvasLabels(labels: CanvasLabel[]): void {
@@ -5922,29 +6002,44 @@ export class PixiStage {
   private rebuildLabelSprites(): void {
     for (const data of this.labelSprites.values()) {
       data.text.destroy();
+      data.statistics?.destroy();
     }
+    this.labelDeleteGraphic?.destroy();
+    this.labelDeleteGraphic = null;
     this.labelSprites.clear();
     this.labelContainer.removeChildren();
+    this.labelStatistics ??= new LabelStatisticsCache();
+    const statistics = this.labelStatistics.get(this.canvasLabels, this.canvasAreas, this.cards);
 
     for (const label of this.canvasLabels) {
       if (label.areaId && !this.canvasAreas.some(area => area.id === label.areaId && area.pinned)) continue;
-      const text = new Text({
+      const text = this.configureTextQuality(new Text({
         text: label.text,
-        style: {
-          fontFamily: "Arial",
-          fontSize: 28,
-          fill: 0xffffff,
-          stroke: { color: 0x000000, width: 4 },
-        },
-      });
+        style: getLabelHeadingStyle(label, this.canvasLabels),
+      }));
 
       text.x = label.x;
       text.y = label.y;
+      text.visible = this.labelEditorAnchor?.labelId !== label.id;
       this.labelContainer.addChild(text);
+
+      const summary = statistics.get(label.id);
+      const fontSize = Math.max(8, Number(text.style.fontSize) - 4);
+      const stats = summary ? this.configureTextQuality(new Text({ text: summary.text, style: {
+        fontFamily: 'Arial', fontSize, lineHeight: fontSize + 1, fontWeight: '400',
+        fill: MANGA_PALETTE.muted, stroke: { color: MANGA_PALETTE.ink, width: 1 },
+      } })) : undefined;
+      if (stats) {
+        stats.position.set(label.x + text.width + 12, label.y);
+        stats.alpha = 0.82;
+        stats.visible = text.visible;
+        this.labelContainer.addChild(stats);
+      }
 
       const data: LabelSpriteData = {
         label: { ...label },
         text,
+        statistics: stats,
         bounds: { left: 0, top: 0, right: 0, bottom: 0 },
       };
 
@@ -5952,6 +6047,46 @@ export class PixiStage {
       this.labelSprites.set(label.id, data);
     }
     this.rebuildLabelRegions();
+    this.drawLabelDeleteButton();
+  }
+
+  private getLabelDeleteBounds(): EffectBounds | null {
+    const data = this.selectedLabelId ? this.labelSprites?.get(this.selectedLabelId) : undefined;
+    if (!data || this.labelEditorAnchor) return null;
+    const zoom = Math.max(0.05, this.camera?.zoom ?? 1);
+    const size = 24 / zoom;
+    return { left: data.text.x - size - 6 / zoom, right: data.text.x - 6 / zoom,
+      top: data.text.y - 3 / zoom, bottom: data.text.y - 3 / zoom + size };
+  }
+
+  private getLabelDeleteTarget(point: { x: number; y: number }): string | null {
+    const bounds = this.getLabelDeleteBounds();
+    return bounds && this.pointInBounds(point, bounds) ? this.selectedLabelId : null;
+  }
+
+  private selectLabel(id: string | null): void {
+    this.selectedLabelId = id;
+    this.drawLabelDeleteButton();
+  }
+
+  private drawLabelDeleteButton(): void {
+    this.labelDeleteGraphic?.destroy();
+    this.labelDeleteGraphic = null;
+    const bounds = this.getLabelDeleteBounds();
+    if (!bounds || !this.labelContainer) return;
+    const graphic = new Graphics();
+    const size = bounds.right - bounds.left;
+    graphic.roundRect(bounds.left, bounds.top, size, size, size / 5)
+      .fill({ color: MANGA_PALETTE.ink, alpha: 0.95 })
+      .stroke({ color: 0xe9a59e, width: size / 24, alpha: 0.9 });
+    const inset = size * 0.3;
+    graphic.moveTo(bounds.left + inset, bounds.top + inset).lineTo(bounds.right - inset, bounds.bottom - inset)
+      .moveTo(bounds.right - inset, bounds.top + inset).lineTo(bounds.left + inset, bounds.bottom - inset)
+      .stroke({ color: 0xffb8af, width: size / 12 });
+    graphic.eventMode = 'static';
+    graphic.cursor = 'pointer';
+    this.labelContainer.addChild(graphic);
+    this.labelDeleteGraphic = graphic;
   }
 
   private updateLabelBounds(data: LabelSpriteData): void {
@@ -5994,6 +6129,7 @@ export class PixiStage {
       if (data) {
         data.label = { ...label };
         data.text.position.set(label.x, label.y);
+        data.statistics?.position.set(label.x + data.text.width + 12, label.y);
         this.updateLabelBounds(data);
       }
     }
@@ -6012,19 +6148,32 @@ export class PixiStage {
       }
     }
     this.rebuildLabelRegions();
+    this.drawLabelDeleteButton();
   }
 
   private endLabelDrag(cancel = false): void {
     const { labelId } = this.labelDragState;
     const label = this.canvasLabels.find(entry => entry.id === labelId);
     if (!label) return;
-    const moved = (this.labelDragLastPos?.x !== this.labelDragState.startWorldPos.x || this.labelDragLastPos?.y !== this.labelDragState.startWorldPos.y);
+    const last = this.labelDragLastPos ?? this.labelDragState.startWorldPos;
+    const moved = Math.hypot(last.x - this.labelDragState.startWorldPos.x,
+      last.y - this.labelDragState.startWorldPos.y) * (this.camera?.zoom ?? 1) > DESKTOP_CLICK_SLOP_PX;
     if (cancel || !moved) {
       this.updateLabelDrag(this.labelDragState.startWorldPos);
     } else {
       const pos = this.labelDragLastPos ?? { x: label.x, y: label.y };
       const family = getLabelFamily(this.canvasLabels, label.id);
       const cards = getLabelCards(this.canvasLabels, label.id, this.canvasAreas);
+      // Snap one card anchor, then translate the whole family by that correction.
+      // Per-card snapping would split mixed spell/site layouts and stacked cards.
+      const anchor = cards[0];
+      if (anchor) {
+        const landscape = this.isLandscapeCard(anchor.cardName);
+        const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const snapped = snapCardCenter(anchor.x + size.width / 2, anchor.y + size.height / 2, landscape);
+        this.updateLabelDrag({ x: pos.x + snapped.x - size.width / 2 - anchor.x,
+          y: pos.y + snapped.y - size.height / 2 - anchor.y });
+      }
       const targetLabel = this.getLabelTarget(pos, family);
       const oldArea = this.canvasAreas.find(area => area.id === label.areaId);
       const targetArea = (targetLabel?.areaId ? this.canvasAreas.find(area => area.id === targetLabel.areaId) : this.getZoneAtPosition(pos)) ?? (cards.length ? oldArea : undefined);
@@ -6058,6 +6207,7 @@ export class PixiStage {
     this.labelDragLabelStarts.clear();
     for (const area of this.canvasAreas) this.reconcileCanvasAreaBounds(area.id);
     if (!cancel && moved) {
+      this.lastClickedLabel = null;
       const owner = this.canvasAreas.find(area => area.id === label.areaId);
       if (owner) saveDeckLayoutProfile(owner, this.canvasLabels, this.deckLayoutProfile ?? 'desktop');
     }
@@ -6068,54 +6218,84 @@ export class PixiStage {
     }
   }
 
-  private addLabelAtPosition(worldPos: { x: number; y: number }): void {
-    this.closeLabelEditor?.();
-    this.closeLabelEditor = openCanvasLabelEditor({
-      title: "Add label",
-      onClose: () => { this.closeLabelEditor = null; },
-      onSave: (text) => {
-        if (this.isDestroyed || !text) return;
-        const area = this.getZoneAtPosition(worldPos);
-        const label: CanvasLabel = {
-          id: crypto.randomUUID(), text, x: worldPos.x, y: worldPos.y,
-          areaId: area?.id,
-          board: area?.type === 'deck' ? (this.getDeckBoardForPosition(area, worldPos) ?? 'mainboard') : undefined,
-        };
-        this.canvasLabels = [...this.canvasLabels, label];
-        this.rebuildLabelSprites();
-        this.playMangaEffect('label', this.labelSprites.get(label.id)?.bounds);
-        this.emitCanvasLabelsChange();
-      },
-    });
+  private getLabelEditorPosition() {
+    const anchor = this.labelEditorAnchor ?? { x: 0, y: 0 };
+    const position = this.camera?.container.toGlobal(anchor) ?? anchor;
+    const rect = this.app?.canvas.getBoundingClientRect();
+    const label = this.canvasLabels.find(entry => entry.id === anchor.labelId);
+    const fontSize = label ? Number(getLabelHeadingStyle(label, this.canvasLabels).fontSize) : 14;
+    return { x: (rect?.left ?? 0) + position.x, y: (rect?.top ?? 0) + position.y,
+      fontSize: fontSize * (this.camera?.zoom ?? 1) };
   }
 
-  private editLabel(labelId: string): void {
-    const current = this.canvasLabels.find((label) => label.id === labelId);
-    if (!current) return;
-    this.closeLabelEditor?.();
-    this.closeLabelEditor = openCanvasLabelEditor({
-      title: "Edit label",
-      initialText: current.text,
-      onClose: () => { this.closeLabelEditor = null; },
-      onSave: (text) => {
-        if (this.isDestroyed || !this.canvasLabels.some(label => label.id === labelId)) return;
-        if (!text) {
-          this.deleteLabel(labelId);
-          return;
+  private openLabelEditor(worldPos: { x: number; y: number }, current?: CanvasLabel): void {
+    this.labelEditor?.commit();
+    this.labelEditorAnchor = { ...worldPos, labelId: current?.id };
+    const data = current && this.labelSprites.get(current.id);
+    if (data) {
+      data.text.visible = false;
+      if (data.statistics) data.statistics.visible = false;
+    }
+    this.drawLabelDeleteButton();
+    this.labelEditor = openCanvasLabelEditor({
+      title: current ? 'Edit label' : 'New label',
+      position: this.getLabelEditorPosition(),
+      initialText: current?.text,
+      onClose: () => {
+        this.labelEditor = null;
+        this.labelEditorAnchor = null;
+        const sprite = current && this.labelSprites.get(current.id);
+        if (sprite) {
+          sprite.text.visible = true;
+          if (sprite.statistics) sprite.statistics.visible = true;
         }
-        this.canvasLabels = this.canvasLabels.map((label) => label.id === labelId ? { ...label, text } : label);
+        this.drawLabelDeleteButton();
+      },
+      onSave: (text) => {
+        if (this.isDestroyed || !text) return;
+        let label: CanvasLabel;
+        if (current) {
+          const existing = this.canvasLabels.find(entry => entry.id === current.id);
+          if (!existing) return;
+          existing.text = text;
+          label = existing;
+        } else {
+          const area = this.getZoneAtPosition(worldPos);
+          label = { id: crypto.randomUUID(), text, x: worldPos.x, y: worldPos.y, areaId: area?.id,
+            board: area?.type === 'deck' ? (this.getDeckBoardForPosition(area, worldPos) ?? 'mainboard') : undefined };
+          this.canvasLabels = [...this.canvasLabels, label];
+        }
+        this.selectedLabelId = label.id;
         this.rebuildLabelSprites();
-        if (current.areaId) {
-          this.reconcileCanvasAreaBounds(current.areaId);
+        if (label.areaId) {
+          this.reconcileCanvasAreaBounds(label.areaId);
+          const owner = this.canvasAreas.find(area => area.id === label.areaId);
+          if (owner) saveDeckLayoutProfile(owner, this.canvasLabels, this.deckLayoutProfile ?? 'desktop');
           this.rebuildZoneVisuals();
           this.emitCanvasAreasChange();
         }
+        if (!current) this.playMangaEffect('label', this.labelSprites.get(label.id)?.bounds);
         this.emitCanvasLabelsChange();
       },
     });
   }
 
+  private addLabelAtPosition(worldPos: { x: number; y: number }): void {
+    this.cancelSelectionBox();
+    this.camera?.resumeDrag();
+    this.lastEmptyCanvasClick = null;
+    this.pendingEmptyCanvasClick = null;
+    this.openLabelEditor(worldPos);
+  }
+
+  private editLabel(labelId: string): void {
+    const current = this.canvasLabels.find(label => label.id === labelId);
+    if (!current) return;
+    this.openLabelEditor({ x: current.x, y: current.y }, current);
+  }
+
   private deleteLabel(labelId: string): void {
+    if (this.selectedLabelId === labelId) this.selectLabel(null);
     const next = this.canvasLabels.filter((label) => label.id !== labelId);
     if (next.length === this.canvasLabels.length) return;
     const parentId = this.canvasLabels.find(label => label.id === labelId)?.parentLabelId;
@@ -6227,6 +6407,7 @@ export class PixiStage {
   }
 
   private clearSelection(suppressEmit = false): void {
+    this.selectLabel(null);
     this.clearMainSelection(true);
     this.clearZoneSelection();
     if (!suppressEmit) {
@@ -6259,6 +6440,52 @@ export class PixiStage {
     }
     this.lastSelectionEffect = signature;
     this.onSelectionChange?.(this.getSelectedCardNames());
+    this.updateCardQuickAddTargets();
+  }
+
+  private getQuickAddCards() {
+    return [
+      ...[...this.selectedCards].flatMap(key => {
+        const data = this.getSpriteData(key);
+        return data ? [{ key, cardName: data.layout.name, sprite: data.sprite, displaySize: data.displaySize }] : [];
+      }),
+      ...[...this.selectedZoneCardKeys].flatMap(key => {
+        const data = this.zoneCardSprites.get(key);
+        return data ? [{ key, cardName: data.cardName, sprite: data.sprite, displaySize: data.displaySize }] : [];
+      }),
+    ];
+  }
+
+  private updateCardQuickAddTargets(): void {
+    const camera = this.camera;
+    if (!this.onCardQuickAddTargetsChange || !camera || !this.isInitialized) return;
+    const rect = this.app.canvas.getBoundingClientRect();
+    const dragging = this.dragState.isDragging || this.zoneCardDragState.isDragging;
+    this.onCardQuickAddTargetsChange(this.getQuickAddCards().map(card => {
+      const corner = camera.viewport.toScreen(card.sprite.x + card.displaySize.width, card.sprite.y);
+      const clientX = rect.left + corner.x - 8;
+      const clientY = rect.top + corner.y + 8;
+      return {
+        key: card.key, cardName: card.cardName, clientX, clientY,
+        visible: !dragging && card.sprite.visible && clientX >= rect.left + 8 && clientX <= rect.right - 8
+          && clientY >= rect.top + 8 && clientY <= rect.bottom - 8,
+      };
+    }));
+  }
+
+  quickAddToDeck(deck: CardQuickAddDeck, cardKey: string, scope: QuickAddScope, board: QuickAddBoard): void {
+    if (!this.camera || !this.onDeckAddRequest) return;
+    const zone = this.canvasAreas.find(area => area.id === deck.canvasAreaId && area.deckId === deck.deckId && area.type === 'deck' && area.pinned);
+    const cards = this.getQuickAddCards();
+    const anchor = cards.find(card => card.key === cardKey);
+    // Revalidate after selection/deck changes; a stale button cannot add cards.
+    if (!zone || !anchor) return;
+    const worldPos = { x: anchor.sprite.x + anchor.displaySize.width / 2, y: anchor.sprite.y + anchor.displaySize.height / 2 };
+    this.requestDeckAdd({
+      deckId: deck.deckId, canvasAreaId: zone.id, board,
+      cardNames: (scope === 'selection' ? cards : [anchor]).map(card => card.cardName),
+      worldPos, screenPos: this.camera.viewport.toScreen(worldPos.x, worldPos.y), source: 'active-deck',
+    });
   }
 
   private getCardAtPosition(worldPos: { x: number; y: number }): string | null {
@@ -6367,6 +6594,7 @@ export class PixiStage {
         data.sprite.y = startPos.y + dy;
       }
     }
+    this.updateCardQuickAddTargets();
   }
 
   private endCardDrag(revertToStart = false): void {
@@ -6478,6 +6706,7 @@ export class PixiStage {
     this.dragState.cardStartBasePositions.clear();
     this.dragState.cardStartGridKeys.clear();
     this.dragState.cardOriginalZIndices.clear();
+    this.updateCardQuickAddTargets();
     this.clearZoneDropPreview();
     if (this.quickTransferState.active || this.quickTransferOverlayTexts.length > 0) {
       this.deactivateQuickTransfer();
@@ -6562,6 +6791,7 @@ export class PixiStage {
     }
     this.updateZoneCardDragFeedback(worldPos);
     this.drawZoneDeleteOverlay();
+    this.updateCardQuickAddTargets();
   }
 
   private endZoneCardDrag(worldPos: { x: number; y: number }): void {
@@ -6589,6 +6819,7 @@ export class PixiStage {
     const transferTarget = hovered && !sourceIds.has(hovered.id) ? hovered : null;
     const changedZones = new Set<CanvasArea>();
     const selectedKeys = new Set<string>();
+    const labelDrops = new Map<string, { label: CanvasLabel; zone: CanvasArea; cards: CanvasCardInstance[] }>();
     for (const source of sources) {
       const target = transferTarget ?? source;
       const targetBoard = target.type === "deck" && !mixedBoards
@@ -6605,7 +6836,13 @@ export class PixiStage {
         selectedKeys.add(`${target.id}:${card.id}`);
       }
       if (affected.length === 0) continue;
-      this.applyLabelDrop(affected, source, target, worldPos, mixedBoards);
+      const label = this.applyLabelDrop(affected, source, target, worldPos, mixedBoards, false);
+      if (label) {
+        const key = `${target.id}:${label.id}`;
+        const drop = labelDrops.get(key) ?? { label, zone: target, cards: [] };
+        drop.cards.push(...affected);
+        labelDrops.set(key, drop);
+      }
       const ids = new Set(movedIds);
       if (source === target) {
         const updates = new Map(affected.map((card) => [card.id, card]));
@@ -6625,6 +6862,10 @@ export class PixiStage {
       changedZones.add(source);
       changedZones.add(target);
     }
+    // One placement for the whole selection, even when its cards came from
+    // several areas. Positioning each source separately would lose its offsets.
+    for (const drop of labelDrops.values()) placeCardsBelowLabel(drop.cards, drop.label, drop.zone, this.canvasLabels,
+      name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
     this.selectedZoneCardKeys = selectedKeys;
     for (const zone of changedZones) this.reconcileCanvasAreaBounds(zone.id);
     for (const zone of changedZones) saveDeckLayoutProfile(zone, this.canvasLabels ?? [], this.deckLayoutProfile ?? 'desktop');
@@ -6643,6 +6884,8 @@ export class PixiStage {
   }
 
   private cancelDesktopInteraction(): void {
+    this.pendingEmptyCanvasClick = null;
+    this.lastEmptyCanvasClick = null;
     if (this.regionDrag) this.endDeckRegionDrag(true);
     this.desktopPanStart = null;
     this.pendingCardClick = null;
@@ -6664,7 +6907,7 @@ export class PixiStage {
 
   private getDeckRegionRects(zone: CanvasArea): DeckRegionBounds {
     return {...this.getDeckBoardRects(zone.bounds, zone),
-      ...getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name), zone.deckRegionBounds)};
+      ...this.getDeckSectionRects(zone)};
   }
 
   private getDeckRegionAtPosition(point: {x: number; y: number}, touch = false): {zone: CanvasArea; hit: DeckRegionHit} | null {
@@ -6769,7 +7012,7 @@ export class PixiStage {
         .stroke({color: active ? MANGA_PALETTE.gold : MANGA_PALETTE.line, width: (active ? 2 : 1) / Math.max(0.4, this.camera?.zoom ?? 1), alpha: 0.95});
       let title = drag.titles.get(id);
       if (!title) {
-        title = this.configureTextQuality(new Text({text: DECK_REGION_NAMES[id], style: {fontFamily: 'Arial', fontSize: 13, fill: MANGA_PALETTE.paper, fontWeight: 'bold'}}));
+        title = this.configureTextQuality(new Text({text: DECK_REGION_NAMES[id], style: getDeckHeadingStyle(id)}));
         title.zIndex = 1000001;
         title.eventMode = 'none';
         drag.titles.set(id, title);
@@ -8104,6 +8347,7 @@ export class PixiStage {
     this.highDetailPreloadRunId++;
     this.onBackgroundTextureProgress?.(0, 0);
     this.onSelectionChange?.([]);
+    this.onCardQuickAddTargetsChange?.([]);
 
     for (const id of this.pendingRevealTimeouts) {
       clearTimeout(id);
@@ -8117,8 +8361,8 @@ export class PixiStage {
     }
     this.removeTextureInvalidationListener?.();
     this.removeTextureInvalidationListener = null;
-    this.closeLabelEditor?.();
-    this.closeLabelEditor = null;
+    this.labelEditor?.close();
+    this.labelEditor = null;
     this.closeDeckVariantDialog();
     this.closeTouchActionSheet();
     this.deactivateQuickTransfer();
@@ -8567,7 +8811,7 @@ export class PixiStage {
     zone: CanvasArea,
   ): Record<DeckZoneBoard, CanvasArea["bounds"]> {
     const rects = computeDeckBoardRects(bounds, zone.cards, this.getZoneHeaderHeight(zone),
-      (name) => this.isLandscapeCard(name), zone.deckRegionBounds);
+      (name) => this.isLandscapeCard(name), zone.deckRegionBounds, this.getMainDeckLabelBounds(zone));
     for (const board of DECK_BOARD_ORDER) {
       for (const label of this.getPopulatedLabelBounds(zone, board)) {
         const rect = rects[board];
@@ -8832,7 +9076,7 @@ export class PixiStage {
         boardRects.mainboard.height,
       );
       frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.56 });
-      const mainSections = getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name), zone.deckRegionBounds);
+      const mainSections = this.getDeckSectionRects(zone);
       this.deckRegionHitRects.set(zone.id, {...boardRects, ...mainSections});
       const drawRegionHandle = (rect: CanvasArea['bounds']) => {
         for (const x of [rect.x + 7, rect.x + 11]) for (const y of [rect.y + 11, rect.y + 16, rect.y + 21]) {
@@ -8850,7 +9094,7 @@ export class PixiStage {
         frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.4 });
         drawRegionHandle(rect);
         const sectionLabel = this.configureTextQuality(new Text({ text: name,
-          style: { fontFamily: 'Arial', fontSize: 12, fill: MANGA_PALETTE.muted, fontWeight: 'bold' } }));
+          style: getDeckHeadingStyle(key) }));
         sectionLabel.position.set(rect.x + 20, rect.y + 8);
         sectionLabel.zIndex = frame.zIndex + 2;
         this.zoneContainer.addChild(sectionLabel);
@@ -8864,12 +9108,7 @@ export class PixiStage {
 
         const boardLabel = this.configureTextQuality(new Text({
           text: label,
-          style: {
-            fontFamily: "Arial",
-            fontSize: 13,
-            fill: MANGA_PALETTE.muted,
-            fontWeight: "bold",
-          },
+          style: getDeckHeadingStyle(board),
         }));
         boardLabel.x = rect.x + 20;
         boardLabel.y = rect.y + 8;
@@ -9145,6 +9384,10 @@ export class PixiStage {
         if (this.fitDeckSections(zone)) layoutChanged = true;
       }
     }
+    this.rebuildLabelSprites();
+    for (const zone of this.canvasAreas) {
+      if (this.fitLabelRegionBounds(zone)) layoutChanged = true;
+    }
     const filteredDeckCardNameCache = new Map<string, Set<string>>();
     const pinnedZones = this.canvasAreas.filter((zone) => zone.pinned);
     pinnedZones.forEach((zone, zoneIndex) => {
@@ -9247,7 +9490,7 @@ export class PixiStage {
     this.syncZoneSelectionVisuals();
     this.applyActiveMetricHighlighting();
     this.drawZoneDeleteOverlay();
-    this.rebuildLabelSprites();
+    this.updateCardQuickAddTargets();
     const survivingKeys = new Set(this.canvasAreas.flatMap(area => area.cards.map(card => `${area.id}:${card.id}`)));
     this.arrivalStackHistory = (this.arrivalStackHistory ?? []).filter(entry => {
       entry.members = new Set([...entry.members].filter(key => survivingKeys.has(key)));
@@ -9609,6 +9852,9 @@ export class PixiStage {
   }
 
   private handleZoomChange(): void {
+    this.updateCardQuickAddTargets();
+    this.labelEditor?.reposition(this.getLabelEditorPosition());
+    this.drawLabelDeleteButton();
     // Recompute visibility before promoting textures. A large wheel step can
     // go from the entire catalogue to a few cards in one event; the previous
     // visible set must not trigger high-detail downloads for all of them.
@@ -9616,6 +9862,8 @@ export class PixiStage {
   }
 
   private handleViewportChange(): void {
+    this.updateCardQuickAddTargets();
+    this.labelEditor?.reposition(this.getLabelEditorPosition());
     const profile = detectResponsiveUiMode();
     if (this.deckLayoutProfile !== profile) {
       if (this.regionDrag) this.endDeckRegionDrag(true);
@@ -9822,6 +10070,7 @@ export class PixiStage {
 
     this.updateCanvasAreaCardVisibility(expandedBounds);
     this.visibleCardNames = newVisible;
+    this.updateCardQuickAddTargets();
 
     // During the initial reveal we let `startTextureReveal()` own texture loading so
     // it can randomize start order and drive the progress UI. After reveal completes,

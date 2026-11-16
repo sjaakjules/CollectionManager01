@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 /** Use the application's actual adapter when checking or publishing snapshots. */
-export async function readCardCatalog(input) {
+export async function readCardCatalog(input, { includeProvisional = false } = {}) {
   const payload = JSON.parse(await readFile(input, 'utf8'));
   const root = fileURLToPath(new URL('../../', import.meta.url));
   const server = await createServer({
@@ -17,7 +17,10 @@ export async function readCardCatalog(input) {
   });
   try {
     const { normalizeCardCatalog } = await server.ssrLoadModule('/src/data/cardCatalog.ts');
-    return normalizeCardCatalog(payload);
+    const catalog = normalizeCardCatalog(payload);
+    if (!includeProvisional) return catalog;
+    const { withProvisionalCards } = await server.ssrLoadModule('/src/data/provisionalCards.ts');
+    return { ...catalog, cards: withProvisionalCards(catalog.cards) };
   } finally {
     await server.close();
   }

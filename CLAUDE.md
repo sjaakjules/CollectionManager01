@@ -89,7 +89,7 @@ The app must remain fully usable without login.
 - Export decks as .txt
 - Format: quantity name
 - One card per line
-- Compatible with curiosa.io
+- Compatible with sorcerytcg.com
 - Import via pasted text
 - Parse line-by-line
 - Unknown cards must be highlighted, not silently dropped

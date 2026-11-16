@@ -1,0 +1,235 @@
+{
+  "source": "photo-6.jpg",
+  "sourceSize": [
+    3840,
+    2880
+  ],
+  "rotate": -90,
+  "portraitSize": [
+    744,
+    1039
+  ],
+  "cornersOrder": "top-left, top-right, bottom-right, bottom-left, after rotation",
+  "cards": [
+    {
+      "name": "Aria Wraith",
+      "corners": [
+        [
+          468,
+          29
+        ],
+        [
+          1061,
+          0
+        ],
+        [
+          1068,
+          809
+        ],
+        [
+          466,
+          826
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "When the Peaks Fell",
+      "corners": [
+        [
+          334,
+          866
+        ],
+        [
+          905,
+          876
+        ],
+        [
+          881,
+          1716
+        ],
+        [
+          247,
+          1697
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Man-made Ice Age",
+      "corners": [
+        [
+          984,
+          811
+        ],
+        [
+          1594,
+          799
+        ],
+        [
+          1610,
+          1654
+        ],
+        [
+          991,
+          1668
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Full-tilt Goliaths",
+      "corners": [
+        [
+          1639,
+          806
+        ],
+        [
+          2266,
+          814
+        ],
+        [
+          2258,
+          1675
+        ],
+        [
+          1615,
+          1668
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Nanurluk",
+      "corners": [
+        [
+          278,
+          1738
+        ],
+        [
+          890,
+          1728
+        ],
+        [
+          900,
+          2621
+        ],
+        [
+          271,
+          2633
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Frost Elemental",
+      "corners": [
+        [
+          929,
+          1702
+        ],
+        [
+          1550,
+          1704
+        ],
+        [
+          1536,
+          2594
+        ],
+        [
+          905,
+          2587
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Bearserker",
+      "corners": [
+        [
+          1610,
+          1747
+        ],
+        [
+          2237,
+          1728
+        ],
+        [
+          2275,
+          2630
+        ],
+        [
+          1625,
+          2647
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "The White Death",
+      "corners": [
+        [
+          158,
+          2635
+        ],
+        [
+          794,
+          2664
+        ],
+        [
+          744,
+          3595
+        ],
+        [
+          98,
+          3569
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Hailstriker",
+      "corners": [
+        [
+          960,
+          2645
+        ],
+        [
+          1601,
+          2671
+        ],
+        [
+          1565,
+          3612
+        ],
+        [
+          914,
+          3578
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Sissi Marksmen",
+      "corners": [
+        [
+          1622,
+          2712
+        ],
+        [
+          2282,
+          2755
+        ],
+        [
+          2244,
+          3701
+        ],
+        [
+          1560,
+          3653
+        ]
+      ],
+      "landscape": false
+    }
+  ]
+}

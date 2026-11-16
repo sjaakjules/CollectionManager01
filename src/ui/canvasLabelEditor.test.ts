@@ -3,68 +3,77 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { openCanvasLabelEditor, type CanvasLabelEditorOptions } from './canvasLabelEditor';
 
 const closers: Array<() => void> = [];
-function open(options: CanvasLabelEditorOptions) {
-  const close = openCanvasLabelEditor(options);
-  closers.push(close);
-  const dialog = document.querySelector<HTMLFormElement>('[role="dialog"]');
+function open(options: Omit<CanvasLabelEditorOptions, 'position'>) {
+  const editor = openCanvasLabelEditor({ ...options, position: { x: 120, y: 80, fontSize: 14 } });
+  closers.push(editor.close);
   const input = document.querySelector<HTMLInputElement>('input[name="label-name"]');
-  const save = document.querySelector<HTMLButtonElement>('button[type="submit"]');
-  const cancel = document.querySelector<HTMLButtonElement>('button[type="button"]');
-  if (!dialog || !input || !save || !cancel) throw new Error('Missing label editor');
-  return { close, dialog, input, save, cancel };
+  if (!input) throw new Error('Missing inline label editor');
+  return { ...editor, input };
 }
 function type(input: HTMLInputElement, value: string) {
   input.value = value;
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }
-function key(value: string, shiftKey = false) {
-  document.dispatchEvent(new KeyboardEvent('keydown', { key: value, shiftKey, bubbles: true, cancelable: true }));
+function key(value: string, isComposing = false) {
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: value, isComposing, bubbles: true, cancelable: true }));
 }
 afterEach(() => {
-  closers.splice(0).forEach((close) => close());
+  closers.splice(0).forEach(close => close());
   document.body.replaceChildren();
 });
 
-describe('canvas label editor', () => {
-  it('focuses the labeled input and saves trimmed text without a native browser prompt', () => {
+describe('inline canvas label editor', () => {
+  it('places a native caret at the canvas point and commits trimmed text on an outside click', () => {
     const onSave = vi.fn();
-    const { input, save } = open({ title: 'Add label', onSave });
+    const { input } = open({ title: 'New label', onSave });
     expect(document.activeElement).toBe(input);
-    expect(document.querySelector('label')?.htmlFor).toBe(input.id);
-    type(input, '  Removal package  ');
-    save.click();
-    expect(onSave).toHaveBeenCalledWith('Removal package');
+    expect(input.getAttribute('aria-label')).toBe('New label');
+    expect(input.style.left).toBe('120px');
     expect(document.querySelector('[role="dialog"]')).toBeNull();
+    type(input, '  Removal package  ');
+    const nextAction = vi.fn();
+    document.body.addEventListener('pointerdown', nextAction, { once: true });
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(onSave).toHaveBeenCalledExactlyOnceWith('Removal package');
+    expect(nextAction).toHaveBeenCalledOnce();
+    expect(input.isConnected).toBe(false);
   });
 
-  it('does not create an empty label', () => {
+  it('discards empty drafts and does not delete an existing label when cleared', () => {
     const onSave = vi.fn();
-    const { input, save, dialog } = open({ title: 'Add label', onSave });
-    type(input, '   ');
-    expect(save.disabled).toBe(true);
-    dialog.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    const first = open({ title: 'New label', onSave });
+    type(first.input, '  ');
+    first.input.blur();
+    expect(first.input.isConnected).toBe(false);
+    const existing = open({ title: 'Edit label', initialText: 'Draw', onSave });
+    type(existing.input, '');
+    key('Enter');
+    expect(existing.input.isConnected).toBe(false);
     expect(onSave).not.toHaveBeenCalled();
-    expect(dialog.isConnected).toBe(true);
   });
 
-  it('explains label-only deletion and permits an empty edit', () => {
+  it('starts editing at the end, follows camera changes, and saves on blur once', () => {
     const onSave = vi.fn();
-    const { input, save, dialog } = open({ title: 'Edit label', initialText: 'Draw', onSave });
-    expect(dialog.textContent).toContain('Your cards stay');
-    type(input, '');
-    expect(save.textContent).toBe('Remove label');
-    expect(save.disabled).toBe(false);
-    save.click();
-    expect(onSave).toHaveBeenCalledWith('');
+    const { input, reposition, commit } = open({ title: 'Edit label', initialText: 'Draw', onSave });
+    expect(input.selectionStart).toBe(4);
+    expect(input.selectionEnd).toBe(4);
+    type(input, 'Draw spells');
+    reposition({ x: 300, y: 160, fontSize: 20 });
+    expect(input.style.left).toBe('300px');
+    expect(input.style.top).toBe('160px');
+    expect(input.value).toBe('Draw spells');
+    input.blur();
+    commit();
+    expect(onSave).toHaveBeenCalledExactlyOnceWith('Draw spells');
   });
 
-  it('cancels with Escape and restores focus while cleaning up only once', () => {
+  it('cancels with Escape, restores focus and cleans up once', () => {
     const opener = document.createElement('button');
     document.body.append(opener);
     opener.focus();
-    const onSave = vi.fn();
-    const onClose = vi.fn();
-    const { close } = open({ title: 'Edit label', initialText: 'Draw', onSave, onClose });
+    const onSave = vi.fn(); const onClose = vi.fn();
+    const { close, input } = open({ title: 'Edit label', initialText: 'Draw', onSave, onClose });
+    type(input, 'Discard this');
     key('Escape');
     expect(document.activeElement).toBe(opener);
     expect(onSave).not.toHaveBeenCalled();
@@ -72,28 +81,33 @@ describe('canvas label editor', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('traps keyboard focus and skips a disabled Save button', () => {
-    const { input, cancel, save } = open({ title: 'Add label', onSave: vi.fn() });
-    key('Tab');
-    expect(document.activeElement).toBe(cancel);
-    key('Tab');
-    expect(document.activeElement).toBe(input);
-    type(input, 'Draw');
-    key('Tab', true);
-    expect(document.activeElement).toBe(save);
-    key('Tab');
-    expect(document.activeElement).toBe(input);
+  it('keeps IME Enter available for Japanese composition', () => {
+    const onSave = vi.fn();
+    const { input } = open({ title: 'New label', onSave });
+    type(input, '魔法');
+    key('Enter', true);
+    expect(input.isConnected).toBe(true);
+    expect(onSave).not.toHaveBeenCalled();
+    key('Enter');
+    expect(onSave).toHaveBeenCalledExactlyOnceWith('魔法');
   });
 
-  it('blocks canvas keyboard shortcuts only while the editor is open', () => {
-    const canvasShortcut = vi.fn();
-    window.addEventListener('keydown', canvasShortcut);
-    const { cancel } = open({ title: 'Add label', onSave: vi.fn() });
-    key(' ');
-    expect(canvasShortcut).not.toHaveBeenCalled();
-    cancel.click();
-    key(' ');
-    expect(canvasShortcut).toHaveBeenCalledOnce();
-    window.removeEventListener('keydown', canvasShortcut);
+  it('blocks canvas shortcuts while typing, then restores them', () => {
+    const shortcut = vi.fn();
+    window.addEventListener('keydown', shortcut);
+    const { close } = open({ title: 'New label', onSave: vi.fn() });
+    key(' '); key('Delete');
+    expect(shortcut).not.toHaveBeenCalled();
+    close(); key(' ');
+    expect(shortcut).toHaveBeenCalledOnce();
+    window.removeEventListener('keydown', shortcut);
+  });
+
+  it('does not save unchanged text or a draft closed by canvas teardown', () => {
+    const onSave = vi.fn();
+    open({ title: 'Edit label', initialText: 'Draw', onSave }).commit();
+    const editor = open({ title: 'New label', onSave });
+    type(editor.input, 'Unfinished'); editor.close();
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

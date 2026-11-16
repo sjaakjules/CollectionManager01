@@ -297,6 +297,25 @@ describe('catalogue hierarchy geometry', () => {
     { field: 'family', mode: 'group', direction: 'asc' },
     { field: 'cost', mode: 'sort', direction: 'asc' },
   ] } as const;
+  it.each(['wide', 'portrait'] as const)('puts all avatars in a visible leading section in %s layout', layoutVariant => {
+    const avatars = [
+      card('Frost Mage', 'Avatar', 'none', null),
+      card('Lavamancer', 'Avatar', 'none', null),
+      ...Array.from({ length: 13 }, (_, index) => card(`Avatar ${index}`, 'Avatar', 'air', null)),
+    ];
+    const inputs = [...avatars, card('Spell', 'Magic', 'air'), card('Site', 'Site', 'fire', null)];
+    const result = calculateCardLayout({ cards: inputs, layoutVariant, catalogueLayout: { ...catalogueLayout, steps: [...catalogueLayout.steps] } });
+    expect(result.headers[0]?.label).toBe('Avatars');
+    expect(result.cards.map(entry => entry.name).sort()).toEqual(inputs.map(entry => entry.name).sort());
+    const lastAvatarEdge = Math.max(...result.cards.filter(entry => entry.type === 'Avatar').map(entry => entry.position.y + 70));
+    expect(result.cards.filter(entry => entry.type !== 'Avatar').every(entry => entry.position.y - 70 > lastAvatarEdge)).toBe(true);
+    for (const entry of result.cards) expect(snapCardCenter(entry.position.x, entry.position.y, entry.isLandscape)).toEqual(entry.position);
+    const onlyAvatars = calculateCardLayout({ cards: avatars, catalogueLayout: { columns: 6, steps: [] } });
+    expect(onlyAvatars.cards).toHaveLength(avatars.length);
+    expect(onlyAvatars.bounds.bottom).toBe(lastAvatarEdge);
+    const onlySpells = calculateCardLayout({ cards: inputs.filter(entry => entry.type !== 'Avatar'), catalogueLayout: { columns: 6, steps: [] } });
+    expect(onlySpells.headers.some(header => header.label === 'Avatars')).toBe(false);
+  });
   it.each(['wide', 'portrait'] as const)('keeps every card in non-overlapping snapped cells in %s layout', (layoutVariant) => {
     const inputs = (['air', 'earth', 'fire', 'water', 'multiple', 'none'] as const).flatMap((element) =>
       Array.from({ length: 25 }, (_, i) => card(`${element}-${i}`, i % 3 === 0 ? 'Site' : 'Magic', element, i % 6)));

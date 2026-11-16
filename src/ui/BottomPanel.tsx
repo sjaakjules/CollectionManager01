@@ -49,8 +49,9 @@ import { getAvatarShortName } from "@/ui/deckDisplay";
 import { ElementIcon } from "@/ui/ElementIcon";
 import { DeckCreatePanel } from "@/ui/DeckCreatePanel";
 import { CatalogueLayoutPanel } from "@/ui/CatalogueLayoutPanel";
+import { CardStatisticsPanel } from "@/ui/CardStatisticsPanel";
 
-type ToolTab = "filter" | "layout" | "categories" | "associations" | null;
+type ToolTab = "filter" | "layout" | "categories" | "associations" | "statistics" | null;
 type ActionPanel = "label" | null;
 type FilterPanelMode = "details" | "settings" | null;
 type CategoryDialogMode = "add" | "edit" | null;
@@ -380,6 +381,16 @@ export function BottomPanel({
     setFilterDetailIndex(null);
     const closing = displayedToolTab === "layout";
     setActiveToolTab(closing ? null : "layout");
+    if (isPhone && (closing || !phoneExpanded)) onPhoneTabToggle?.();
+  }, [dispatch, displayedToolTab, isPhone, onPhoneTabToggle, phoneExpanded]);
+
+  const openStatisticsTab = useCallback(() => {
+    dispatch({ type: "SET_ASSOCIATIONS_ENABLED", enabled: false });
+    setActiveActionPanel(null);
+    setFilterPanelMode(null);
+    setFilterDetailIndex(null);
+    const closing = displayedToolTab === "statistics" && (!isPhone || phoneExpanded);
+    setActiveToolTab(closing ? null : "statistics");
     if (isPhone && (closing || !phoneExpanded)) onPhoneTabToggle?.();
   }, [dispatch, displayedToolTab, isPhone, onPhoneTabToggle, phoneExpanded]);
 
@@ -735,6 +746,7 @@ export function BottomPanel({
         <div
           className={`bottom-folder-panel ${panelOpen ? "open" : ""}`}
         >
+          {displayedToolTab === "statistics" && <CardStatisticsPanel cards={state.cards} filteredCards={filteredCards} />}
           {displayedToolTab === "filter" && (
             <>
               <div className="filter-subtabs">
@@ -1300,10 +1312,11 @@ export function BottomPanel({
                 <ul className="canvas-label-guide">
                   <li>Drag a Main, Spellbook, Atlas, Collection or Maybe title to move that region. Its outline previews the drop and neighbouring cards make room.</li>
                   <li>Drag a region edge or corner to resize it. Cards and titles always keep their padding. Escape cancels a move.</li>
-                  <li>Choose a spot on the canvas to place a label. Labels inside a deck move with that deck.</li>
-                  <li>Drop a card on a label’s name to join its group. Drag the label to move the whole group.</li>
+                  <li>Double-click empty canvas to type a label, or use Label Placement and click a spot. Click elsewhere or press Enter to finish; Escape cancels.</li>
+                  <li>Drop a card on a label’s name to join its group. Drag a populated label to move its cards together on the grid. Empty labels move freely.</li>
                   <li>Shake a card while dragging to detach it. Drop it in another board to transfer it, or on another label’s name to join that group.</li>
-                  <li>Double-click a label to edit it. Leave its name blank to remove only the label; your cards stay.</li>
+                  <li>Double-click a label to edit its name. Select it and click × to remove only the label; your cards stay. A blank draft is discarded.</li>
+                  <li>Small label statistics use the active variant. Draw odds mean at least one card from that label in three draws without replacement, separately from the full Spellbook or Atlas, before mulligans.</li>
                 </ul>
               </div>
             </div>
@@ -1311,6 +1324,14 @@ export function BottomPanel({
         </div>
 
         <div className="bottom-folder-tabs">
+          <button
+            type="button"
+            className={`bottom-folder-tab statistics-root-tab ${displayedToolTab === "statistics" ? "active" : ""}`}
+            aria-expanded={displayedToolTab === "statistics" && (!isPhone || phoneExpanded)}
+            onClick={openStatisticsTab}
+          >
+            Card Stats
+          </button>
           <button
             type="button"
             className={`bottom-folder-tab filter-root-tab ${

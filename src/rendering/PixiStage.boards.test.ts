@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PixiStage } from './PixiStage';
 import { createDeckZone, cardNameToOrientationMap, type CanvasArea, type CanvasCardInstance } from '@/canvas/canvasAreas';
 import { DECK_COLLECTION_WIDTH, type DeckZoneBoard } from '@/canvas/deckBoardLayout';
-import type { Card, Deck } from '@/data/dataModels';
+import type { Card, Deck, CanvasLabel } from '@/data/dataModels';
 import { CARD_SIZE } from './Grid';
 
 interface BoardStage {
@@ -18,6 +18,7 @@ interface BoardStage {
   syncDeckVariantForBoardChange(zone: CanvasArea, id: string, board: DeckZoneBoard): void;
   requestZoneLayoutReset(id: string): void;
   resetDeckLayout(id: string): void;
+  applyLabelDrop(cards: CanvasCardInstance[], source: CanvasArea, target: CanvasArea, point: {x: number; y: number}, mixed: boolean, positionCards?: boolean): CanvasLabel | null;
 }
 
 let stage: BoardStage;
@@ -230,6 +231,30 @@ describe('free deck arrangements', () => {
     stage.endZoneCardDrag({x:point.x+550,y:point.y});
     expect(zone.cards.find((card) => card.id===firstCard.id)?.x).toBe(before.first+550);
     expect(second.cards.find((card) => card.id===secondCard.id)?.x).toBe(before.second+550);
+  });
+
+  it('keeps offsets across source areas when their cards join one label heading', () => {
+    const firstCard = first('mainboard');
+    const secondCard = { ...firstCard, id: 'second-card', x: firstCard.x + 330, y: firstCard.y + 55 };
+    const second: CanvasArea = { ...structuredClone(zone), id: 'second', cards: [secondCard] };
+    const target: CanvasArea = { ...structuredClone(zone), id: 'target', cards: [] };
+    const label: CanvasLabel = { id: 'target-label', areaId: 'target', board: 'mainboard', text: 'Together', x: 1500, y: 1500 };
+    stage.canvasAreas.push(second, target);
+    Object.assign(stage, {
+      canvasLabels: [label], labelSprites: new Map(),
+      applyLabelDrop: (PixiStage.prototype as unknown as BoardStage).applyLabelDrop,
+      getZoneAtPosition: vi.fn(() => target), getLabelTarget: vi.fn(() => label),
+      emitCanvasLabelsChange: vi.fn(),
+    });
+    armDrag([firstCard, secondCard]);
+    stage.endZoneCardDrag({ x: label.x, y: label.y });
+    const a = required(target.cards.find(card => card.id === firstCard.id));
+    const b = required(target.cards.find(card => card.id === secondCard.id));
+    expect(a.labelId).toBe(label.id);
+    expect(b.labelId).toBe(label.id);
+    expect(b.x - a.x).toBe(330);
+    expect(b.y - a.y).toBe(55);
+    expect(a.y).toBeGreaterThan(label.y + 30);
   });
 
   it('uses exactly the same frame for preview and completed placement', () => {

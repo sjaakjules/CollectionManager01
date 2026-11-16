@@ -1,0 +1,102 @@
+.card-quick-add-controls {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.card-quick-add-plus,
+.card-quick-add-row button {
+  pointer-events: auto;
+  touch-action: manipulation;
+  cursor: pointer;
+  color: var(--manga-paper, #fff3d6);
+  background: var(--manga-ink, #161620);
+  border: 1px solid #817969;
+  box-shadow: 0 2px 8px #0009;
+  font: inherit;
+}
+
+.card-quick-add-plus {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 26px;
+  line-height: 28px;
+}
+
+.card-quick-add-plus[hidden] { display: none; }
+.card-quick-add-plus[aria-expanded="true"] { z-index: 2; }
+.card-quick-add-plus:hover,
+.card-quick-add-plus[aria-expanded="true"],
+.card-quick-add-row button:hover {
+  background: #484336;
+  border-color: #f2c572;
+}
+
+.card-quick-add-controls button:focus-visible {
+  outline: 2px solid #f2c572;
+  outline-offset: 3px;
+}
+
+.card-quick-add-menu {
+  position: fixed;
+  width: min(270px, calc(100vw - 16px));
+  z-index: 1;
+}
+
+.card-quick-add-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.card-quick-add-row button {
+  min-height: 40px;
+  padding: 7px 4px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.card-quick-add-gap { height: 44px; }
+.card-quick-add-selection {
+  padding: 7px;
+  border: 1px solid #fff3d6a6;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px #161620d9, 0 3px 12px #0008;
+  background: #161620ed;
+  pointer-events: auto;
+  position: relative;
+}
+
+/* Match the paper rim and stronger corners around selected cards. */
+.card-quick-add-selection::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 3px;
+  pointer-events: none;
+  background:
+    linear-gradient(#fff3d6, #fff3d6) top left / 13px 2px,
+    linear-gradient(#fff3d6, #fff3d6) top right / 13px 2px,
+    linear-gradient(#fff3d6, #fff3d6) bottom left / 13px 2px,
+    linear-gradient(#fff3d6, #fff3d6) bottom right / 13px 2px,
+    linear-gradient(#fff3d6, #fff3d6) top left / 2px 13px,
+    linear-gradient(#fff3d6, #fff3d6) top right / 2px 13px,
+    linear-gradient(#fff3d6, #fff3d6) bottom left / 2px 13px,
+    linear-gradient(#fff3d6, #fff3d6) bottom right / 2px 13px;
+  background-repeat: no-repeat;
+}
+
+.card-quick-add-caption {
+  color: #fff3d6;
+  text-align: center;
+  font-size: 11px;
+  padding-top: 7px;
+}
+.card-quick-add-caption span { color: #b6af9f; }

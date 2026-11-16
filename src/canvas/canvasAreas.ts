@@ -106,7 +106,7 @@ const ZONE_SPREAD_STEP = 110;
  * - `name`: Raw deck title from import source.
  *
  * Outputs:
- * - Returns sanitized display name with Curiosa suffixes removed.
+ * - Returns sanitized display name with Sorcery suffixes removed.
  */
 export function sanitizeDeckZoneName(name: string | null | undefined): string {
   const normalized = (name ?? "").replace(/\s+/g, " ").trim();
@@ -114,10 +114,10 @@ export function sanitizeDeckZoneName(name: string | null | undefined): string {
     return "Imported Deck";
   }
 
-  const withoutCuriosaSuffix = normalized
-    .replace(/\s*(?:\||-|—|•)\s*curiosa(?:\.io)?(?:\s*deck builder)?\s*$/i, "")
+  const withoutSorcerySuffix = normalized
+    .replace(/\s*(?:\||-|—|•)\s*sorcery\s*tcg(?:\.com)?(?:\s*deck builder)?\s*$/i, "")
     .trim();
-  const primarySegment = withoutCuriosaSuffix.split("|")[0]?.trim() ?? "";
+  const primarySegment = withoutSorcerySuffix.split("|")[0]?.trim() ?? "";
   const cleaned = primarySegment.replace(/\s*\|+\s*$/g, "").trim();
   return cleaned || "Imported Deck";
 }

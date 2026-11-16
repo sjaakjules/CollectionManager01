@@ -12,6 +12,31 @@ const landscape = (name: string) => name.includes('Site');
 const card = (id: string, board: CanvasCardInstance['board'], x: number, y: number, cardName = id): CanvasCardInstance => ({id, cardName, board, x, y});
 
 describe('content-driven deck boards', () => {
+  it('keeps custom headings inside Spellbook/Atlas and below their parent titles', () => {
+    const zone = createEmptyZone('deck', 'Label headings', 0);
+    zone.cards = [card('spell', 'mainboard', 200, 300), card('site', 'mainboard', 200, 800, 'Site')];
+    const labels = {
+      spellbook: [{ x: 180, y: 250, width: 170, height: 210 }],
+      atlas: [{ x: 180, y: 750, width: 210, height: 190 }],
+    };
+    const before = structuredClone(zone.cards);
+    const sections = getMainDeckSectionRects(zone.cards, landscape, {}, labels);
+    const main = getDeckBoardRects(zone.bounds, zone.cards, ZONE_DECK_HEADER_HEIGHT, landscape, {}, labels).mainboard;
+    for (const key of ['spellbook', 'atlas'] as const) {
+      const section = required(sections[key]);
+      const label = required(labels[key][0]);
+      expect(label.y - section.y).toBeGreaterThan(DECK_REGION_TITLE_HEIGHT);
+      expect(label.x).toBeGreaterThan(section.x);
+      expect(label.x + label.width).toBeLessThan(section.x + section.width);
+      expect(section.y - main.y).toBeGreaterThan(DECK_REGION_TITLE_HEIGHT);
+      expect(section.x + section.width).toBeLessThan(main.x + main.width);
+    }
+    expect(zone.cards).toEqual(before);
+    // Removing a label allows derived frames to contract again.
+    expect(required(getMainDeckSectionRects(zone.cards, landscape).spellbook).y)
+      .toBeGreaterThan(required(sections.spellbook).y);
+  });
+
   it.each([1, 2, 3, 4, 5, 6])('reserves readable nested titles around stacks of %s portrait and landscape cards', count => {
     const zone = createEmptyZone('deck', 'Nested titles', 0);
     zone.cards = [false, true].flatMap(site => Array.from({length: count}, (_, i) =>

@@ -71,7 +71,7 @@ sorcery-collection-manager/
 │  │  ├─ cardService.ts        # Card data fetching from API
 │  │  ├─ userStorage.ts        # guest.json / username.json read/write
 │  │  ├─ userSync.ts           # username.json sync logic
-│  │  └─ importExport.ts       # Curiosa text import/export
+│  │  └─ importExport.ts       # Sorcery text import/export
 │  │
 │  ├─ rendering/
 │  │  ├─ PixiStage.ts          # PixiJS application setup
@@ -137,7 +137,12 @@ sorcery-collection-manager/
 
 Defined in `data/dataModels.ts`
 
-### Card Data (from Sorcery API)
+### Card Data (normalized from the SorceryTCG API)
+
+The public API uses `engine/printings`; the adapter exposes the internal model
+below. Current response details, refresh and cache behavior are maintained in
+[the catalogue guide](card-catalog-updates.md) and
+[the integration guide](sorcery-deck-integration.md).
 
 ```ts
 interface Card {
@@ -149,10 +154,10 @@ interface Card {
 }
 
 interface CardStats {
-  rarity: 'Ordinary' | 'Exceptional' | 'Elite' | 'Unique'
-  type: 'Minion' | 'Magic' | 'Aura' | 'Artifact' | 'Site' | 'Avatar'
+  rarity: string | null
+  type: string
   rulesText: string
-  cost: number
+  cost: number | null
   attack: number | null
   defence: number | null
   life: number | null
@@ -348,7 +353,7 @@ React NEVER directly manipulates PixiJS objects. State flows one-way from React 
 
 ---
 
-## 10. Import / Export (Curiosa Compatibility)
+## 10. Import / Export (Sorcery Compatibility)
 
 **Export**
 - Generate .txt

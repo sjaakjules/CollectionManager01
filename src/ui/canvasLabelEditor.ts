@@ -1,102 +1,88 @@
+export interface CanvasLabelEditorPosition {
+  x: number;
+  y: number;
+  fontSize: number;
+}
+
 export interface CanvasLabelEditorOptions {
   title: string;
-  /** Omit for a new label. An existing label may be saved blank to remove it. */
+  position: CanvasLabelEditorPosition;
   initialText?: string;
   onSave: (text: string) => void;
   onClose?: () => void;
 }
 
-let nextEditorId = 0;
+export interface CanvasLabelEditor {
+  /** Discard the draft (Escape, canvas destruction). */
+  close: () => void;
+  commit: () => void;
+  reposition: (position: CanvasLabelEditorPosition) => void;
+}
 
-/** DOM-only editor; callbacks keep label mutations in the canvas controller. */
-export function openCanvasLabelEditor(options: CanvasLabelEditorOptions): () => void {
+/** A native caret on the canvas; label data changes only when the draft commits. */
+export function openCanvasLabelEditor(options: CanvasLabelEditorOptions): CanvasLabelEditor {
   const previousFocus = document.activeElement;
-  const editing = options.initialText !== undefined;
-  const id = `canvas-label-editor-${++nextEditorId}`;
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay canvas-label-editor-overlay';
-  const dialog = document.createElement('form');
-  dialog.className = 'canvas-label-editor';
-  dialog.setAttribute('role', 'dialog');
-  dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-labelledby', `${id}-title`);
-  dialog.setAttribute('aria-describedby', `${id}-hint`);
-  const heading = document.createElement('h2');
-  heading.id = `${id}-title`;
-  heading.textContent = options.title;
-  const label = document.createElement('label');
-  label.htmlFor = `${id}-input`;
-  label.textContent = 'Label name';
   const input = document.createElement('input');
-  input.id = `${id}-input`;
+  input.className = 'canvas-label-input';
   input.name = 'label-name';
   input.type = 'text';
   input.autocomplete = 'off';
+  input.setAttribute('aria-label', options.title);
   input.value = options.initialText ?? '';
-  input.setAttribute('aria-describedby', `${id}-hint`);
-  const hint = document.createElement('p');
-  hint.id = `${id}-hint`;
-  hint.textContent = editing
-    ? 'Leave the name blank to remove only this label. Your cards stay.'
-    : 'Drop cards on the label name to make a group.';
-  const actions = document.createElement('div');
-  actions.className = 'canvas-label-editor-actions';
-  const cancel = document.createElement('button');
-  cancel.type = 'button';
-  cancel.textContent = 'Cancel';
-  const save = document.createElement('button');
-  save.type = 'submit';
-  save.className = 'canvas-label-editor-save';
-  const updateSave = () => {
-    const blank = input.value.trim().length === 0;
-    save.disabled = !editing && blank;
-    save.textContent = editing && blank ? 'Remove label' : 'Save';
-    save.classList.toggle('remove', editing && blank);
-  };
-  input.addEventListener('input', updateSave);
-  updateSave();
-  actions.append(cancel, save);
-  dialog.append(heading, label, input, hint, actions);
-  overlay.append(dialog);
-
+  input.placeholder = 'Label name';
   let closed = false;
-  const close = () => {
+  let fontSize = options.position.fontSize;
+  const resize = () => {
+    // scrollWidth accounts for proportional glyphs, including Japanese input.
+    input.style.width = '1px';
+    input.style.width = `${Math.max(fontSize * 7, input.scrollWidth + 8)}px`;
+  };
+  const reposition = (position: CanvasLabelEditorPosition) => {
+    fontSize = Math.max(12, position.fontSize);
+    input.style.left = `${position.x}px`;
+    input.style.top = `${position.y}px`;
+    input.style.fontSize = `${fontSize}px`;
+    input.style.maxWidth = `${Math.max(40, window.innerWidth - position.x - 12)}px`;
+    resize();
+  };
+  const finish = (save: boolean, restoreFocus = false) => {
     if (closed) return;
     closed = true;
+    const text = input.value.trim();
+    document.removeEventListener('pointerdown', handleOutsidePointer, true);
     document.removeEventListener('keydown', handleKeyDown, true);
-    overlay.remove();
-    if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    input.removeEventListener('blur', commit);
+    input.remove();
     options.onClose?.();
-  };
-  const handleKeyDown = (event: KeyboardEvent) => {
-    // Keep canvas shortcuts, panning and delete commands out of the editor.
-    event.stopPropagation();
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      close();
-    } else if (event.key === 'Tab') {
-      event.preventDefault();
-      const controls = [input, cancel, save].filter((control) => !control.disabled);
-      const current = controls.findIndex((control) => control === document.activeElement);
-      const next = current < 0 ? 0 : (current + (event.shiftKey ? -1 : 1) + controls.length) % controls.length;
-      controls[next]?.focus();
+    // Clearing a draft never accidentally deletes an existing group.
+    if (save && text && text !== options.initialText) options.onSave(text);
+    if (restoreFocus && previousFocus instanceof HTMLElement && previousFocus.isConnected) {
+      previousFocus.focus({ preventScroll: true });
     }
   };
-  cancel.addEventListener('click', close);
-  overlay.addEventListener('pointerdown', (event) => {
+  const commit = () => finish(true);
+  const handleOutsidePointer = (event: PointerEvent) => {
+    if (event.target !== input) commit();
+  };
+  const handleKeyDown = (event: KeyboardEvent) => {
     event.stopPropagation();
-    if (event.target === overlay) close();
-  });
-  dialog.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const text = input.value.trim();
-    if (closed || (!editing && !text)) return;
-    close();
-    options.onSave(text);
-  });
+    if (event.isComposing) return;
+    if (event.key === 'Escape' || event.key === 'Enter') {
+      event.preventDefault();
+      finish(event.key === 'Enter', true);
+    } else if (event.key === 'Tab') {
+      // Return focus to the opener before allowing normal keyboard navigation.
+      finish(true, true);
+    }
+  };
+  input.addEventListener('input', resize);
+  input.addEventListener('blur', commit);
+  input.addEventListener('pointerdown', event => event.stopPropagation());
+  document.addEventListener('pointerdown', handleOutsidePointer, true);
   document.addEventListener('keydown', handleKeyDown, true);
-  document.body.append(overlay);
-  input.focus();
-  input.select();
-  return close;
+  document.body.append(input);
+  reposition(options.position);
+  input.focus({ preventScroll: true });
+  input.setSelectionRange(input.value.length, input.value.length);
+  return { close: () => finish(false), commit, reposition };
 }

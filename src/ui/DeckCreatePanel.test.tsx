@@ -6,7 +6,7 @@ import { createEmptyDeck, type Deck } from '@/data/dataModels';
 import { DeckCreatePanel } from './DeckCreatePanel';
 
 const mocks = vi.hoisted(() => ({ fetchDeck: vi.fn(), dispatch: vi.fn() }));
-vi.mock('@/data/curiosaService', () => ({ fetchCuriosaDeck: mocks.fetchDeck }));
+vi.mock('@/data/sorceryDeckService', () => ({ fetchSorceryDeck: mocks.fetchDeck }));
 vi.mock('@/app/AppState', () => ({ useAppState: () => ({
   state: { cards: [
     { name: 'Animist', guardian: { type: 'Avatar' } },
@@ -82,7 +82,7 @@ describe('shared Add Deck flow', () => {
   });
 
   it('imports a SorceryTCG URL and retains its identity and boards', async () => {
-    const deck = createEmptyDeck('Remote deck', 'curiosa-source-id');
+    const deck = createEmptyDeck('Remote deck', 'sorcery-source-id');
     deck.boards.avatar.push({ name: 'Animist', quantity: 1 });
     mocks.fetchDeck.mockResolvedValue(deck);
     const onCreate = await render();

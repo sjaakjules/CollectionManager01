@@ -38,7 +38,10 @@ let stage: StageHarness;
 let anchor: SpriteData;
 let base: Point;
 function event(x: number, y: number, button = 0): FederatedPointerEvent {
-  return { globalX: x, globalY: y, button, pointerType: 'mouse', shiftKey: false, altKey: false } as FederatedPointerEvent;
+  const pointer: Partial<FederatedPointerEvent> = {
+    preventDefault: vi.fn(), globalX: x, globalY: y, button, pointerType: 'mouse', shiftKey: false, altKey: false,
+  };
+  return pointer as FederatedPointerEvent;
 }
 
 beforeEach(() => {
@@ -80,6 +83,44 @@ beforeEach(() => {
     getZoneCardAtPosition: vi.fn(() => anchor), getLabelAtPosition: vi.fn(() => null),
     getCardAtPosition: vi.fn(() => null), getZoneAtPosition: vi.fn(() => null),
     lastClickTime: 0, lastZoneCardClickTime: 0,
+  });
+});
+
+describe('empty canvas label gestures', () => {
+  function emptyCanvas() {
+    const addLabelAtPosition = vi.fn();
+    Object.assign(stage, {
+      getZoneCardAtPosition: () => null,
+      startSelectionBox: vi.fn(), endSelectionBox: vi.fn(),
+      setStacksDropVisual: vi.fn(), addLabelAtPosition,
+    });
+    return addLabelAtPosition;
+  }
+  it('creates on the second empty click, including empty deck space above catalogue cards', () => {
+    const create = emptyCanvas();
+    Object.assign(stage, { getZoneAtPosition: () => stage.canvasAreas[0], getCardAtPosition: () => 'behind-deck' });
+    stage.onPointerDown(event(200, 200)); stage.onPointerUp(event(200, 200));
+    expect(create).not.toHaveBeenCalled();
+    const second = event(200, 200);
+    stage.onPointerDown(second);
+    expect(second.preventDefault).toHaveBeenCalledOnce();
+    expect(create).toHaveBeenCalledExactlyOnceWith({ x: 200, y: 200 });
+  });
+  it('does not confuse a marquee, pan, or far-away click with double-click creation', () => {
+    const create = emptyCanvas();
+    stage.onPointerDown(event(200, 200)); stage.onPointerUp(event(400, 400));
+    stage.onPointerDown(event(400, 400)); stage.onPointerUp(event(400, 400));
+    stage.onPointerDown(event(400, 400, 2)); stage.onPointerUp(event(420, 420, 2));
+    stage.onPointerDown(event(400, 400)); stage.onPointerUp(event(400, 400));
+    stage.onPointerDown(event(500, 500));
+    expect(create).not.toHaveBeenCalled();
+  });
+  it('routes the selected label cross to label deletion before any overlapping card', () => {
+    const remove = vi.fn();
+    Object.assign(stage, { getLabelDeleteTarget: () => 'label', deleteLabel: remove });
+    stage.onPointerDown(event(500, 500));
+    expect(remove).toHaveBeenCalledExactlyOnceWith('label');
+    expect(stage.pendingZoneCardClick).toBeNull();
   });
 });
 

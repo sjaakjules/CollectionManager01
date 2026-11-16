@@ -1,0 +1,367 @@
+{
+  "source": "photo-7.jpg",
+  "sourceSize": [
+    3840,
+    2880
+  ],
+  "rotate": -90,
+  "portraitSize": [
+    744,
+    1039
+  ],
+  "cornersOrder": "top-left, top-right, bottom-right, bottom-left, after rotation",
+  "cards": [
+    {
+      "name": "Research",
+      "corners": [
+        [
+          132,
+          122
+        ],
+        [
+          708,
+          113
+        ],
+        [
+          708,
+          886
+        ],
+        [
+          139,
+          898
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Jussi Puffins",
+      "corners": [
+        [
+          787,
+          110
+        ],
+        [
+          1349,
+          65
+        ],
+        [
+          1382,
+          852
+        ],
+        [
+          804,
+          883
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Lone Wolf",
+      "corners": [
+        [
+          1435,
+          55
+        ],
+        [
+          2016,
+          74
+        ],
+        [
+          2009,
+          842
+        ],
+        [
+          1418,
+          828
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Stomping Mammoth",
+      "corners": [
+        [
+          2170,
+          70
+        ],
+        [
+          2750,
+          24
+        ],
+        [
+          2825,
+          806
+        ],
+        [
+          2230,
+          845
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Polar Shift",
+      "corners": [
+        [
+          180,
+          974
+        ],
+        [
+          761,
+          982
+        ],
+        [
+          737,
+          1790
+        ],
+        [
+          149,
+          1786
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Arctic Fox",
+      "corners": [
+        [
+          900,
+          926
+        ],
+        [
+          1483,
+          922
+        ],
+        [
+          1490,
+          1742
+        ],
+        [
+          898,
+          1738
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Frostbolt",
+      "corners": [
+        [
+          1498,
+          890
+        ],
+        [
+          2074,
+          838
+        ],
+        [
+          2143,
+          1661
+        ],
+        [
+          1543,
+          1709
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Hibernal Legion",
+      "corners": [
+        [
+          2165,
+          840
+        ],
+        [
+          2758,
+          845
+        ],
+        [
+          2808,
+          1656
+        ],
+        [
+          2165,
+          1668
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Frost Breath",
+      "corners": [
+        [
+          96,
+          1814
+        ],
+        [
+          677,
+          1812
+        ],
+        [
+          670,
+          2657
+        ],
+        [
+          72,
+          2662
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Runeling",
+      "corners": [
+        [
+          845,
+          1759
+        ],
+        [
+          1428,
+          1738
+        ],
+        [
+          1471,
+          2582
+        ],
+        [
+          869,
+          2604
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Swealand Longship",
+      "corners": [
+        [
+          1548,
+          1759
+        ],
+        [
+          2138,
+          1740
+        ],
+        [
+          2182,
+          2590
+        ],
+        [
+          1570,
+          2604
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Slide",
+      "corners": [
+        [
+          2194,
+          1752
+        ],
+        [
+          2794,
+          1721
+        ],
+        [
+          2868,
+          2570
+        ],
+        [
+          2254,
+          2609
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Shatter",
+      "corners": [
+        [
+          113,
+          2674
+        ],
+        [
+          710,
+          2676
+        ],
+        [
+          708,
+          3566
+        ],
+        [
+          94,
+          3564
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Highgate Guide",
+      "corners": [
+        [
+          782,
+          2642
+        ],
+        [
+          1382,
+          2647
+        ],
+        [
+          1380,
+          3530
+        ],
+        [
+          761,
+          3545
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "A Yeti So Shy",
+      "corners": [
+        [
+          1392,
+          2690
+        ],
+        [
+          1999,
+          2676
+        ],
+        [
+          2047,
+          3559
+        ],
+        [
+          1411,
+          3593
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Jormungand",
+      "corners": [
+        [
+          2153,
+          2650
+        ],
+        [
+          2770,
+          2676
+        ],
+        [
+          2767,
+          3583
+        ],
+        [
+          2143,
+          3552
+        ]
+      ],
+      "landscape": false
+    }
+  ]
+}

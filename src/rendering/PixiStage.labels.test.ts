@@ -69,6 +69,8 @@ describe('deck label interactions', () => {
     stage.getLabelTarget.mockReturnValue(stage.canvasLabels[0]);
     stage.applyLabelDrop([required(area.cards[1])], area, area, { x: 480, y: 550 }, false);
     expect(required(area.cards[1]).labelId).toBe('label');
+    expect(required(area.cards[1]).y).toBeGreaterThan(580);
+    expect(required(area.cards[0])).toMatchObject({ x: 500, y: 600 });
   });
   it('deleting a label keeps cards and releases direct members', () => {
     stage.deleteLabel('label');

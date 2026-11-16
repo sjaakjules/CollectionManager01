@@ -27,12 +27,12 @@ These are the scripts currently exposed through `package.json`:
 | `pnpm cards:atlas:all` | `cards:atlas` and `cards:atlas:medium` | Generate both atlas tiers. |
 | `pnpm cards:thumbs+atlas` | `cards:thumbs` and `cards:atlas:all` | Generate standalone thumbnails and both atlas tiers. |
 | `pnpm sorcery:request` | `scripts/sorcery-request.mjs` | Download one response through the shared host throttle. |
-| `pnpm sorcery:decks` | `scripts/fetch-curiosa-decks.mjs` | Download decklists through the shared host throttle. |
-| `pnpm sorcery:search-decks` | `scripts/search-curiosa-decks.mjs` | Search SorceryTCG sequentially and archive matching decks. |
-| `pnpm sorcery:competitive-decks` | `scripts/search-curiosa-decks.mjs --preset competitive-2026` | Refresh competition decks and rebuild Deck Lookup. |
-| `pnpm curiosa:decks` | `scripts/fetch-curiosa-decks.mjs` | Download decklists from input files into an archive. |
-| `pnpm curiosa:search-decks` | `scripts/search-curiosa-decks.mjs` | Legacy alias for the SorceryTCG search command. |
+| `pnpm sorcery:decks` | `scripts/fetch-sorcery-decks.mjs` | Download decklists through the shared host throttle. |
+| `pnpm sorcery:search-decks` | `scripts/search-sorcery-decks.mjs` | Search SorceryTCG sequentially and archive matching decks. |
+| `pnpm sorcery:competitive-decks` | `scripts/search-sorcery-decks.mjs --preset competitive-2026` | Refresh competition decks and rebuild Deck Lookup. |
+| `pnpm sorcery:seed-decks` | `scripts/build-guest-seed-decks.mjs` | Build bundled guest seeds from the saved archive. |
 | `pnpm deck-styles:build` | `scripts/build-deck-style-associations.mjs` | Build the Deck Lookup and deck-style card score asset. |
+| `pnpm analytics:import <file>` | `scripts/import-play-sorcery-analytics.mjs` | Validate a saved Play Sorcery Online response offline and archive it locally. See [the analytics workflow](play-sorcery-analytics.md). |
 
 Helper scripts that are not package commands:
 
@@ -106,7 +106,7 @@ Runs the Vitest test suite.
 pnpm test
 ```
 
-This includes the script tests such as Curiosa archive handling, association
+This includes the script tests such as Sorcery archive handling, association
 generation, and deployment asset manifest logic.
 
 ## SorceryTCG Deck Archives
@@ -134,10 +134,9 @@ Reuse the downloaded file for subsequent validation and archive commands.
 
 ### Archive command compatibility
 
-The `pnpm sorcery:decks`, `pnpm sorcery:search-decks`, and
-`pnpm sorcery:competitive-decks` commands are the current names. Existing
-`curiosa:*` commands and `--curiosa-base-url` remain aliases. The upstream is
-SorceryTCG for both names. Imports use one `deck.get` request; search follows
+Use `pnpm sorcery:decks`, `pnpm sorcery:search-decks`, and
+`pnpm sorcery:competitive-decks`, with `--sorcery-base-url` when needed.
+Retired commands, hosts and proxy aliases have been removed. Imports use one `deck.get` request; search follows
 `nextCursor` until it is absent, because the old `deck.count` endpoint is gone.
 The old `relevance` search option now selects SorceryTCG's popularity order;
 `latest` selects update time. Search audit counts are totals discovered so far.
@@ -207,7 +206,7 @@ additional labels; reviewing them required no further upstream calls.
 Event seasons written directly after a name,
 such as `SorceryCon26`, take priority over historical years in a primer.
 
-### `pnpm curiosa:search-decks`
+### `pnpm sorcery:search-decks`
 
 Searches SorceryTCG, saves a search snapshot, then downloads matching decklists
 into an archive.
@@ -215,7 +214,7 @@ into an archive.
 Common command:
 
 ```sh
-pnpm curiosa:search-decks --query cornerstone --output offlineData/deckArchive.json --skip-processed
+pnpm sorcery:search-decks --query cornerstone --output offlineData/deckArchive.json --skip-processed
 ```
 
 Useful options:
@@ -256,29 +255,29 @@ Search snapshot behavior:
 Example multi-query workflow:
 
 ```sh
-pnpm curiosa:search-decks --query cornerstone --output offlineData/deckArchive.json --search-output offlineData/search.cornerstone.json --skip-processed
-pnpm curiosa:search-decks --query riptide --output offlineData/deckArchive.json --search-output offlineData/search.riptide.json --skip-processed
-pnpm curiosa:search-decks --query battlemage --output offlineData/deckArchive.json --search-output offlineData/search.battlemage.json --skip-processed
+pnpm sorcery:search-decks --query cornerstone --output offlineData/deckArchive.json --search-output offlineData/search.cornerstone.json --skip-processed
+pnpm sorcery:search-decks --query riptide --output offlineData/deckArchive.json --search-output offlineData/search.riptide.json --skip-processed
+pnpm sorcery:search-decks --query battlemage --output offlineData/deckArchive.json --search-output offlineData/search.battlemage.json --skip-processed
 ```
 
 All three commands append/merge into `offlineData/deckArchive.json` by deck ID
 and reuse `offlineData/deckArchive.json.skipped.json` unless you pass a
 different `--skipped-output`.
 
-### `pnpm curiosa:decks`
+### `pnpm sorcery:decks`
 
 Downloads decklists from one or more input JSON files into an archive.
 
 Common command:
 
 ```sh
-pnpm curiosa:decks --input tmp/Search_SCG.json --output offlineData/deckArchive.json --skip-processed
+pnpm sorcery:decks --input tmp/Search_SCG.json --output offlineData/deckArchive.json --skip-processed
 ```
 
 Multiple input files can be passed by repeating `--input`:
 
 ```sh
-pnpm curiosa:decks --input tmp/search-a.json --input tmp/search-b.json --output offlineData/deckArchive.json --skip-processed
+pnpm sorcery:decks --input tmp/search-a.json --input tmp/search-b.json --output offlineData/deckArchive.json --skip-processed
 ```
 
 Useful options:
@@ -650,8 +649,8 @@ Current script-related test files:
 
 ```txt
 scripts/build-card-associations.test.mjs
-scripts/fetch-curiosa-decks.test.mjs
-scripts/search-curiosa-decks.test.mjs
+scripts/fetch-sorcery-decks.test.mjs
+scripts/search-sorcery-decks.test.mjs
 scripts/lib/deploy-assets.test.mjs
 ```
 
@@ -672,8 +671,8 @@ pnpm test scripts/build-card-associations.test.mjs
 ### Update Deck Data And Deck Lookup
 
 ```sh
-pnpm curiosa:search-decks --query cornerstone --output offlineData/deckArchive.json --search-output offlineData/search.cornerstone.json --skip-processed
-pnpm curiosa:search-decks --query riptide --output offlineData/deckArchive.json --search-output offlineData/search.riptide.json --skip-processed
+pnpm sorcery:search-decks --query cornerstone --output offlineData/deckArchive.json --search-output offlineData/search.cornerstone.json --skip-processed
+pnpm sorcery:search-decks --query riptide --output offlineData/deckArchive.json --search-output offlineData/search.riptide.json --skip-processed
 pnpm deck-styles:build
 pnpm test
 pnpm typecheck

@@ -2,8 +2,42 @@ import { describe, expect, it } from 'vitest';
 import { normalizeDeckBoards, normalizeUserDataBoards } from './boardMigration';
 import { createEmptyDeck, createGuestUserData, type UserData } from './dataModels';
 import { appReducer, initialAppState } from '@/app/AppState';
+import { mergeSeedDecks } from './seedDecks';
+import { extractDeckId } from './sorceryDeckSource';
 
 describe('Collection board migration', () => {
+  it('migrates retired deck identities and photographed card names in both guest and account data', () => {
+    for (const name of ['Guest', 'Alice']) {
+      const before: UserData = { ...createGuestUserData('user'), name,
+        decks: [{ ...createEmptyDeck('My edits', 'curiosa-source'), boards: {
+          avatar: [], collection: [], maybeboard: [], mainboard: [{ name: 'Reed-cord Measurer', quantity: 2 }],
+        } }],
+        collection: [{ name: 'Reed-cord Measurer', quantity: 3 }],
+        favouriteDeckIds: ['curiosa-source'], removedDecks: { 'curiosa-deleted': '2026-11-16T00:00:00Z' },
+        canvasAreas: [{ id: 'area', deckId: 'curiosa-source', type: 'deck', name: 'My edits', pinned: true,
+          bounds: { x: 0, y: 0, width: 1000, height: 1000 },
+          cards: [{ id: 'copy', cardName: 'Reed-cord Measurer', x: 12, y: 34, board: 'mainboard' }],
+          deckVariants: [{ id: 'variant', name: 'Local variant', activeCardIds: ['copy'] }],
+        }],
+      };
+      const saved = JSON.stringify(before);
+      const migrated = normalizeUserDataBoards(before);
+      expect(migrated.decks[0]?.id).toBe('sorcery-source');
+      expect(migrated.decks[0]?.boards.mainboard).toEqual([{ name: 'Reed Cord Measurer', quantity: 2 }]);
+      expect(migrated.collection).toEqual([{ name: 'Reed Cord Measurer', quantity: 3 }]);
+      expect(migrated.favouriteDeckIds).toEqual(['sorcery-source']);
+      expect(migrated.removedDecks).toEqual({ 'sorcery-deleted': '2026-11-16T00:00:00Z' });
+      expect(migrated.canvasAreas?.[0]).toMatchObject({ id: 'area', deckId: 'sorcery-source',
+        cards: [{ id: 'copy', cardName: 'Reed Cord Measurer', x: 12, y: 34 }],
+        deckVariants: before.canvasAreas?.[0]?.deckVariants,
+      });
+      expect(mergeSeedDecks(migrated, [createEmptyDeck('Seed', 'sorcery-source'), createEmptyDeck('Deleted seed', 'sorcery-deleted')]).addedDeckNames).toEqual([]);
+      expect(normalizeUserDataBoards(migrated)).toEqual(migrated);
+      expect(JSON.stringify(before)).toBe(saved);
+    }
+    // The storage migration is not a live URL alias.
+    expect(extractDeckId('https://curiosa.io/decks/source')).toBe('');
+  });
   it('upgrades old guest and account snapshots without moving cards or losing variants and labels', () => {
     for (const name of ['Guest', 'Alice']) {
       const legacy = {

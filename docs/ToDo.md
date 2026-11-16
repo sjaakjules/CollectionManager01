@@ -2,7 +2,9 @@
 
 ## Sorcery Collection Manager
 
-Based on implementation phases from CodePlan.md. Tasks organized by phase with completion status.
+Historical implementation checklist from CodePlan.md. Current catalogue and upstream behavior are documented in [the integration guide](sorcery-deck-integration.md).
+
+16 November 2026: official Frost Mage Vs. Lavamancer metadata loaded; avatars have a leading catalogue section; selected cards support quick add to Main, Collection or Maybe. Official artwork replacement and atlas rebuilding are pending the owner’s signal.
 
 ---
 
@@ -45,7 +47,7 @@ Based on implementation phases from CodePlan.md. Tasks organized by phase with c
 | Deck editing (add/remove) | Done   | Double-click interactions                               |
 | Board selection           | Done   | Main/Collection/avatar/Maybe                   |
 | Quantity overlays         | Done   | Color-coded based on collection                         |
-| Export to .txt            | Done   | `importExport.ts` with Curiosa format                   |
+| Export to .txt            | Done   | `importExport.ts` with Sorcery format                   |
 | Import from .txt          | Done   | Parse with unknown card highlighting                    |
 
 **Phase 2 Remaining:**
@@ -128,7 +130,7 @@ These items are explicitly excluded from MVP per PDR section 10:
 - [ ] Full filtering system (type, element, rarity, cost)
 - [ ] Collection tracking with import from external sources
 - [ ] Deck sharing via URL
-- [ ] Curiosa.io API integration
+- [ ] Sorcery.io API integration
 - [ ] Card image caching strategy
 - [ ] Multiple deck comparison view
 - [ ] Deck archetype detection

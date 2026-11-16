@@ -3,7 +3,7 @@
  *
  * Loads pre-downloaded decks from a bundled static asset and merges them into
  * guest user data exactly once. Seed decks carry deterministic ids
- * (`curiosa-<curiosaDeckId>`, produced by `scripts/build-guest-seed-decks.mjs`),
+ * (`sorcery-<sorceryDeckId>`, produced by `scripts/build-guest-seed-decks.mjs`),
  * so re-running startup never duplicates them and never overwrites local edits
  * made to a previously seeded deck.
  *

@@ -4,7 +4,7 @@ import { createEmptyDeck } from '@/data/dataModels';
 import {
   exportDeckToText,
   importDeckFromText,
-  importFromCuriosaDeck,
+  importFromSorceryDeck,
 } from '@/data/importExport';
 
 function card(name: string, type: CardType, rarity: CardRarity = 'Ordinary'): Card {
@@ -36,7 +36,7 @@ describe('deck import/export', () => {
     card('Skeleton', 'Minion'),
   ];
 
-  it('parses Curiosa-style text, routes avatars, and reports unknown cards', () => {
+  it('parses Sorcery-style text, routes avatars, and reports unknown cards', () => {
     const result = importDeckFromText(
       [
         '// Mainboard',
@@ -100,10 +100,10 @@ describe('deck import/export', () => {
     ]);
   });
 
-  it('keeps unknown Curiosa cards visible in import diagnostics', () => {
-    const result = importFromCuriosaDeck(
+  it('keeps unknown Sorcery cards visible in import diagnostics', () => {
+    const result = importFromSorceryDeck(
       {
-        name: 'Curiosa Deck',
+        name: 'Sorcery Deck',
         author: 'Tester',
         mainboard: [
           { name: 'Missing Card', quantity: 1 },
@@ -132,11 +132,11 @@ describe('deck import/export', () => {
     ]);
   });
 
-  it('keeps a provided Curiosa deck id and canonicalizes card spellings', () => {
-    const result = importFromCuriosaDeck(
+  it('keeps a provided Sorcery deck id and canonicalizes card spellings', () => {
+    const result = importFromSorceryDeck(
       {
-        id: 'curiosa-abc123',
-        name: 'Curiosa Deck',
+        id: 'sorcery-abc123',
+        name: 'Sorcery Deck',
         author: '',
         mainboard: [{ name: 'fireball', quantity: 2 }],
         avatar: [],
@@ -146,7 +146,7 @@ describe('deck import/export', () => {
       cards,
     );
 
-    expect(result.deck.id).toBe('curiosa-abc123');
+    expect(result.deck.id).toBe('sorcery-abc123');
     expect(result.deck.author).toBeUndefined();
     expect(result.unknownCards).toEqual([]);
     expect(result.deck.boards.mainboard).toEqual([{ name: 'Fireball', quantity: 2 }]);

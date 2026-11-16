@@ -1,5 +1,5 @@
 /**
- * Deck import/export for SorceryTCG and legacy Curiosa compatibility
+ * Deck import/export for SorceryTCG
  *
  * Export format: "quantity name" per line (e.g., "4 Cave Trolls")
  * Import: Parse text, match card names, highlight unknown cards
@@ -7,12 +7,13 @@
  * Related files:
  * - `src/ui/BottomPanel.tsx` (import/export UI actions)
  * - `src/data/dataModels.ts` (deck/card structures)
- * - `src/data/curiosaService.ts` (Curiosa deck ingestion)
+ * - `src/data/sorceryDeckService.ts` (Sorcery deck ingestion)
  */
 
 import type { Card, Deck, DeckCard, DeckBoards } from './dataModels';
 import { createEmptyDeck } from './dataModels';
 import { generateUUID } from '@/utils/uuid';
+import { canonicalCardName } from './catalogueMigrations';
 import { isBlockedTokenCardName } from '@/data/tokenCards';
 
 // ============================================================================
@@ -20,7 +21,7 @@ import { isBlockedTokenCardName } from '@/data/tokenCards';
 // ============================================================================
 
 /**
- * Export all deck boards into Curiosa-style plain text.
+ * Export all deck boards into Sorcery-style plain text.
  *
  * Inputs:
  * - `deck`: Deck to serialize.
@@ -194,7 +195,7 @@ export function importDeckFromText(
       return;
     }
 
-    const normalizedName = name.toLowerCase();
+    const normalizedName = canonicalCardName(name).toLowerCase();
     if (!cardNames.has(normalizedName)) {
       unknownCards.push(name);
       addCardToBoard(currentBoard, name, quantity);
@@ -239,37 +240,37 @@ export function importDeckFromText(
 }
 
 // ============================================================================
-// Curiosa.io Integration
+// Sorcery.io Integration
 // ============================================================================
 
 /**
- * Board payload returned by the Curiosa import service.
+ * Board payload returned by the Sorcery import service.
  */
-export interface CuriosaDeckData {
-  /** Stable deck id to keep (e.g. `curiosa-<id>`); a UUID is generated when omitted. */
+export interface SorceryDeckData {
+  /** Stable deck id to keep (e.g. `sorcery-<id>`); a UUID is generated when omitted. */
   id?: string;
   name: string;
   author: string;
   mainboard: DeckCard[];
   avatar: DeckCard[];
   collection?: DeckCard[];
-  /** Accepted only at the legacy Curiosa import boundary. */
+  /** Accepted only when reading older exported deck data. */
   sideboard?: DeckCard[];
   maybeboard: DeckCard[];
 }
 
 /**
- * Convert Curiosa deck payload into internal `ImportResult`.
+ * Convert Sorcery deck payload into internal `ImportResult`.
  *
  * Inputs:
- * - `data`: Curiosa board payload.
+ * - `data`: Sorcery board payload.
  * - `cardDatabase`: Known cards for canonical name matching.
  *
  * Outputs:
  * - Returns `{ deck, unknownCards, warnings }` ready for reducer insertion.
  */
-export function importFromCuriosaDeck(
-  data: CuriosaDeckData,
+export function importFromSorceryDeck(
+  data: SorceryDeckData,
   cardDatabase: Card[]
 ): ImportResult {
   const deck = createEmptyDeck(data.name, data.id ?? generateUUID());
@@ -289,7 +290,7 @@ export function importFromCuriosaDeck(
         warnings.push(`Token cards cannot be added to decks: ${card.name}`);
         continue;
       }
-      const normalizedName = card.name.toLowerCase();
+      const normalizedName = canonicalCardName(card.name).toLowerCase();
       if (!cardNames.has(normalizedName)) {
         unknownCards.push(card.name);
         deck.boards[board].push({

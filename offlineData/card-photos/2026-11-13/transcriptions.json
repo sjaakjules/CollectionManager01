@@ -1,0 +1,4220 @@
+{
+  "setName": "Frostmage vs Lavamancer",
+  "recordedAt": "2026-11-13",
+  "cards": [
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Ancient Thaw",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Genesis → Cast an ⑧ Beast from your collection here, disabled until your next turn.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "None",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Genesis → Cast an ⑧ Beast from your collection here, disabled until your next turn.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-ancient_thaw",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Michal Nagypál",
+                "flavorText": "",
+                "typeText": "An Elite Site where the first age stirs"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Deep Snow",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Site",
+          "rulesText": "Trap ① → Tap minions at target adjacent site. They don't untap the next time they would.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Site",
+              "rulesText": "Trap ① → Tap minions at target adjacent site. They don't untap the next time they would.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-deep_snow",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "An Ordinary Site of impeding powder"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Permafrost",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Disable effects on minions here are permanent, but are removed if they leave.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Disable effects on minions here are permanent, but are removed if they leave.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-permafrost",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Zohn Dee",
+                "flavorText": "",
+                "typeText": "An Elite Site and final resting place"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "officialGuardianHash": "340eb91f",
+      "card": {
+        "name": "Winter River",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Site",
+          "rulesText": "Genesis → Look at your next spell. You may put it on the bottom of your spellbook.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "River",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Site",
+              "rulesText": "Genesis → Look at your next spell. You may put it on the bottom of your spellbook.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-winter_river",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Matt Tames",
+                "flavorText": "",
+                "typeText": "An Ordinary Site of cold crisp recovery"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Springstem Meadow",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Site",
+          "rulesText": "Trap ① → Fling a unit atop this site onto a nearby site.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Site",
+              "rulesText": "Trap ① → Fling a unit atop this site onto a nearby site.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-springstem_meadow",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Scott Kirschner",
+                "flavorText": "",
+                "typeText": "An Ordinary Site of buoyant jounce"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Avalanche",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Trap ② → Snow flows forward, carrying and disabling surface units until your next turn.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Trap ② → Snow flows forward, carrying and disabling surface units until your next turn.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-avalanche",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Michal Nagypál",
+                "flavorText": "",
+                "typeText": "An Elite Site and the fastest way down"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Icicle Dome",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Trap ① → Destroy target adjacent disabled or immobile minion.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Trap ① → Destroy target adjacent disabled or immobile minion.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-icicle_dome",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Brian Smith",
+                "flavorText": "",
+                "typeText": "An Elite Site puts them out of their misery"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": [],
+      "verification": [
+        {
+          "url": "https://sorcery.moxfield.com/cards/fro/booster/standard/icicle_dome",
+          "checkedAt": "2026-11-13",
+          "fields": [
+            "name",
+            "guardian.rulesText",
+            "artist",
+            "typeText"
+          ],
+          "kind": "independent-card-catalogue"
+        }
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Tundra",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Your (A) and (W) are equal to the higher of the two.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air, Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Your (A) and (W) are equal to the higher of the two.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-tundra",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Mark Poole",
+                "flavorText": "",
+                "typeText": "An Elite Site where breath becomes mist"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": [],
+      "verification": [
+        {
+          "url": "https://sorcerytcg.gg/fantasy-legend-mark-poole-joins-sorcery-contested-realm/",
+          "checkedAt": "2026-11-13",
+          "fields": [
+            "artist"
+          ],
+          "kind": "publisher-article-reproduction"
+        }
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-5.jpg",
+      "card": {
+        "name": "Frost Mage",
+        "guardian": {
+          "rarity": null,
+          "type": "Avatar",
+          "rulesText": "Tap → Play or draw a site.\n(A)(A)(W)(W), ②, Once on your turn → Encase target nearby minion in ice. It is disabled and takes no damage until your next turn.",
+          "cost": null,
+          "attack": 1,
+          "defence": 1,
+          "life": 20,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "None",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": null,
+              "type": "Avatar",
+              "rulesText": "Tap → Play or draw a site.\n(A)(A)(W)(W), ②, Once on your turn → Encase target nearby minion in ice. It is disabled and takes no damage until your next turn.",
+              "cost": null,
+              "attack": 1,
+              "defence": 1,
+              "life": 20,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-frost_mage",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Melissa A. Benson",
+                "flavorText": "",
+                "typeText": "Your Avatar knocks them out cold"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Research",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Magic",
+          "rulesText": "Draw two spells.",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Magic",
+              "rulesText": "Draw two spells.",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-research",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Pedro Ferreira",
+                "flavorText": "",
+                "typeText": "The Ordinary Magic behind every spell"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Jussi Puffins",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Airborne, Submerge\nCan move as if the opposite edges of the realm were connected.",
+          "cost": 2,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Air, Water",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Airborne, Submerge\nCan move as if the opposite edges of the realm were connected.",
+              "cost": 2,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-jussi_puffins",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "Exceptional Beasts of curious migration"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Airborne",
+          "Submerge"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Lone Wolf",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Stealth\nCan and must be cast to any location without allies nearby.",
+          "cost": 3,
+          "attack": 3,
+          "defence": 3,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Stealth\nCan and must be cast to any location without allies nearby.",
+              "cost": 3,
+              "attack": 3,
+              "defence": 3,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-lone_wolf",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Truitt Parrish",
+                "flavorText": "",
+                "typeText": "Exceptional Beast howls to none"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Stealth"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Stomping Mammoth",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "While attacking, the Mammoth's excess damage is dealt to its site.",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "While attacking, the Mammoth's excess damage is dealt to its site.",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-stomping_mammoth",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Juan Machuca",
+                "flavorText": "",
+                "typeText": "Trampled by an Exceptional Beast!"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Aria Wraith",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Stealth\nBreak Stealth → Destroy all artifacts and disabled minions nearby.",
+          "cost": 3,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Stealth\nBreak Stealth → Destroy all artifacts and disabled minions nearby.",
+              "cost": 3,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-aria_wraith",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Melissa A. Benson",
+                "flavorText": "",
+                "typeText": "An Elite Spirit of fracturing chorus"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Stealth"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": [],
+      "verification": [
+        {
+          "url": "https://sorcery.moxfield.com/cards/fro/booster/standard/aria_wraith",
+          "checkedAt": "2026-11-13",
+          "fields": [
+            "name",
+            "guardian.rulesText",
+            "artist",
+            "typeText"
+          ],
+          "kind": "independent-card-catalogue"
+        }
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Polar Shift",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Magic",
+          "rulesText": "Shift the realm north or south, moving all sites one step as if the top and bottom edges were connected. Draw a spell.",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Air, Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Magic",
+              "rulesText": "Shift the realm north or south, moving all sites one step as if the top and bottom edges were connected. Draw a spell.",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-polar_shift",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Emil Idzikowski",
+                "flavorText": "",
+                "typeText": "Unique Magic confounds the compass"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Arctic Fox",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Stealth, Can’t be disabled\n①, Banish this from your cemetery → An ally gains “Stealth, Can’t be disabled.”",
+          "cost": 1,
+          "attack": 1,
+          "defence": 1,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Stealth, Can’t be disabled\n①, Banish this from your cemetery → An ally gains “Stealth, Can’t be disabled.”",
+              "cost": 1,
+              "attack": 1,
+              "defence": 1,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-arctic_fox",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Liz Danforth",
+                "flavorText": "",
+                "typeText": "An Exceptional Beast of cozy cover"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Stealth"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Frostbolt",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Magic",
+          "rulesText": "Shoot a 3-damage projectile. On impact, all adjacent units are disabled until your next turn.",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Air, Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Magic",
+              "rulesText": "Shoot a 3-damage projectile. On impact, all adjacent units are disabled until your next turn.",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-frostbolt",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "Flash-frozen by Exceptional Magic!"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Hibernal Legion",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "At the end of your turn, freeze this site and other minions here. They’re disabled until the Legion leaves the realm.",
+          "cost": 6,
+          "attack": 5,
+          "defence": 5,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 3
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "At the end of your turn, freeze this site and other minions here. They’re disabled until the Legion leaves the realm.",
+              "cost": 6,
+              "attack": 5,
+              "defence": 5,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 3
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-hibernal_legion",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Dan Seagrave",
+                "flavorText": "",
+                "typeText": "Elite Spirits bring a boundless brume"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "When the Peaks Fell",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Magic",
+          "rulesText": "Choose any number of allied sites. Snow rolls forward from them, picking up surface units in its path and carrying them as far as possible. When it stops, they take 3 damage and are disabled until your next turn.",
+          "cost": 5,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 3,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Magic",
+              "rulesText": "Choose any number of allied sites. Snow rolls forward from them, picking up surface units in its path and carrying them as far as possible. When it stops, they take 3 damage and are disabled until your next turn.",
+              "cost": 5,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 3,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-when_the_peaks_fell",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "Unique Magic thunders down the mountain"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Man-made Ice Age",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Aura",
+          "rulesText": "Minions and artifacts atop affected sites are disabled.",
+          "cost": 6,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 3
+          }
+        },
+        "elements": "Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Aura",
+              "rulesText": "Minions and artifacts atop affected sites are disabled.",
+              "cost": 6,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 3
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-man_made_ice_age",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "All is frozen solid in this Unique Aura"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Full-tilt Goliaths",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Charge\nGenesis → Cover nearby sites with silencing snow until your next turn.",
+          "cost": 7,
+          "attack": 5,
+          "defence": 5,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Giant",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Charge\nGenesis → Cover nearby sites with silencing snow until your next turn.",
+              "cost": 7,
+              "attack": 5,
+              "defence": 5,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-full_tilt_goliaths",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Rodney Matthews",
+                "flavorText": "",
+                "typeText": "Elite Giants enjoy the thrill of the hill"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Charge"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Frost Breath",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Magic",
+          "rulesText": "May be cast by a Beast or Spirit.\nEach unit at affected locations takes damage and is disabled until your next turn.\nDamage diagram (● = caster):\n  1\n1 2 1\n  ●",
+          "cost": 4,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Magic",
+              "rulesText": "May be cast by a Beast or Spirit.\nEach unit at affected locations takes damage and is disabled until your next turn.\nDamage diagram (● = caster):\n  1\n1 2 1\n  ●",
+              "cost": 4,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-frost_breath",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Truitt Parrish",
+                "flavorText": "",
+                "typeText": "Exceptional Magic of winter’s kiss"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Runeling",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Spellcaster\nGenesis → Draws his own spell, which only he can cast.",
+          "cost": 2,
+          "attack": 1,
+          "defence": 1,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Spellcaster\nGenesis → Draws his own spell, which only he can cast.",
+              "cost": 2,
+              "attack": 1,
+              "defence": 1,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-runeling",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Pedro Ferreira",
+                "flavorText": "",
+                "typeText": "An Exceptional Mortal, newly etched"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Spellcaster"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Swealand Longship",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Once on your turn, may move to an adjacent water site.",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Once on your turn, may move to an adjacent water site.",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-swealand_longship",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Melissa A. Benson",
+                "flavorText": "",
+                "typeText": "Exceptional Mortals claim the shallows"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Slide",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Magic",
+          "rulesText": "Slide an ally or disabled enemy as far as possible in a cardinal direction. Draw a spell.",
+          "cost": 2,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Magic",
+              "rulesText": "Slide an ally or disabled enemy as far as possible in a cardinal direction. Draw a spell.",
+              "cost": 2,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-slide",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Paul Carrick",
+                "flavorText": "",
+                "typeText": "Exceptional Magic of glacial gliding"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Nanurluk",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Has Charge if there are Bears or sites in your cemetery.",
+          "cost": 6,
+          "attack": 6,
+          "defence": 6,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 3
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Spirit, Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Has Charge if there are Bears or sites in your cemetery.",
+              "cost": 6,
+              "attack": 6,
+              "defence": 6,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 3
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-nanurluk",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Brian Smith",
+                "flavorText": "",
+                "typeText": "A Unique Spirit Beast, blizzard given flesh"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Charge"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Frost Elemental",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Air and Water Spellcaster\nGenesis → Disable target adjacent unit until your next turn.",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Air, Water",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Air and Water Spellcaster\nGenesis → Disable target adjacent unit until your next turn.",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-frost_elemental",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Brian Smith",
+                "flavorText": "",
+                "typeText": "An Exceptional Spirit of bitter hatred"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Spellcaster"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Bearserker",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "(W)(W) — You may pay the difference in cost to transform a Mortal or Bear into Bearserker from hand, untapped.",
+          "cost": 5,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "(W)(W) — You may pay the difference in cost to transform a Mortal or Bear into Bearserker from hand, untapped.",
+              "cost": 5,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-bearserker",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Alan Pollack",
+                "flavorText": "",
+                "typeText": "An Exceptional Mortal with the heart of a Beast"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Shatter",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Magic",
+          "rulesText": "Destroy a nearby target artifact or disabled minion.",
+          "cost": 1,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Magic",
+              "rulesText": "Destroy a nearby target artifact or disabled minion.",
+              "cost": 1,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-shatter",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "Exceptional Magic breaks the ice"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Highgate Guide",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Nearby allies are Protected from sites.",
+          "cost": 2,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Nearby allies are Protected from sites.",
+              "cost": 2,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-highgate_guide",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Mattias Frisk",
+                "flavorText": "",
+                "typeText": "An Ordinary Mortal leads the way"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Protected"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "A Yeti So Shy",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Stealth, Outerbound",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Giant",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Stealth, Outerbound",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-a_yeti_so_shy",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Vincent Pompetti",
+                "flavorText": "Secretly alone, just letting others pass it by.",
+                "typeText": "An Elite Giant too scared to say hi"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Stealth",
+          "Outerbound"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-7.jpg",
+      "card": {
+        "name": "Jormungand",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Occupies all outer locations safely, and can’t be modified.\nOccupancy diagram (● = occupied location):\n● ● ● ● ●\n●       ●\n●       ●\n● ● ● ● ●",
+          "cost": 7,
+          "attack": 10,
+          "defence": 10,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 3
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Monster",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Occupies all outer locations safely, and can’t be modified.\nOccupancy diagram (● = occupied location):\n● ● ● ● ●\n●       ●\n●       ●\n● ● ● ● ●",
+              "cost": 7,
+              "attack": 10,
+              "defence": 10,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 3
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-jormungand",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Truitt Parrish",
+                "flavorText": "",
+                "typeText": "A Unique Monster girds the realm"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "The White Death",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Ranged 3, Stealth\nLethal while Stealthed.",
+          "cost": 2,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Ranged 3, Stealth\nLethal while Stealthed.",
+              "cost": 2,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-the_white_death",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Paul Carrick",
+                "flavorText": "",
+                "typeText": "A Unique Mortal with an iron-blue sight"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Ranged",
+          "Stealth",
+          "Lethal"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Hailstriker",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Ranged\nGenesis → Target an adjacent location. Each minion there takes 1 damage and is disabled until your next turn.",
+          "cost": 4,
+          "attack": 3,
+          "defence": 3,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Air, Water",
+        "subTypes": "Demon",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Ranged\nGenesis → Target an adjacent location. Each minion there takes 1 damage and is disabled until your next turn.",
+              "cost": 4,
+              "attack": 3,
+              "defence": 3,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-hailstriker",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Zohn Dee",
+                "flavorText": "",
+                "typeText": "An Elite Demon brings a boreal barrage"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Ranged"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-6.jpg",
+      "card": {
+        "name": "Sissi Marksmen",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Ranged\nMay shoot across the top and bottom edges of the realm.",
+          "cost": 2,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Ranged\nMay shoot across the top and bottom edges of the realm.",
+              "cost": 2,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-sissi_marksmen",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Truitt Parrish",
+                "flavorText": "",
+                "typeText": "Exceptional Mortals harry from on high"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Ranged"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "officialGuardianHash": "9c4f495d",
+      "card": {
+        "name": "Fireball",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Magic",
+          "rulesText": "Shoot a projectile. It explodes on impact, dealing damage to each unit at affected locations:\nDamage diagram (boxed centre = impact location):\n   2\n2 [4] 2\n   2",
+          "cost": 4,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Magic",
+              "rulesText": "Shoot a projectile. It explodes on impact, dealing damage to each unit at affected locations:\nDamage diagram (boxed centre = impact location):\n   2\n2 [4] 2\n   2",
+              "cost": 4,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-fireball",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Doug Kovacs",
+                "flavorText": "",
+                "typeText": "Exceptional Magic of deflagrant destruction"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Tusslin' Trolls",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "At the end of your turn, strike target adjacent minion for D6 damage.",
+          "cost": 5,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Giant",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "At the end of your turn, strike target adjacent minion for D6 damage.",
+              "cost": 5,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-tusslin_trolls",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Emil Idzikowski",
+                "flavorText": "",
+                "typeText": "Elite Giants form a fit of flailing fists"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Ash of Effort",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Magic",
+          "rulesText": "Sacrifice a site to draw three sites.",
+          "cost": 2,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Magic",
+              "rulesText": "Sacrifice a site to draw three sites.",
+              "cost": 2,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-ash_of_effort",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Scott Kirschner",
+                "flavorText": "They wanted more glitter, more glimmer, more gleam,\ntill the city grew thin from their terrible dream.",
+                "typeText": "Elite Magic of obscene incentive"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": [
+        "The small italic flavor couplet was completed from Corefield’s published transcription."
+      ],
+      "verification": [
+        {
+          "url": "https://sorcery.moxfield.com/cards/fro/booster/standard/ash_of_effort",
+          "checkedAt": "2026-11-13",
+          "fields": [
+            "flavorText",
+            "artist",
+            "guardian.rulesText",
+            "typeText"
+          ],
+          "kind": "independent-card-catalogue"
+        }
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Namira Cheetah",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Movement +3",
+          "cost": 2,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Movement +3",
+              "cost": 2,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-namira_cheetah",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Elvira Shakirova",
+                "flavorText": "Elastic and elegant, swift as a breeze—\nshe flows through savanna with effortless ease.",
+                "typeText": "An Ordinary Beast fleet of foot"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Movement"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Ground Slam",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Magic",
+          "rulesText": "An ally strikes its site. Deal 2 damage to other units at nearby sites.",
+          "cost": 4,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Earth, Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Magic",
+              "rulesText": "An ally strikes its site. Deal 2 damage to other units at nearby sites.",
+              "cost": 4,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-ground_slam",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Alan Pollack",
+                "flavorText": "",
+                "typeText": "Exceptional Magic drops the hammer"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Snapjaw Raptor",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Charge, Stealth",
+          "cost": 2,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Charge, Stealth",
+              "cost": 2,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-snapjaw_raptor",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Alan Pollack",
+                "flavorText": "No escaping this girl.",
+                "typeText": "An Exceptional Beast ever so clever"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Charge",
+          "Stealth"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Reed-cord Measurer",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Genesis → Play or draw a site.",
+          "cost": 3,
+          "attack": 1,
+          "defence": 1,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Genesis → Play or draw a site.",
+              "cost": 3,
+              "attack": 1,
+              "defence": 1,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-reed_cord_measurer",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Pedro Ferreira",
+                "flavorText": "",
+                "typeText": "An Exceptional Mortal sets the bounds"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Sunspear Tribe",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Once per game → Throw a projectile that deals 1 damage.",
+          "cost": 3,
+          "attack": 3,
+          "defence": 3,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Once per game → Throw a projectile that deals 1 damage.",
+              "cost": 3,
+              "attack": 3,
+              "defence": 3,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-sunspear_tribe",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Scott Kirschner",
+                "flavorText": "To flinch is to step closer to his point.",
+                "typeText": "Ordinary Mortals as inevitable as dawn"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Emberleaf Dryad",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Genesis → Play a site from the top of your atlas to an adjacent Rubble.",
+          "cost": 2,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Earth, Fire",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Genesis → Play a site from the top of your atlas to an adjacent Rubble.",
+              "cost": 2,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-emberleaf_dryad",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Elite Spirit of ash and bloom"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Terraform",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Magic",
+          "rulesText": "Replace sites in this column with ones from the top of their controller’s atlas, starting at your back row going forwards.",
+          "cost": 1,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 3,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Magic",
+              "rulesText": "Replace sites in this column with ones from the top of their controller’s atlas, starting at your back row going forwards.",
+              "cost": 1,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 3,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-terraform",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Elvira Shakirova",
+                "flavorText": "",
+                "typeText": "A realm reborn by Unique Magic"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Rite of Eruption",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Aura",
+          "rulesText": "Conjure to a single site. At the start of your turn, deal damage to each unit at affected sites, then destroy everything in this square:\nDamage diagram (boxed centre = conjured site):\n1  3  1\n3 [5] 3\n1  3  1",
+          "cost": 5,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Earth, Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Aura",
+              "rulesText": "Conjure to a single site. At the start of your turn, deal damage to each unit at affected sites, then destroy everything in this square:\nDamage diagram (boxed centre = conjured site):\n1  3  1\n3 [5] 3\n1  3  1",
+              "cost": 5,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-rite_of_eruption",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Mattias Frisk",
+                "flavorText": "",
+                "typeText": "A Unique Aura of pressurized trauma"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Chart",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Magic",
+          "rulesText": "Draw two sites.",
+          "cost": 2,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Magic",
+              "rulesText": "Draw two sites.",
+              "cost": 2,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-chart",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Francesca Baerald",
+                "flavorText": "",
+                "typeText": "Ordinary Magic to plan an expedition"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Lava Elemental",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Earth and Fire Spellcaster\nGenesis → Deal 2 damage to target adjacent unit.",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Earth, Fire",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Earth and Fire Spellcaster\nGenesis → Deal 2 damage to target adjacent unit.",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-lava_elemental",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Brian Smith",
+                "flavorText": "",
+                "typeText": "An Exceptional Spirit of seething desire"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Spellcaster"
+        ]
+      },
+      "uncertainFields": [
+        "image"
+      ],
+      "notes": [
+        "Artist verified against Corefield. Flat Realm Society overlaps the lower border in every supplied photo; the hidden border is not reconstructed."
+      ],
+      "verification": [
+        {
+          "url": "https://sorcery.moxfield.com/cards/fro/booster/standard/lava_elemental",
+          "checkedAt": "2026-11-13",
+          "fields": [
+            "artist",
+            "guardian.rulesText",
+            "typeText"
+          ],
+          "kind": "independent-card-catalogue"
+        }
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Southpaw Dyrodor",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Tap → Dyrodor swings its tail left to right, dealing damage to each unit at affected locations:\nDamage diagram (● = Dyrodor):\n3 2 1\n4 ●",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Tap → Dyrodor swings its tail left to right, dealing damage to each unit at affected locations:\nDamage diagram (● = Dyrodor):\n3 2 1\n4 ●",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-southpaw_dyrodor",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Melissa A. Benson",
+                "flavorText": "",
+                "typeText": "An Exceptional Beast with a sinister side"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Flametongue Newt",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Once on your turn, may just for fun, shoot a projectile that deals damage 1.",
+          "cost": 2,
+          "attack": 1,
+          "defence": 1,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Once on your turn, may just for fun, shoot a projectile that deals damage 1.",
+              "cost": 2,
+              "attack": 1,
+              "defence": 1,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-flametongue_newt",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Séverine Pineaux",
+                "flavorText": "",
+                "typeText": "An Ordinary Beast is fiery but cute"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Myrmidons",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Burrowing\nHas +1 power for each site in their span of land.",
+          "cost": 6,
+          "attack": 0,
+          "defence": 0,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 3,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Burrowing\nHas +1 power for each site in their span of land.",
+              "cost": 6,
+              "attack": 0,
+              "defence": 0,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 3,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-myrmidons",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Francesca Baerald",
+                "flavorText": "",
+                "typeText": "Elite Beasts go marching one by one"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Burrowing"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "King Krakalak",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Genesis → Sacrifice this site to deal damage to each other unit at affected sites:\nDamage diagram (boxed centre = sacrificed site):\n3  3  3\n3 [5] 3\n3  3  3",
+          "cost": 8,
+          "attack": 8,
+          "defence": 8,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 3,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Demon",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Genesis → Sacrifice this site to deal damage to each other unit at affected sites:\nDamage diagram (boxed centre = sacrificed site):\n3  3  3\n3 [5] 3\n3  3  3",
+              "cost": 8,
+              "attack": 8,
+              "defence": 8,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 3,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-king_krakalak",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Francesca Baerald",
+                "flavorText": "",
+                "typeText": "A Unique Demon of ruinous reign"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Dust Devil",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Movement +1\nTakes no damage while attacking.",
+          "cost": 3,
+          "attack": 2,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Demon",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Movement +1\nTakes no damage while attacking.",
+              "cost": 3,
+              "attack": 2,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-dust_devil",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Lindsey Crummett",
+                "flavorText": "",
+                "typeText": "An Exceptional Demon of blinding fury"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Movement"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Flat Realm Society",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Stealth\nEdges of the realm can’t be connected, crossed, or shifted.",
+          "cost": 3,
+          "attack": 3,
+          "defence": 3,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Stealth\nEdges of the realm can’t be connected, crossed, or shifted.",
+              "cost": 3,
+              "attack": 3,
+              "defence": 3,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-flat_realm_society",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Séverine Pineaux",
+                "flavorText": "",
+                "typeText": "Unique Mortals were right all along"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Stealth"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Slag Slug",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Whenever the Slug leaves a site, it deals 2 damage to units there.",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Earth, Fire",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Whenever the Slug leaves a site, it deals 2 damage to units there.",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-slag_slug",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Lindsey Crummett",
+                "flavorText": "",
+                "typeText": "An Exceptional Beast is very, very sorry"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Gnarled Laborers",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Untaps the first time they take damage each turn.",
+          "cost": 3,
+          "attack": 3,
+          "defence": 3,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Untaps the first time they take damage each turn.",
+              "cost": 3,
+              "attack": 3,
+              "defence": 3,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-gnarled_laborers",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Paul Carrick",
+                "flavorText": "",
+                "typeText": "Exceptional Mortals under the lash"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Pass-plug Serpent",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Burrowing\nWhenever an enemy enters the surface of a nearby allied site, if the Serpent is underground, it may unburrow there.",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Burrowing\nWhenever an enemy enters the surface of a nearby allied site, if the Serpent is underground, it may unburrow there.",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-pass_plug_serpent",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Rodney Matthews",
+                "flavorText": "",
+                "typeText": "Suddenly, an Elite Beast blocks the path!"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Burrowing"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "None Survive the Sun",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Aura",
+          "rulesText": "At the end of each turn, minions on the surface burn. Those here take 20 damage, those elsewhere take 1. Then the sun must move one step westward or it is dispelled.",
+          "cost": 6,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 3,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Aura",
+              "rulesText": "At the end of each turn, minions on the surface burn. Those here take 20 damage, those elsewhere take 1. Then the sun must move one step westward or it is dispelled.",
+              "cost": 6,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 3,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-none_survive_the_sun",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "You’d better run from this Unique Aura"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Stiff-pitch Witch",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Tap, Banish a dead minion → Target a location up to three steps away. Each unit there takes 2 damage.",
+          "cost": 4,
+          "attack": 4,
+          "defence": 4,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Tap, Banish a dead minion → Target a location up to three steps away. Each unit there takes 2 damage.",
+              "cost": 4,
+              "attack": 4,
+              "defence": 4,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-stiff_pitch_witch",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Scott Kirschner",
+                "flavorText": "",
+                "typeText": "Elite Spirits return to sender"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Spike Trap",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Site",
+          "rulesText": "Trap ① → Deal 3 damage to a unit here.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Site",
+              "rulesText": "Trap ① → Deal 3 damage to a unit here.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-spike_trap",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Bryon Wackwitz",
+                "flavorText": "",
+                "typeText": "An Ordinary Site of barbed betrayal"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Landslide",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Site",
+          "rulesText": "Trap ② → Swap this site with another adjacent site.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Site",
+              "rulesText": "Trap ② → Swap this site with another adjacent site.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-landslide",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Drew Tucker",
+                "flavorText": "",
+                "typeText": "An Ordinary Site shifts underfoot"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Smoldering Hollow",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Genesis → Damage dealt to nearby units is increased by 1 this turn.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Genesis → Damage dealt to nearby units is increased by 1 this turn.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-smoldering_hollow",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Brian Smith",
+                "flavorText": "",
+                "typeText": "An Elite Site adds insult to injury"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Lavamancer",
+        "guardian": {
+          "rarity": null,
+          "type": "Avatar",
+          "rulesText": "Tap → Play or draw a site.\n(E)(E)(F)(F), ③ → Pull apart a partial row or column, filling the resulting void with Rubble that deals 1 damage to minions near it.",
+          "cost": null,
+          "attack": 1,
+          "defence": 1,
+          "life": 20,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "None",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": null,
+              "type": "Avatar",
+              "rulesText": "Tap → Play or draw a site.\n(E)(E)(F)(F), ③ → Pull apart a partial row or column, filling the resulting void with Rubble that deals 1 damage to minions near it.",
+              "cost": null,
+              "attack": 1,
+              "defence": 1,
+              "life": 20,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-lavamancer",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Melissa A. Benson",
+                "flavorText": "",
+                "typeText": "Your Avatar turns up the heat"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Combusting Busts",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Site",
+          "rulesText": "Trap ④ → Deal 3 damage to each unit at another target adjacent location.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Site",
+              "rulesText": "Trap ④ → Deal 3 damage to each unit at another target adjacent location.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-combusting_busts",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Drew Tucker",
+                "flavorText": "",
+                "typeText": "An Ordinary Site misstep and you’re dust!"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Scoria",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Your (E) and (F) are equal to the higher of the two.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth, Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Your (E) and (F) are equal to the higher of the two.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-scoria",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Mark Poole",
+                "flavorText": "",
+                "typeText": "An Elite Site where ember becomes ore"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": [
+        "Artist credit corroborated by the publisher artist spotlight reproduced on SorceryTCG.gg."
+      ],
+      "verification": [
+        {
+          "url": "https://sorcerytcg.gg/fantasy-legend-mark-poole-joins-sorcery-contested-realm/",
+          "checkedAt": "2026-11-13",
+          "fields": [
+            "artist"
+          ],
+          "kind": "publisher-article-reproduction"
+        }
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Sulfur Vents",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Site",
+          "rulesText": "Trap ① → Deal 1 damage to each adjacent minion.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Site",
+              "rulesText": "Trap ① → Deal 1 damage to each adjacent minion.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-sulfur_vents",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Dan Seagrave",
+                "flavorText": "",
+                "typeText": "An Ordinary Site chokes the air"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Trapper's Rest",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Site",
+          "rulesText": "Genesis → You may reactivate an adjacent Trap for ① less.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Site",
+              "rulesText": "Genesis → You may reactivate an adjacent Trap for ① less.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-trappers_rest",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Caio Calazans",
+                "flavorText": "",
+                "typeText": "An Exceptional Site where patience pays off"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Volcanic Eruption",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Site",
+          "rulesText": "Trap ② → Shoot three 1-damage projectiles in different cardinal directions.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Site",
+              "rulesText": "Trap ② → Shoot three 1-damage projectiles in different cardinal directions.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-volcanic_eruption",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Ralph Horsley",
+                "flavorText": "",
+                "typeText": "An Exceptional Site of tectonic release"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": [],
+      "verification": [
+        {
+          "url": "https://sorcery.moxfield.com/cards/fro/booster/standard/volcanic_eruption",
+          "checkedAt": "2026-11-13",
+          "fields": [
+            "name",
+            "guardian.rulesText",
+            "artist",
+            "typeText"
+          ],
+          "kind": "independent-card-catalogue"
+        }
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Supervolcano",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Site",
+          "rulesText": "(F)(F)(F) — Trap ⑦ → All minions on the surface take 20 damage.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Site",
+              "rulesText": "(F)(F)(F) — Trap ⑦ → All minions on the surface take 20 damage.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-supervolcano",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Emil Idzikowski",
+                "flavorText": "",
+                "typeText": "A Unique Site at the heart of extinction"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Humming Hummocks",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Genesis → Until your next turn, nearby allies are Protected from all but units.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Genesis → Until your next turn, nearby allies are Protected from all but units.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-humming_hummocks",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "An Elite Site where stones sing of safety"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Protected"
+        ]
+      },
+      "uncertainFields": [
+        "artist"
+      ],
+      "notes": [
+        "The artist credit remains too faint to confirm from the supplied photographs. The online search on 2026-11-13 found a set listing but no accessible, reliable artist attribution."
+      ]
+    },
+    {
+      "source": "offlineData/card-photos/2026-11-13/batch-2/photo-4.jpg",
+      "card": {
+        "name": "Bouldermaw",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Site",
+          "rulesText": "Trap ⑥ → Roll a Rolling Boulder in your collection from here.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Frostmage vs Lavamancer",
+            "releasedAt": "",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Site",
+              "rulesText": "Trap ⑥ → Roll a Rolling Boulder in your collection from here.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "photo-bouldermaw",
+                "finish": "",
+                "product": "Frostmage vs Lavamancer",
+                "artist": "Dan Seagrave",
+                "flavorText": "",
+                "typeText": "An Elite Site, this ride flattens pride!"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Trap"
+        ]
+      },
+      "uncertainFields": [],
+      "notes": []
+    }
+  ]
+}

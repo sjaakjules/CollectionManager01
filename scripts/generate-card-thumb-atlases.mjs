@@ -4,6 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { promises as fs } from 'node:fs';
 import sharp from 'sharp';
+import { readCardCatalog } from './lib/card-catalog.mjs';
 
 const IMAGE_EXTENSIONS = new Set(['.webp', '.png', '.jpg', '.jpeg']);
 
@@ -323,12 +324,8 @@ function compareByCostThenName(a, b) {
 }
 
 async function loadCanvasSlugOrder(metadataPath) {
-  const absolutePath = path.resolve(metadataPath);
-  const raw = await fs.readFile(absolutePath, 'utf8');
-  const cards = JSON.parse(raw);
-  if (!Array.isArray(cards)) {
-    throw new Error(`Metadata file must contain an array: ${absolutePath}`);
-  }
+  // Match the runtime catalogue, including locally photographed previews.
+  const { cards } = await readCardCatalog(metadataPath, { includeProvisional: true });
 
   const normalized = cards.map((card) => ({
     name: card.name,

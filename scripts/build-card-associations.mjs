@@ -1705,7 +1705,7 @@ function parseNumber(value, flagName) {
 }
 
 function printHelp() {
-  console.log(`Build card/avatar association graph from a Curiosa deck archive.
+  console.log(`Build card/avatar association graph from a Sorcery deck archive.
 
 Usage:
   node scripts/build-card-associations.mjs

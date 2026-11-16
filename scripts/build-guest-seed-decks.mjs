@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Build the guest seed deck asset from a Curiosa deck archive.
+ * Build the guest seed deck asset from a Sorcery deck archive.
  *
- * Converts archive entries (produced by `scripts/fetch-curiosa-decks.mjs`)
+ * Converts archive entries (produced by `scripts/fetch-sorcery-decks.mjs`)
  * into app-shaped decks and writes them to a public asset. At startup the app
  * merges these decks into guest data once per deck id, so they are editable
- * fully offline and stay separate from the online Curiosa versions.
+ * fully offline and stay separate from the online Sorcery versions.
  *
  * Archive board maps (spellbook/atlas/collection/maybe, name -> quantity)
  * become app boards: spellbook + atlas fold into mainboard, collection is the
@@ -30,9 +30,9 @@ const DEFAULT_INPUT = 'offlineData/guestDecks.json';
 const DEFAULT_OUTPUT = 'public/assets/guest_seed_decks.json';
 const DEFAULT_CARD_DATA = 'docs/Sorcery_CardInfo.json';
 
-// Must match the deck id convention used by `src/data/curiosaService.ts` so a
-// pasted Curiosa URL and a seeded deck of the same source never duplicate.
-const CURIOSA_DECK_ID_PREFIX = 'curiosa-';
+// Must match the deck id convention used by `src/data/sorceryDeckService.ts` so a
+// pasted Sorcery URL and a seeded deck of the same source never duplicate.
+const SORCERY_DECK_ID_PREFIX = 'sorcery-';
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -81,7 +81,7 @@ export function convertArchiveDeckToSeedDeck(deckId, deckinfo, lookup, nowIso) {
   const name =
     typeof deckinfo?.name === 'string' && deckinfo.name.trim()
       ? deckinfo.name.trim()
-      : `Curiosa deck ${deckId}`;
+      : `Sorcery deck ${deckId}`;
 
   const cards = isRecord(deckinfo?.cards) ? deckinfo.cards : {};
   const mainboard = [
@@ -109,7 +109,7 @@ export function convertArchiveDeckToSeedDeck(deckId, deckinfo, lookup, nowIso) {
     typeof deckinfo?.updatedAt === 'string' ? deckinfo.updatedAt : nowIso;
 
   const deck = {
-    id: `${CURIOSA_DECK_ID_PREFIX}${deckId}`,
+    id: `${SORCERY_DECK_ID_PREFIX}${deckId}`,
     name,
     boards: { mainboard, collection, avatar, maybeboard },
     createdAt,

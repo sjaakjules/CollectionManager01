@@ -119,7 +119,7 @@ The app must remain fully usable without login.
 - Export decks as .txt
 - Format: quantity name
 - One card per line
-- Compatible with SorceryTCG and legacy Curiosa deck text
+- Compatible with SorceryTCG deck text
 - Import via pasted text
 - Parse line-by-line
 - Unknown cards must be highlighted, not silently dropped
@@ -155,7 +155,7 @@ The app must remain fully usable without login.
 
 Be kind to SorceryTCG's servers. This applies to the app, proxies, scripts,
 agents, manual debugging, card metadata, decks, search pages, retries and any
-future artwork downloads, including legacy Curiosa links.
+future artwork downloads, including direct SorceryTCG links.
 
 - Read [the request policy](docs/sorcery-request-policy.md) before making live calls.
 - Allow only **one upstream request at a time**, with **at least 3 seconds after

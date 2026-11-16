@@ -66,6 +66,12 @@ export interface Card {
   keywords?: string[];
   umbrellas?: string[];
   back?: CardStats;
+  /** Local photo transcription only; never written into guest/account data. */
+  provisional?: {
+    source: string;
+    uncertainFields: string[];
+    notes: string[];
+  };
 }
 
 // ============================================================================

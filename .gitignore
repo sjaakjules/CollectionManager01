@@ -78,6 +78,9 @@ tmp/
 # Local user data (not committed)
 guest.json
 
+# Authenticated third-party analytics snapshots stay local; never deploy as assets.
+offlineData/playsorcery/
+
 # Editor directories
 *.sublime-workspace
 *.sublime-project

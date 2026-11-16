@@ -2,7 +2,7 @@
 
 SorceryTCG is a community service. The limits below are project requirements,
 not claims about an allowance published by SorceryTCG. They apply to
-`sorcerytcg.com`, `api.sorcerytcg.com`, legacy Curiosa links and every route to
+`sorcerytcg.com`, `api.sorcerytcg.com` and every route to
 those services. A missing rate-limit header is not permission to send faster.
 
 ## Required pacing
@@ -31,8 +31,11 @@ those services. A missing rate-limit header is not permission to send faster.
 | Card startup | Existing 24-hour browser cache and bundled/stale fallback; concurrent catalogue loads share a download; no 250ms retry loop |
 | Archive/search commands | `nodeSorceryClient` in `scripts/lib/sorcery-client.ts`; queries, pages, downloads and retries use the same queue |
 | Manual diagnostics/downloads | `pnpm sorcery:request <https-url> <output-file>` uses that same Node client |
-| Vite `/api/sorcery`, `/api/decks`, `/api/curiosa` | `scripts/lib/sorcery-dev-proxy.ts` uses the shared Node client, including requests made directly to the dev proxy |
-| PHP card/deck proxies, including legacy aliases | Mandatory limiter in `server/php/api/shared/proxy.php`; one `sorcerytcg` namespace and file lock across visitors/routes; minimum interval cannot be configured below 3000ms |
+| Vite `/api/sorcery`, `/api/decks` | `scripts/lib/sorcery-dev-proxy.ts` uses the shared Node client, including requests made directly to the dev proxy |
+| PHP card/deck proxies | Mandatory limiter in `server/php/api/shared/proxy.php`; one `sorcerytcg` namespace and file lock across visitors/routes; minimum interval cannot be configured below 3000ms |
+
+The deployed catalogue also uses `server/php/api/shared/catalogue-cache.php`: a
+shared 24-hour cache, one refresh lock and one-hour failed-refresh backoff.
 
 Node maintenance commands and development servers share an exclusive lock and
 persisted deadlines under the operating system temp directory, in
@@ -73,9 +76,16 @@ of SorceryTCG in a user's browser is outside this app's transport controls;
 automated diagnostics must use the helper instead. Local image/atlas assets
 and the app's own login/storage endpoints are not SorceryTCG upstream requests.
 
-For future visitor-triggered updates, add a shared daily catalogue cache and
-refresh lock **as well as** this limiter. Keep serving the last good catalogue
-during a failed refresh. This change does not schedule background crawls.
+The deployed catalogue route uses a shared daily cache **as well as** this
+limiter. A fresh reviewed deployment snapshot is served directly. After 24
+hours, one visitor can refresh it; concurrent visitors receive the last good
+catalogue. Failed, malformed, empty or unexpectedly small responses retain that
+catalogue and defer another attempt for at least an hour. The upstream budget
+can extend the wait further. `X-Sorcery-Catalogue-Cache` reports fresh, refreshed
+or stale; stale responses do not acquire a new 24-hour browser-cache timestamp.
+Cache files are separated by deployment path and contain public card data only.
+The route accepts GET without catalogue query parameters. Vite uses the shared
+Node limiter for development requests. No background crawls are scheduled.
 
 ## Offline regression coverage
 

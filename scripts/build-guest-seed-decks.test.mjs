@@ -49,7 +49,7 @@ describe('convertArchiveDeckToSeedDeck', () => {
       NOW,
     );
 
-    expect(deck.id).toBe('curiosa-abc123');
+    expect(deck.id).toBe('sorcery-abc123');
     expect(deck.name).toBe('Test Deck');
     expect(deck.author).toBe('Tester');
     expect(deck.createdAt).toBe('2026-01-01T00:00:00.000Z');
@@ -111,7 +111,7 @@ describe('convertArchiveToSeedDecks', () => {
 
     const { decks, warnings } = convertArchiveToSeedDecks(archive, CARDS, NOW);
 
-    expect(decks.map((deck) => deck.id)).toEqual(['curiosa-abc123']);
+    expect(decks.map((deck) => deck.id)).toEqual(['sorcery-abc123']);
     expect(warnings.some((entry) => entry.includes('broken'))).toBe(true);
   });
 });

@@ -3,8 +3,8 @@
 
 Upstream access must follow the current [SorceryTCG request policy](sorcery-request-policy.md),
 including scripts, agent diagnostics and future automatic refreshes. Historical
-Curiosa endpoint examples below are superseded by the
-[SorceryTCG integration notes](curiosa-service-request-policy.md).
+Sorcery endpoint examples below are superseded by the
+[SorceryTCG integration notes](sorcery-deck-integration.md).
 
 ---
 
@@ -91,25 +91,16 @@ Sorcery Collection Manager is a web-based visual deck-building tool for the Sorc
 
 ### 4.3 Fetched data
 
-- Card data from sorcery API: https://api.sorcerytcg.com/api/cards as JSON:
-    {
-        name, guardian (card characteristics), elements, subtypes, sets{name, releaseAt, metadata (card characteristics), variants}
-    }
-- Deck data from ​user supplied URL with format: https://curiosa.io/decks/{deck_id}
-  - Deck name and author from html scraping, eg soup.title split with |
-  - ​TRPC endpoint: https://curiosa.io/api/trpc/ 
-  - ​filenames: deck.getDecklistById, deck.getAvatarById, deck.getSideboardById, deck.getMaybeboardById
-  - ​query: {"json": {"id": deck_id}} for each filename
-  - ​saved offline in browser guest.json or user.json with data: {name, author, mainboard, avatar, collection, maybeboard}
-- Collection loaded from text file 
-  - user upload with structure same as curiosa.io download: 1 item per line in the format "quantity name" e.g. "4 Cave Trolls"
-  - saved in guest.json or user.json
-- Collection loaded from curiosa.io login:
-  - Requires user to login to generate session token, used in TRPC endpoint
-  - TRPC endpoint: https://curiosa.io/api/trpc/collection.search
-  - Sample input: {"0":{"json":{"query":"","sort":"latest","set":"*","filters":[],"limit":50,"cursor":0,"direction":"forward"}}}
-  - Rate limit from response
-  - saved offline in browser guest.json or user.json with data processed from returned json
+- Card metadata: `https://api.sorcerytcg.com/api/cards`, with `engine` and
+  `printings` normalized into the shared internal card model.
+- Public deck imports: `https://sorcerytcg.com/decks/{deck_id}`. One `deck.get`
+  request returns the name, owner and all boards as JSON; no HTML scraping.
+- Public search: `deck.search` with the current filters and `nextCursor`.
+- Requests use the shared throttles, catalogue cache and fallback policy in
+  [sorcery-request-policy.md](sorcery-request-policy.md).
+- Collection text import uses `quantity name`, one entry per line, and stores
+  names/quantities in the same guest/account schema. SorceryTCG account login and
+  private collection APIs are not integrated.
 
 ---
 
@@ -226,7 +217,7 @@ Optimisations:
   active-variant metrics and locally estimated style affinities.
 - Only one deck may be active and modified at a time
 - active deck has boards: mainboard, collection, avatar, maybeboard
-- Load Collection via text upload (later with curiosa login)
+- Load Collection via text upload
 - Multiple decks can be loaded when a collection is present to ensure user can make all loaded decks from the cards in their collection. 
 
 ---
@@ -300,7 +291,7 @@ Optimisations:
 
 - Filtering (beyond laying out cards in groups)
 - Load collection from text file
-- Load deck from curiosa.io (no curiosa login)
+- Load deck from sorcerytcg.com (no sorcery login)
 - Mobile optimisation
 - Animation polish beyond functional needs
 

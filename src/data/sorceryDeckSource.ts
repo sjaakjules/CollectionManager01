@@ -3,7 +3,7 @@ import type { Deck } from "./dataModels";
 export const SORCERY_DECK_ORIGIN = "https://sorcerytcg.com";
 export const SORCERY_DECK_PROXY = "/api/decks";
 const DECK_HOSTS = new Set([
-  "sorcerytcg.com", "www.sorcerytcg.com", "curiosa.io", "www.curiosa.io",
+  "sorcerytcg.com", "www.sorcerytcg.com",
 ]);
 
 export function extractDeckId(urlOrId: string): string {

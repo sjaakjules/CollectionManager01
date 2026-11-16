@@ -1,0 +1,214 @@
+{
+  "source": "photo-5.jpg",
+  "sourceSize": [
+    2880,
+    3840
+  ],
+  "rotate": -90,
+  "portraitSize": [
+    744,
+    1039
+  ],
+  "cornersOrder": "top-left, top-right, bottom-right, bottom-left, after rotation",
+  "cards": [
+    {
+      "name": "Ancient Thaw",
+      "corners": [
+        [
+          389,
+          127
+        ],
+        [
+          1344,
+          120
+        ],
+        [
+          1332,
+          802
+        ],
+        [
+          365,
+          792
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Permafrost",
+      "corners": [
+        [
+          1428,
+          144
+        ],
+        [
+          2410,
+          175
+        ],
+        [
+          2419,
+          852
+        ],
+        [
+          1402,
+          830
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Winter River",
+      "corners": [
+        [
+          2527,
+          101
+        ],
+        [
+          3554,
+          53
+        ],
+        [
+          3593,
+          768
+        ],
+        [
+          2554,
+          797
+        ]
+      ],
+      "landscape": true,
+      "existing": true
+    },
+    {
+      "name": "Springstem Meadow",
+      "corners": [
+        [
+          550,
+          874
+        ],
+        [
+          1524,
+          902
+        ],
+        [
+          1495,
+          1603
+        ],
+        [
+          511,
+          1562
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Icicle Dome",
+      "corners": [
+        [
+          1608,
+          838
+        ],
+        [
+          2614,
+          826
+        ],
+        [
+          2623,
+          1546
+        ],
+        [
+          1615,
+          1553
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Tundra",
+      "corners": [
+        [
+          2614,
+          809
+        ],
+        [
+          3636,
+          792
+        ],
+        [
+          3658,
+          1517
+        ],
+        [
+          2628,
+          1546
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Frost Mage",
+      "corners": [
+        [
+          737,
+          1668
+        ],
+        [
+          1450,
+          1699
+        ],
+        [
+          1392,
+          2731
+        ],
+        [
+          667,
+          2681
+        ]
+      ],
+      "landscape": false
+    },
+    {
+      "name": "Avalanche",
+      "corners": [
+        [
+          1538,
+          1673
+        ],
+        [
+          2544,
+          1716
+        ],
+        [
+          2525,
+          2467
+        ],
+        [
+          1500,
+          2412
+        ]
+      ],
+      "landscape": true
+    },
+    {
+      "name": "Deep Snow",
+      "corners": [
+        [
+          2662,
+          1661
+        ],
+        [
+          3701,
+          1721
+        ],
+        [
+          3691,
+          2477
+        ],
+        [
+          2633,
+          2414
+        ]
+      ],
+      "landscape": true
+    }
+  ]
+}

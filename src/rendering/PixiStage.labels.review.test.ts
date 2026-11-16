@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PixiStage } from './PixiStage';
+import { CARD_SIZE, snapCardCenter } from './Grid';
 import type { CanvasLabel } from '@/data/dataModels';
 import type { CanvasArea, CanvasCardInstance } from '@/canvas/canvasAreas';
 import { openCanvasLabelEditor } from '@/ui/canvasLabelEditor';
@@ -116,19 +117,54 @@ describe('label interaction review regressions', () => {
     expect(next.labelId).toBe('child');
   });
 
-  it('lets a custom label float freely while retaining card and label offsets', () => {
+  it('snaps a populated label by one card anchor while retaining all offsets', () => {
     stage.startLabelDrag('child', { x: 0, y: 0 });
     stage.updateLabelDrag({ x: 113, y: 97 });
     stage.endLabelDrag();
     const [first, second] = area.cards;
     if (!first || !second) throw new Error('Missing card fixture');
-    expect(first.x).toBe(118);
-    expect(first.y).toBe(109.5);
+    expect(first.x).toBe(115);
+    expect(first.y).toBe(122.5);
     expect(second.x - first.x).toBe(110);
     expect(second.y - first.y).toBe(0);
     const label = stage.canvasLabels.find((entry) => entry.id === 'child');
     expect(first.x - (label?.x ?? 0)).toBe(5);
     expect(first.y - (label?.y ?? 0)).toBe(12.5);
+  });
+
+  it('keeps mixed orientations, stacks and nested headings on the same grid translation', () => {
+    area.cards.unshift({ id: 'site', cardName: 'Site', x: 12.5, y: 5, board: 'mainboard', labelId: 'parent' });
+    area.cards.push({ id: 'copy', cardName: 'Spell A', x: 5, y: 12.5, board: 'mainboard', labelId: 'child' });
+    Object.assign(stage, { isLandscapeCard: (name: string) => name === 'Site' });
+    const before = structuredClone(area.cards);
+    stage.startLabelDrag('parent', { x: -40, y: -50 });
+    stage.updateLabelDrag({ x: 73, y: 47 });
+    stage.endLabelDrag();
+    for (const [index, card] of area.cards.entries()) {
+      const original = before[index];
+      if (!original) throw new Error('Missing original card');
+      const size = card.cardName === 'Site' ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+      const center = { x: card.x + size.width / 2, y: card.y + size.height / 2 };
+      expect(snapCardCenter(center.x, center.y, card.cardName === 'Site')).toEqual(center);
+      expect(card.x - original.x).toBe(110);
+      expect(card.y - original.y).toBe(110);
+    }
+    expect(stage.canvasLabels.find(label => label.id === 'parent')).toMatchObject({ x: 70, y: 60 });
+    expect(stage.canvasLabels.find(label => label.id === 'child')).toMatchObject({ x: 110, y: 110 });
+  });
+
+  it('leaves an empty label free and treats pointer jitter as a click', () => {
+    area.cards = [];
+    stage.startLabelDrag('child', { x: 0, y: 0 });
+    stage.updateLabelDrag({ x: 113, y: 97 });
+    stage.endLabelDrag();
+    expect(stage.canvasLabels.find(label => label.id === 'child')).toMatchObject({ x: 113, y: 97 });
+    stage.emitCanvasLabelsChange.mockClear();
+    stage.startLabelDrag('child', { x: 113, y: 97 });
+    stage.updateLabelDrag({ x: 114, y: 98 });
+    stage.endLabelDrag();
+    expect(stage.canvasLabels.find(label => label.id === 'child')).toMatchObject({ x: 113, y: 97 });
+    expect(stage.emitCanvasLabelsChange).not.toHaveBeenCalled();
   });
 
   it('restores a cancelled touch label drag and does not publish moved positions', () => {
@@ -144,7 +180,7 @@ describe('label interaction review regressions', () => {
   it('reconciles populated label bounds when its text becomes longer', () => {
     vi.mocked(openCanvasLabelEditor).mockImplementation((options) => {
       options.onSave('A much longer label title for these cards');
-      return vi.fn();
+      return { close: vi.fn(), commit: vi.fn(), reposition: vi.fn() };
     });
     stage.editLabel('child');
     expect(stage.reconcileCanvasAreaBounds).toHaveBeenCalledWith('deck');

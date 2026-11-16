@@ -7,7 +7,7 @@ export function sorceryDevProxy(): Plugin {
     name: "sorcery-throttled-proxy",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        const route = /^(\/api\/(sorcery|decks|curiosa))(\/.*)$/.exec(req.url ?? "");
+        const route = /^(\/api\/(sorcery|decks))(\/.*)$/.exec(req.url ?? "");
         if (!route) { next(); return; }
         const method = req.method ?? "GET";
         if (method === "OPTIONS") { res.writeHead(204).end(); return; }

@@ -44,6 +44,8 @@ import {
 } from "@/data/deckStyleAssociations";
 import type { CanvasArea } from "@/canvas/canvasAreas";
 import { buildQuickTransferDeckTargets } from "@/ui/deckTransferTargets";
+import { CardQuickAddControls, type CardQuickAddControlsHandle } from '@/ui/CardQuickAddControls';
+import type { CardQuickAddDeck } from './cardQuickAdd';
 
 interface PixiCanvasProps {
   splashDone: boolean;
@@ -98,6 +100,7 @@ export function PixiCanvas({
 }: PixiCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<PixiStage | null>(null);
+  const quickAddRef = useRef<CardQuickAddControlsHandle>(null);
   const { state, dispatch } = useAppState();
   const userCategoryData = state.userData?.cardCategories ?? null;
   const cardFilters = useMemo(
@@ -131,6 +134,11 @@ export function PixiCanvas({
     () => buildQuickTransferDeckTargets(state.userData?.decks ?? [], canvasAreas),
     [canvasAreas, state.userData?.decks],
   );
+  const quickAddDeck = useMemo<CardQuickAddDeck | null>(() => {
+    const deck = state.userData?.decks.find(entry => entry.id === state.editor.activeDeckId);
+    const area = deck && canvasAreas.find(entry => entry.type === 'deck' && entry.deckId === deck.id && entry.pinned);
+    return deck && area ? { deckId: deck.id, canvasAreaId: area.id, name: deck.name } : null;
+  }, [canvasAreas, state.editor.activeDeckId, state.userData?.decks]);
 
   // Load card categories from userData (when present) or static seed fallback.
   useEffect(() => {
@@ -237,6 +245,7 @@ export function PixiCanvas({
       onSelectionChange: (selectedCardNames) => {
         dispatch({ type: "SET_SELECTED_CARD_NAMES", names: selectedCardNames });
       },
+      onCardQuickAddTargetsChange: targets => quickAddRef.current?.updateTargets(targets),
       onCanvasLabelsChange: (labels) => {
         dispatch({ type: "SET_CANVAS_LABELS", labels });
       },
@@ -394,7 +403,7 @@ export function PixiCanvas({
       const overOverlayUi =
         event.target instanceof Element &&
         !!event.target.closest(
-          ".stacks-panel, .stacks-tabs, .bottom-folder-shell, .bottom-folder-tabs, .top-login-button",
+          ".stacks-panel, .stacks-tabs, .bottom-folder-shell, .bottom-folder-tabs, .top-login-button, .card-quick-add-controls",
         );
 
       setIsPointerOverOverlayUi((prev) =>
@@ -456,6 +465,10 @@ export function PixiCanvas({
       className="pixi-canvas-container"
       onContextMenu={handleContextMenu}
     >
+      <CardQuickAddControls ref={quickAddRef} deck={quickAddDeck}
+        onAdd={(key, scope, board) => {
+          if (quickAddDeck) stageRef.current?.quickAddToDeck(quickAddDeck, key, scope, board);
+        }} />
       {showLoadingBar && (
         <TextureLoadingBar
           loaded={loadProgress.loaded}

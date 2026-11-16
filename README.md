@@ -9,7 +9,7 @@ A visual deck-building tool for the Sorcery TCG. Built with React and PixiJS for
 - **Real-time Validation**: Deck rules enforced with clear visual feedback
 - **Multiple Boards**: Main (Spellbook and Atlas), Collection, Maybe, and avatar support
 - **Local-first**: Works fully offline with optional cloud sync
-- **SorceryTCG deck imports**: Load current or legacy Curiosa deck links; import/export standard deck text
+- **SorceryTCG deck imports**: Load SorceryTCG deck links; import/export standard deck text
 
 ## Quick Start
 
@@ -139,7 +139,7 @@ Key runtime modules and how they connect:
 | `src/rendering/PixiCanvas.tsx` | React <-> Pixi bridge and loading overlays | `src/rendering/PixiStage.ts`, `src/data/cardFilters.ts` |
 | `src/canvas/canvasAreas.ts` | Stack/deck canvas model + placement/layout helpers | `src/rendering/Grid.ts`, `src/app/App.tsx` |
 | `src/data/cardFilters.ts` | Filter state + card matching engine | `src/ui/BottomPanel.tsx`, `src/rendering/PixiCanvas.tsx` |
-| `src/data/curiosaService.ts` | SorceryTCG URL import and deck payload parsing | `src/ui/BottomPanel.tsx` |
+| `src/data/sorceryDeckService.ts` | SorceryTCG URL import and deck payload parsing | `src/ui/BottomPanel.tsx` |
 | `src/data/sorceryRequest.ts` | Shared upstream queue, spacing and retry policy | Cards, decks, search, Node maintenance/dev clients |
 | `src/data/importExport.ts` | Deck text import/export helpers | `src/ui/BottomPanel.tsx` |
 | `src/data/userSync.ts` | Debounced server sync + merge strategy | `src/auth/api.ts`, `src/app/App.tsx` |
@@ -160,6 +160,7 @@ All of the modules above include top-of-file headers and exported function docs 
 | ------ | ------ |
 | Left-drag empty canvas | Draw a selection rectangle (Shift adds) |
 | Click a card stack | Select the stack; another click selects one card |
+| Selected card + with an active canvas deck | Upper Collection / Main / Maybe row adds that card; outlined lower row adds All Selected; outside click or Escape closes |
 | Double-click in a deck or stack | Select the whole stack |
 | Drag a card | Move the selected card, stack or group; snap on release |
 | Middle/right-drag or Space + left-drag | Pan, including mice without a middle button |

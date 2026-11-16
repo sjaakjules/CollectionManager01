@@ -43,7 +43,13 @@ async function main() {
     throw new Error(`Snapshot was not replaced. Review catalog issues first:\n${JSON.stringify(issues, null, 2)}`);
   }
   await fs.mkdir(path.dirname(args.output), { recursive: true });
-  await fs.writeFile(args.output, `${JSON.stringify(cards, null, 2)}\n`);
+  const temporary = `${args.output}.${process.pid}.tmp`;
+  try {
+    await fs.writeFile(temporary, `${JSON.stringify(cards, null, 2)}\n`);
+    await fs.rename(temporary, args.output);
+  } finally {
+    await fs.rm(temporary, { force: true });
+  }
   console.log(`Validated and copied ${cards.length} cards: ${args.input} -> ${args.output}`);
 }
 

@@ -1,4 +1,4 @@
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,7 +48,7 @@ describe('promotional Court card assets', () => {
       readJson('public/assets/sorcery_cards.json'),
     ]);
     expect(snapshot).toEqual(catalog);
-    expect(catalog).toHaveLength(1108);
+    expect(catalog).toHaveLength(1169);
   });
 
   it('contains the four official Elite Promotional Site records', async () => {
@@ -64,7 +64,7 @@ describe('promotional Court card assets', () => {
         },
         elements: promo.element,
         sets: [{
-          name: 'Promotional',
+          name: 'Promo',
           variants: [
             { finish: 'Standard', product: 'Dust', artist: promo.artist },
             { finish: 'Foil', product: 'Dust', artist: promo.artist },
@@ -79,8 +79,10 @@ describe('promotional Court card assets', () => {
       readJson('public/assets/CardsThumbAtlas/manifest.json'),
       readJson('public/assets/CardsMediumAtlas/manifest.json'),
     ]);
-    expect(Object.keys(thumbManifest.cards)).toHaveLength(1108);
-    expect(Object.keys(mediumManifest.cards)).toHaveLength(1108);
+    const expectedCount = (await readdir(path.join(ROOT, 'public/assets/Cards')))
+      .filter((file) => file.endsWith('.webp')).length;
+    expect(Object.keys(thumbManifest.cards)).toHaveLength(expectedCount);
+    expect(Object.keys(mediumManifest.cards)).toHaveLength(expectedCount);
 
     for (const promo of PROMOS) {
       const sourcePath = path.join(ROOT, 'public/assets/Cards', `${promo.slug}.webp`);

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useAppState } from "@/app/AppState";
 import type { Deck } from "@/data/dataModels";
 import { createLocalDeck } from "@/data/deckCreation";
-import { fetchCuriosaDeck } from "@/data/curiosaService";
-import { importDeckFromText, importFromCuriosaDeck, type ImportResult } from "@/data/importExport";
+import { fetchSorceryDeck } from "@/data/sorceryDeckService";
+import { importDeckFromText, importFromSorceryDeck, type ImportResult } from "@/data/importExport";
 import { AVATAR_SHORT_NAMES, getAvatarShortName } from "@/ui/deckDisplay";
 
 type CreateMode = "menu" | "import" | "local" | "text";
@@ -74,14 +74,14 @@ export function DeckCreatePanel({ onCreateDeck }: DeckCreatePanelProps) {
       if (importAbortRef.current === controller && !controller.signal.aborted) setNotice(waitingMessage);
     }, 1000);
     try {
-      const fetched = await fetchCuriosaDeck(deckUrl.trim(), {
+      const fetched = await fetchSorceryDeck(deckUrl.trim(), {
         signal: controller.signal,
         onDelay: () => {
           if (importAbortRef.current === controller && !controller.signal.aborted) setNotice(waitingMessage);
         },
       });
       if (controller.signal.aborted || importAbortRef.current !== controller) return;
-      finishImport(importFromCuriosaDeck({
+      finishImport(importFromSorceryDeck({
         id: fetched.id, name: fetched.name, author: fetched.author ?? "", ...fetched.boards,
       }, state.cards));
     } catch (cause) {

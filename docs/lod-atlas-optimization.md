@@ -123,6 +123,8 @@ Phone medium priority order:
 
 Atlas and full-image loading:
 
+- Atlas manifests revalidate on load. Their `generatedAt` revision versions the
+  page image URLs, keeping cached pixels paired with the correct card coordinates.
 - The thumbnail manifest is fetched on first thumbnail lookup, then only needed
   atlas pages are requested. A full initial reveal can eventually touch all
   thumbnail pages because every card starts at thumbnail quality.

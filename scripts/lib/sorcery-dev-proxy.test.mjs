@@ -27,7 +27,7 @@ describe('throttled development proxy (mocked upstream)', () => {
   it.each([
     ['/api/sorcery/cards', 'https://api.sorcerytcg.com/api/cards'],
     ['/api/decks/api/trpc/deck.get?batch=1', 'https://sorcerytcg.com/api/trpc/deck.get?batch=1'],
-    ['/api/curiosa/api/trpc/deck.search', 'https://sorcerytcg.com/api/trpc/deck.search'],
+    ['/api/decks/api/trpc/deck.search', 'https://sorcerytcg.com/api/trpc/deck.search'],
   ])('routes %s through the shared host client without a nested retry', async (url, target) => {
     mocks.fetch.mockResolvedValue(new Response('{}', { status: 429, headers: { 'retry-after': '20' } }));
     const test = context(url);

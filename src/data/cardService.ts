@@ -17,6 +17,7 @@ import { get, set } from "idb-keyval";
 import { isBlockedTokenCardName } from "@/data/tokenCards";
 import { normalizeCardCatalog, type CardCatalogResult } from './cardCatalog';
 import { sorceryClient } from './sorceryRequest';
+import { withProvisionalCards } from './provisionalCards';
 
 // Always fetch via same-origin to avoid CORS.
 // - DEV: Vite should proxy this path (see vite.config.ts).
@@ -26,15 +27,19 @@ const API_URL = "/api/sorcery/cards";
 // Bundled snapshot for offline-first runs (no network, no cache yet).
 // Regenerate with `pnpm cards:snapshot` after updating docs/Sorcery_CardInfo.json.
 const LOCAL_SNAPSHOT_URL = "/assets/sorcery_cards.json";
+// Bump after publishing a reviewed official snapshot, never clear guest data.
+export const CARD_CATALOGUE_REVISION = '2026-11-16';
 
-let pendingCatalogue: Promise<CardCatalogResult> | null = null;
+type FetchedCatalogue = CardCatalogResult & { stale?: boolean };
+let pendingCatalogue: Promise<FetchedCatalogue> | null = null;
 
-function fetchFreshCatalogue(): Promise<CardCatalogResult> {
+function fetchFreshCatalogue(): Promise<FetchedCatalogue> {
   if (!pendingCatalogue) {
     pendingCatalogue = (async () => {
       const response = await sorceryClient.fetch(API_URL, { cache: "no-store" });
       if (!response.ok) throw new Error(`API error: ${response.status}`);
-      return normalizeCardCatalog(await response.json());
+      return { ...normalizeCardCatalog(await response.json()),
+        stale: response.headers.get('x-sorcery-catalogue-cache') === 'stale' };
     })();
     void pendingCatalogue.then(
       () => { pendingCatalogue = null; },
@@ -57,7 +62,7 @@ function fetchFreshCatalogue(): Promise<CardCatalogResult> {
 export async function fetchCards(onWarning?: (message: string) => void): Promise<Card[]> {
   // Try cache first
   const cached = await getCachedCards();
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+  if (cached && cached.revision === CARD_CATALOGUE_REVISION && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     console.log("Using cached card data");
     return playableCatalog(cached.catalog, onWarning);
   }
@@ -67,13 +72,25 @@ export async function fetchCards(onWarning?: (message: string) => void): Promise
     console.log("Fetching cards from API...");
     const catalog = await fetchFreshCatalogue();
     const cards = playableCatalog(catalog, onWarning);
+    if (catalog.stale) onWarning?.('SorceryTCG is unavailable. Using the last verified shared catalogue.');
 
     // A partial response must not replace the last complete catalog.
-    if (catalog.issues.length === 0) await cacheCards(cards);
+    // Keep photo transcriptions out of the official cache so corrected local
+    // transcriptions and future official records can replace them on any load.
+    if (catalog.issues.length === 0 && !catalog.stale) await cacheCards(filterPlayableCards(catalog.cards));
 
     return cards;
   } catch (error) {
     console.error("Failed to fetch cards from API:", error);
+
+    // A bundled release is newer than a cache from a previous catalogue build.
+    if (cached && cached.revision !== CARD_CATALOGUE_REVISION) {
+      const bundled = await fetchBundledCards(onWarning);
+      if (bundled) {
+        onWarning?.('The latest card catalogue could not be loaded. Using the bundled release catalogue.');
+        return bundled;
+      }
+    }
 
     // Return cached data if available (even if stale)
     if (cached) {
@@ -121,7 +138,12 @@ function playableCatalog(catalog: CardCatalogResult, onWarning?: (message: strin
       onWarning?.(`${repaired.length} card(s) are using set metadata because current rules are unavailable.`);
     }
   }
-  return cards;
+  const supplemented = withProvisionalCards(cards);
+  const previewCount = supplemented.filter((card) => card.provisional).length;
+  if (previewCount > 0) {
+    onWarning?.(`${previewCount} cards use provisional photo transcriptions. Official release metadata replaces them when available.`);
+  }
+  return supplemented;
 }
 
 export function filterPlayableCards(cards: Card[]): Card[] {
@@ -223,7 +245,8 @@ async function getCachedCards(): Promise<CachedCards | null> {
     const timestamp = 'timestamp' in cached && typeof cached.timestamp === 'number'
       && Number.isFinite(cached.timestamp) && cached.timestamp <= Date.now()
       ? cached.timestamp : 0;
-    return { timestamp, catalog };
+    const revision = 'revision' in cached && typeof cached.revision === 'string' ? cached.revision : '';
+    return { timestamp, catalog, revision };
   } catch (error) {
     console.warn('Card cache unavailable or incompatible; trying a fresh catalog:', error);
     return null;
@@ -233,6 +256,7 @@ async function getCachedCards(): Promise<CachedCards | null> {
 async function cacheCards(cards: Card[]): Promise<void> {
   try {
     await set(CACHE_KEY, {
+      revision: CARD_CATALOGUE_REVISION,
       timestamp: Date.now(),
       cards,
     });
@@ -245,6 +269,7 @@ const CACHE_KEY = "sorcery_card_cache";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CachedCards {
+  revision: string;
   timestamp: number;
   catalog: CardCatalogResult;
 }

@@ -11,6 +11,7 @@ export const DECK_BOARD_TOP_GAP = DRAWN_GRID.height;
 export const DECK_BOARD_GAP = 22;
 export const DECK_BOARD_BOTTOM_PADDING = 18;
 export const DECK_REGION_TITLE_HEIGHT = 32;
+export type MainDeckLabelBounds = Partial<Record<'spellbook' | 'atlas', CanvasAreaBounds[]>>;
 
 export function normalizeDeckRegionBounds(value: unknown): DeckRegionBounds | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -93,10 +94,11 @@ export function getDeckBoardRects(
   headerHeight: number,
   isLandscape: (name: string) => boolean,
   saved: DeckRegionBounds = {},
+  labels: MainDeckLabelBounds = {},
 ): Record<DeckZoneBoard, CanvasAreaBounds> {
   const extents = cardExtents(cards, isLandscape);
   // Main encloses its physical children, including their own title bands.
-  const children = Object.values(getMainDeckSectionRects(cards, isLandscape, saved));
+  const children = Object.values(getMainDeckSectionRects(cards, isLandscape, saved, labels));
   if (children.length) extents.set('mainboard', {
     left: Math.min(...children.map(rect => rect.x)),
     top: Math.min(...children.map(rect => rect.y)),
@@ -270,6 +272,7 @@ export function getMainDeckSectionRects(
   cards: CanvasCardInstance[],
   isLandscape: (name: string) => boolean,
   saved: DeckRegionBounds = {},
+  labels: MainDeckLabelBounds = {},
 ): { spellbook?: CanvasAreaBounds; atlas?: CanvasAreaBounds } {
   const result: { spellbook?: CanvasAreaBounds; atlas?: CanvasAreaBounds } = {};
   for (const [key, landscape] of [['spellbook', false], ['atlas', true]] as const) {
@@ -282,6 +285,13 @@ export function getMainDeckSectionRects(
     result[key] = { x:left-DECK_BOARD_INNER_PADDING, y:top-DECK_BOARD_TOP_GAP,
       width:right-left+DECK_BOARD_INNER_PADDING*2, height:bottom-top+DECK_BOARD_TOP_GAP+DECK_BOARD_BOTTOM_PADDING };
     if (saved[key]) result[key] = unionRegionBounds(required(result[key]), required(saved[key]));
+    for (const label of labels[key] ?? []) {
+      result[key] = unionRegionBounds(required(result[key]), {
+        x: label.x - DECK_BOARD_INNER_PADDING, y: label.y - DECK_BOARD_TOP_GAP,
+        width: label.width + DECK_BOARD_INNER_PADDING * 2,
+        height: label.height + DECK_BOARD_TOP_GAP + DECK_BOARD_BOTTOM_PADDING,
+      });
+    }
   }
   return result;
 }

@@ -7,6 +7,28 @@ cast to `Card[]` and cached without validation.
 
 Source: https://api.sorcerytcg.com/api/cards
 
+## Current release — 16 November 2026
+
+One throttled official download validated **1,169 cards**, including **120** with
+the **Frost Mage Vs. Lavamancer** printing (released 13 November 2026). Both
+`docs/Sorcery_CardInfo.json` and `public/assets/sorcery_cards.json` now contain
+that normalized response. All 71 photographed cards have official replacements;
+the runtime photo supplement is empty and the transcriptions are archived.
+`Reed-cord Measurer` migrates to the official `Reed Cord Measurer` in saved
+decks, canvas cards, collections and text imports. Humming Hummocks' official
+artist is Jeff A. Menges. Official rules, statistics and printings are used as
+published, including cases where the API omits a printed positional diagram.
+
+The previous snapshot's nine individual Foot Soldier/Frog token records are
+absent from the new feed; no saved deck is deleted because a record disappears.
+The published set name is retained exactly, as is the API's `Promo` set name.
+The browser cache revision is `2026-11-16`; earlier caches refresh once and
+prefer the newer bundled snapshot on failure. Guest/account data is not reset.
+
+**Artwork is still the supplied photographic WebPs.** Keep the existing
+thumbnails/atlases until the owner confirms the official image upload is done.
+Do not regenerate atlases as part of a metadata-only refresh.
+
 ## Runtime contract
 
 `src/data/cardCatalog.ts` converts API responses, cached data and bundled
@@ -71,6 +93,8 @@ decks, deduplicates simultaneous catalogue loads and retains its 24-hour cache.
    ```
    Snapshot creation validates every record and refuses to replace the file
    if any records require repair or would be skipped.
+   Update `CARD_CATALOGUE_REVISION` in `src/data/cardService.ts` to the review
+   date so older browser catalogues refresh without clearing saved user data.
 4. Add images to `public/assets/Cards`, then regenerate thumbnails and atlases
    with `pnpm cards:thumbs+atlas`. Metadata updates do not download artwork.
    Rebuild category/deck association assets as needed using their existing
@@ -81,3 +105,10 @@ decks, deduplicates simultaneous catalogue loads and retains its 24-hour cache.
 
 The existing bundled snapshot remains a known compatible fallback; it is not
 automatically replaced by the live API during a production build.
+
+Photographed cards awaiting an official release are maintained separately and
+supplement all runtime loading paths. See [provisional photo imports](card-photo-imports.md)
+for the source images, review limitations and official replacement workflow.
+
+The deployed PHP route now shares its catalogue response for a day and keeps
+the last good response during an upstream failure; see the request policy.
