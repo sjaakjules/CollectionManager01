@@ -3,9 +3,7 @@
   "source": "User-downloaded SorceryTCG Frost Mage Vs. Lavamancer WebPs",
   "catalogue": "docs/Sorcery_CardInfo.json",
   "sourceOriginals": "tmp/imported-card-originals-2026-11-16 (local, not deployed)",
-  "retainedPhotoCards": [
-    "Permafrost"
-  ],
+  "retainedPhotoCards": [],
   "cards": [
     {
       "name": "A Yeti So Shy",
@@ -384,6 +382,15 @@
       "sourceSha256": "0a8c4136f790eb6d39b7fcb581666ac5f6b02482ac0391686599ef19840636aa",
       "sha256": "0a8c4136f790eb6d39b7fcb581666ac5f6b02482ac0391686599ef19840636aa",
       "previousSha256": "84d895f685aa0234ecd124e082d80be39a616bf0d307f6c515ae3eb147eb3683"
+    },
+    {
+      "name": "Permafrost",
+      "printing": "008-permafrost-pd-s",
+      "file": "permafrost.webp",
+      "rotation": 90,
+      "sourceSha256": "d03223576f68e7f2fd9dea11888f35c90a6cba4691de2d1e5ef0ab092e995ad9",
+      "sha256": "939e7b671fe99b584217045dc56d85e0f0a92366450d75469568ab5a01ab1135",
+      "previousSha256": "710db789ec04a73ef93a3015106019f9d2c2d152751a56c5484c11229a2635a8"
     },
     {
       "name": "Polar Bears",

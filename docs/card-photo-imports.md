@@ -8,10 +8,10 @@ name is `Reed Cord Measurer`; saved uses of the photographed hyphenated name
 migrate automatically. Humming Hummocks' artist is confirmed as **Jeff A.
 Menges**. The historical uncertainty below describes the initial photo import.
 
-The owner subsequently supplied 73 official WebPs on 16 November. These replace
-70 of the 71 photo images, plus the earlier Flame Wave, Polar Bears and Rubble
-images. **Permafrost keeps its photo image** because no official download was
-supplied. All thumbnails and both atlas tiers have been rebuilt. See the
+The owner subsequently supplied 74 official WebPs on 16 November, including
+Permafrost in a follow-up attachment. These replace all 71 photo images, plus
+the earlier Flame Wave, Polar Bears and Rubble images. All thumbnails and both
+atlas tiers have been rebuilt. See the
 [current import record](../offlineData/card-images/2026-11-16.json) and
 [catalogue update notes](card-catalog-updates.md). The photos and transcriptions
 below remain an archive of the initial import, not the active metadata source.

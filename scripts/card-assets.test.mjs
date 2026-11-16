@@ -48,7 +48,8 @@ it('uses the validated official downloads and current rules for reprinted cards'
     readJson('offlineData/card-images/2026-11-16.json'),
     readJson('src/data/cardImageVersions.json'),
   ]);
-  expect(imports.cards).toHaveLength(73);
+  expect(imports.cards).toHaveLength(74);
+  expect(imports.retainedPhotoCards).toEqual([]);
   for (const record of imports.cards) {
     const card = catalog.find(entry => entry.name === record.name);
     expect(card?.sets.flatMap(set => set.variants.map(variant => variant.slug))).toContain(record.printing);

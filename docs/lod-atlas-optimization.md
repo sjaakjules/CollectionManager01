@@ -49,8 +49,8 @@ After the current rebuild:
 | Output | Pages/files | Wire size | Decoded RGBA total | Largest page |
 | --- | ---: | ---: | ---: | ---: |
 | `CardsThumb` | 1,177 files | 3.28 MiB | per-file fallback | n/a |
-| `CardsThumbAtlas` | 17 pages | 3.10 MiB | 55.4 MiB | `944x912` |
-| `CardsMediumAtlas` | 99 pages | 21.30 MiB | 482.6 MiB | `1112x1160` |
+| `CardsThumbAtlas` | 17 pages | 3.11 MiB | 55.4 MiB | `944x912` |
+| `CardsMediumAtlas` | 99 pages | 21.31 MiB | 482.6 MiB | `1112x1160` |
 
 Each full medium atlas page decodes to about `4.92 MiB` of RGBA pixels. The
 wire size is only about 21 MiB, but the decoded total is roughly 483 MiB before

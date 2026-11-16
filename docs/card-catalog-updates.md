@@ -25,16 +25,18 @@ The published set name is retained exactly, as is the API's `Promo` set name.
 The browser cache revision is `2026-11-16`; earlier caches refresh once and
 prefer the newer bundled snapshot on failure. Guest/account data is not reset.
 
-The owner's **73 downloaded official WebPs** were imported on 16 November from
-the project-local `tmp/New Cards/` directory. Exact printing slugs were matched
+The owner's **74 downloaded official WebPs** were imported on 16 November from
+the project-local `tmp/New Cards/` directory and the subsequent Permafrost
+attachment. Exact printing slugs were matched
 to the official catalogue before renaming into `public/assets/Cards`. Fifty-five
-files retain their original bytes; 18 sideways sites were rotated clockwise
+files retain their original bytes; 19 sideways sites were rotated clockwise
 into landscape WebPs with lossless encoding and verified visible pixels/alpha.
 The import record and hashes are in `offlineData/card-images/2026-11-16.json`.
 Original downloads remain locally in `tmp/imported-card-originals-2026-11-16`.
 
-These replace 70 photo scans plus Flame Wave, Polar Bears and Rubble. Permafrost
-was absent from the downloads and keeps its photo image with official metadata.
+These replace all 71 photo scans plus Flame Wave, Polar Bears and Rubble.
+Permafrost's official image completes the replacement; no photo images remain
+in use for the photographed set.
 Reprints use current engine rules/statistics: Polar Bears is cost 3, power 3;
 Fireball uses the updated explosion text. No older printing overrides the
 current rules. All standalone thumbnails and both atlas tiers are current:
