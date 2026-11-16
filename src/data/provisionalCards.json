@@ -1984,7 +1984,8 @@
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Placeholder title: the robed avatar with sun, moon and planets at 00:30. The name, power and abilities are unreadable. Manual identification will be needed."
+        "Placeholder title: the robed avatar with sun, moon and planets at 00:30. The name, power and abilities are unreadable. Manual identification will be needed.",
+        "Matching 4K VP9 and AV1 encodes show the same directional blur. Using the tracked movement and accumulating 41 aligned title crops or eight rules crops did not recover readable text."
       ]
     },
     {
@@ -2752,6 +2753,207 @@
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
         "The rules and artist are clearer in a second frame. Treasure overlaps the title and power in the useful frames."
+      ]
+    },
+    {
+      "card": {
+        "name": "Giant Pelican",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Airborne\n\nMay carry one ally, which loses Waterbound.",
+          "cost": 6,
+          "attack": 6,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Airborne\n\nMay carry one ally, which loses Waterbound.",
+              "cost": 6,
+              "attack": 6,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_giant_pelican_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Airborne"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=85s",
+      "uncertainFields": [
+        "typeText",
+        "artist",
+        "image"
+      ],
+      "notes": [
+        "Printed on the side of the booster box near the end of the trailer. Perspective and shadow were corrected.",
+        "The printed type line after “An Elite Beast” and the artist credit are too soft to read. A narrow part of the right edge is covered by Treasure Map."
+      ]
+    },
+    {
+      "card": {
+        "name": "Treasure Map",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Artifact",
+          "rulesText": "Banish while at the spot marked X → Conjure five Treasure tokens.",
+          "cost": 2,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "Document",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Artifact",
+              "rulesText": "Banish while at the spot marked X → Conjure five Treasure tokens.",
+              "cost": 2,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_treasure_map_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=85s",
+      "uncertainFields": [
+        "rulesText",
+        "typeText",
+        "artist",
+        "image"
+      ],
+      "notes": [
+        "Printed on the side of the booster box near the end of the trailer. Perspective and shadow were corrected.",
+        "The rules text is legible. The accompanying grid markings, complete type line and artist credit need a clearer image. Zarith covers part of the right edge."
+      ]
+    },
+    {
+      "card": {
+        "name": "Zarith",
+        "guardian": {
+          "rarity": null,
+          "type": "Minion",
+          "rulesText": "Can't carry anything.",
+          "cost": 6,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": null,
+              "type": "Minion",
+              "rulesText": "Can't carry anything.",
+              "cost": 6,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_zarith_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=86s",
+      "uncertainFields": [
+        "name",
+        "rarity",
+        "attack",
+        "thresholds",
+        "subTypes",
+        "typeText",
+        "flavorText",
+        "artist",
+        "image"
+      ],
+      "notes": [
+        "Printed on the side of the booster box near the end of the trailer. Perspective and shadow were corrected.",
+        "Zarith is a tentative reading of the printed title. The cost and first rules line are legible. The smaller text underneath and the remaining print details need a clearer source."
       ]
     }
   ],

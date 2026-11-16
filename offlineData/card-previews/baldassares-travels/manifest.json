@@ -1418,7 +1418,8 @@
       "partial": false,
       "output": "public/assets/Cards/unidentified_avatar_bt_trailer.webp",
       "notes": [
-        "Placeholder title: the robed avatar with sun, moon and planets at 00:30. The name, power and abilities are unreadable. Manual identification will be needed."
+        "Placeholder title: the robed avatar with sun, moon and planets at 00:30. The name, power and abilities are unreadable. Manual identification will be needed.",
+        "Matching 4K VP9 and AV1 encodes show the same directional blur. Using the tracked movement and accumulating 41 aligned title crops or eight rules crops did not recover readable text."
       ]
     },
     {
@@ -2552,6 +2553,141 @@
             0.5
           ]
         }
+      ]
+    },
+    {
+      "name": "Giant Pelican",
+      "cardName": "Giant Pelican",
+      "timestampSeconds": 85.619,
+      "frameIndex": 2566,
+      "source": "sources/giant_pelican.png",
+      "sourceSize": [
+        217,
+        489
+      ],
+      "sourceSha256": "7c95e7ad2b99473929405eeb7ac47ffe2e0ebf4bb083a8bb89bec165c157c896",
+      "frameCrop": [
+        2374,
+        1018,
+        217,
+        489
+      ],
+      "corners": [
+        [
+          9.56,
+          98.888
+        ],
+        [
+          191.173,
+          9.337
+        ],
+        [
+          206.187,
+          370.313
+        ],
+        [
+          25.887,
+          478.357
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/giant_pelican.webp",
+      "luminanceGamma": 0.57,
+      "luminanceSharpen": 0.95,
+      "notes": [
+        "Printed on the side of the booster box near the end of the trailer. Perspective and shadow were corrected.",
+        "The printed type line after “An Elite Beast” and the artist credit are too soft to read. A narrow part of the right edge is covered by Treasure Map."
+      ]
+    },
+    {
+      "name": "Treasure Map",
+      "cardName": "Treasure Map",
+      "timestampSeconds": 85.085,
+      "frameIndex": 2550,
+      "source": "sources/treasure_map.png",
+      "sourceSize": [
+        205,
+        467
+      ],
+      "sourceSha256": "fa15e71df966e24826b732cbf1fe859da774e45184e934e5036d61bd32828b65",
+      "frameCrop": [
+        2555,
+        951,
+        205,
+        467
+      ],
+      "corners": [
+        [
+          16.228,
+          75.605
+        ],
+        [
+          194.325,
+          9.045
+        ],
+        [
+          186.271,
+          380.027
+        ],
+        [
+          9.347,
+          456.601
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/treasure_map.webp",
+      "luminanceGamma": 0.57,
+      "luminanceSharpen": 0.95,
+      "notes": [
+        "Printed on the side of the booster box near the end of the trailer. Perspective and shadow were corrected.",
+        "The rules text is legible. The accompanying grid markings, complete type line and artist credit need a clearer image. Zarith covers part of the right edge."
+      ]
+    },
+    {
+      "name": "Zarith",
+      "cardName": "Zarith",
+      "timestampSeconds": 86.086,
+      "frameIndex": 2580,
+      "source": "sources/zarith.png",
+      "sourceSize": [
+        200,
+        420
+      ],
+      "sourceSha256": "1142de7f72f021c9cab39aa3df5871c997b83dd49eb16ada73a18245254844e9",
+      "frameCrop": [
+        2700,
+        920,
+        200,
+        420
+      ],
+      "corners": [
+        [
+          33.896,
+          42.259
+        ],
+        [
+          189.308,
+          9.374
+        ],
+        [
+          160.131,
+          372.043
+        ],
+        [
+          9.462,
+          409.629
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/zarith.webp",
+      "luminanceGamma": 0.57,
+      "luminanceSharpen": 0.95,
+      "notes": [
+        "Printed on the side of the booster box near the end of the trailer. Perspective and shadow were corrected.",
+        "Zarith is a tentative reading of the printed title. The cost and first rules line are legible. The smaller text underneath and the remaining print details need a clearer source."
       ]
     }
   ]

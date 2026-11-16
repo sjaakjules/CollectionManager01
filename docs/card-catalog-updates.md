@@ -15,7 +15,7 @@ the **Frost Mage Vs. Lavamancer** printing (released 13 November 2026). Both
 that normalized response. All 71 photographed cards have official replacements;
 the Frost Mage/Lavamancer photo transcriptions are retired and archived.
 A separate [Baldassare's Travels trailer preview supplement](baldassares-travels-previews.md)
-now adds 43 provisional identities and one existing-card set appearance.
+now adds 46 provisional identities and one existing-card set appearance.
 `Reed-cord Measurer` migrates to the official `Reed Cord Measurer` in saved
 decks, canvas cards, collections and text imports. Humming Hummocks' official
 artist is Jeff A. Menges. Official rules, statistics and printings are used as

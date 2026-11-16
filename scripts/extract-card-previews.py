@@ -59,6 +59,13 @@ def sharpen_luminance(image, strength):
     return cv2.cvtColor(ycc, cv2.COLOR_YCrCb2BGR)
 
 
+def adjust_luminance(image, gamma):
+    ycc = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
+    luma = ycc[:, :, 0].astype(np.float32) / 255
+    ycc[:, :, 0] = (255 * luma ** gamma).round().astype(np.uint8)
+    return cv2.cvtColor(ycc, cv2.COLOR_YCrCb2BGR)
+
+
 def rounded_card(image):
     height, width = image.shape[:2]
     scale, radius = 4, 27
@@ -115,6 +122,8 @@ def extract(manifest_path, output_root, source_frames_only=False):
             detail, available = rectify(manifest_path.parent, layer, card['name'], width, height)
             rectified = blend_layer(rectified, detail, available, layer)
         # Conventional local contrast only. No synthesis, inpainting or OCR redraw.
+        if 'luminanceGamma' in card:
+            rectified = adjust_luminance(rectified, card['luminanceGamma'])
         if 'luminanceSharpen' in card:
             rectified = sharpen_luminance(rectified, card['luminanceSharpen'])
         else:

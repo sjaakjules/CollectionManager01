@@ -34,7 +34,11 @@ export const captures: PreviewCapture[] = manifest.images;
 export const captureNames = [...new Set(captures.map((capture) => capture.cardName))];
 export const previewCards = new Map(provisionalCards.map((card) => [card.name, card]));
 
-export const fieldKeys = ['name', 'rulesText', 'cost', 'power', 'flavorText'] as const;
+export const thresholdFields = ['air', 'earth', 'fire', 'water'] as const;
+export const fieldKeys = [
+  'name', 'rulesText', 'cost', 'power', 'life', ...thresholdFields,
+  'type', 'typeText', 'subTypes', 'rarity', 'flavorText', 'artist',
+] as const;
 export type FieldKey = typeof fieldKeys[number];
 export type ReviewFields = Record<FieldKey, string>;
 
@@ -43,13 +47,33 @@ export function fieldsForCard(cardName: string, card: Card | undefined): ReviewF
   const defence = card?.guardian.defence ?? null;
   const printing = card?.sets.find((set) => set.name === reviewSet)?.variants[0]
     ?? card?.sets[0]?.variants[0];
+  const thresholds = card?.guardian.thresholds;
+  const threshold = (element: typeof thresholdFields[number]) => {
+    if (card?.provisional?.uncertainFields.includes('thresholds') && !thresholds?.[element]) return '';
+    return String(thresholds?.[element] ?? '');
+  };
   return {
     name: cardName,
     rulesText: card?.guardian.rulesText ?? '',
     cost: String(card?.guardian.cost ?? ''),
     power: defence === null ? String(attack ?? '') : `${attack ?? ''}/${defence}`,
+    life: String(card?.guardian.life ?? ''),
+    air: threshold('air'),
+    earth: threshold('earth'),
+    fire: threshold('fire'),
+    water: threshold('water'),
+    type: card?.guardian.type ?? '',
+    typeText: printing?.typeText ?? '',
+    subTypes: card?.subTypes ?? '',
+    rarity: card?.guardian.rarity ?? '',
     flavorText: printing?.flavorText ?? '',
+    artist: printing?.artist ?? '',
   };
+}
+
+export function illustrationFor(capture: PreviewCapture): string {
+  const prefix = `${capture.cardName} - `;
+  return capture.name.startsWith(prefix) ? capture.name.slice(prefix.length) : '';
 }
 
 export function reviewImageUrl(capture: PreviewCapture): string {

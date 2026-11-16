@@ -16,8 +16,8 @@ it('keeps trailer captures traceable and supplies preview cards at every image t
     json('public/assets/CardsMediumAtlas/manifest.json'), json('src/data/cardImageVersions.json'),
     json(`${directory}/comparison-frames.json`),
   ]);
-  expect(manifest.images).toHaveLength(51);
-  expect(new Set(manifest.images.map(entry => entry.cardName)).size).toBe(44);
+  expect(manifest.images).toHaveLength(54);
+  expect(new Set(manifest.images.map(entry => entry.cardName)).size).toBe(47);
   expect(manifest.images.filter(entry => entry.cardName === 'Treasure')).toHaveLength(8);
   for (const capture of manifest.images) {
     const width = capture.landscape ? 1039 : 744;
@@ -63,6 +63,6 @@ it('uses the same supplement for atlas ordering as the running app, while snapsh
   expect(official.issues).toEqual([]);
   expect(combined.issues).toEqual([]);
   expect(official.cards.some(card => card.provisional)).toBe(false);
-  expect(combined.cards.filter(card => card.provisional)).toHaveLength(44);
-  expect(combined.cards).toHaveLength(official.cards.length + 43);
+  expect(combined.cards.filter(card => card.provisional)).toHaveLength(47);
+  expect(combined.cards).toHaveLength(official.cards.length + 46);
 });

@@ -1,15 +1,11 @@
-import { useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useMemo, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { reviewImageUrl, reviewSourceFrames, type GalleryFrame, type PreviewCapture } from './previewReviewData';
 import { fittedImageRectangle, hoveredFrameIndex } from './reviewImageGeometry';
 
 export interface ZoomImage {
-  url: string;
-  alt: string;
-  width: number;
-  height: number;
-  origin: HTMLImageElement;
+  capture: PreviewCapture;
   opener: HTMLButtonElement;
-  frameLabel?: string;
+  initialFrameUrl?: string;
 }
 
 interface ReviewCardArtworkProps {
@@ -20,7 +16,6 @@ interface ReviewCardArtworkProps {
 }
 
 export function ReviewCardArtwork({ capture, title, illustration, onZoom }: ReviewCardArtworkProps) {
-  const baseImage = useRef<HTMLImageElement>(null);
   const [index, setIndex] = useState<number | null>(null);
   const [ready, setReady] = useState<ReadonlySet<string>>(() => new Set());
   const [keyboardFrame, setKeyboardFrame] = useState('');
@@ -60,14 +55,8 @@ export function ReviewCardArtwork({ capture, title, illustration, onZoom }: Revi
     setIndex(next);
     setKeyboardFrame(labelFor(next));
   };
-  const enlarge = (opener: HTMLButtonElement, frame: GalleryFrame | null | undefined = shown) => {
-    const origin = baseImage.current;
-    if (!origin) return;
-    onZoom({
-      url: frame?.url ?? quality, alt, width, height, origin, opener,
-      frameLabel: frame ? frameLabel : undefined,
-    });
-  };
+  const enlarge = (opener: HTMLButtonElement, frame?: GalleryFrame) =>
+    onZoom({ capture, opener, initialFrameUrl: frame?.url });
 
   return (
     <div className="review-art-wrap">
@@ -83,10 +72,9 @@ export function ReviewCardArtwork({ capture, title, illustration, onZoom }: Revi
         onPointerCancel={reset}
         onBlur={reset}
         onKeyDown={scrubKeys}
-        onClick={(event) => enlarge(event.currentTarget)}
+        onClick={(event) => enlarge(event.currentTarget, shown)}
       >
         <img
-          ref={baseImage}
           className="review-art-result"
           src={quality}
           alt=""
@@ -116,7 +104,7 @@ export function ReviewCardArtwork({ capture, title, illustration, onZoom }: Revi
         className="review-view-final"
         aria-label={`Enlarge finished ${alt}`}
         aria-haspopup="dialog"
-        onClick={(event) => enlarge(event.currentTarget, null)}
+        onClick={(event) => enlarge(event.currentTarget)}
       >
         View final
       </button>

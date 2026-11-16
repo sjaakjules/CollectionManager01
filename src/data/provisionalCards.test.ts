@@ -42,9 +42,9 @@ describe("Baldassare's Travels trailer previews", () => {
   it('adds one record per identity, keeps uncertain fields explicit and is idempotent', async () => {
     const official = await loadOfficial();
     const result = withProvisionalCards(official);
-    expect(provisionalCards).toHaveLength(43);
-    expect(result).toHaveLength(official.length + 43);
-    expect(result.filter(card => card.sets.some(set => set.name === setName))).toHaveLength(44);
+    expect(provisionalCards).toHaveLength(46);
+    expect(result).toHaveLength(official.length + 46);
+    expect(result.filter(card => card.sets.some(set => set.name === setName))).toHaveLength(47);
     expect(new Set(result.map(card => card.name)).size).toBe(result.length);
     expect(withProvisionalCards(result)).toEqual(result);
     expect(result.filter(card => card.name.startsWith('Unidentified '))).toHaveLength(3);
@@ -55,6 +55,15 @@ describe("Baldassare's Travels trailer previews", () => {
     });
     expect(result.find(card => card.name === 'Broadside')).toMatchObject({
       guardian: { rulesText: '' }, provisional: { uncertainFields: expect.arrayContaining(['rulesText', 'image']) },
+    });
+    expect(result.find(card => card.name === 'Giant Pelican')).toMatchObject({
+      guardian: { type: 'Minion', cost: 6, attack: 6, thresholds: { air: 1 } },
+    });
+    expect(result.find(card => card.name === 'Treasure Map')).toMatchObject({
+      guardian: { type: 'Artifact', cost: 2, rarity: 'Exceptional' },
+    });
+    expect(result.find(card => card.name === 'Zarith')).toMatchObject({
+      guardian: { attack: null }, provisional: { uncertainFields: expect.arrayContaining(['name', 'attack']) },
     });
     expect(official.every(card => !card.provisional)).toBe(true);
   });
