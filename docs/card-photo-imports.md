@@ -3,7 +3,8 @@
 **Status, 16 November 2026:** All 71 photographed cards now have official
 SorceryTCG metadata in the bundled catalogue. The original transcriptions are
 archived in `offlineData/card-photos/2026-11-13/transcriptions.json` and the
-runtime supplement in `src/data/provisionalCards.json` is empty. The official
+runtime supplement no longer contains this photo batch. It now holds the
+separate [Baldassare's Travels trailer previews](baldassares-travels-previews.md). The official
 name is `Reed Cord Measurer`; saved uses of the photographed hyphenated name
 migrate automatically. Humming Hummocks' artist is confirmed as **Jeff A.
 Menges**. The historical uncertainty below describes the initial photo import.

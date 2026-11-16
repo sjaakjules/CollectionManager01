@@ -449,11 +449,9 @@ export function PixiCanvas({
   const hoveredCardPreviewSrc = hoveredCardName && useFullCardHoverPreview
     ? getCardImageUrl(hoveredCardName)
     : null;
-  const hoveredCardIsLandscape = useMemo(() => {
-    if (!hoveredCardName) return false;
-    const card = state.cards.find((entry) => entry.name === hoveredCardName);
-    return card?.guardian?.type === "Site";
-  }, [hoveredCardName, state.cards]);
+  const hoveredCard = useMemo(() => state.cards.find((entry) => entry.name === hoveredCardName),
+    [hoveredCardName, state.cards]);
+  const hoveredCardIsLandscape = hoveredCard?.guardian.type === "Site";
 
   useEffect(() => {
     setHoveredCardPreviewNeedsRotation(hoveredCardIsLandscape);
@@ -486,6 +484,14 @@ export function PixiCanvas({
           className={`card-hover-preview ${hoveredCardIsLandscape ? "landscape" : ""}`}
           aria-hidden="true"
         >
+          {hoveredCard?.provisional && (
+            <div className="card-preview-notice">
+              {hoveredCard.provisional.uncertainFields.includes('set')
+                ? 'Shown in the trailer · Set appearance unconfirmed'
+                : `Trailer preview${hoveredCard.provisional.uncertainFields.some((field) => field !== 'artist')
+                  ? ' · Some details unreadable or unconfirmed' : ' · Subject to change'}`}
+            </div>
+          )}
           <img
             className={[
               hoveredCardIsLandscape ? "landscape" : "",

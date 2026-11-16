@@ -1,0 +1,2072 @@
+{
+  "setName": "Baldassare's Travels",
+  "reviewedAt": "2026-11-16",
+  "video": {
+    "id": "NPd_t2Un-4g",
+    "url": "https://www.youtube.com/watch?v=NPd_t2Un-4g",
+    "title": "Baldassare’s Travels | Sorcery: Contested Realm Official Trailer",
+    "uploader": "SorceryTCG",
+    "uploadedAt": "2026-11-15",
+    "frameSize": [
+      3840,
+      2160
+    ],
+    "framesPerSecond": 30
+  },
+  "announcedRelease": "2027-03-31T00:00:00.000Z",
+  "releaseAnnouncementTimestampSeconds": 83.5,
+  "images": [
+    {
+      "name": "Chosen One",
+      "cardName": "Chosen One",
+      "timestampSeconds": 9.2,
+      "source": "sources/chosen_one.png",
+      "sourceSize": [
+        885,
+        701
+      ],
+      "sourceSha256": "8b7618a55392825b5a84be40e22607186bde6abbd6332937a9174ef80cf68c2e",
+      "frameCrop": [
+        726,
+        266,
+        885,
+        701
+      ],
+      "corners": [
+        [
+          10,
+          244
+        ],
+        [
+          410,
+          10
+        ],
+        [
+          874,
+          386
+        ],
+        [
+          454,
+          690
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/chosen_one.webp",
+      "notes": []
+    },
+    {
+      "name": "Imaginary Friend",
+      "cardName": "Imaginary Friend",
+      "timestampSeconds": 9.2,
+      "source": "sources/imaginary_friend.png",
+      "sourceSize": [
+        565,
+        567
+      ],
+      "sourceSha256": "99d4a9be87bc4c61bea0be63b994a851a7e3c80e90fd8d81a37ba58eb5886f3b",
+      "frameCrop": [
+        1802,
+        72,
+        565,
+        567
+      ],
+      "corners": [
+        [
+          114,
+          10
+        ],
+        [
+          554,
+          86
+        ],
+        [
+          506,
+          556
+        ],
+        [
+          10,
+          484
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/imaginary_friend.webp",
+      "notes": []
+    },
+    {
+      "name": "A Very Little House",
+      "cardName": "A Very Little House",
+      "timestampSeconds": 9.2,
+      "source": "sources/a_very_little_house.png",
+      "sourceSize": [
+        945,
+        671
+      ],
+      "sourceSha256": "0b6f43a50222adf108ab4ddce9fbbd5fc61c2d14e16b62d3d1de5a5e45e3fea7",
+      "frameCrop": [
+        1402,
+        1050,
+        945,
+        671
+      ],
+      "corners": [
+        [
+          10,
+          90
+        ],
+        [
+          808,
+          10
+        ],
+        [
+          934,
+          548
+        ],
+        [
+          50,
+          660
+        ]
+      ],
+      "landscape": true,
+      "partial": false,
+      "output": "public/assets/Cards/a_very_little_house.webp",
+      "notes": []
+    },
+    {
+      "name": "Boundless Thought",
+      "cardName": "Boundless Thought",
+      "timestampSeconds": 9.2,
+      "source": "sources/boundless_thought.png",
+      "sourceSize": [
+        807,
+        865
+      ],
+      "sourceSha256": "2fa515503b139f0cd8e3d25423671cb0703cbb33ad085d4e09dd502c33736060",
+      "frameCrop": [
+        2486,
+        1144,
+        807,
+        865
+      ],
+      "corners": [
+        [
+          10,
+          10
+        ],
+        [
+          566,
+          10
+        ],
+        [
+          796,
+          846
+        ],
+        [
+          134,
+          854
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/boundless_thought.webp",
+      "notes": []
+    },
+    {
+      "name": "Walk the Plank",
+      "cardName": "Walk the Plank",
+      "timestampSeconds": 19.5,
+      "source": "sources/walk_the_plank.png",
+      "sourceSize": [
+        783,
+        671
+      ],
+      "sourceSha256": "e28cf37e959d5019d21ee65494d20f00cff35e88b3a0b39cddef86a3a2ebe60c",
+      "frameCrop": [
+        1786,
+        378,
+        783,
+        671
+      ],
+      "corners": [
+        [
+          10,
+          164
+        ],
+        [
+          412,
+          10
+        ],
+        [
+          772,
+          470
+        ],
+        [
+          342,
+          660
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/walk_the_plank.webp",
+      "notes": []
+    },
+    {
+      "name": "Spectral Sailors",
+      "cardName": "Spectral Sailors",
+      "timestampSeconds": 19.5,
+      "source": "sources/spectral_sailors.png",
+      "sourceSize": [
+        777,
+        981
+      ],
+      "sourceSha256": "d5fe6021328879c6fafd03a5ed640ffc11910ffaedc85fdb4b3aae8bad576613",
+      "frameCrop": [
+        2656,
+        1132,
+        777,
+        981
+      ],
+      "corners": [
+        [
+          214,
+          10
+        ],
+        [
+          766,
+          210
+        ],
+        [
+          654,
+          970
+        ],
+        [
+          10,
+          714
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/spectral_sailors.webp",
+      "notes": []
+    },
+    {
+      "name": "King Croc",
+      "cardName": "King Croc",
+      "timestampSeconds": 22.5,
+      "source": "sources/king_croc.png",
+      "sourceSize": [
+        417,
+        589
+      ],
+      "sourceSha256": "c9c39d31b9720e2267019e750b5cd6a109e7a4f16eaeb9a628570a8971e473bc",
+      "frameCrop": [
+        1182,
+        422,
+        417,
+        589
+      ],
+      "corners": [
+        [
+          60,
+          84
+        ],
+        [
+          406,
+          10
+        ],
+        [
+          380,
+          538
+        ],
+        [
+          10,
+          578
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/king_croc.webp",
+      "notes": []
+    },
+    {
+      "name": "Tandoraz",
+      "cardName": "Tandoraz",
+      "timestampSeconds": 22.5,
+      "source": "sources/tandoraz.png",
+      "sourceSize": [
+        581,
+        771
+      ],
+      "sourceSha256": "f21587558f393063964045d724b04e165d269cc309f6af0f9e7ab59eb4370f82",
+      "frameCrop": [
+        2142,
+        1034,
+        581,
+        771
+      ],
+      "corners": [
+        [
+          10,
+          66
+        ],
+        [
+          510,
+          10
+        ],
+        [
+          570,
+          758
+        ],
+        [
+          12,
+          760
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/tandoraz.webp",
+      "notes": []
+    },
+    {
+      "name": "Orohi Sloth",
+      "cardName": "Orohi Sloth",
+      "timestampSeconds": 35.8,
+      "source": "sources/orohi_sloth.png",
+      "sourceSize": [
+        769,
+        791
+      ],
+      "sourceSha256": "2e9ff96365104bae94a5131eba301846111fdd581099c9d2b3548c8df2849f4b",
+      "frameCrop": [
+        352,
+        1260,
+        769,
+        791
+      ],
+      "corners": [
+        [
+          10,
+          212
+        ],
+        [
+          494,
+          10
+        ],
+        [
+          758,
+          534
+        ],
+        [
+          246,
+          780
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/orohi_sloth.webp",
+      "notes": [
+        "Earth symbols and power are motion-blurred; counts left unconfirmed.",
+        "Motion-blurred title is tentatively transcribed as Orohi Sloth."
+      ]
+    },
+    {
+      "name": "Powder Keg",
+      "cardName": "Powder Keg",
+      "timestampSeconds": 35.8,
+      "source": "sources/powder_keg.png",
+      "sourceSize": [
+        581,
+        607
+      ],
+      "sourceSha256": "bc5cc5d991633743bf358dda9d3fbfaab5202d2f3fd861875de2d624a2ca47f4",
+      "frameCrop": [
+        1082,
+        924,
+        581,
+        607
+      ],
+      "corners": [
+        [
+          10,
+          94
+        ],
+        [
+          420,
+          10
+        ],
+        [
+          570,
+          502
+        ],
+        [
+          106,
+          596
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/powder_keg.webp",
+      "notes": [
+        "The printed damage grid is transcribed as three rows; wording is motion-blurred."
+      ]
+    },
+    {
+      "name": "Spawn of Zahhak",
+      "cardName": "Spawn of Zahhak",
+      "timestampSeconds": 35.8,
+      "source": "sources/spawn_of_zahhak.png",
+      "sourceSize": [
+        601,
+        507
+      ],
+      "sourceSha256": "337fb4a02fddf49523c89e50f43c80ceef6f7e93a9f97ef369f455881f4a2931",
+      "frameCrop": [
+        1940,
+        678,
+        601,
+        507
+      ],
+      "corners": [
+        [
+          10,
+          92
+        ],
+        [
+          330,
+          10
+        ],
+        [
+          590,
+          390
+        ],
+        [
+          222,
+          496
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/spawn_of_zahhak.webp",
+      "notes": [
+        "Small threshold and power glyphs need confirmation."
+      ]
+    },
+    {
+      "name": "Captain's Macaw",
+      "cardName": "Captain's Macaw",
+      "timestampSeconds": 41.0,
+      "source": "sources/captains_macaw.png",
+      "sourceSize": [
+        601,
+        499
+      ],
+      "sourceSha256": "4b72c62798079ceaff9dcc62c7499c7863394836ad2d4004c3e4dc6efa695a7e",
+      "frameCrop": [
+        242,
+        816,
+        601,
+        499
+      ],
+      "corners": [
+        [
+          162,
+          10
+        ],
+        [
+          590,
+          32
+        ],
+        [
+          484,
+          488
+        ],
+        [
+          10,
+          470
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/captains_macaw.webp",
+      "notes": []
+    },
+    {
+      "name": "Undari Guide",
+      "cardName": "Undari Guide",
+      "timestampSeconds": 41.0,
+      "source": "sources/undari_guide.png",
+      "sourceSize": [
+        427,
+        447
+      ],
+      "sourceSha256": "e3315db5b386c72c03231b0f2ab6b5fe260958b9216a548b47e3762b5952ccef",
+      "frameCrop": [
+        1276,
+        732,
+        427,
+        447
+      ],
+      "corners": [
+        [
+          40,
+          10
+        ],
+        [
+          406,
+          36
+        ],
+        [
+          416,
+          436
+        ],
+        [
+          10,
+          412
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/undari_guide.webp",
+      "notes": [
+        "The title appears to read Undari Guide; confirm spelling when official metadata arrives."
+      ]
+    },
+    {
+      "name": "Face-belly Blemmyes",
+      "cardName": "Face-belly Blemmyes",
+      "timestampSeconds": 40.0,
+      "source": "sources/face_belly_blemmyes.png",
+      "sourceSize": [
+        619,
+        615
+      ],
+      "sourceSha256": "c301e062f8a62ae7b02d855447b53ec24ccb3b1b1ec035f0380262ead8b63969",
+      "frameCrop": [
+        1000,
+        1048,
+        619,
+        615
+      ],
+      "corners": [
+        [
+          10,
+          114
+        ],
+        [
+          402,
+          10
+        ],
+        [
+          608,
+          460
+        ],
+        [
+          180,
+          604
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/face_belly_blemmyes.webp",
+      "notes": []
+    },
+    {
+      "name": "Gashadokuro",
+      "cardName": "Gashadokuro",
+      "timestampSeconds": 40.0,
+      "source": "sources/gashadokuro.png",
+      "sourceSize": [
+        661,
+        609
+      ],
+      "sourceSha256": "db197b6e8a74cb3d6278e921665bc364596805a34fc91c4aac2fd0b85b676267",
+      "frameCrop": [
+        2630,
+        1286,
+        661,
+        609
+      ],
+      "corners": [
+        [
+          10,
+          122
+        ],
+        [
+          286,
+          10
+        ],
+        [
+          650,
+          460
+        ],
+        [
+          356,
+          598
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/gashadokuro.webp",
+      "notes": []
+    },
+    {
+      "name": "Poison Dart Frogs",
+      "cardName": "Poison Dart Frogs",
+      "timestampSeconds": 48.6,
+      "source": "sources/poison_dart_frogs.png",
+      "sourceSize": [
+        563,
+        529
+      ],
+      "sourceSha256": "0dfc1811159021610f3042a41fbb61394b1efa9ffc569ad18930288d6ac31ed0",
+      "frameCrop": [
+        1602,
+        2,
+        563,
+        529
+      ],
+      "corners": [
+        [
+          10,
+          92
+        ],
+        [
+          362,
+          10
+        ],
+        [
+          552,
+          430
+        ],
+        [
+          190,
+          518
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/poison_dart_frogs.webp",
+      "notes": []
+    },
+    {
+      "name": "Last Bastion of Albespine",
+      "cardName": "Last Bastion of Albespine",
+      "timestampSeconds": 48.6,
+      "source": "sources/last_bastion_of_albespine.png",
+      "sourceSize": [
+        611,
+        369
+      ],
+      "sourceSha256": "3070ce981c507873c4e2204db77f7aac892cab50fddb84541c25c235ae6817e4",
+      "frameCrop": [
+        3026,
+        110,
+        611,
+        369
+      ],
+      "corners": [
+        [
+          10,
+          52
+        ],
+        [
+          458,
+          10
+        ],
+        [
+          600,
+          310
+        ],
+        [
+          128,
+          358
+        ]
+      ],
+      "landscape": true,
+      "partial": false,
+      "output": "public/assets/Cards/last_bastion_of_albespine.webp",
+      "notes": [
+        "(E)(E)(E) represents the three printed Earth symbols in the ability."
+      ]
+    },
+    {
+      "name": "Flying Machines",
+      "cardName": "Flying Machines",
+      "timestampSeconds": 52.5,
+      "source": "sources/flying_machines.png",
+      "sourceSize": [
+        907,
+        949
+      ],
+      "sourceSha256": "d13e17aeb3b198e5bf24f3a69299787de89c84ffcc3c41887bca4908aeed6946",
+      "frameCrop": [
+        2296,
+        700,
+        907,
+        949
+      ],
+      "corners": [
+        [
+          10,
+          192
+        ],
+        [
+          536,
+          10
+        ],
+        [
+          896,
+          746
+        ],
+        [
+          300,
+          938
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/flying_machines.webp",
+      "notes": []
+    },
+    {
+      "name": "Sindbad",
+      "cardName": "Sindbad",
+      "timestampSeconds": 55.5,
+      "source": "sources/sindbad.png",
+      "sourceSize": [
+        931,
+        1197
+      ],
+      "sourceSha256": "7777f8a6a1a45b400d459803c954950a3d765af51d6c2529cb7729cad00269a8",
+      "frameCrop": [
+        1482,
+        522,
+        931,
+        1197
+      ],
+      "corners": [
+        [
+          32,
+          26
+        ],
+        [
+          840,
+          10
+        ],
+        [
+          920,
+          1170
+        ],
+        [
+          10,
+          1186
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/sindbad.webp",
+      "notes": []
+    },
+    {
+      "name": "Mirador",
+      "cardName": "Mirador",
+      "timestampSeconds": 58.2,
+      "source": "sources/mirador.png",
+      "sourceSize": [
+        673,
+        467
+      ],
+      "sourceSha256": "875f3b675a2386c89ae514e1cca261a532d29c9d0ad851040100a9e2246738a0",
+      "frameCrop": [
+        682,
+        452,
+        673,
+        467
+      ],
+      "corners": [
+        [
+          96,
+          10
+        ],
+        [
+          662,
+          72
+        ],
+        [
+          580,
+          456
+        ],
+        [
+          10,
+          386
+        ]
+      ],
+      "landscape": true,
+      "partial": false,
+      "output": "public/assets/Cards/mirador.webp",
+      "notes": []
+    },
+    {
+      "name": "The White Death",
+      "cardName": "The White Death",
+      "timestampSeconds": 58.2,
+      "source": "sources/the_white_death.png",
+      "sourceSize": [
+        473,
+        611
+      ],
+      "sourceSha256": "7bf09964af69e4fe0c0858afd77696cb94d4c80bc41d670f23411af91e70988d",
+      "frameCrop": [
+        1594,
+        694,
+        473,
+        611
+      ],
+      "corners": [
+        [
+          10,
+          30
+        ],
+        [
+          426,
+          10
+        ],
+        [
+          462,
+          576
+        ],
+        [
+          20,
+          600
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/the_white_death.webp",
+      "notes": [
+        "Shown in the trailer; this set association is provisional and does not confirm a reprint. Current official rules and artwork are retained."
+      ]
+    },
+    {
+      "name": "Guard Post",
+      "cardName": "Guard Post",
+      "timestampSeconds": 63.1,
+      "source": "sources/guard_post.png",
+      "sourceSize": [
+        563,
+        681
+      ],
+      "sourceSha256": "2d0b09ab81521503798e13e860598c0127dc316ef5e95c54027859efbac11530",
+      "frameCrop": [
+        1720,
+        302,
+        563,
+        681
+      ],
+      "corners": [
+        [
+          10,
+          44
+        ],
+        [
+          482,
+          10
+        ],
+        [
+          552,
+          638
+        ],
+        [
+          52,
+          670
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/guard_post.webp",
+      "notes": [
+        "Small ability text needs confirmation against the official release."
+      ]
+    },
+    {
+      "name": "Baldassare's Armada",
+      "cardName": "Baldassare's Armada",
+      "timestampSeconds": 70.5,
+      "source": "sources/baldassares_armada.png",
+      "sourceSize": [
+        1667,
+        2097
+      ],
+      "sourceSha256": "751d921ce8c6f25705c5e34033da1f86151837b42578298a5f026eaacc03b542",
+      "frameCrop": [
+        1030,
+        34,
+        1667,
+        2097
+      ],
+      "corners": [
+        [
+          156,
+          10
+        ],
+        [
+          1578,
+          30
+        ],
+        [
+          1656,
+          2086
+        ],
+        [
+          10,
+          2058
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/baldassares_armada.webp",
+      "notes": []
+    },
+    {
+      "name": "Ogre Chef",
+      "cardName": "Ogre Chef",
+      "timestampSeconds": 49.2,
+      "source": "sources/ogre_chef.png",
+      "sourceSize": [
+        547,
+        603
+      ],
+      "sourceSha256": "c054517841a88f01a85759ea8ba22e73d1de6fc3a0b8f757464b9ac27381d38d",
+      "frameCrop": [
+        2390,
+        764,
+        547,
+        603
+      ],
+      "corners": [
+        [
+          10,
+          28
+        ],
+        [
+          394,
+          10
+        ],
+        [
+          536,
+          558
+        ],
+        [
+          116,
+          592
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/ogre_chef.webp",
+      "notes": []
+    },
+    {
+      "name": "Don Quixote",
+      "cardName": "Don Quixote",
+      "timestampSeconds": 56.2,
+      "source": "sources/don_quixote.png",
+      "sourceSize": [
+        481,
+        641
+      ],
+      "sourceSha256": "698cea7dcc98d8d39333eb55e758b674f25c7913a5423a4f72376146b5d30ff3",
+      "frameCrop": [
+        1506,
+        804,
+        481,
+        641
+      ],
+      "corners": [
+        [
+          10,
+          32
+        ],
+        [
+          442,
+          10
+        ],
+        [
+          470,
+          612
+        ],
+        [
+          10,
+          630
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/don_quixote.webp",
+      "notes": []
+    },
+    {
+      "name": "Enbiggen",
+      "cardName": "Enbiggen",
+      "timestampSeconds": 61.8,
+      "source": "sources/enbiggen.png",
+      "sourceSize": [
+        651,
+        871
+      ],
+      "sourceSha256": "f88044ed1334e1761ab7cb3797907ffbc2195ae2165deb37d590f0c9802a3058",
+      "frameCrop": [
+        1502,
+        1276,
+        651,
+        871
+      ],
+      "corners": [
+        [
+          10,
+          64
+        ],
+        [
+          540,
+          10
+        ],
+        [
+          640,
+          808
+        ],
+        [
+          58,
+          860
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/enbiggen.webp",
+      "notes": [
+        "The title appears to read Enbiggen; spelling needs official confirmation."
+      ]
+    },
+    {
+      "name": "Hammer-for-Hire",
+      "cardName": "Hammer-for-Hire",
+      "timestampSeconds": 61.8,
+      "source": "sources/hammer_for_hire.png",
+      "sourceSize": [
+        723,
+        821
+      ],
+      "sourceSha256": "6c3d5523ddb7924859f5965d928f085ed2d3cec7c29d028ad326b13479537ceb",
+      "frameCrop": [
+        2596,
+        652,
+        723,
+        821
+      ],
+      "corners": [
+        [
+          10,
+          72
+        ],
+        [
+          524,
+          10
+        ],
+        [
+          712,
+          750
+        ],
+        [
+          156,
+          810
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/hammer_for_hire.webp",
+      "notes": []
+    },
+    {
+      "name": "Krampus Crew",
+      "cardName": "Krampus Crew",
+      "timestampSeconds": 39.3,
+      "source": "sources/krampus_crew.png",
+      "sourceSize": [
+        543,
+        441
+      ],
+      "sourceSha256": "2239ed319c39c056fe8c05d314c763f7d72858f6d6292849f4e1934796d222a9",
+      "frameCrop": [
+        900,
+        486,
+        543,
+        441
+      ],
+      "corners": [
+        [
+          10,
+          84
+        ],
+        [
+          348,
+          10
+        ],
+        [
+          532,
+          330
+        ],
+        [
+          176,
+          430
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/krampus_crew.webp",
+      "notes": [
+        "Rhyming rules transcribed from small, motion-blurred lettering."
+      ]
+    },
+    {
+      "name": "Whisperwhomp",
+      "cardName": "Whisperwhomp",
+      "timestampSeconds": 28.5,
+      "source": "sources/whisperwhomp.png",
+      "sourceSize": [
+        441,
+        577
+      ],
+      "sourceSha256": "755825acf7f091767b03606cd156eb871970dd5c5fc0706b1a63a45a6b6a1784",
+      "frameCrop": [
+        2292,
+        192,
+        441,
+        577
+      ],
+      "corners": [
+        [
+          36,
+          10
+        ],
+        [
+          410,
+          124
+        ],
+        [
+          430,
+          566
+        ],
+        [
+          10,
+          436
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/whisperwhomp.webp",
+      "notes": []
+    },
+    {
+      "name": "The Jade Monkey",
+      "cardName": "The Jade Monkey",
+      "timestampSeconds": 26.5,
+      "source": "sources/the_jade_monkey.png",
+      "sourceSize": [
+        649,
+        757
+      ],
+      "sourceSha256": "b537c4cb248aab45bac1d57df4073ac58e3728a8758273b46ed2d1ab2978d5f6",
+      "frameCrop": [
+        2322,
+        646,
+        649,
+        757
+      ],
+      "corners": [
+        [
+          204,
+          10
+        ],
+        [
+          638,
+          198
+        ],
+        [
+          478,
+          746
+        ],
+        [
+          10,
+          522
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/the_jade_monkey.webp",
+      "notes": [
+        "Ability text is blurred by camera movement."
+      ]
+    },
+    {
+      "name": "Unidentified Site (BT trailer)",
+      "cardName": "Unidentified Site (BT trailer)",
+      "timestampSeconds": 30.1,
+      "source": "sources/unidentified_site_bt_trailer.png",
+      "sourceSize": [
+        1005,
+        883
+      ],
+      "sourceSha256": "a2db72042018dec57a15f4c6b1a8ec2a71ac0a8af66c6dc26c9317f6520a7812",
+      "frameCrop": [
+        1468,
+        1220,
+        1005,
+        883
+      ],
+      "corners": [
+        [
+          10,
+          352
+        ],
+        [
+          686,
+          10
+        ],
+        [
+          994,
+          470
+        ],
+        [
+          250,
+          872
+        ]
+      ],
+      "landscape": true,
+      "partial": false,
+      "output": "public/assets/Cards/unidentified_site_bt_trailer.webp",
+      "notes": [
+        "Placeholder title: the dark site with a red doorway at 00:30. The title and rules are unreadable. Manual identification will be needed."
+      ]
+    },
+    {
+      "name": "Zig-Zag Dragonfly",
+      "cardName": "Zig-Zag Dragonfly",
+      "timestampSeconds": 30.1,
+      "source": "sources/zig_zag_dragonfly.png",
+      "sourceSize": [
+        951,
+        781
+      ],
+      "sourceSha256": "71dabc87c07d319c6696ffa9591980371c05574f030c46e42eaf229863b61653",
+      "frameCrop": [
+        1906,
+        564,
+        951,
+        781
+      ],
+      "corners": [
+        [
+          10,
+          242
+        ],
+        [
+          400,
+          10
+        ],
+        [
+          940,
+          482
+        ],
+        [
+          512,
+          770
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/zig_zag_dragonfly.webp",
+      "notes": [
+        "Tentative title; small lettering and power are motion-blurred."
+      ]
+    },
+    {
+      "name": "Unidentified Avatar (BT trailer)",
+      "cardName": "Unidentified Avatar (BT trailer)",
+      "timestampSeconds": 30.6,
+      "source": "sources/unidentified_avatar_bt_trailer.png",
+      "sourceSize": [
+        1081,
+        975
+      ],
+      "sourceSha256": "b29d1c015d37758a6b3cfb39fb28eca76489d255933a53b04ff9f52b92395939",
+      "frameCrop": [
+        2758,
+        1094,
+        1081,
+        975
+      ],
+      "corners": [
+        [
+          10,
+          146
+        ],
+        [
+          592,
+          10
+        ],
+        [
+          1070,
+          796
+        ],
+        [
+          430,
+          964
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/unidentified_avatar_bt_trailer.webp",
+      "notes": [
+        "Placeholder title: the robed avatar with sun, moon and planets at 00:30. The name, power and abilities are unreadable. Manual identification will be needed."
+      ]
+    },
+    {
+      "name": "Set Sail",
+      "cardName": "Set Sail",
+      "timestampSeconds": 32.0,
+      "source": "sources/set_sail.png",
+      "sourceSize": [
+        855,
+        681
+      ],
+      "sourceSha256": "2f9ff0409dd10a99917e41f9b23f4663bfeffc420d30acb9235536dc39d800eb",
+      "frameCrop": [
+        814,
+        568,
+        855,
+        681
+      ],
+      "corners": [
+        [
+          10,
+          250
+        ],
+        [
+          408,
+          10
+        ],
+        [
+          844,
+          382
+        ],
+        [
+          426,
+          670
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/set_sail.webp",
+      "notes": [
+        "Rules transcribed from motion-blurred text."
+      ]
+    },
+    {
+      "name": "Blunderbuss Buffoons",
+      "cardName": "Blunderbuss Buffoons",
+      "timestampSeconds": 16.4,
+      "source": "sources/blunderbuss_buffoons.png",
+      "sourceSize": [
+        1031,
+        960
+      ],
+      "sourceSha256": "2121bb73f9279277812eae7f076c05c2b493da91c64cd1021f90a6ecb3ae04cf",
+      "frameCrop": [
+        2494,
+        1200,
+        1031,
+        960
+      ],
+      "corners": [
+        [
+          10,
+          218
+        ],
+        [
+          458,
+          10
+        ],
+        [
+          1020,
+          708
+        ],
+        [
+          496,
+          992
+        ]
+      ],
+      "landscape": false,
+      "partial": true,
+      "output": "public/assets/Cards/blunderbuss_buffoons.webp",
+      "notes": [
+        "The lowest edge of the card extends outside the video frame."
+      ]
+    },
+    {
+      "name": "Broadside",
+      "cardName": "Broadside",
+      "timestampSeconds": 17.0,
+      "source": "sources/broadside.png",
+      "sourceSize": [
+        1081,
+        500
+      ],
+      "sourceSha256": "e14e6de997ce5ea2d555c147cc119d162b5d9717530625f9f6a791e0d1a849af",
+      "frameCrop": [
+        950,
+        1660,
+        1081,
+        500
+      ],
+      "corners": [
+        [
+          10,
+          450
+        ],
+        [
+          538,
+          10
+        ],
+        [
+          1070,
+          700
+        ],
+        [
+          424,
+          1180
+        ]
+      ],
+      "landscape": false,
+      "partial": true,
+      "output": "public/assets/Cards/broadside.webp",
+      "notes": [
+        "Only the upper part of the card is shown. Missing pixels remain blank; no rules were invented."
+      ]
+    },
+    {
+      "name": "Sing-song Siren",
+      "cardName": "Sing-song Siren",
+      "timestampSeconds": 28.5,
+      "source": "sources/sing_song_siren.png",
+      "sourceSize": [
+        983,
+        828
+      ],
+      "sourceSha256": "6e7c7cf29494940805c896f4bf2f55ccd2fa15b630b2684def671f8397067c8b",
+      "frameCrop": [
+        472,
+        1332,
+        983,
+        828
+      ],
+      "corners": [
+        [
+          324,
+          10
+        ],
+        [
+          972,
+          156
+        ],
+        [
+          740,
+          1098
+        ],
+        [
+          10,
+          940
+        ]
+      ],
+      "landscape": false,
+      "partial": true,
+      "output": "public/assets/Cards/sing_song_siren.webp",
+      "notes": [
+        "Submerge is readable; the remaining ability and bottom edge are cut off."
+      ]
+    },
+    {
+      "name": "Realm in a Bottle",
+      "cardName": "Realm in a Bottle",
+      "timestampSeconds": 28.5,
+      "source": "sources/realm_in_a_bottle.png",
+      "sourceSize": [
+        815,
+        706
+      ],
+      "sourceSha256": "38bab487e322cc8ca6abeff92c4dd85bd2d3cfb22d1ddaf303452b0070b11024",
+      "frameCrop": [
+        2286,
+        1454,
+        815,
+        706
+      ],
+      "corners": [
+        [
+          10,
+          100
+        ],
+        [
+          462,
+          10
+        ],
+        [
+          804,
+          886
+        ],
+        [
+          244,
+          1028
+        ]
+      ],
+      "landscape": false,
+      "partial": true,
+      "output": "public/assets/Cards/realm_in_a_bottle.webp",
+      "notes": [
+        "The ability is cut off and partly covered by cloud; no complete transcription is possible."
+      ]
+    },
+    {
+      "name": "Man Mountain Mattis",
+      "cardName": "Man Mountain Mattis",
+      "timestampSeconds": 60.0,
+      "source": "sources/man_mountain_mattis.png",
+      "sourceSize": [
+        729,
+        869
+      ],
+      "sourceSha256": "1acfda78a328c18b027ef764b6b498199538944d50275c8bf6bb3ee569522510",
+      "frameCrop": [
+        730,
+        838,
+        729,
+        869
+      ],
+      "corners": [
+        [
+          10,
+          170
+        ],
+        [
+          490,
+          10
+        ],
+        [
+          718,
+          690
+        ],
+        [
+          188,
+          858
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/man_mountain_mattis.webp",
+      "notes": [
+        "A small part of the right edge is covered by The White Death."
+      ]
+    },
+    {
+      "name": "Nellie Bly",
+      "cardName": "Nellie Bly",
+      "timestampSeconds": 60.0,
+      "source": "sources/nellie_bly.png",
+      "sourceSize": [
+        631,
+        783
+      ],
+      "sourceSha256": "e9650a43ca53b59f00f938422737142bdfcf24afa3e26c082722065abfe85335",
+      "frameCrop": [
+        1058,
+        772,
+        631,
+        783
+      ],
+      "corners": [
+        [
+          10,
+          116
+        ],
+        [
+          534,
+          10
+        ],
+        [
+          620,
+          650
+        ],
+        [
+          112,
+          772
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/nellie_bly.webp",
+      "notes": [
+        "Title and power are visible. The rest is mostly covered by Man Mountain Mattis and The White Death throughout the trailer."
+      ]
+    },
+    {
+      "name": "Baron of Felbog",
+      "cardName": "Baron of Felbog",
+      "timestampSeconds": 59.2,
+      "source": "sources/baron_of_felbog.png",
+      "sourceSize": [
+        419,
+        493
+      ],
+      "sourceSha256": "88f6070ba33a3e1c0a0fefde7bc295a856b38c598638d3a476c4d96d8c989b74",
+      "frameCrop": [
+        1066,
+        874,
+        419,
+        493
+      ],
+      "corners": [
+        [
+          114,
+          10
+        ],
+        [
+          408,
+          64
+        ],
+        [
+          300,
+          482
+        ],
+        [
+          10,
+          424
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/baron_of_felbog.webp",
+      "notes": [
+        "Submerge is readable. The remaining transformation ability is too blurred for a reliable transcription."
+      ]
+    },
+    {
+      "name": "Loot Goblin",
+      "cardName": "Loot Goblin",
+      "timestampSeconds": 63.7,
+      "source": "sources/loot_goblin.png",
+      "sourceSize": [
+        559,
+        737
+      ],
+      "sourceSha256": "99074f6e27bc0775dad503c43123bce1a821562965c0b7164e71469aca33a595",
+      "frameCrop": [
+        2042,
+        792,
+        559,
+        737
+      ],
+      "corners": [
+        [
+          54,
+          10
+        ],
+        [
+          548,
+          44
+        ],
+        [
+          546,
+          726
+        ],
+        [
+          10,
+          684
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/loot_goblin.webp",
+      "notes": [
+        "Rules are read from the later close view at 01:05; the complete card at 01:03 has a motion-blurred cost and threshold."
+      ]
+    },
+    {
+      "name": "Treasure - crown",
+      "cardName": "Treasure",
+      "timestampSeconds": 65.8,
+      "source": "sources/treasure_crown.png",
+      "sourceSize": [
+        335,
+        387
+      ],
+      "sourceSha256": "1d77ea3b09017484465c40b0822ad0b3efc349c5f88dccf78a7200d808688c9a",
+      "frameCrop": [
+        2316,
+        790,
+        335,
+        387
+      ],
+      "corners": [
+        [
+          22,
+          10
+        ],
+        [
+          296,
+          18
+        ],
+        [
+          324,
+          376
+        ],
+        [
+          10,
+          372
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/Cards/treasure.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Treasure - sword",
+      "cardName": "Treasure",
+      "timestampSeconds": 65.8,
+      "source": "sources/treasure_sword.png",
+      "sourceSize": [
+        301,
+        395
+      ],
+      "sourceSha256": "4b3335772e3bc81fe779f3cdf63e48a7dfc8eeb97ec7d52ba34f3a2fe08d156c",
+      "frameCrop": [
+        1780,
+        830,
+        301,
+        395
+      ],
+      "corners": [
+        [
+          30,
+          12
+        ],
+        [
+          282,
+          10
+        ],
+        [
+          290,
+          374
+        ],
+        [
+          10,
+          384
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/treasure_sword.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Treasure - ring",
+      "cardName": "Treasure",
+      "timestampSeconds": 65.8,
+      "source": "sources/treasure_ring.png",
+      "sourceSize": [
+        299,
+        363
+      ],
+      "sourceSha256": "80d015374e7c16a47540f01ccdc7639cef4869ae2bd02e3c9da4ee3b08eec9af",
+      "frameCrop": [
+        3294,
+        372,
+        299,
+        363
+      ],
+      "corners": [
+        [
+          30,
+          10
+        ],
+        [
+          288,
+          50
+        ],
+        [
+          286,
+          352
+        ],
+        [
+          10,
+          310
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/treasure_ring.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Treasure - cup",
+      "cardName": "Treasure",
+      "timestampSeconds": 65.8,
+      "source": "sources/treasure_cup.png",
+      "sourceSize": [
+        341,
+        435
+      ],
+      "sourceSha256": "871cc0c9ff12b81ba0a99d003c781039eaa8524fa2f805efe1bdf316f5c97d06",
+      "frameCrop": [
+        2538,
+        1334,
+        341,
+        435
+      ],
+      "corners": [
+        [
+          10,
+          10
+        ],
+        [
+          330,
+          28
+        ],
+        [
+          330,
+          424
+        ],
+        [
+          28,
+          406
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/treasure_cup.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Treasure - cross",
+      "cardName": "Treasure",
+      "timestampSeconds": 65.8,
+      "source": "sources/treasure_cross.png",
+      "sourceSize": [
+        319,
+        355
+      ],
+      "sourceSha256": "79cba35b64f7bc77c763578be766b7cabf702c5de3f1268c77f878ec4455c327",
+      "frameCrop": [
+        2196,
+        344,
+        319,
+        355
+      ],
+      "corners": [
+        [
+          10,
+          28
+        ],
+        [
+          270,
+          10
+        ],
+        [
+          308,
+          344
+        ],
+        [
+          22,
+          332
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/treasure_cross.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Treasure - chest",
+      "cardName": "Treasure",
+      "timestampSeconds": 65.8,
+      "source": "sources/treasure_chest.png",
+      "sourceSize": [
+        341,
+        351
+      ],
+      "sourceSha256": "989f1e12d9fe0924f09c6adc7351a20017406655a6c903a3b229abfd53ca9c42",
+      "frameCrop": [
+        950,
+        308,
+        341,
+        351
+      ],
+      "corners": [
+        [
+          36,
+          10
+        ],
+        [
+          300,
+          18
+        ],
+        [
+          330,
+          340
+        ],
+        [
+          10,
+          326
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/treasure_chest.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Treasure - ruby",
+      "cardName": "Treasure",
+      "timestampSeconds": 65.8,
+      "source": "sources/treasure_ruby.png",
+      "sourceSize": [
+        329,
+        393
+      ],
+      "sourceSha256": "66a13bd7ad7124649fbc480ff0ee66ccfd5ac70cc9e3bf92307168f53a5f23e8",
+      "frameCrop": [
+        2848,
+        752,
+        329,
+        393
+      ],
+      "corners": [
+        [
+          64,
+          10
+        ],
+        [
+          318,
+          38
+        ],
+        [
+          286,
+          382
+        ],
+        [
+          10,
+          332
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/treasure_ruby.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Treasure - urn",
+      "cardName": "Treasure",
+      "timestampSeconds": 66.1,
+      "source": "sources/treasure_urn.png",
+      "sourceSize": [
+        331,
+        415
+      ],
+      "sourceSha256": "36047e6a52f8f9d35ba8ebaa22b3e0942c075d7d2f72434f4343617cc7cbe7ff",
+      "frameCrop": [
+        1374,
+        748,
+        331,
+        415
+      ],
+      "corners": [
+        [
+          10,
+          42
+        ],
+        [
+          250,
+          10
+        ],
+        [
+          320,
+          356
+        ],
+        [
+          26,
+          404
+        ]
+      ],
+      "landscape": false,
+      "partial": false,
+      "output": "public/assets/CardPreviews/baldassares_travels/treasure_urn.webp",
+      "notes": [
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "name": "Unidentified Fae (BT trailer)",
+      "cardName": "Unidentified Fae (BT trailer)",
+      "timestampSeconds": 64.9,
+      "source": "sources/unidentified_fae_bt_trailer.png",
+      "sourceSize": [
+        590,
+        761
+      ],
+      "sourceSha256": "2352e74986d282951cc8eb895a0555aa03a2ddc17312f622ec90dc5e492a2502",
+      "frameCrop": [
+        3250,
+        1034,
+        590,
+        761
+      ],
+      "corners": [
+        [
+          10,
+          50
+        ],
+        [
+          470,
+          10
+        ],
+        [
+          592,
+          706
+        ],
+        [
+          94,
+          750
+        ]
+      ],
+      "landscape": false,
+      "partial": true,
+      "output": "public/assets/Cards/unidentified_fae_bt_trailer.webp",
+      "notes": [
+        "Placeholder title: the red Fae at 01:04. Treasure cards obscure the title and power throughout the useful frames. Manual identification will be needed."
+      ]
+    }
+  ]
+}

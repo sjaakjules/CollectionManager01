@@ -92,10 +92,24 @@ body {
   width: clamp(220px, 30vw, 400px);
   aspect-ratio: 400 / 559;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(129, 121, 105, 0.7);
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
   pointer-events: none;
+}
+
+.card-preview-notice {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--manga-line);
+  border-radius: 6px;
+  background: var(--manga-ink);
+  color: var(--manga-paper);
+  font-size: 0.8rem;
+  line-height: 1.35;
 }
 
 .card-hover-preview.landscape {
@@ -156,6 +170,7 @@ body {
   height: 100%;
   display: block;
   object-fit: cover;
+  border-radius: 8px;
 }
 
 .card-hover-preview img.landscape.rotate-source {

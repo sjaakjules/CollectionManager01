@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { get, set } from 'idb-keyval';
 import engineCards from './__fixtures__/sorcery-engine-cards.json';
 import { normalizeCardCatalog } from './cardCatalog';
-import { withProvisionalCards } from './provisionalCards';
+import { provisionalCards, withProvisionalCards } from './provisionalCards';
 import { CARD_CATALOGUE_REVISION } from './cardService';
 import { cardNameToOrientationMap } from '@/canvas/canvasAreas';
 
@@ -40,25 +40,25 @@ describe('card catalog loading and recovery', () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(engineCards), {
       headers: { 'content-type': 'application/json', 'x-sorcery-catalogue-cache': 'stale' },
     }));
-    expect(await fetchCards(warning)).toEqual(normalized);
+    expect(await fetchCards(warning)).toEqual(supplemented);
     expect(set).not.toHaveBeenCalled();
     expect(warning).toHaveBeenCalledWith(expect.stringContaining('last verified shared catalogue'));
   });
-  it('replaces a photo transcription with the official record and caches only upstream data', async () => {
+  it('replaces a trailer transcription with the official record and caches only upstream data', async () => {
     const official = {
-      name: 'Research',
+      name: 'Chosen One',
       engine: { type: 'Magic', rarity: 'Ordinary', rules: 'Official corrected text.', cost: 4, air: 1 },
-      printings: [{ slug: 'official-research', set: { name: 'Official Release' }, meta: { finish: 'Standard' } }],
+      printings: [{ slug: 'official-chosen-one', set: { name: 'Official Release' }, meta: { finish: 'Standard' } }],
     };
     fetchMock.mockResolvedValueOnce(json([...engineCards, official]));
     const cards = await fetchCards(warning);
-    expect(cards.filter((card) => card.name === 'Research')).toHaveLength(1);
-    expect(cards.find((card) => card.name === 'Research')).toMatchObject({
+    expect(cards.filter((card) => card.name === 'Chosen One')).toHaveLength(1);
+    expect(cards.find((card) => card.name === 'Chosen One')).toMatchObject({
       guardian: { rulesText: 'Official corrected text.', cost: 4, thresholds: { air: 1 } },
       sets: [{ name: 'Official Release' }],
     });
-    expect(cards.find((card) => card.name === 'Research')?.provisional).toBeUndefined();
-    expect(cards.filter((card) => card.provisional)).toHaveLength(0);
+    expect(cards.find((card) => card.name === 'Chosen One')?.provisional).toBeUndefined();
+    expect(cards.filter((card) => card.provisional)).toHaveLength(provisionalCards.length - 1);
     const saved = vi.mocked(set).mock.calls[0]?.[1] as { cards: typeof cards };
     expect(saved.cards).toHaveLength(normalized.length + 1);
     expect(saved.cards.every((card) => !card.provisional)).toBe(true);
@@ -67,7 +67,7 @@ describe('card catalog loading and recovery', () => {
   it('refreshes a pre-release cache even when its timestamp is fresh', async () => {
     vi.mocked(get).mockResolvedValue({ timestamp: Date.now(), cards: normalized });
     fetchMock.mockResolvedValueOnce(json(engineCards));
-    expect(await fetchCards()).toEqual(normalized);
+    expect(await fetchCards()).toEqual(supplemented);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(set).toHaveBeenCalledWith('sorcery_card_cache', expect.objectContaining({ revision: CARD_CATALOGUE_REVISION }));
   });
@@ -107,7 +107,7 @@ describe('card catalog loading and recovery', () => {
     expect(cards).toEqual(supplemented);
     expect(() => cardNameToOrientationMap(cards)).not.toThrow();
     expect(set).toHaveBeenCalledWith('sorcery_card_cache', expect.objectContaining({ cards: normalized }));
-    expect(warning).not.toHaveBeenCalled();
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining('provisional trailer details'));
   });
 
   it.each([{ payload: engineCards }, { payload: normalized }])('repairs a fresh legacy or raw engine cache without requiring a reset', async ({ payload }) => {

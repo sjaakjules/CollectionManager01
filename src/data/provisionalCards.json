@@ -1,8 +1,2793 @@
 {
-  "setName": "Frostmage vs Lavamancer",
-  "recordedAt": "2026-11-13",
-  "cards": [],
-  "retiredAt": "2026-11-16",
-  "retirementSource": "https://api.sorcerytcg.com/api/cards",
-  "archive": "offlineData/card-photos/2026-11-13/transcriptions.json"
+  "setName": "Baldassare's Travels",
+  "recordedAt": "2026-11-16",
+  "announcedRelease": "2027-03-31T00:00:00.000Z",
+  "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g",
+  "cards": [
+    {
+      "card": {
+        "name": "Chosen One",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Magic",
+          "rulesText": "Choose an Ordinary Mortal to become Unique. For the rest of the game, it has “At the end of your turn, gain Ward or +1 power permanently.”",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Magic",
+              "rulesText": "Choose an Ordinary Mortal to become Unique. For the rest of the game, it has “At the end of your turn, gain Ward or +1 power permanently.”",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_chosen_one_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Brian Smith",
+                "flavorText": "",
+                "typeText": "A higher power intervenes by Unique Magic"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Ward"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=9s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Imaginary Friend",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Stealth\nIf not adjacent to a small allied minion, return the Friend to its owner's hand.",
+          "cost": 3,
+          "attack": 4,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Stealth\nIf not adjacent to a small allied minion, return the Friend to its owner's hand.",
+              "cost": 3,
+              "attack": 4,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_imaginary_friend_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Vasiliy Ermolaev",
+                "flavorText": "",
+                "typeText": "An Exceptional Spirit loyal to the lonely"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Stealth"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=9s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "A Very Little House",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Site",
+          "rulesText": "Once per game, your Avatar may return home.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Site",
+              "rulesText": "Once per game, your Avatar may return home.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_a_very_little_house_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "A Unique Site where the journey began"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=9s",
+      "uncertainFields": [
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Boundless Thought",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Aura",
+          "rulesText": "Allied minions at affected sites are Unique and Airborne, and can't be disabled, immobile, or silenced.",
+          "cost": 2,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Aura",
+              "rulesText": "Allied minions at affected sites are Unique and Airborne, and can't be disabled, immobile, or silenced.",
+              "cost": 2,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_boundless_thought_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Juan Machuca",
+                "flavorText": "",
+                "typeText": "An Elite Aura of soaring fancy"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Airborne"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=9s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Walk the Plank",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Magic",
+          "rulesText": "May be cast by any ally.\nPush target adjacent minion one step away, then submerge it if able.",
+          "cost": 4,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Magic",
+              "rulesText": "May be cast by any ally.\nPush target adjacent minion one step away, then submerge it if able.",
+              "cost": 4,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_walk_the_plank_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Ralph Horsley",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=19s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Spectral Sailors",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Voidwalk",
+          "cost": 3,
+          "attack": 3,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Spirit",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Voidwalk",
+              "cost": 3,
+              "attack": 3,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_spectral_sailors_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "Ordinary Spirits sail winds of eternity"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Voidwalk"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=19s",
+      "uncertainFields": [
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "King Croc",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Submerge\nCan and must be cast beneath any water site.",
+          "cost": 4,
+          "attack": 4,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Submerge\nCan and must be cast beneath any water site.",
+              "cost": 4,
+              "attack": 4,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_king_croc_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Submerge"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=22s",
+      "uncertainFields": [
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Tandoraz",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Submerge, Waterbound\nMay attack enemies from one step away.",
+          "cost": 5,
+          "attack": 5,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 3
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Submerge, Waterbound\nMay attack enemies from one step away.",
+              "cost": 5,
+              "attack": 5,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 3
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_tandoraz_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Pedro Ferreira",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Submerge",
+          "Waterbound"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=22s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Orohi Sloth",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Can't move to attack or defend.",
+          "cost": 4,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Can't move to attack or defend.",
+              "cost": 4,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_orohi_sloth_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=35s",
+      "uncertainFields": [
+        "thresholds",
+        "attack",
+        "artist",
+        "name"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Earth symbols and power are motion-blurred; counts left unconfirmed.",
+        "Motion-blurred title is tentatively transcribed as Orohi Sloth."
+      ]
+    },
+    {
+      "card": {
+        "name": "Powder Keg",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Artifact",
+          "rulesText": "If damage is dealt here, Keg explodes, dealing damage:\n1 1 1\n1 3 1\n1 1 1",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "Device",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Artifact",
+              "rulesText": "If damage is dealt here, Keg explodes, dealing damage:\n1 1 1\n1 3 1\n1 1 1",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_powder_keg_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "An Ordinary Device ready to blow"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=35s",
+      "uncertainFields": [
+        "rulesText",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "The printed damage grid is transcribed as three rows; wording is motion-blurred."
+      ]
+    },
+    {
+      "card": {
+        "name": "Spawn of Zahhak",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Burrowing\nMay be cast in any site, destroying it.",
+          "cost": 7,
+          "attack": 6,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Burrowing\nMay be cast in any site, destroying it.",
+              "cost": 7,
+              "attack": 6,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_spawn_of_zahhak_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Burrowing"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=35s",
+      "uncertainFields": [
+        "thresholds",
+        "attack",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Small threshold and power glyphs need confirmation."
+      ]
+    },
+    {
+      "card": {
+        "name": "Captain's Macaw",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Airborne\nWhenever an allied minion is summoned nearby, the Macaw copies its Genesis ability.",
+          "cost": 2,
+          "attack": 1,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Airborne\nWhenever an allied minion is summoned nearby, the Macaw copies its Genesis ability.",
+              "cost": 2,
+              "attack": 1,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_captains_macaw_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Vincent Pompetti",
+                "flavorText": "",
+                "typeText": "An Elite Beast of perpetual parroting"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Airborne",
+          "Genesis"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=41s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Undari Guide",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Allies in this column are Protected from sites.",
+          "cost": 2,
+          "attack": 2,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Allies in this column are Protected from sites.",
+              "cost": 2,
+              "attack": 2,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_undari_guide_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Sam McKinnon",
+                "flavorText": "",
+                "typeText": "An Ordinary Mortal blazes a reluctant trail"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Protected"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=41s",
+      "uncertainFields": [
+        "name"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "The title appears to read Undari Guide; confirm spelling when official metadata arrives."
+      ]
+    },
+    {
+      "card": {
+        "name": "Face-belly Blemmyes",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Protected from sites and magic.",
+          "cost": 3,
+          "attack": 3,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Protected from sites and magic.",
+              "cost": 3,
+              "attack": 3,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_face_belly_blemmyes_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Mattias Frisk",
+                "flavorText": "",
+                "typeText": "Exceptional Mortals are built different"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Protected"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=40s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Gashadokuro",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Genesis → Banishes all dead minions, then Gashadokuro permanently gains power equal to the number banished.",
+          "cost": 5,
+          "attack": 0,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 3,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Undead, Giant",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Genesis → Banishes all dead minions, then Gashadokuro permanently gains power equal to the number banished.",
+              "cost": 5,
+              "attack": 0,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 3,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_gashadokuro_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Francesca Baerald",
+                "flavorText": "",
+                "typeText": "A Unique Undead Giant, gachi gachi!"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=40s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Poison Dart Frogs",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Genesis → May deal 1 damage to an adjacent minion, disabling it until your next turn.",
+          "cost": 2,
+          "attack": 2,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Genesis → May deal 1 damage to an adjacent minion, disabling it until your next turn.",
+              "cost": 2,
+              "attack": 2,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_poison_dart_frogs_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=48s",
+      "uncertainFields": [
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Last Bastion of Albespine",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Site",
+          "rulesText": "(E)(E)(E) — When you reach Death's Door, summon Foot Soldiers atop sites in this row.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Site",
+              "rulesText": "(E)(E)(E) — When you reach Death's Door, summon Foot Soldiers atop sites in this row.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_last_bastion_of_albespine_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=48s",
+      "uncertainFields": [
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "(E)(E)(E) represents the three printed Earth symbols in the ability."
+      ]
+    },
+    {
+      "card": {
+        "name": "Flying Machines",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Airborne\nDies to any damage.",
+          "cost": 3,
+          "attack": 4,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Airborne\nDies to any damage.",
+              "cost": 3,
+              "attack": 4,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_flying_machines_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "Ordinary Mortals in fragile flight"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Airborne"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=52s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Sindbad",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Genesis → If you've summoned Sindbad before, conjure five Treasure tokens here.\nDeathrite → Sindbad escapes to his owner's spellbook. Shuffle it.",
+          "cost": 3,
+          "attack": 3,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Genesis → If you've summoned Sindbad before, conjure five Treasure tokens here.\nDeathrite → Sindbad escapes to his owner's spellbook. Shuffle it.",
+              "cost": 3,
+              "attack": 3,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_sindbad_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Pedro Ferreira",
+                "flavorText": "",
+                "typeText": "A Unique Mortal, back from certain doom"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis",
+          "Deathrite"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=55s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Mirador",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Site",
+          "rulesText": "Back Row — Other back row sites are silenced.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Site",
+              "rulesText": "Back Row — Other back row sites are silenced.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_mirador_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "A Unique Site beneath a hundred years of snow"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=58s",
+      "uncertainFields": [
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Guard Post",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Magic",
+          "rulesText": "Up to five allied minions each gain a different specialty: +1 Power, Ranged, Stealth, Ward, or Protected from sites.",
+          "cost": 2,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Magic",
+              "rulesText": "Up to five allied minions each gain a different specialty: +1 Power, Ranged, Stealth, Ward, or Protected from sites.",
+              "cost": 2,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_guard_post_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Ranged",
+          "Stealth",
+          "Ward",
+          "Protected"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=63s",
+      "uncertainFields": [
+        "rulesText",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Small ability text needs confirmation against the official release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Baldassare's Armada",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Nearby allied minions count as every minion type—believe me, every single one. They get Airborne, they get Charge, fantastic abilities. And we're getting rid of the bad ones—Waterbound, Immobile—totally gone!",
+          "cost": 7,
+          "attack": 5,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 1,
+            "fire": 1,
+            "water": 1
+          }
+        },
+        "elements": "Air, Earth, Fire, Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Nearby allied minions count as every minion type—believe me, every single one. They get Airborne, they get Charge, fantastic abilities. And we're getting rid of the bad ones—Waterbound, Immobile—totally gone!",
+              "cost": 7,
+              "attack": 5,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 1,
+                "fire": 1,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_baldassares_armada_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Juan Machuca",
+                "flavorText": "",
+                "typeText": "The most Unique fleet by far!"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Airborne",
+          "Charge"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=70s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Ogre Chef",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Genesis → Banish all dead Beasts into a stew. Nearby allies eat it to gain +1 power until your next turn.",
+          "cost": 3,
+          "attack": 3,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Giant",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Genesis → Banish all dead Beasts into a stew. Nearby allies eat it to gain +1 power until your next turn.",
+              "cost": 3,
+              "attack": 3,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_ogre_chef_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Ralph Horsley",
+                "flavorText": "",
+                "typeText": "An Exceptional Giant turns pests to pottage"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=49s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Don Quixote",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Charge, Lance\nDeals double damage to Giants and Windmills.",
+          "cost": 5,
+          "attack": 3,
+          "defence": 2,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Charge, Lance\nDeals double damage to Giants and Windmills.",
+              "cost": 5,
+              "attack": 3,
+              "defence": 2,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_don_quixote_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Sam McKinnon",
+                "flavorText": "",
+                "typeText": "A Unique Mortal knight of lost virtues"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Charge",
+          "Lance"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=56s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Enbiggen",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Magic",
+          "rulesText": "Until your next turn, a minion gains +3 power and is immobile.",
+          "cost": 2,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Magic",
+              "rulesText": "Until your next turn, a minion gains +3 power and is immobile.",
+              "cost": 2,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_enbiggen_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Elvira Shakirova",
+                "flavorText": "",
+                "typeText": "Ordinary Magic grows out of bounds"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=61s",
+      "uncertainFields": [
+        "name"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "The title appears to read Enbiggen; spelling needs official confirmation."
+      ]
+    },
+    {
+      "card": {
+        "name": "Hammer-for-Hire",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "As an additional cost to cast Hammer-for-hire, sacrifice an artifact.",
+          "cost": 3,
+          "attack": 4,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "As an additional cost to cast Hammer-for-hire, sacrifice an artifact.",
+              "cost": 3,
+              "attack": 4,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_hammer_for_hire_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Jeffrey Laubenstein",
+                "flavorText": "",
+                "typeText": "An Exceptional Mortal paid to raid"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=61s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "Krampus Crew",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "You may sacrifice treasures,\nto lighten their due:\nSave two mana for each,\nWhy not give up a few?",
+          "cost": 8,
+          "attack": 6,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 1,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Giant",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "You may sacrifice treasures,\nto lighten their due:\nSave two mana for each,\nWhy not give up a few?",
+              "cost": 8,
+              "attack": 6,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 1,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_krampus_crew_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=39s",
+      "uncertainFields": [
+        "rulesText",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Rhyming rules transcribed from small, motion-blurred lettering."
+      ]
+    },
+    {
+      "card": {
+        "name": "Whisperwhomp",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Genesis → Your opponent may disarm a Trap, or look at your hand.",
+          "cost": 4,
+          "attack": 4,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Giant",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Genesis → Your opponent may disarm a Trap, or look at your hand.",
+              "cost": 4,
+              "attack": 4,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_whisperwhomp_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Jussi Pylkäs",
+                "flavorText": "",
+                "typeText": "An Exceptional Giant spills the beans"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=28s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release."
+      ]
+    },
+    {
+      "card": {
+        "name": "The Jade Monkey",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Artifact",
+          "rulesText": "Other nearby artifacts can't be carried.",
+          "cost": 1,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "Relic",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Artifact",
+              "rulesText": "Other nearby artifacts can't be carried.",
+              "cost": 1,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_the_jade_monkey_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=26s",
+      "uncertainFields": [
+        "rulesText",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Ability text is blurred by camera movement."
+      ]
+    },
+    {
+      "card": {
+        "name": "Unidentified Site (BT trailer)",
+        "guardian": {
+          "rarity": null,
+          "type": "Site",
+          "rulesText": "",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 1,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": null,
+              "type": "Site",
+              "rulesText": "",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 1,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_unidentified_site_bt_trailer_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=30s",
+      "uncertainFields": [
+        "name",
+        "rarity",
+        "rulesText",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Placeholder title: the dark site with a red doorway at 00:30. The title and rules are unreadable. Manual identification will be needed."
+      ]
+    },
+    {
+      "card": {
+        "name": "Zig-Zag Dragonfly",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Airborne, Movement +2\nCan only move diagonally.",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 2,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Air",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Airborne, Movement +2\nCan only move diagonally.",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 2,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_zig_zag_dragonfly_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Airborne",
+          "Movement"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=30s",
+      "uncertainFields": [
+        "name",
+        "attack",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Tentative title; small lettering and power are motion-blurred."
+      ]
+    },
+    {
+      "card": {
+        "name": "Unidentified Avatar (BT trailer)",
+        "guardian": {
+          "rarity": null,
+          "type": "Avatar",
+          "rulesText": "",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": 20,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": null,
+              "type": "Avatar",
+              "rulesText": "",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": 20,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_unidentified_avatar_bt_trailer_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=30s",
+      "uncertainFields": [
+        "name",
+        "rulesText",
+        "attack",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Placeholder title: the robed avatar with sun, moon and planets at 00:30. The name, power and abilities are unreadable. Manual identification will be needed."
+      ]
+    },
+    {
+      "card": {
+        "name": "Set Sail",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Magic",
+          "rulesText": "One at a time, you may move each ally one step to a water site it's adjacent to. Draw a spell.",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Magic",
+              "rulesText": "One at a time, you may move each ally one step to a water site it's adjacent to. Draw a spell.",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_set_sail_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=32s",
+      "uncertainFields": [
+        "rulesText",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Rules transcribed from motion-blurred text."
+      ]
+    },
+    {
+      "card": {
+        "name": "Blunderbuss Buffoons",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Genesis → Flip a coin. If heads, they shoot a 2-damage projectile. If tails, they shoot you for 2 damage.",
+          "cost": 4,
+          "attack": 4,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Giant",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Genesis → Flip a coin. If heads, they shoot a 2-damage projectile. If tails, they shoot you for 2 damage.",
+              "cost": 4,
+              "attack": 4,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_blunderbuss_buffoons_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "Exceptional Giants armed and cantankerous"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=16s",
+      "uncertainFields": [
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "The lowest edge of the card extends outside the video frame."
+      ]
+    },
+    {
+      "card": {
+        "name": "Broadside",
+        "guardian": {
+          "rarity": null,
+          "type": "Magic",
+          "rulesText": "",
+          "cost": 3,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": null,
+              "type": "Magic",
+              "rulesText": "",
+              "cost": 3,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_broadside_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=17s",
+      "uncertainFields": [
+        "rarity",
+        "rulesText",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Only the upper part of the card is shown. Missing pixels remain blank; no rules were invented."
+      ]
+    },
+    {
+      "card": {
+        "name": "Sing-song Siren",
+        "guardian": {
+          "rarity": "Exceptional",
+          "type": "Minion",
+          "rulesText": "Submerge",
+          "cost": 2,
+          "attack": 2,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 2
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Fae",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Exceptional",
+              "type": "Minion",
+              "rulesText": "Submerge",
+              "cost": 2,
+              "attack": 2,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 2
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_sing_song_siren_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "An Exceptional Fae grows her fanbase"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Submerge"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=28s",
+      "uncertainFields": [
+        "rulesText",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Submerge is readable; the remaining ability and bottom edge are cut off."
+      ]
+    },
+    {
+      "card": {
+        "name": "Realm in a Bottle",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Artifact",
+          "rulesText": "",
+          "cost": 5,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "Relic",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Artifact",
+              "rulesText": "",
+              "cost": 5,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_realm_in_a_bottle_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "A Unique Relic with a world within"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=28s",
+      "uncertainFields": [
+        "rulesText",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "The ability is cut off and partly covered by cloud; no complete transcription is possible."
+      ]
+    },
+    {
+      "card": {
+        "name": "Man Mountain Mattis",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Genesis → Conjure a Grog here from your collection.\nProtected from Hangovers.",
+          "cost": 3,
+          "attack": 3,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 2,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "Earth",
+        "subTypes": "Mortal",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Genesis → Conjure a Grog here from your collection.\nProtected from Hangovers.",
+              "cost": 3,
+              "attack": 3,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 2,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_man_mountain_mattis_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "Melissa A. Benson",
+                "flavorText": "",
+                "typeText": "A Unique Mortal drinks all under the table"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis",
+          "Protected"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=60s",
+      "uncertainFields": [
+        "image"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "A small part of the right edge is covered by The White Death."
+      ]
+    },
+    {
+      "card": {
+        "name": "Nellie Bly",
+        "guardian": {
+          "rarity": null,
+          "type": "Minion",
+          "rulesText": "",
+          "cost": null,
+          "attack": 2,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": null,
+              "type": "Minion",
+              "rulesText": "",
+              "cost": null,
+              "attack": 2,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_nellie_bly_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=60s",
+      "uncertainFields": [
+        "rarity",
+        "cost",
+        "thresholds",
+        "subTypes",
+        "rulesText",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Title and power are visible. The rest is mostly covered by Man Mountain Mattis and The White Death throughout the trailer."
+      ]
+    },
+    {
+      "card": {
+        "name": "Baron of Felbog",
+        "guardian": {
+          "rarity": "Unique",
+          "type": "Minion",
+          "rulesText": "Submerge",
+          "cost": 2,
+          "attack": 2,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 1
+          }
+        },
+        "elements": "Water",
+        "subTypes": "Beast",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Unique",
+              "type": "Minion",
+              "rulesText": "Submerge",
+              "cost": 2,
+              "attack": 2,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 1
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_baron_of_felbog_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Submerge"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=59s",
+      "uncertainFields": [
+        "rulesText",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Submerge is readable. The remaining transformation ability is too blurred for a reliable transcription."
+      ]
+    },
+    {
+      "card": {
+        "name": "Loot Goblin",
+        "guardian": {
+          "rarity": "Elite",
+          "type": "Minion",
+          "rulesText": "Genesis → Takes five steps of your opponent's choice, leaving a trail of Treasure tokens behind.",
+          "cost": 3,
+          "attack": 1,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 1,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Fae",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Elite",
+              "type": "Minion",
+              "rulesText": "Genesis → Takes five steps of your opponent's choice, leaving a trail of Treasure tokens behind.",
+              "cost": 3,
+              "attack": 1,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 1,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_loot_goblin_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": ""
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Genesis"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=63s",
+      "uncertainFields": [
+        "cost",
+        "thresholds",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Rules are read from the later close view at 01:05; the complete card at 01:03 has a motion-blurred cost and threshold."
+      ]
+    },
+    {
+      "card": {
+        "name": "Treasure",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Artifact",
+          "rulesText": "At the start of your turn, bearer may sacrifice this and another artifact they carry to draw a spell.",
+          "cost": null,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 0,
+            "water": 0
+          }
+        },
+        "elements": "",
+        "subTypes": "Relic",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Artifact",
+              "rulesText": "At the start of your turn, bearer may sacrifice this and another artifact they carry to draw a spell.",
+              "cost": null,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 0,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_treasure_crown",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              },
+              {
+                "slug": "preview_bt_treasure_sword",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              },
+              {
+                "slug": "preview_bt_treasure_ring",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              },
+              {
+                "slug": "preview_bt_treasure_cup",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              },
+              {
+                "slug": "preview_bt_treasure_cross",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              },
+              {
+                "slug": "preview_bt_treasure_chest",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              },
+              {
+                "slug": "preview_bt_treasure_ruby",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              },
+              {
+                "slug": "preview_bt_treasure_urn",
+                "finish": "Preview",
+                "product": "Token preview",
+                "artist": "Elwira Pawlikowska",
+                "flavorText": "",
+                "typeText": "An Ordinary Relic, the chase is on!"
+              }
+            ]
+          }
+        ],
+        "keywords": []
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=65s",
+      "uncertainFields": [],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
+      ]
+    },
+    {
+      "card": {
+        "name": "Unidentified Fae (BT trailer)",
+        "guardian": {
+          "rarity": "Ordinary",
+          "type": "Minion",
+          "rulesText": "Sacrifice a nearby artifact → Gain Charge.",
+          "cost": 5,
+          "attack": null,
+          "defence": null,
+          "life": null,
+          "thresholds": {
+            "air": 0,
+            "earth": 0,
+            "fire": 2,
+            "water": 0
+          }
+        },
+        "elements": "Fire",
+        "subTypes": "Fae",
+        "sets": [
+          {
+            "name": "Baldassare's Travels",
+            "releasedAt": "2027-03-31T00:00:00.000Z",
+            "metadata": {
+              "rarity": "Ordinary",
+              "type": "Minion",
+              "rulesText": "Sacrifice a nearby artifact → Gain Charge.",
+              "cost": 5,
+              "attack": null,
+              "defence": null,
+              "life": null,
+              "thresholds": {
+                "air": 0,
+                "earth": 0,
+                "fire": 2,
+                "water": 0
+              }
+            },
+            "variants": [
+              {
+                "slug": "preview_bt_unidentified_fae_bt_trailer_standard",
+                "finish": "Preview",
+                "product": "Trailer preview",
+                "artist": "",
+                "flavorText": "",
+                "typeText": "Ordinary Fae move at the jingle of coin"
+              }
+            ]
+          }
+        ],
+        "keywords": [
+          "Charge"
+        ]
+      },
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=64s",
+      "uncertainFields": [
+        "name",
+        "attack",
+        "image",
+        "artist"
+      ],
+      "notes": [
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "Placeholder title: the red Fae at 01:04. Treasure cards obscure the title and power throughout the useful frames. Manual identification will be needed."
+      ]
+    }
+  ],
+  "appearances": [
+    {
+      "name": "The White Death",
+      "setName": "Baldassare's Travels",
+      "releasedAt": "2027-03-31T00:00:00.000Z",
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=58s",
+      "notes": [
+        "Shown in the trailer; this set association is provisional and does not confirm a reprint. Current official rules and artwork are retained."
+      ]
+    }
+  ]
 }

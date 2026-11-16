@@ -66,7 +66,7 @@ export interface Card {
   keywords?: string[];
   umbrellas?: string[];
   back?: CardStats;
-  /** Local photo transcription only; never written into guest/account data. */
+  /** Reviewed prerelease source/limitations; never written into guest/account data. */
   provisional?: {
     source: string;
     uncertainFields: string[];

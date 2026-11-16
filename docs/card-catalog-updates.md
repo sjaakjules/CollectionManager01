@@ -13,7 +13,9 @@ One throttled official download validated **1,169 cards**, including **120** wit
 the **Frost Mage Vs. Lavamancer** printing (released 13 November 2026). Both
 `docs/Sorcery_CardInfo.json` and `public/assets/sorcery_cards.json` now contain
 that normalized response. All 71 photographed cards have official replacements;
-the runtime photo supplement is empty and the transcriptions are archived.
+the Frost Mage/Lavamancer photo transcriptions are retired and archived.
+A separate [Baldassare's Travels trailer preview supplement](baldassares-travels-previews.md)
+now adds 43 provisional identities and one existing-card set appearance.
 `Reed-cord Measurer` migrates to the official `Reed Cord Measurer` in saved
 decks, canvas cards, collections and text imports. Humming Hummocks' official
 artist is Jeff A. Menges. Official rules, statistics and printings are used as
@@ -40,8 +42,11 @@ in use for the photographed set.
 Reprints use current engine rules/statistics: Polar Bears is cost 3, power 3;
 Fireball uses the updated explosion text. No older printing overrides the
 current rules. All standalone thumbnails and both atlas tiers are current:
-1,177 source images, 17 thumbnail pages and 99 medium pages. Existing archived
-token images account for the image count exceeding the active catalogue.
+1,220 main card images, 18 thumbnail pages and 102 medium pages, including
+the subsequent 43 trailer preview images. Eight additional trailer captures
+(seven Treasure variants and The White Death) are available in the preview
+gallery. Existing archived token images account for the remaining difference
+between the main image count and the 1,212 combined catalogue records.
 
 Individual image URLs now include a per-card content hash, shared by canvas,
 hover previews and stack panels. Builds and `cards:atlas:all` refresh these
@@ -130,9 +135,10 @@ decks, deduplicates simultaneous catalogue loads and retains its 24-hour cache.
 The existing bundled snapshot remains a known compatible fallback; it is not
 automatically replaced by the live API during a production build.
 
-Photographed cards awaiting an official release are maintained separately and
-supplement all runtime loading paths. See [provisional photo imports](card-photo-imports.md)
-for the source images, review limitations and official replacement workflow.
+Preview cards awaiting an official release are maintained separately and
+supplement all runtime loading paths. See [Baldassare's Travels previews](baldassares-travels-previews.md)
+for the active batch and [provisional photo imports](card-photo-imports.md)
+for the retired Frost Mage/Lavamancer archive.
 
 The deployed PHP route now shares its catalogue response for a day and keeps
 the last good response during an upstream failure; see the request policy.

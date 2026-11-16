@@ -141,7 +141,7 @@ function playableCatalog(catalog: CardCatalogResult, onWarning?: (message: strin
   const supplemented = withProvisionalCards(cards);
   const previewCount = supplemented.filter((card) => card.provisional).length;
   if (previewCount > 0) {
-    onWarning?.(`${previewCount} cards use provisional photo transcriptions. Official release metadata replaces them when available.`);
+    onWarning?.(`${previewCount} cards have provisional trailer details. Some text or images are incomplete; matching official records take precedence when available.`);
   }
   return supplemented;
 }
