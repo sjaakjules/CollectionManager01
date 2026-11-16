@@ -8,7 +8,7 @@ The White Death retains its current official rules, statistics, older printings 
 
 ## Image provenance and limitations
 
-- [Extraction manifest](../offlineData/card-previews/baldassares-travels/manifest.json): source video, frame timestamps, original 3840 × 2160 frame coordinates, tight PNG source patches, hashes, perspective corners, orientation, partial-image flags and output paths.
+- The [extraction manifest](../offlineData/card-previews/baldassares-travels/manifest.json) records the source video, frame timestamps, original 3840 × 2160 frame coordinates, PNG source patches, hashes, perspective corners, orientation, partial-image flags, blend regions and output paths.
 - Review sheets: [first 26 images](../offlineData/card-previews/baldassares-travels/contact-sheet-1.jpg), [remaining 25](../offlineData/card-previews/baldassares-travels/contact-sheet-2.jpg).
 - [Release announcement](../offlineData/card-previews/baldassares-travels/release-announcement.jpg).
 - Runtime transcriptions: `src/data/provisionalCards.json`.
@@ -16,7 +16,11 @@ The White Death retains its current official rules, statistics, older printings 
 - Seven additional Treasure illustrations and The White Death trailer crop: `public/assets/CardPreviews/baldassares_travels/`.
 - Standalone gallery: `public/previews/baldassares-travels.html`.
 
-Each source patch is perspective corrected, bicubically resampled, gently sharpened, given rounded transparent corners and encoded as quality-96 WebP. Portraits are **744 × 1039**, sites **1039 × 744**. No artwork, text or missing pixels were generated or inpainted. Offscreen areas stay grey; overlapping cards remain visible. Enlargement does not restore details lost to motion blur or the video's original card scale.
+Each source patch is perspective corrected, bicubically resampled, gently sharpened, given rounded transparent corners and encoded as quality-96 WebP. Portraits are **744 × 1039**, sites **1039 × 744**.
+
+A second pass tracked nearby frames for 22 blurry or partly covered cards and improved 15. Ten use a sharper frame, with light sharpening where it helps the text. Baron of Felbog uses three aligned frames. Blunderbuss Buffoons, Loot Goblin, The Jade Monkey and the unidentified Fae use two each. The manifest records the source and blend region for each contributing frame. Grey areas still mark portions outside the frame, and overlaps stay visible wherever every useful view is covered. Frame averages and stronger motion reversal did not recover reliable lettering on the unidentified avatar. All improvements use pixels from the trailer.
+
+The clearer footage confirms **Grand Heist** (previously transcribed as Guard Post) and **Flying Machine** (previously Flying Machines). Saved decks, collections, canvas cards and imports resolve the old spellings to the corrected names. The closer views also confirm the Sloth's two Earth symbols and 5 power and identify Spawn of Zahhak's subtype as Monster.
 
 The archived PNG patches are sufficient to reproduce the images without downloading the video again. The large video and expiring download URLs are not committed.
 
@@ -34,16 +38,16 @@ All records are provisional, even when the text is legible. `uncertainFields` an
 | Card | Outstanding detail |
 | --- | --- |
 | Unidentified Avatar (BT trailer) | Robed figure with sun, moon and planets at 00:30; title, abilities and power unreadable. |
-| Unidentified Site (BT trailer) | Dark site with a red doorway at 00:30; title, rarity and rules unreadable. |
-| Unidentified Fae (BT trailer) | Red Fae at 01:04; Treasure overlaps the title and power. |
-| Enbiggen, Undari Guide, Orohi Sloth, Zig-Zag Dragonfly | Tentative title spellings to confirm against official records. Sloth thresholds/power and Dragonfly power also need review. |
+| Unidentified Site (BT trailer) | Dark site with a red doorway at 00:29.9. The alternate frame shows clearer stonework, but the title, rarity and rules are still unreadable. |
+| Unidentified Fae (BT trailer) | Red Fae at 01:04. Treasure overlaps the title and power. The second frame makes its rules and artist credit clearer. |
+| Enbiggen, Undari Guide, Orohi Sloth, Zig-Zag Dragonfly | Tentative title spellings to confirm against official records. Dragonfly power also needs review. |
 | Broadside | Only the top portion appears; rarity and all rules are unavailable. |
 | Sing-song Siren | Submerge is legible; remaining rules and the bottom of the image are cut off. |
 | Realm in a Bottle | Ability cut off/covered by cloud. |
 | Nellie Bly | Title and power visible; most of the card stays behind two other cards. |
-| Baron of Felbog | Submerge readable; the transformation ability is too blurred for a reliable complete transcription. |
-| Powder Keg, Guard Post, Krampus Crew, The Jade Monkey, Set Sail | Small/motion-blurred rule text needs confirmation; transcribed portions are flagged. Powder Keg's diagram is represented as three text rows. |
-| Spawn of Zahhak, Loot Goblin | Small cost/threshold/power glyphs need confirmation as recorded per card. |
+| Baron of Felbog | The merged crop shows more of the transformation ability. Its left side is still too blurred for a reliable complete transcription. |
+| The Jade Monkey | The right end of the rules text is still blurred despite the sharper rest of the card. |
+| Loot Goblin | Cost and threshold glyphs come from an earlier, still-blurred frame and need confirmation. |
 | Blunderbuss Buffoons, Man Mountain Mattis | Minor clipping/overlap at an image edge. |
 | The White Death | Trailer appearance only; a printing in this set is not independently confirmed. |
 

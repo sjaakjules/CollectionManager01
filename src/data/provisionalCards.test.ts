@@ -91,11 +91,15 @@ describe("Baldassare's Travels trailer previews", () => {
 
   it('supports preview avatars, sites, spells and tokens through all four saved boards', async () => {
     const catalog = withProvisionalCards(await loadOfficial());
-    const text = '// Avatar\n1 Unidentified Avatar (BT trailer)\n// Main\n1 Chosen One\n1 A Very Little House\n// Collection\n2 Treasure\n// Maybe\n1 Broadside';
+    const text = '// Avatar\n1 Unidentified Avatar (BT trailer)\n// Main\n1 Guard Post\n1 Flying Machines\n1 A Very Little House\n// Collection\n2 Treasure\n// Maybe\n1 Broadside';
     const imported = importDeckFromText(text, 'Trailer deck', catalog);
     expect(imported.unknownCards).toEqual([]);
     expect(imported.deck.boards.avatar).toEqual([{ name: 'Unidentified Avatar (BT trailer)', quantity: 1 }]);
-    expect(imported.deck.boards.mainboard).toContainEqual({ name: 'A Very Little House', quantity: 1 });
+    expect(imported.deck.boards.mainboard).toEqual(expect.arrayContaining([
+      { name: 'Grand Heist', quantity: 1 },
+      { name: 'Flying Machine', quantity: 1 },
+      { name: 'A Very Little House', quantity: 1 },
+    ]));
     expect(imported.deck.boards.collection).toEqual([{ name: 'Treasure', quantity: 2 }]);
     expect(imported.deck.boards.maybeboard).toEqual([{ name: 'Broadside', quantity: 1 }]);
     expect(importDeckFromText(exportDeckToText(imported.deck), 'Round trip', catalog).deck.boards).toEqual(imported.deck.boards);

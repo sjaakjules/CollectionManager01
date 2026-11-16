@@ -11,7 +11,7 @@
       3840,
       2160
     ],
-    "framesPerSecond": 30
+    "framesPerSecond": 29.97002997
   },
   "announcedRelease": "2027-03-31T00:00:00.000Z",
   "releaseAnnouncementTimestampSeconds": 83.5,
@@ -214,41 +214,42 @@
     {
       "name": "Spectral Sailors",
       "cardName": "Spectral Sailors",
-      "timestampSeconds": 19.5,
+      "timestampSeconds": 19.019,
       "source": "sources/spectral_sailors.png",
       "sourceSize": [
-        777,
-        981
+        739,
+        953
       ],
-      "sourceSha256": "d5fe6021328879c6fafd03a5ed640ffc11910ffaedc85fdb4b3aae8bad576613",
+      "sourceSha256": "81953cbc3046c25314b33573d8d79b556b611cdfa151ef000e526271f427491d",
       "frameCrop": [
-        2656,
-        1132,
-        777,
-        981
+        2794,
+        1052,
+        739,
+        953
       ],
       "corners": [
         [
-          214,
-          10
+          180.124,
+          12.743
         ],
         [
-          766,
-          210
+          725.793,
+          204.45
         ],
         [
-          654,
-          970
+          652.034,
+          939.295
         ],
         [
-          10,
-          714
+          12.908,
+          697.676
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/spectral_sailors.webp",
-      "notes": []
+      "notes": [],
+      "frameIndex": 570
     },
     {
       "name": "King Croc",
@@ -331,126 +332,126 @@
     {
       "name": "Orohi Sloth",
       "cardName": "Orohi Sloth",
-      "timestampSeconds": 35.8,
+      "timestampSeconds": 36.536,
       "source": "sources/orohi_sloth.png",
       "sourceSize": [
-        769,
-        791
+        761,
+        825
       ],
-      "sourceSha256": "2e9ff96365104bae94a5131eba301846111fdd581099c9d2b3548c8df2849f4b",
+      "sourceSha256": "c1145757bccc93f47cb21496f8f50d57860e522c9bb09133f2995aa84e50592f",
       "frameCrop": [
-        352,
-        1260,
-        769,
-        791
+        16,
+        1330,
+        761,
+        825
       ],
       "corners": [
         [
-          10,
-          212
+          12.196,
+          211.993
         ],
         [
-          494,
-          10
+          532.112,
+          12.217
         ],
         [
-          758,
-          534
+          747.256,
+          565.128
         ],
         [
-          246,
-          780
+          192.481,
+          811.706
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/orohi_sloth.webp",
       "notes": [
-        "Earth symbols and power are motion-blurred; counts left unconfirmed.",
-        "Motion-blurred title is tentatively transcribed as Orohi Sloth."
-      ]
+        "A sharper frame confirms two Earth threshold symbols and 5 power. Confirm the title spelling on release."
+      ],
+      "frameIndex": 1095
     },
     {
       "name": "Powder Keg",
       "cardName": "Powder Keg",
-      "timestampSeconds": 35.8,
+      "timestampSeconds": 37.971,
       "source": "sources/powder_keg.png",
       "sourceSize": [
-        581,
-        607
+        591,
+        757
       ],
-      "sourceSha256": "bc5cc5d991633743bf358dda9d3fbfaab5202d2f3fd861875de2d624a2ca47f4",
+      "sourceSha256": "7ad89281929282fbd1d3bfeea83cd10e5b0f0e7391598f1bc1830d4d0c3caef9",
       "frameCrop": [
-        1082,
-        924,
-        581,
-        607
+        501,
+        1403,
+        591,
+        757
       ],
       "corners": [
         [
-          10,
-          94
+          45.498,
+          91.94
         ],
         [
-          420,
-          10
+          535.815,
+          12.488
         ],
         [
-          570,
-          502
+          577.392,
+          659.627
         ],
         [
-          106,
-          596
+          12.979,
+          752.034
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/powder_keg.webp",
       "notes": [
-        "The printed damage grid is transcribed as three rows; wording is motion-blurred."
-      ]
+        "The printed 3×3 damage grid is transcribed as three text rows."
+      ],
+      "frameIndex": 1138
     },
     {
       "name": "Spawn of Zahhak",
       "cardName": "Spawn of Zahhak",
-      "timestampSeconds": 35.8,
+      "timestampSeconds": 38.605,
       "source": "sources/spawn_of_zahhak.png",
       "sourceSize": [
-        601,
-        507
+        650,
+        726
       ],
-      "sourceSha256": "337fb4a02fddf49523c89e50f43c80ceef6f7e93a9f97ef369f455881f4a2931",
+      "sourceSha256": "5c088a9bddc9146d16995548b4132c2e759722128e3c64f9caeda328e5a2e61e",
       "frameCrop": [
-        1940,
-        678,
-        601,
-        507
+        1580,
+        1403,
+        650,
+        726
       ],
       "corners": [
         [
-          10,
-          92
+          12.397,
+          98.307
         ],
         [
-          330,
-          10
+          414.122,
+          12.871
         ],
         [
-          590,
-          390
+          636.878,
+          579.99
         ],
         [
-          222,
-          496
+          153.574,
+          712.736
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/spawn_of_zahhak.webp",
-      "notes": [
-        "Small threshold and power glyphs need confirmation."
-      ]
+      "notes": [],
+      "frameIndex": 1157
     },
     {
       "name": "Captain's Macaw",
@@ -691,43 +692,47 @@
       ]
     },
     {
-      "name": "Flying Machines",
-      "cardName": "Flying Machines",
-      "timestampSeconds": 52.5,
-      "source": "sources/flying_machines.png",
+      "name": "Flying Machine",
+      "cardName": "Flying Machine",
+      "timestampSeconds": 52.652,
+      "source": "sources/flying_machine.png",
       "sourceSize": [
-        907,
-        949
+        911,
+        951
       ],
-      "sourceSha256": "d13e17aeb3b198e5bf24f3a69299787de89c84ffcc3c41887bca4908aeed6946",
+      "sourceSha256": "f952b9766e9801d7cf64075556a8578b6f2e3dc8ca9215b41034e9b6b0126168",
       "frameCrop": [
-        2296,
-        700,
-        907,
-        949
+        2297,
+        697,
+        911,
+        951
       ],
       "corners": [
         [
-          10,
-          192
+          12.396,
+          193.968
         ],
         [
-          536,
-          10
+          536.554,
+          12.609
         ],
         [
-          896,
-          746
+          897.975,
+          745.356
         ],
         [
-          300,
-          938
+          304.409,
+          937.991
         ]
       ],
       "landscape": false,
       "partial": false,
-      "output": "public/assets/Cards/flying_machines.webp",
-      "notes": []
+      "output": "public/assets/Cards/flying_machine.webp",
+      "notes": [
+        "The sharper frame confirms the singular title Flying Machine."
+      ],
+      "frameIndex": 1578,
+      "luminanceSharpen": 0.75
     },
     {
       "name": "Sindbad",
@@ -849,45 +854,46 @@
       ]
     },
     {
-      "name": "Guard Post",
-      "cardName": "Guard Post",
-      "timestampSeconds": 63.1,
-      "source": "sources/guard_post.png",
+      "name": "Grand Heist",
+      "cardName": "Grand Heist",
+      "timestampSeconds": 62.629,
+      "source": "sources/grand_heist.png",
       "sourceSize": [
-        563,
-        681
+        596,
+        701
       ],
-      "sourceSha256": "2d0b09ab81521503798e13e860598c0127dc316ef5e95c54027859efbac11530",
+      "sourceSha256": "abd80fa398cd6763a610767db5fc9a88227ebe2630447ad18ab95772aaf7a37b",
       "frameCrop": [
-        1720,
-        302,
-        563,
-        681
+        1935,
+        288,
+        596,
+        701
       ],
       "corners": [
         [
-          10,
-          44
+          12.906,
+          50.119
         ],
         [
-          482,
-          10
+          491.727,
+          12.995
         ],
         [
-          552,
-          638
+          582.577,
+          651.804
         ],
         [
-          52,
-          670
+          75.904,
+          687.153
         ]
       ],
       "landscape": false,
       "partial": false,
-      "output": "public/assets/Cards/guard_post.webp",
+      "output": "public/assets/Cards/grand_heist.webp",
       "notes": [
-        "Small ability text needs confirmation against the official release."
-      ]
+        "The sharper frame confirms the name Grand Heist, replacing the earlier transcription Guard Post."
+      ],
+      "frameIndex": 1877
     },
     {
       "name": "Baldassare's Armada",
@@ -1089,43 +1095,42 @@
     {
       "name": "Krampus Crew",
       "cardName": "Krampus Crew",
-      "timestampSeconds": 39.3,
+      "timestampSeconds": 39.873,
       "source": "sources/krampus_crew.png",
       "sourceSize": [
-        543,
-        441
+        559,
+        474
       ],
-      "sourceSha256": "2239ed319c39c056fe8c05d314c763f7d72858f6d6292849f4e1934796d222a9",
+      "sourceSha256": "e51e41526596df3bba8a86bc0e7d5d4f6f2200b85896932ec3bcba1f85406de5",
       "frameCrop": [
-        900,
-        486,
-        543,
-        441
+        910,
+        584,
+        559,
+        474
       ],
       "corners": [
         [
-          10,
-          84
+          12.02,
+          89.584
         ],
         [
-          348,
-          10
+          359.676,
+          12.675
         ],
         [
-          532,
-          330
+          545.282,
+          355.699
         ],
         [
-          176,
-          430
+          177.924,
+          460.192
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/krampus_crew.webp",
-      "notes": [
-        "Rhyming rules transcribed from small, motion-blurred lettering."
-      ]
+      "notes": [],
+      "frameIndex": 1195
     },
     {
       "name": "Whisperwhomp",
@@ -1169,125 +1174,211 @@
     {
       "name": "The Jade Monkey",
       "cardName": "The Jade Monkey",
-      "timestampSeconds": 26.5,
+      "timestampSeconds": 31.031,
       "source": "sources/the_jade_monkey.png",
       "sourceSize": [
-        649,
-        757
+        859,
+        784
       ],
-      "sourceSha256": "b537c4cb248aab45bac1d57df4073ac58e3728a8758273b46ed2d1ab2978d5f6",
+      "sourceSha256": "7af4b77d2bca275f6cf1b9f43b0b5059b9b454ecf7ec9cc1cf2713624d0e3257",
       "frameCrop": [
-        2322,
-        646,
-        649,
-        757
+        84,
+        1207,
+        859,
+        784
       ],
       "corners": [
         [
-          204,
-          10
+          311.497,
+          12.179
         ],
         [
-          638,
-          198
+          845.25,
+          40.722
         ],
         [
-          478,
-          746
+          591.335,
+          770.362
         ],
         [
-          10,
-          522
+          12.78,
+          730.028
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/the_jade_monkey.webp",
       "notes": [
-        "Ability text is blurred by camera movement."
+        "Uses two aligned frames to recover the clear artwork and most of the text. The right end of the rules line is still blurred."
+      ],
+      "frameIndex": 930,
+      "layers": [
+        {
+          "timestampSeconds": 28.562,
+          "frameIndex": 856,
+          "source": "sources/the_jade_monkey-frame-856.png",
+          "sourceSize": [
+            450,
+            642
+          ],
+          "sourceSha256": "afb63cbb40009dba838709fee8bbb8a95504477be3dc5b0814571c70157e18b6",
+          "frameCrop": [
+            2840,
+            551,
+            450,
+            642
+          ],
+          "corners": [
+            [
+              66.851,
+              12.216
+            ],
+            [
+              436.369,
+              193.339
+            ],
+            [
+              398.294,
+              628.495
+            ],
+            [
+              12.506,
+              442.048
+            ]
+          ],
+          "partial": false,
+          "region": [
+            [
+              0,
+              0
+            ],
+            [
+              743,
+              0
+            ],
+            [
+              743,
+              663
+            ],
+            [
+              653,
+              727
+            ],
+            [
+              589,
+              787
+            ],
+            [
+              534,
+              860
+            ],
+            [
+              488,
+              945
+            ],
+            [
+              468,
+              1038
+            ],
+            [
+              0,
+              1038
+            ]
+          ],
+          "featherPx": 34,
+          "colorOffsetBgr": [
+            23,
+            27,
+            25
+          ]
+        }
       ]
     },
     {
       "name": "Unidentified Site (BT trailer)",
       "cardName": "Unidentified Site (BT trailer)",
-      "timestampSeconds": 30.1,
+      "timestampSeconds": 29.863,
       "source": "sources/unidentified_site_bt_trailer.png",
       "sourceSize": [
-        1005,
-        883
+        963,
+        791
       ],
-      "sourceSha256": "a2db72042018dec57a15f4c6b1a8ec2a71ac0a8af66c6dc26c9317f6520a7812",
+      "sourceSha256": "066f2d4573bcaaf14bd96491e5001b8588aa0e687a2e2d59d2d395f72637122a",
       "frameCrop": [
-        1468,
-        1220,
-        1005,
-        883
+        1808,
+        1030,
+        963,
+        791
       ],
       "corners": [
         [
-          10,
-          352
+          12.224,
+          302.725
         ],
         [
-          686,
-          10
+          636.054,
+          12.415
         ],
         [
-          994,
-          470
+          949.18,
+          435.736
         ],
         [
-          250,
-          872
+          266.751,
+          777.052
         ]
       ],
       "landscape": true,
       "partial": false,
       "output": "public/assets/Cards/unidentified_site_bt_trailer.webp",
       "notes": [
-        "Placeholder title: the dark site with a red doorway at 00:30. The title and rules are unreadable. Manual identification will be needed."
-      ]
+        "The new frame improves the stonework, but the title and rules remain unreadable. This is the dark site with a red doorway at 00:29.9."
+      ],
+      "frameIndex": 895,
+      "luminanceSharpen": 0.55
     },
     {
       "name": "Zig-Zag Dragonfly",
       "cardName": "Zig-Zag Dragonfly",
-      "timestampSeconds": 30.1,
+      "timestampSeconds": 30.898,
       "source": "sources/zig_zag_dragonfly.png",
       "sourceSize": [
-        951,
-        781
+        999,
+        1014
       ],
-      "sourceSha256": "71dabc87c07d319c6696ffa9591980371c05574f030c46e42eaf229863b61653",
+      "sourceSha256": "a7018dccda7b7616c6739cf526fa8fd3b68410029b573284b75653bd93dea7c6",
       "frameCrop": [
-        1906,
-        564,
-        951,
-        781
+        1159,
+        1077,
+        999,
+        1014
       ],
       "corners": [
         [
-          10,
-          242
+          12.538,
+          286.214
         ],
         [
-          400,
-          10
+          509.776,
+          12.404
         ],
         [
-          940,
-          482
+          985.54,
+          638.795
         ],
         [
-          512,
-          770
+          422.915,
+          1000.545
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/zig_zag_dragonfly.webp",
       "notes": [
-        "Tentative title; small lettering and power are motion-blurred."
-      ]
+        "A sharper frame improves the lettering and artwork. The title and power remain tentative because of motion blur."
+      ],
+      "frameIndex": 926,
+      "luminanceSharpen": 0.6
     },
     {
       "name": "Unidentified Avatar (BT trailer)",
@@ -1333,83 +1424,149 @@
     {
       "name": "Set Sail",
       "cardName": "Set Sail",
-      "timestampSeconds": 32.0,
+      "timestampSeconds": 32.533,
       "source": "sources/set_sail.png",
       "sourceSize": [
-        855,
-        681
+        867,
+        725
       ],
-      "sourceSha256": "2f9ff0409dd10a99917e41f9b23f4663bfeffc420d30acb9235536dc39d800eb",
+      "sourceSha256": "cf951f6990ac435e15829aedd8a1af3ac27034964f297ea98d314bc15830126b",
       "frameCrop": [
-        814,
-        568,
-        855,
-        681
+        498,
+        673,
+        867,
+        725
       ],
       "corners": [
         [
-          10,
-          250
+          12.498,
+          257.772
         ],
         [
-          408,
-          10
+          448.812,
+          12.868
         ],
         [
-          844,
-          382
+          853.278,
+          414.775
         ],
         [
-          426,
-          670
+          389.646,
+          711.905
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/set_sail.webp",
-      "notes": [
-        "Rules transcribed from motion-blurred text."
-      ]
+      "notes": [],
+      "frameIndex": 975,
+      "luminanceSharpen": 0.6
     },
     {
       "name": "Blunderbuss Buffoons",
       "cardName": "Blunderbuss Buffoons",
-      "timestampSeconds": 16.4,
+      "timestampSeconds": 16.416,
       "source": "sources/blunderbuss_buffoons.png",
       "sourceSize": [
-        1031,
-        960
+        1035,
+        962
       ],
-      "sourceSha256": "2121bb73f9279277812eae7f076c05c2b493da91c64cd1021f90a6ecb3ae04cf",
+      "sourceSha256": "35941508b69ee05c85f173dcad130620453a163aaf26d1346e45491a2a3e0700",
       "frameCrop": [
-        2494,
-        1200,
-        1031,
-        960
+        2492,
+        1198,
+        1035,
+        962
       ],
       "corners": [
         [
-          10,
-          218
+          12.0,
+          220.0
         ],
         [
-          458,
-          10
+          460.0,
+          12.0
         ],
         [
-          1020,
-          708
+          1022.0,
+          710.0
         ],
         [
-          496,
-          992
+          498.0,
+          994.0
         ]
       ],
       "landscape": false,
       "partial": true,
       "output": "public/assets/Cards/blunderbuss_buffoons.webp",
       "notes": [
-        "The lowest edge of the card extends outside the video frame."
+        "The title and art use a sharper frame; the earlier view supplies more of the lower edge. A small corner stays outside the shot."
+      ],
+      "frameIndex": 492,
+      "layers": [
+        {
+          "timestampSeconds": 17.217,
+          "frameIndex": 516,
+          "source": "sources/blunderbuss_buffoons-frame-516.png",
+          "sourceSize": [
+            1004,
+            912
+          ],
+          "sourceSha256": "3a24c8f62f97747eaa156a60ffabd2c43819ac2211c24d5f10d1a8f39c10abed",
+          "frameCrop": [
+            2142,
+            1248,
+            1004,
+            912
+          ],
+          "corners": [
+            [
+              12.501,
+              191.052
+            ],
+            [
+              514.037,
+              12.042
+            ],
+            [
+              990.023,
+              781.756
+            ],
+            [
+              388.355,
+              1031.407
+            ]
+          ],
+          "partial": true,
+          "region": [
+            [
+              0,
+              0
+            ],
+            [
+              743,
+              0
+            ],
+            [
+              743,
+              1038
+            ],
+            [
+              416,
+              1038
+            ],
+            [
+              0,
+              830
+            ]
+          ],
+          "featherPx": 30,
+          "colorOffsetBgr": [
+            -3.0,
+            -2.5,
+            -3.5
+          ]
+        }
       ]
     },
     {
@@ -1620,83 +1777,350 @@
     {
       "name": "Baron of Felbog",
       "cardName": "Baron of Felbog",
-      "timestampSeconds": 59.2,
+      "timestampSeconds": 59.225,
       "source": "sources/baron_of_felbog.png",
       "sourceSize": [
-        419,
-        493
+        423,
+        497
       ],
-      "sourceSha256": "88f6070ba33a3e1c0a0fefde7bc295a856b38c598638d3a476c4d96d8c989b74",
+      "sourceSha256": "8f7426e424b38d3db3a6888117b47d65cb8401c0b00ce484eef269e0618c8c8e",
       "frameCrop": [
-        1066,
-        874,
-        419,
-        493
+        1064,
+        872,
+        423,
+        497
       ],
       "corners": [
         [
-          114,
-          10
+          116.0,
+          12.0
         ],
         [
-          408,
-          64
+          410.0,
+          66.0
         ],
         [
-          300,
-          482
+          302.0,
+          484.0
         ],
         [
-          10,
-          424
+          12.0,
+          426.0
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/baron_of_felbog.webp",
       "notes": [
-        "Submerge is readable. The remaining transformation ability is too blurred for a reliable transcription."
+        "Uses three aligned views. The full ability is still unconfirmed because its left side is blurred in the unobstructed frames."
+      ],
+      "frameIndex": 1775,
+      "layers": [
+        {
+          "timestampSeconds": 59.292,
+          "frameIndex": 1777,
+          "source": "sources/baron_of_felbog-frame-1777.png",
+          "sourceSize": [
+            429,
+            503
+          ],
+          "sourceSha256": "17ab73ab339f5290c9b0e835758b1f3269713672a2140efe4c337b3c9045465d",
+          "frameCrop": [
+            1060,
+            843,
+            429,
+            503
+          ],
+          "corners": [
+            [
+              117.22,
+              12.236
+            ],
+            [
+              415.193,
+              66.499
+            ],
+            [
+              306.197,
+              489.046
+            ],
+            [
+              12.005,
+              430.729
+            ]
+          ],
+          "partial": false,
+          "region": [
+            [
+              0,
+              0
+            ],
+            [
+              743,
+              0
+            ],
+            [
+              743,
+              1038
+            ],
+            [
+              240,
+              1038
+            ],
+            [
+              231,
+              936
+            ],
+            [
+              183,
+              807
+            ],
+            [
+              135,
+              618
+            ],
+            [
+              83,
+              423
+            ],
+            [
+              43,
+              233
+            ],
+            [
+              0,
+              141
+            ]
+          ],
+          "featherPx": 30,
+          "colorOffsetBgr": [
+            1.0,
+            1.0,
+            0.5
+          ]
+        },
+        {
+          "timestampSeconds": 61.761,
+          "frameIndex": 1851,
+          "source": "sources/baron_of_felbog-frame-1851.png",
+          "sourceSize": [
+            737,
+            858
+          ],
+          "sourceSha256": "9824eaf3b22b09a9b2e8c61f9835839293953237703bd579aec54301ded75a40",
+          "frameCrop": [
+            345,
+            1302,
+            737,
+            858
+          ],
+          "corners": [
+            [
+              200.875,
+              12.61
+            ],
+            [
+              723.867,
+              76.414
+            ],
+            [
+              547.755,
+              886.547
+            ],
+            [
+              12.931,
+              811.503
+            ]
+          ],
+          "partial": true,
+          "region": [
+            [
+              0,
+              0
+            ],
+            [
+              743,
+              0
+            ],
+            [
+              743,
+              959
+            ],
+            [
+              668,
+              985
+            ],
+            [
+              612,
+              1038
+            ],
+            [
+              355,
+              1038
+            ],
+            [
+              323,
+              917
+            ],
+            [
+              285,
+              766
+            ],
+            [
+              245,
+              612
+            ],
+            [
+              207,
+              470
+            ],
+            [
+              164,
+              307
+            ],
+            [
+              139,
+              208
+            ],
+            [
+              107,
+              157
+            ],
+            [
+              52,
+              140
+            ],
+            [
+              0,
+              163
+            ]
+          ],
+          "featherPx": 37,
+          "colorOffsetBgr": [
+            0,
+            1,
+            0
+          ]
+        }
       ]
     },
     {
       "name": "Loot Goblin",
       "cardName": "Loot Goblin",
-      "timestampSeconds": 63.7,
+      "timestampSeconds": 63.63,
       "source": "sources/loot_goblin.png",
       "sourceSize": [
-        559,
-        737
+        566,
+        749
       ],
-      "sourceSha256": "99074f6e27bc0775dad503c43123bce1a821562965c0b7164e71469aca33a595",
+      "sourceSha256": "473a0227690a3261c51d1c2adc34c5114d113764d1faaa82efcfabe56e6921e4",
       "frameCrop": [
-        2042,
-        792,
-        559,
-        737
+        2164,
+        814,
+        566,
+        749
       ],
       "corners": [
         [
-          54,
-          10
+          47.811,
+          12.669
         ],
         [
-          548,
-          44
+          545.51,
+          47.082
         ],
         [
-          546,
-          726
+          552.193,
+          735.987
         ],
         [
-          10,
-          684
+          12.048,
+          693.997
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/loot_goblin.webp",
       "notes": [
-        "Rules are read from the later close view at 01:05; the complete card at 01:03 has a motion-blurred cost and threshold."
+        "Artwork, title and rules use the sharper frame. The blurry cost and threshold come from an earlier unobstructed view."
+      ],
+      "frameIndex": 1907,
+      "layers": [
+        {
+          "timestampSeconds": 65.565,
+          "frameIndex": 1965,
+          "source": "sources/loot_goblin-frame-1965.png",
+          "sourceSize": [
+            596,
+            616
+          ],
+          "sourceSha256": "2ad7f61e0ada9b9c68941fff9aca7c9838ea8fd13abbff83cff9848c78c95c0f",
+          "frameCrop": [
+            421,
+            263,
+            596,
+            616
+          ],
+          "corners": [
+            [
+              150.324,
+              12.086
+            ],
+            [
+              582.856,
+              41.742
+            ],
+            [
+              476.54,
+              602.112
+            ],
+            [
+              12.593,
+              567.512
+            ]
+          ],
+          "partial": false,
+          "region": [
+            [
+              223,
+              0
+            ],
+            [
+              743,
+              0
+            ],
+            [
+              743,
+              956
+            ],
+            [
+              633,
+              1015
+            ],
+            [
+              610,
+              1038
+            ],
+            [
+              0,
+              1038
+            ],
+            [
+              0,
+              195
+            ],
+            [
+              195,
+              170
+            ]
+          ],
+          "featherPx": 25,
+          "colorOffsetBgr": [
+            9.0,
+            10.0,
+            11.0
+          ]
+        }
       ]
     },
     {
@@ -2030,42 +2454,104 @@
     {
       "name": "Unidentified Fae (BT trailer)",
       "cardName": "Unidentified Fae (BT trailer)",
-      "timestampSeconds": 64.9,
+      "timestampSeconds": 64.898,
       "source": "sources/unidentified_fae_bt_trailer.png",
       "sourceSize": [
-        590,
-        761
+        592,
+        765
       ],
-      "sourceSha256": "2352e74986d282951cc8eb895a0555aa03a2ddc17312f622ec90dc5e492a2502",
+      "sourceSha256": "32909be4d066e1ba2b753b569e93bf224e87c6edfb2012664fe0fefc5fd3d798",
       "frameCrop": [
-        3250,
-        1034,
-        590,
-        761
+        3248,
+        1032,
+        592,
+        765
       ],
       "corners": [
         [
-          10,
-          50
+          12.0,
+          52.0
         ],
         [
-          470,
-          10
+          472.0,
+          12.0
         ],
         [
-          592,
-          706
+          594.0,
+          708.0
         ],
         [
-          94,
-          750
+          96.0,
+          752.0
         ]
       ],
       "landscape": false,
       "partial": true,
       "output": "public/assets/Cards/unidentified_fae_bt_trailer.webp",
       "notes": [
-        "Placeholder title: the red Fae at 01:04. Treasure cards obscure the title and power throughout the useful frames. Manual identification will be needed."
+        "The rules and artist are clearer in a second frame. Treasure overlaps the title and power in the useful frames."
+      ],
+      "frameIndex": 1945,
+      "layers": [
+        {
+          "timestampSeconds": 65.699,
+          "frameIndex": 1969,
+          "source": "sources/unidentified_fae_bt_trailer-frame-1969.png",
+          "sourceSize": [
+            629,
+            796
+          ],
+          "sourceSha256": "de312a16056fab2d176b1dafb951dfe5a374c9b5d2c14397123a6307af562bdb",
+          "frameCrop": [
+            3158,
+            971,
+            629,
+            796
+          ],
+          "corners": [
+            [
+              12.328,
+              51.917
+            ],
+            [
+              509.041,
+              12.809
+            ],
+            [
+              615.516,
+              738.611
+            ],
+            [
+              131.23,
+              782.043
+            ]
+          ],
+          "partial": false,
+          "region": [
+            [
+              0,
+              711
+            ],
+            [
+              743,
+              711
+            ],
+            [
+              743,
+              1038
+            ],
+            [
+              0,
+              1038
+            ]
+          ],
+          "featherPx": 55,
+          "colorOffsetBgr": [
+            0.5,
+            0.0,
+            0.5
+          ]
+        }
       ]
     }
   ]

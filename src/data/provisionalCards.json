@@ -351,8 +351,8 @@
                 "slug": "preview_bt_spectral_sailors_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
-                "flavorText": "",
+                "artist": "Daniel Bitton",
+                "flavorText": "Men spoke of crews long lost,\nstill reefing sails in stormlight.",
                 "typeText": "Ordinary Spirits sail winds of eternity"
               }
             ]
@@ -363,9 +363,7 @@
         ]
       },
       "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=19s",
-      "uncertainFields": [
-        "artist"
-      ],
+      "uncertainFields": [],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release."
       ]
@@ -503,12 +501,12 @@
           "type": "Minion",
           "rulesText": "Can't move to attack or defend.",
           "cost": 4,
-          "attack": null,
+          "attack": 5,
           "defence": null,
           "life": null,
           "thresholds": {
             "air": 0,
-            "earth": 0,
+            "earth": 2,
             "fire": 0,
             "water": 0
           }
@@ -524,12 +522,12 @@
               "type": "Minion",
               "rulesText": "Can't move to attack or defend.",
               "cost": 4,
-              "attack": null,
+              "attack": 5,
               "defence": null,
               "life": null,
               "thresholds": {
                 "air": 0,
-                "earth": 0,
+                "earth": 2,
                 "fire": 0,
                 "water": 0
               }
@@ -539,26 +537,22 @@
                 "slug": "preview_bt_orohi_sloth_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
+                "artist": "Franck Pawlowski",
                 "flavorText": "",
-                "typeText": ""
+                "typeText": "An Ordinary Beast in no hurry at all"
               }
             ]
           }
         ],
         "keywords": []
       },
-      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=35s",
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=36s",
       "uncertainFields": [
-        "thresholds",
-        "attack",
-        "artist",
         "name"
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Earth symbols and power are motion-blurred; counts left unconfirmed.",
-        "Motion-blurred title is tentatively transcribed as Orohi Sloth."
+        "A sharper frame confirms two Earth threshold symbols and 5 power. Confirm the title spelling on release."
       ]
     },
     {
@@ -614,14 +608,13 @@
         ],
         "keywords": []
       },
-      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=35s",
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=37s",
       "uncertainFields": [
-        "rulesText",
         "artist"
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "The printed damage grid is transcribed as three rows; wording is motion-blurred."
+        "The printed 3×3 damage grid is transcribed as three text rows."
       ]
     },
     {
@@ -643,7 +636,7 @@
           }
         },
         "elements": "Fire",
-        "subTypes": "Beast",
+        "subTypes": "Monster",
         "sets": [
           {
             "name": "Baldassare's Travels",
@@ -668,9 +661,9 @@
                 "slug": "preview_bt_spawn_of_zahhak_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
+                "artist": "Emil Idzikowski",
                 "flavorText": "",
-                "typeText": ""
+                "typeText": "An Elite Monster of ruin made manifest"
               }
             ]
           }
@@ -679,15 +672,10 @@
           "Burrowing"
         ]
       },
-      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=35s",
-      "uncertainFields": [
-        "thresholds",
-        "attack",
-        "artist"
-      ],
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=38s",
+      "uncertainFields": [],
       "notes": [
-        "Transcribed from a prerelease trailer; details may change before release.",
-        "Small threshold and power glyphs need confirmation."
+        "Transcribed from a prerelease trailer; details may change before release."
       ]
     },
     {
@@ -1065,7 +1053,7 @@
     },
     {
       "card": {
-        "name": "Flying Machines",
+        "name": "Flying Machine",
         "guardian": {
           "rarity": "Ordinary",
           "type": "Minion",
@@ -1104,7 +1092,7 @@
             },
             "variants": [
               {
-                "slug": "preview_bt_flying_machines_standard",
+                "slug": "preview_bt_flying_machine_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
                 "artist": "Jussi Pylkäs",
@@ -1121,7 +1109,8 @@
       "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=52s",
       "uncertainFields": [],
       "notes": [
-        "Transcribed from a prerelease trailer; details may change before release."
+        "Transcribed from a prerelease trailer; details may change before release.",
+        "The sharper frame confirms the singular title Flying Machine."
       ]
     },
     {
@@ -1249,7 +1238,7 @@
     },
     {
       "card": {
-        "name": "Guard Post",
+        "name": "Grand Heist",
         "guardian": {
           "rarity": "Unique",
           "type": "Magic",
@@ -1288,12 +1277,12 @@
             },
             "variants": [
               {
-                "slug": "preview_bt_guard_post_standard",
+                "slug": "preview_bt_grand_heist_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
+                "artist": "Paul Carrick",
                 "flavorText": "",
-                "typeText": ""
+                "typeText": "Unique Magic seeks a certain set of skills"
               }
             ]
           }
@@ -1305,14 +1294,11 @@
           "Protected"
         ]
       },
-      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=63s",
-      "uncertainFields": [
-        "rulesText",
-        "artist"
-      ],
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=62s",
+      "uncertainFields": [],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Small ability text needs confirmation against the official release."
+        "The sharper frame confirms the name Grand Heist, replacing the earlier transcription Guard Post."
       ]
     },
     {
@@ -1627,7 +1613,7 @@
         "guardian": {
           "rarity": "Exceptional",
           "type": "Minion",
-          "rulesText": "You may sacrifice treasures,\nto lighten their due:\nSave two mana for each,\nWhy not give up a few?",
+          "rulesText": "You may sacrifice treasures,\nto lighten their due.\nSave two mana for each,\nWhy not give up a few?",
           "cost": 8,
           "attack": 6,
           "defence": null,
@@ -1648,7 +1634,7 @@
             "metadata": {
               "rarity": "Exceptional",
               "type": "Minion",
-              "rulesText": "You may sacrifice treasures,\nto lighten their due:\nSave two mana for each,\nWhy not give up a few?",
+              "rulesText": "You may sacrifice treasures,\nto lighten their due.\nSave two mana for each,\nWhy not give up a few?",
               "cost": 8,
               "attack": 6,
               "defence": null,
@@ -1665,9 +1651,9 @@
                 "slug": "preview_bt_krampus_crew_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
+                "artist": "Séverine Pineaux",
                 "flavorText": "",
-                "typeText": ""
+                "typeText": "Exceptional Giants with coin in view"
               }
             ]
           }
@@ -1675,13 +1661,9 @@
         "keywords": []
       },
       "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=39s",
-      "uncertainFields": [
-        "rulesText",
-        "artist"
-      ],
+      "uncertainFields": [],
       "notes": [
-        "Transcribed from a prerelease trailer; details may change before release.",
-        "Rhyming rules transcribed from small, motion-blurred lettering."
+        "Transcribed from a prerelease trailer; details may change before release."
       ]
     },
     {
@@ -1789,8 +1771,8 @@
                 "slug": "preview_bt_the_jade_monkey_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
-                "flavorText": "",
+                "artist": "Michal Nagypál",
+                "flavorText": "All eyes turn to the monkey.",
                 "typeText": ""
               }
             ]
@@ -1798,14 +1780,13 @@
         ],
         "keywords": []
       },
-      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=26s",
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=31s",
       "uncertainFields": [
-        "rulesText",
-        "artist"
+        "rulesText"
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Ability text is blurred by camera movement."
+        "Uses two aligned frames to recover the clear artwork and most of the text. The right end of the rules line is still blurred."
       ]
     },
     {
@@ -1861,7 +1842,7 @@
         ],
         "keywords": []
       },
-      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=30s",
+      "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=29s",
       "uncertainFields": [
         "name",
         "rarity",
@@ -1871,7 +1852,7 @@
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Placeholder title: the dark site with a red doorway at 00:30. The title and rules are unreadable. Manual identification will be needed."
+        "The new frame improves the stonework, but the title and rules remain unreadable. This is the dark site with a red doorway at 00:29.9."
       ]
     },
     {
@@ -1938,7 +1919,7 @@
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Tentative title; small lettering and power are motion-blurred."
+        "A sharper frame improves the lettering and artwork. The title and power remain tentative because of motion blur."
       ]
     },
     {
@@ -2052,7 +2033,7 @@
                 "product": "Trailer preview",
                 "artist": "",
                 "flavorText": "",
-                "typeText": ""
+                "typeText": "Ordinary Magic to chase the horizon"
               }
             ]
           }
@@ -2061,12 +2042,10 @@
       },
       "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=32s",
       "uncertainFields": [
-        "rulesText",
         "artist"
       ],
       "notes": [
-        "Transcribed from a prerelease trailer; details may change before release.",
-        "Rules transcribed from motion-blurred text."
+        "Transcribed from a prerelease trailer; details may change before release."
       ]
     },
     {
@@ -2131,7 +2110,7 @@
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "The lowest edge of the card extends outside the video frame."
+        "The title and art use a sharper frame; the earlier view supplies more of the lower edge. A small corner stays outside the shot."
       ]
     },
     {
@@ -2506,9 +2485,9 @@
                 "slug": "preview_bt_baron_of_felbog_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
+                "artist": "Jeff A. Menges",
                 "flavorText": "",
-                "typeText": ""
+                "typeText": "A Unique Beast raises them right"
               }
             ]
           }
@@ -2520,12 +2499,11 @@
       "source": "https://www.youtube.com/watch?v=NPd_t2Un-4g&t=59s",
       "uncertainFields": [
         "rulesText",
-        "image",
-        "artist"
+        "image"
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Submerge is readable. The remaining transformation ability is too blurred for a reliable transcription."
+        "Uses three aligned views. The full ability is still unconfirmed because its left side is blurred in the unobstructed frames."
       ]
     },
     {
@@ -2572,9 +2550,9 @@
                 "slug": "preview_bt_loot_goblin_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
+                "artist": "Ralph Horsley",
                 "flavorText": "",
-                "typeText": ""
+                "typeText": "An Elite Fae double-scoots, triple-shoots"
               }
             ]
           }
@@ -2587,12 +2565,11 @@
       "uncertainFields": [
         "cost",
         "thresholds",
-        "image",
-        "artist"
+        "image"
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Rules are read from the later close view at 01:05; the complete card at 01:03 has a motion-blurred cost and threshold."
+        "Artwork, title and rules use the sharper frame. The blurry cost and threshold come from an earlier unobstructed view."
       ]
     },
     {
@@ -2755,7 +2732,7 @@
                 "slug": "preview_bt_unidentified_fae_bt_trailer_standard",
                 "finish": "Preview",
                 "product": "Trailer preview",
-                "artist": "",
+                "artist": "Truitt Parrish",
                 "flavorText": "",
                 "typeText": "Ordinary Fae move at the jingle of coin"
               }
@@ -2770,12 +2747,11 @@
       "uncertainFields": [
         "name",
         "attack",
-        "image",
-        "artist"
+        "image"
       ],
       "notes": [
         "Transcribed from a prerelease trailer; details may change before release.",
-        "Placeholder title: the red Fae at 01:04. Treasure cards obscure the title and power throughout the useful frames. Manual identification will be needed."
+        "The rules and artist are clearer in a second frame. Treasure overlaps the title and power in the useful frames."
       ]
     }
   ],

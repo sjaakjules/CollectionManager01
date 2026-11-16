@@ -19,15 +19,24 @@ it('keeps trailer captures traceable and supplies preview cards at every image t
   expect(new Set(manifest.images.map(entry => entry.cardName)).size).toBe(44);
   expect(manifest.images.filter(entry => entry.cardName === 'Treasure')).toHaveLength(8);
   for (const capture of manifest.images) {
-    const source = await readFile(`${directory}/${capture.source}`);
-    expect(createHash('sha256').update(source).digest('hex')).toBe(capture.sourceSha256);
-    expect(await sharp(source).metadata()).toMatchObject({
-      width: capture.sourceSize[0], height: capture.sourceSize[1],
-    });
-    expect(await sharp(capture.output).metadata()).toMatchObject({ format: 'webp', hasAlpha: true,
-      width: capture.landscape ? 1039 : 744, height: capture.landscape ? 744 : 1039 });
-    expect(capture.timestampSeconds).toBeGreaterThan(0);
-    expect(capture.timestampSeconds).toBeLessThan(89);
+    const width = capture.landscape ? 1039 : 744;
+    const height = capture.landscape ? 744 : 1039;
+    for (const frame of [capture, ...(capture.layers ?? [])]) {
+      const source = await readFile(`${directory}/${frame.source}`);
+      expect(createHash('sha256').update(source).digest('hex')).toBe(frame.sourceSha256);
+      expect(await sharp(source).metadata()).toMatchObject({
+        width: frame.sourceSize[0], height: frame.sourceSize[1],
+      });
+      expect(frame.timestampSeconds).toBeGreaterThan(0);
+      expect(frame.timestampSeconds).toBeLessThan(89);
+    }
+    for (const layer of capture.layers ?? []) {
+      expect(layer.frameIndex).not.toBe(capture.frameIndex);
+      expect(layer.featherPx).toBeGreaterThan(0);
+      expect(layer.region.length).toBeGreaterThanOrEqual(3);
+      expect(layer.region.every(([x, y]) => x >= 0 && x < width && y >= 0 && y < height)).toBe(true);
+    }
+    expect(await sharp(capture.output).metadata()).toMatchObject({ format: 'webp', hasAlpha: true, width, height });
   }
   for (const { card } of previews.cards) {
     const name = slug(card.name);
