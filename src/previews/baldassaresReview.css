@@ -90,13 +90,144 @@ a { color: var(--review-accent); }
   background: var(--review-tile);
 }
 
-.review-art { display: block; }
+.review-art-wrap { position: relative; }
+
+.review-art {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: zoom-in;
+}
 
 .review-art img {
   display: block;
   width: 100%;
   height: 350px;
   object-fit: contain;
+}
+
+.review-art-source {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: var(--review-tile);
+}
+
+.review-art-source.is-shown { visibility: visible; }
+
+.review-frame-badge, .review-view-final, .review-zoom-label, .review-zoom-close {
+  position: absolute;
+  border: 1px solid #7e6a47;
+  border-radius: 5px;
+  background: #22212b;
+  color: #f8e0af;
+  pointer-events: none;
+}
+
+.review-frame-badge {
+  top: -7px;
+  right: 0;
+  padding: 3px 6px;
+  font: 600 0.71rem/1.15 system-ui, sans-serif;
+}
+
+.review-view-final {
+  right: 4px;
+  bottom: 4px;
+  padding: 5px 8px;
+  opacity: 0;
+  font: 600 0.74rem/1.1 system-ui, sans-serif;
+  cursor: zoom-in;
+}
+
+.review-art-wrap:is(:hover, :focus-within) .review-view-final {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .review-view-final { display: none; }
+}
+
+.review-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.review-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  width: 100dvw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+}
+
+.review-zoom::before {
+  position: absolute;
+  inset: 0;
+  background: rgb(17 15 24 / 76%);
+  content: '';
+}
+.review-zoom-entering::before { animation: review-dim 190ms ease-out both; }
+.review-zoom-closing::before { animation: review-dim 170ms ease-in reverse both; }
+
+@keyframes review-dim {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.review-zoom-surface {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: clamp(10px, 2vw, 24px);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: zoom-out;
+  touch-action: pan-y;
+}
+
+.review-zoom-surface img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.review-zoom-close {
+  top: 12px;
+  right: 12px;
+  min-width: 34px;
+  padding: 3px;
+  font-size: 1.25rem;
+}
+
+.review-zoom-label {
+  left: 12px;
+  bottom: 12px;
+  padding: 5px 8px;
+  font-size: 0.78rem;
 }
 
 .review-title {

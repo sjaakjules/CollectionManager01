@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import type { Card } from '@/data/dataModels';
+import { ReviewCardArtwork, type ZoomImage } from './ReviewCardArtwork';
 import {
   fieldsForCard, reviewImageUrl, trailerUrl, type FieldKey, type PreviewCapture, type ReviewFields,
 } from './previewReviewData';
@@ -12,6 +13,7 @@ interface PreviewCardTileProps {
   waitingForCard: boolean;
   onEdit: (name: string, field: FieldKey, value: string, original: string) => void;
   onBlur: () => void;
+  onZoom: (image: ZoomImage) => void;
 }
 
 const uncertaintyLabels: Readonly<Record<string, string>> = {
@@ -30,7 +32,7 @@ function frameLink(seconds: number): string {
 }
 
 export const PreviewCardTile = memo(function PreviewCardTile({
-  capture, card, changes, editable, waitingForCard, onEdit, onBlur,
+  capture, card, changes, editable, waitingForCard, onEdit, onBlur, onZoom,
 }: PreviewCardTileProps) {
   const original = fieldsForCard(capture.cardName, card);
   const fields = editable ? { ...original, ...changes } : original;
@@ -80,16 +82,7 @@ export const PreviewCardTile = memo(function PreviewCardTile({
 
   return (
     <figure className="review-tile" data-card={capture.cardName}>
-      <a className="review-art" href={image} target="_blank" rel="noreferrer" aria-label={`Open full-size ${title}`}>
-        <img
-          src={image}
-          alt={`${title}${art ? ` · ${art}` : ''} · trailer preview`}
-          loading="lazy"
-          decoding="async"
-          width={capture.landscape ? 1039 : 744}
-          height={capture.landscape ? 744 : 1039}
-        />
-      </a>
+      <ReviewCardArtwork capture={capture} title={title} illustration={art} onZoom={onZoom} />
       <figcaption>
         <h2 className="review-title">
           {canEdit ? (

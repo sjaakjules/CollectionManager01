@@ -14,11 +14,14 @@ The White Death retains its current official rules, statistics, older printings 
 - Runtime transcriptions: `src/data/provisionalCards.json`.
 - Usable card images: `public/assets/Cards/<name_slug>.webp`.
 - Seven additional Treasure illustrations and The White Death trailer crop: `public/assets/CardPreviews/baldassares_travels/`.
+- The unsharpened gallery crops live under `public/assets/CardPreviewFrames/baldassares-travels/`. The comparison index attaches a content hash to each URL.
 - Standalone gallery: `previews/baldassares-travels.html` is built by Vite at the same public URL.
 
 Each source patch is perspective corrected, bicubically resampled, gently sharpened, given rounded transparent corners and encoded as quality-96 WebP. Portraits are **744 × 1039**, sites **1039 × 744**.
 
 A second pass tracked nearby frames for 22 blurry or partly covered cards and improved 15. Ten use a sharper frame, with light sharpening where it helps the text. Baron of Felbog uses three aligned frames. Blunderbuss Buffoons, Loot Goblin, The Jade Monkey and the unidentified Fae use two each. The manifest records the source and blend region for each contributing frame. Grey areas still mark portions outside the frame, and overlaps stay visible wherever every useful view is covered. Frame averages and stronger motion reversal did not recover reliable lettering on the unidentified avatar. All improvements use pixels from the trailer.
+
+Further trials used the saved 3840 × 2160 trailer to align up to 37 frames per region across eight of the remaining soft or obstructed images. Averages and joint motion deblurring produced no reliable improvement over the reviewed crops. The hardest areas need a clearer view of the same card.
 
 The clearer footage confirms **Grand Heist** (previously transcribed as Guard Post) and **Flying Machine** (previously Flying Machines). Saved decks, collections, canvas cards and imports resolve the old spellings to the corrected names. The closer views also confirm the Sloth's two Earth symbols and 5 power and identify Spawn of Zahhak's subtype as Monster.
 
@@ -26,6 +29,7 @@ The archived PNG patches are sufficient to reproduce the images without download
 
 ```sh
 python3 scripts/extract-card-previews.py offlineData/card-previews/baldassares-travels/manifest.json .
+python3 scripts/extract-card-previews.py offlineData/card-previews/baldassares-travels/manifest.json . --source-frames-only
 pnpm cards:thumbs+atlas
 ```
 
@@ -56,6 +60,8 @@ The gallery lists all cards, individual limitations and source timestamps. Unkno
 ## Reviewing card details
 
 The gallery supports editing names, ability text, costs, power and flavour. It reads the provisional transcriptions and uses the bundled official record for The White Death. All eight Treasure illustrations edit the same card. Power accepts a single value or a pair such as `3/2` for attack and defence.
+
+Hover from left to right to see each contributing crop in time order. The finished WebP is shown again when the pointer leaves. The source crops use only perspective correction and rounded corners. A tile loads its source images on interaction. With the image focused, the arrow keys select a frame. Clicking or tapping opens the current image at the largest size that fits the screen. **View final** opens the finished crop directly. Click, scroll or press Escape to close it.
 
 Edits are drafts saved in the browser. Reloading the gallery restores them. **Download edits** exports `baldassares-travels-edits.json` with only the changed fields, keyed by each card's original name. A blank field in the export means the reviewer cleared it. The gallery does not upload drafts to a server.
 

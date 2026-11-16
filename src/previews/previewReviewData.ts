@@ -2,9 +2,16 @@ import { normalizeCardCatalog } from '@/data/cardCatalog';
 import imageVersions from '@/data/cardImageVersions.json';
 import type { Card } from '@/data/dataModels';
 import { provisionalCards } from '@/data/provisionalCards';
+import comparisonFrames from '../../offlineData/card-previews/baldassares-travels/comparison-frames.json';
 import manifest from '../../offlineData/card-previews/baldassares-travels/manifest.json';
 
 interface Frame {
+  source: string;
+  timestampSeconds: number;
+}
+
+export interface GalleryFrame {
+  url: string;
   timestampSeconds: number;
 }
 
@@ -50,6 +57,16 @@ export function reviewImageUrl(capture: PreviewCapture): string {
   const slug = url.split('/').at(-1)?.replace(/\.webp$/u, '') ?? '';
   const versions: Readonly<Record<string, string>> = imageVersions;
   return url.startsWith('/assets/Cards/') && versions[slug] ? `${url}?v=${versions[slug]}` : url;
+}
+
+export function reviewSourceFrames(capture: PreviewCapture): GalleryFrame[] {
+  const urls: Readonly<Record<string, string>> = comparisonFrames;
+  return [capture, ...(capture.layers ?? [])]
+    .sort((first, second) => first.timestampSeconds - second.timestampSeconds)
+    .flatMap(({ source, timestampSeconds }) => {
+      const url = urls[source];
+      return url ? [{ url, timestampSeconds }] : [];
+    });
 }
 
 /** Fill existing-card appearances from the bundled snapshot, without an upstream request. */

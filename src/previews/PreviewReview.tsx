@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PreviewCardTile } from './PreviewCardTile';
 import { announcedRelease, captureNames, captures, loadAppearanceCards, previewCards, reviewSet, trailerUrl } from './previewReviewData';
+import type { ZoomImage } from './ReviewCardArtwork';
+import { ReviewImageZoom } from './ReviewImageZoom';
 import { usePreviewReview } from './usePreviewReview';
 
 export function PreviewReview({ editable }: { editable: boolean }) {
   const [cards, setCards] = useState(previewCards);
   const [loading, setLoading] = useState(true);
+  const [zoom, setZoom] = useState<ZoomImage | null>(null);
+  const dismissZoom = useCallback(() => setZoom(null), []);
   const { drafts, saveState, edit, flush, download } = usePreviewReview(editable);
   const saveOnBlur = useCallback(() => flush(), [flush]);
 
@@ -30,6 +34,10 @@ export function PreviewReview({ editable }: { editable: boolean }) {
         <a href="/">Open Sorcery Stacks</a>
         <h1>{reviewSet}</h1>
         <p>{captures.length} preview images · {captureNames.length} cards · Announced for {announcedRelease}</p>
+        <p id="review-image-help">
+          Hover left to right to compare source frames. Click a card image to enlarge it.
+          <span className="review-visually-hidden"> With the image focused, use the left and right arrow keys to select a frame.</span>
+        </p>
         {editable && <p>Click a title or field to edit it. Changes save in this browser. Download the edits when you’re ready to hand them back.</p>}
       </header>
       {editable && (
@@ -49,12 +57,14 @@ export function PreviewReview({ editable }: { editable: boolean }) {
             waitingForCard={loading}
             onEdit={edit}
             onBlur={saveOnBlur}
+            onZoom={setZoom}
           />
         ))}
       </main>
       <footer className="review-footer">
         <p>Images come from the <a href={trailerUrl}>official trailer</a>. Some titles and print details are still unconfirmed.</p>
       </footer>
+      {zoom && <ReviewImageZoom image={zoom} onDismiss={dismissZoom} />}
     </>
   );
 }

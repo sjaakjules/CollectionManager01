@@ -73,7 +73,8 @@ describe('preview gallery review', () => {
     localStorage.setItem('sorcerystacks:baldassare-preview-review:v1:Chosen%20One:name', 'Draft-only title');
     await act(async () => root.render(<PreviewReview editable={false} />));
     expect(element.querySelectorAll('figure')).toHaveLength(51);
-    expect(element.querySelector('input, textarea, button')).toBeNull();
+    expect(element.querySelector('input, textarea, .review-toolbar')).toBeNull();
+    expect(element.querySelectorAll('button.review-art')).toHaveLength(51);
     expect(element.querySelector('[data-card="Chosen One"] h2')?.textContent).toBe('Chosen One');
     expect(element.textContent).not.toContain('Draft-only title');
   });
