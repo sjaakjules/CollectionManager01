@@ -291,6 +291,12 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: true,
+    rollupOptions: {
+      input: {
+        app: resolve(__dirname, 'index.html'),
+        baldassaresReview: resolve(__dirname, 'previews/baldassares-travels.html'),
+      },
+    },
   },
   // Disable source maps for dependencies to avoid PixiJS shader warnings
   optimizeDeps: {

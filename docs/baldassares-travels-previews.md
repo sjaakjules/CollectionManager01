@@ -14,7 +14,7 @@ The White Death retains its current official rules, statistics, older printings 
 - Runtime transcriptions: `src/data/provisionalCards.json`.
 - Usable card images: `public/assets/Cards/<name_slug>.webp`.
 - Seven additional Treasure illustrations and The White Death trailer crop: `public/assets/CardPreviews/baldassares_travels/`.
-- Standalone gallery: `public/previews/baldassares-travels.html`.
+- Standalone gallery: `previews/baldassares-travels.html` is built by Vite at the same public URL.
 
 Each source patch is perspective corrected, bicubically resampled, gently sharpened, given rounded transparent corners and encoded as quality-96 WebP. Portraits are **744 × 1039**, sites **1039 × 744**.
 
@@ -52,6 +52,14 @@ All records are provisional, even when the text is legible. `uncertainFields` an
 | The White Death | Trailer appearance only; a printing in this set is not independently confirmed. |
 
 The gallery lists all cards, individual limitations and source timestamps. Unknown and tentative names need manual matching; no fuzzy identification or invented rules are used.
+
+## Reviewing card details
+
+The gallery supports editing names, ability text, costs, power and flavour. It reads the provisional transcriptions and uses the bundled official record for The White Death. All eight Treasure illustrations edit the same card. Power accepts a single value or a pair such as `3/2` for attack and defence.
+
+Edits are drafts saved in the browser. Reloading the gallery restores them. **Download edits** exports `baldassares-travels-edits.json` with only the changed fields, keyed by each card's original name. A blank field in the export means the reviewer cleared it. The gallery does not upload drafts to a server.
+
+When the reviewer says they are finished, compare that file to the images and apply the accepted fields to the catalogue. Review any title changes before renaming assets and add saved-deck aliases as needed. Preserve official rules for existing printings. Set `reviewOpen` to `false` in `src/previews/baldassaresReview.tsx` after applying the edits. A closed gallery displays catalogue values with static fields and ignores the earlier drafts. Build and deploy the gallery with the updated catalogue.
 
 ## Official release replacement
 
