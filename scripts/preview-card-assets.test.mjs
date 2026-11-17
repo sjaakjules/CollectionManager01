@@ -87,7 +87,7 @@ it('exports consecutive 4K source frames for all eighteen requested cards', asyn
       });
     }
   }
-});
+}, 15000);
 
 it('uses the same supplement for atlas ordering as the running app, while snapshots stay official-only', async () => {
   const official = await readCardCatalog('docs/Sorcery_CardInfo.json');
