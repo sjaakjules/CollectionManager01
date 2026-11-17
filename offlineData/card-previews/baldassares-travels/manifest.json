@@ -2246,31 +2246,31 @@
       "source": "sources/treasure_crown.png",
       "sourceSize": [
         335,
-        387
+        403
       ],
-      "sourceSha256": "1d77ea3b09017484465c40b0822ad0b3efc349c5f88dccf78a7200d808688c9a",
+      "sourceSha256": "eb4c05cafb31c2440f1e5d1ed3c52488f08e5035c52a413795a390d774cff367",
       "frameCrop": [
         2316,
-        790,
+        782,
         335,
-        387
+        403
       ],
       "corners": [
         [
-          22,
-          10
+          27.713,
+          7.632
         ],
         [
-          296,
-          18
+          300.362,
+          30.189
         ],
         [
-          324,
-          376
+          294.458,
+          394.426
         ],
         [
-          10,
-          372
+          11.362,
+          369.67
         ]
       ],
       "landscape": false,
@@ -2286,32 +2286,32 @@
       "timestampSeconds": 65.8,
       "source": "sources/treasure_sword.png",
       "sourceSize": [
-        301,
+        304,
         395
       ],
-      "sourceSha256": "4b3335772e3bc81fe779f3cdf63e48a7dfc8eeb97ec7d52ba34f3a2fe08d156c",
+      "sourceSha256": "701cf1edeed04b478e06f6b012b85570579646c013280574224e57a1eea58631",
       "frameCrop": [
-        1780,
+        1779,
         830,
-        301,
+        304,
         395
       ],
       "corners": [
         [
-          30,
-          12
+          3.123,
+          17.647
         ],
         [
-          282,
-          10
+          277.266,
+          9.442
         ],
         [
-          290,
-          374
+          296.573,
+          376.892
         ],
         [
-          10,
-          384
+          12.121,
+          386.029
         ]
       ],
       "landscape": false,
@@ -2328,31 +2328,31 @@
       "source": "sources/treasure_ring.png",
       "sourceSize": [
         299,
-        363
+        379
       ],
-      "sourceSha256": "80d015374e7c16a47540f01ccdc7639cef4869ae2bd02e3c9da4ee3b08eec9af",
+      "sourceSha256": "1ccffc10734a653ece5d459b5c8624e679ba1dcaffcd071f204fa1b5b8119784",
       "frameCrop": [
         3294,
-        372,
+        368,
         299,
-        363
+        379
       ],
       "corners": [
         [
-          30,
-          10
+          24.772,
+          7.199
         ],
         [
-          288,
-          50
+          285.321,
+          44.446
         ],
         [
-          286,
-          352
+          290.032,
+          370.45
         ],
         [
-          10,
-          310
+          20.415,
+          330.674
         ]
       ],
       "landscape": false,
@@ -2368,32 +2368,32 @@
       "timestampSeconds": 65.8,
       "source": "sources/treasure_cup.png",
       "sourceSize": [
-        341,
-        435
+        347,
+        444
       ],
-      "sourceSha256": "871cc0c9ff12b81ba0a99d003c781039eaa8524fa2f805efe1bdf316f5c97d06",
+      "sourceSha256": "edbd8f90d154b2751d42d8f501b44a52b2233c18e2931e2e2af85c8c8533edc6",
       "frameCrop": [
         2538,
         1334,
-        341,
-        435
+        347,
+        444
       ],
       "corners": [
         [
-          10,
-          10
+          34.851,
+          13.848
         ],
         [
-          330,
-          28
+          320.86,
+          28.618
         ],
         [
-          330,
-          424
+          339.321,
+          435.072
         ],
         [
-          28,
-          406
+          41.476,
+          418.78
         ]
       ],
       "landscape": false,
@@ -2406,43 +2406,45 @@
     {
       "name": "Treasure - cross",
       "cardName": "Treasure",
-      "timestampSeconds": 65.8,
-      "source": "sources/treasure_cross.png",
+      "timestampSeconds": 66.1,
+      "source": "sources/treasure_cross-later.png",
       "sourceSize": [
-        319,
-        355
+        365,
+        440
       ],
-      "sourceSha256": "79cba35b64f7bc77c763578be766b7cabf702c5de3f1268c77f878ec4455c327",
+      "sourceSha256": "6d7f264ba3da1a3b7c37413f96ccd11d7cbe96366ccaabe692c8558d48ba083a",
       "frameCrop": [
-        2196,
-        344,
-        319,
-        355
+        1220,
+        1195,
+        365,
+        440
       ],
       "corners": [
         [
-          10,
-          28
+          50.438,
+          14.704
         ],
         [
-          270,
-          10
+          338.464,
+          19.763
         ],
         [
-          308,
-          344
+          316.157,
+          422.746
         ],
         [
-          22,
-          332
+          16.606,
+          416.949
         ]
       ],
       "landscape": false,
       "partial": false,
       "output": "public/assets/CardPreviews/baldassares_travels/treasure_cross.webp",
       "notes": [
-        "Eight illustrations are visible; they are variants of this one token, not eight different cards."
-      ]
+        "Eight illustrations are visible; they are variants of this one token, not eight different cards.",
+        "A larger unobstructed copy at 01:06.1 shows the complete upper and lower print."
+      ],
+      "frameIndex": 1982
     },
     {
       "name": "Treasure - chest",
@@ -2450,32 +2452,32 @@
       "timestampSeconds": 65.8,
       "source": "sources/treasure_chest.png",
       "sourceSize": [
-        341,
-        351
+        343,
+        353
       ],
-      "sourceSha256": "989f1e12d9fe0924f09c6adc7351a20017406655a6c903a3b229abfd53ca9c42",
+      "sourceSha256": "8ee548befb3bf7a8d7aa7d60daa67bd9485e06c76b67cd8b32f2b4bf8dd602b1",
       "frameCrop": [
-        950,
-        308,
-        341,
-        351
+        948,
+        306,
+        343,
+        353
       ],
       "corners": [
         [
-          36,
-          10
+          54.524,
+          7.289
         ],
         [
-          300,
-          18
+          305.169,
+          16.051
         ],
         [
-          330,
-          340
+          268.303,
+          332.378
         ],
         [
-          10,
-          326
+          9.116,
+          322.952
         ]
       ],
       "landscape": false,
@@ -2491,32 +2493,32 @@
       "timestampSeconds": 65.8,
       "source": "sources/treasure_ruby.png",
       "sourceSize": [
-        329,
-        393
+        332,
+        424
       ],
-      "sourceSha256": "66a13bd7ad7124649fbc480ff0ee66ccfd5ac70cc9e3bf92307168f53a5f23e8",
+      "sourceSha256": "f511a88d5fca68b32528cc3e3f82e157162f1d81e1cd74088949dd816971b0bd",
       "frameCrop": [
         2848,
-        752,
-        329,
-        393
+        727,
+        332,
+        424
       ],
       "corners": [
         [
-          64,
-          10
+          53.414,
+          7.497
         ],
         [
-          318,
-          38
+          325.088,
+          60.864
         ],
         [
-          286,
-          382
+          293.387,
+          415.813
         ],
         [
-          10,
-          332
+          12.196,
+          358.594
         ]
       ],
       "landscape": false,
@@ -2532,32 +2534,32 @@
       "timestampSeconds": 66.1,
       "source": "sources/treasure_urn.png",
       "sourceSize": [
-        331,
-        415
+        344,
+        420
       ],
-      "sourceSha256": "36047e6a52f8f9d35ba8ebaa22b3e0942c075d7d2f72434f4343617cc7cbe7ff",
+      "sourceSha256": "240ad2f27899b59290852307502472761c07ceba0fef6b682dd1847e6b7d55b2",
       "frameCrop": [
-        1374,
-        748,
-        331,
-        415
+        1361,
+        743,
+        344,
+        420
       ],
       "corners": [
         [
-          10,
-          42
+          3.767,
+          43.988
         ],
         [
-          250,
-          10
+          274.918,
+          4.88
         ],
         [
-          320,
-          356
+          324.467,
+          360.911
         ],
         [
-          26,
-          404
+          43.922,
+          402.83
         ]
       ],
       "landscape": false,
