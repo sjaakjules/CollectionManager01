@@ -1,4 +1,4 @@
-/** Synthetic aggregates for offline tests; no downloaded data or credentials. */
+/** Synthetic aggregates for offline maintenance tests; no downloaded data or credentials. */
 export function analyticsResponseFixture() {
   const observed = { playerGames: 200, matches: 180, wins: 100, winRate: 0.5 };
   const suppressed = { playerGames: null, matches: null, wins: null, winRate: null };

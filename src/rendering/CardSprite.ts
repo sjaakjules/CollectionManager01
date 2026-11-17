@@ -28,6 +28,8 @@ import {
 } from "./LODManager";
 import { shouldRotateCardImage } from "./cardOrientation";
 import { drawMangaOutline, MANGA_PALETTE, type EffectBounds } from './mangaStyle';
+import type { CardStatisticsPresentation } from '@/data/cardStatisticHighlights';
+import { CardStatisticsOverlay } from './CardStatisticsOverlay';
 import { createPreviewWatermark } from './PreviewWatermark';
 
 // ============================================================================
@@ -73,6 +75,7 @@ export class CardSprite extends Container {
   private selectionBorder: Graphics;
   private newCardBorder: Graphics;
   private outlineZoom = 1;
+  private statisticsOverlay: CardStatisticsOverlay | null = null;
   private selectionEnvelope: EffectBounds | null | undefined;
   private isNewlyAdded = false;
   private metricOutline: Graphics;
@@ -331,6 +334,19 @@ export class CardSprite extends Container {
     this.scoreText.visible = showValue;
 
     this.alpha = 1;
+  }
+
+  setCardStatistics(presentation: CardStatisticsPresentation | null): void {
+    if (!presentation) {
+      this.statisticsOverlay?.destroy({ children: true });
+      this.statisticsOverlay = null;
+      return;
+    }
+    if (!this.statisticsOverlay) {
+      this.statisticsOverlay = new CardStatisticsOverlay(this.displayWidth, this.displayHeight);
+      this.addChildAt(this.statisticsOverlay, this.getChildIndex(this.metricOutline));
+    }
+    this.statisticsOverlay.setPresentation(presentation, this.outlineZoom);
   }
 
   updateLOD(zoom: number): void {

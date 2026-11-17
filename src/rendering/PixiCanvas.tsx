@@ -46,6 +46,9 @@ import type { CanvasArea } from "@/canvas/canvasAreas";
 import { buildQuickTransferDeckTargets } from "@/ui/deckTransferTargets";
 import { CardQuickAddControls, type CardQuickAddControlsHandle } from '@/ui/CardQuickAddControls';
 import type { CardQuickAddDeck } from './cardQuickAdd';
+import { createCardStatisticsPresentations } from '@/data/cardStatisticHighlights';
+import { useCardStatistics } from '@/ui/useCardStatistics';
+import { CardStatisticsHover } from '@/ui/CardStatisticsHover';
 import { hasPreviewArtwork } from '@/data/previewArtwork';
 import { PreviewCardText } from '@/ui/PreviewCardText';
 
@@ -104,6 +107,8 @@ export function PixiCanvas({
   const stageRef = useRef<PixiStage | null>(null);
   const quickAddRef = useRef<CardQuickAddControlsHandle>(null);
   const { state, dispatch } = useAppState();
+  const { asset: cardStatistics } = useCardStatistics();
+  const cardStatisticsPresentations = useMemo(() => createCardStatisticsPresentations(cardStatistics, state.ui.cardStatistics), [cardStatistics, state.ui.cardStatistics]);
   const userCategoryData = state.userData?.cardCategories ?? null;
   const cardFilters = useMemo(
     () => ensureCardFilterState(state.ui.cardFilters),
@@ -374,6 +379,11 @@ export function PixiCanvas({
     stageRef.current.setLabelPlacementMode(state.ui.labelPlacementMode);
   }, [state.ui.labelPlacementMode]);
 
+  // Prepared, memoized statistics are display inputs; Pixi owns their rendering.
+  useEffect(() => {
+    stageRef.current?.updateCardStatistics(cardStatisticsPresentations);
+  }, [cardStatisticsPresentations]);
+
   // Update card category highlighting.
   useEffect(() => {
     if (!stageRef.current) return;
@@ -487,6 +497,11 @@ export function PixiCanvas({
         >
           <div className="card-hover-details">
             <PreviewCardText card={hoveredCard} />
+            {cardStatistics && state.ui.cardStatistics.showOnHover && hoveredCardName && (
+              <CardStatisticsHover name={hoveredCardName} stats={cardStatistics.cards[hoveredCardName]}
+                releasedThrough={cardStatistics.releasedThrough} rules={state.ui.cardStatistics.highlightRules}
+                outlines={cardStatisticsPresentations.get(hoveredCardName)?.outlines} />
+            )}
           </div>
           {hoveredCard?.provisional && (
             <div className="card-preview-notice">

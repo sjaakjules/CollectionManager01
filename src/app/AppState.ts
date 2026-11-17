@@ -31,6 +31,11 @@ import {
   type CardFilterState,
 } from '@/data/cardFilters';
 import type { DeckStyleAssociationMode } from '@/data/deckStyleAssociations';
+import type { CardStatisticMetric } from '@/data/cardStatistics';
+import {
+  DEFAULT_CARD_STATISTICS_SETTINGS, getEnabledCardStatisticMetrics, normalizeCardStatisticsSettings,
+  type CardStatisticRule, type CardStatisticsSettings,
+} from '@/data/cardStatisticHighlights';
 import { filterBlockedTokenCardNames } from '@/data/tokenCards';
 import { detachLabelsFromAreas, normalizeDeckRemovals } from '@/data/deckRemovals';
 import { normalizeUserDataBoards } from '@/data/boardMigration';
@@ -84,6 +89,7 @@ export interface UIState {
   associationMode: DeckStyleAssociationMode;
   associationStyleId: string | null;
   associationSubStyleId: string | null;
+  cardStatistics: CardStatisticsSettings;
 }
 
 export interface Notification {
@@ -125,6 +131,7 @@ export const initialAppState: AppState = {
     associationMode: 'primary',
     associationStyleId: null,
     associationSubStyleId: null,
+    cardStatistics: DEFAULT_CARD_STATISTICS_SETTINGS,
   },
 };
 
@@ -157,6 +164,8 @@ export type AppAction =
   | { type: 'RUN_CANVAS_GESTURE'; command: CanvasGestureCommand }
   | { type: 'CLEAR_CARD_FILTERS' }
   | { type: 'SET_SELECTED_CARD_NAMES'; names: string[] }
+  | { type: 'SET_CARD_STATISTICS'; settings: Partial<CardStatisticsSettings> }
+  | { type: 'SET_CARD_STATISTIC_RULE'; metric: CardStatisticMetric; change: Partial<CardStatisticRule> }
   | { type: 'SET_ASSOCIATIONS_ENABLED'; enabled: boolean }
   | { type: 'SET_ASSOCIATION_MODE'; mode: DeckStyleAssociationMode }
   | { type: 'SET_ASSOCIATION_STYLE'; styleId: string | null }
@@ -193,6 +202,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           ui: {
             ...state.ui,
             selectedCardCategory: normalized.selectedCardCategory ?? null,
+            cardStatistics: normalized.selectedCardCategory ? { ...state.ui.cardStatistics, highlightEnabled: false } : state.ui.cardStatistics,
             catalogueLayout: ensureCatalogueLayout(normalized.catalogueLayout),
             interactionEffects: ensureInteractionEffects(normalized.interactionEffects),
           },
@@ -404,6 +414,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ui: {
           ...state.ui,
           selectedCardCategory: nextCategory,
+          cardStatistics: nextCategory ? { ...state.ui.cardStatistics, highlightEnabled: false } : state.ui.cardStatistics,
           associationsEnabled: nextCategory ? false : state.ui.associationsEnabled,
         },
         userData: state.userData
@@ -453,12 +464,39 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ui: { ...state.ui, selectedCardNames: action.names },
       };
 
+    case 'SET_CARD_STATISTIC_RULE': {
+      const rules = state.ui.cardStatistics.highlightRules;
+      const { metric, change } = action;
+      return appReducer(state, {
+        type: 'SET_CARD_STATISTICS',
+        settings: { highlightRules: { ...rules, [metric]: { ...rules[metric], ...change } } },
+      });
+    }
+
+    case 'SET_CARD_STATISTICS': {
+      const cardStatistics = normalizeCardStatisticsSettings({ ...state.ui.cardStatistics, ...action.settings });
+      const highlighting = getEnabledCardStatisticMetrics(cardStatistics).length > 0;
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          cardStatistics,
+          selectedCardCategory: highlighting ? null : state.ui.selectedCardCategory,
+          associationsEnabled: highlighting ? false : state.ui.associationsEnabled,
+        },
+        userData: highlighting && state.userData?.selectedCardCategory
+          ? { ...state.userData, selectedCardCategory: null }
+          : state.userData,
+      };
+    }
+
     case 'SET_ASSOCIATIONS_ENABLED':
       return {
         ...state,
         ui: {
           ...state.ui,
           associationsEnabled: action.enabled,
+          cardStatistics: action.enabled ? { ...state.ui.cardStatistics, highlightEnabled: false } : state.ui.cardStatistics,
           associationStyleId: action.enabled ? state.ui.associationStyleId : null,
           associationSubStyleId: action.enabled ? state.ui.associationSubStyleId : null,
           selectedCardCategory: action.enabled ? null : state.ui.selectedCardCategory,

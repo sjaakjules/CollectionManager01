@@ -33,7 +33,7 @@ These are the scripts currently exposed through `package.json`:
 | `pnpm sorcery:competitive-decks` | `scripts/search-sorcery-decks.mjs --preset competitive-2026` | Refresh competition decks and rebuild Deck Lookup. |
 | `pnpm sorcery:seed-decks` | `scripts/build-guest-seed-decks.mjs` | Build bundled guest seeds from the saved archive. |
 | `pnpm deck-styles:build` | `scripts/build-deck-style-associations.mjs` | Build the Deck Lookup and deck-style card score asset. |
-| `pnpm analytics:import <file>` | `scripts/import-play-sorcery-analytics.mjs` | Validate a saved Play Sorcery Online response offline and archive it locally. See [the analytics workflow](play-sorcery-analytics.md). |
+| `pnpm analytics:build [file]` | `scripts/build-card-statistics.mjs` | Prepare the published card-statistics JSON offline from a saved response. See [the analytics workflow](play-sorcery-analytics.md). |
 
 Helper scripts that are not package commands:
 

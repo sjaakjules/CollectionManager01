@@ -79,7 +79,7 @@ tmp/
 guest.json
 offlineData/card-previews/*/local-media/
 
-# Authenticated third-party analytics snapshots stay local; never deploy as assets.
+# Raw authenticated exports stay local. Only the offline-built aggregate asset is published.
 offlineData/playsorcery/
 
 # Editor directories

@@ -143,6 +143,7 @@ body {
   gap: 8px;
   width: 260px;
 }
+.card-hover-details > .card-hover-statistics { position: static; width: 100%; }
 .card-hover-transcription {
   box-sizing: border-box;
   padding: 14px;

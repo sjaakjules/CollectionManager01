@@ -45,6 +45,7 @@ import { getCardClickSelection } from "./cardSelection";
 import type { CardQuickAddDeck, CardQuickAddTarget, QuickAddBoard, QuickAddScope } from './cardQuickAdd';
 import { CardSprite, type CardSpriteConfig, type CardSpriteState } from "./CardSprite";
 import { hasPreviewArtwork } from '@/data/previewArtwork';
+import type { CardStatisticsPresentation } from '@/data/cardStatisticHighlights';
 import {
   calculateCardLayout,
   calculateDeckLayout,
@@ -674,6 +675,7 @@ export class PixiStage {
   private gridGraphics: Graphics | null = null;
   private quadrantGraphics: Graphics | null = null;
   private cardSprites: Map<string, CardSpriteData> = new Map();
+  private cardStatisticsByName: ReadonlyMap<string, CardStatisticsPresentation> | null = null;
   private zoneCardSprites: Map<string, ZoneCardSpriteData> = new Map();
   private zoneFrames: Map<
     string,
@@ -8661,9 +8663,24 @@ export class PixiStage {
   private applyActiveMetricHighlighting(): void {
     if (this.selectedCardCategoryId && this.cardCategoryData) {
       this.applyCardCategoryHighlighting();
-      return;
+    } else {
+      this.applyDeckStyleAssociationHighlighting();
     }
-    this.applyDeckStyleAssociationHighlighting();
+    this.applyCardStatistics();
+  }
+
+  updateCardStatistics(presentations: ReadonlyMap<string, CardStatisticsPresentation>): void {
+    this.cardStatisticsByName = presentations;
+    this.applyCardStatistics();
+  }
+
+  private applyCardStatistics(): void {
+    if (!this.cardStatisticsByName) return;
+    const apply = (sprite: CardSprite) => sprite.setCardStatistics(this.cardStatisticsByName?.get(sprite.cardName) ?? null);
+    for (const data of this.cardSprites.values()) apply(data.sprite);
+    for (const data of this.deckSprites.values()) apply(data.sprite);
+    for (const data of this.associationShelfSprites.values()) apply(data.sprite);
+    for (const sprite of this.getCanvasAreaCardSprites()) apply(sprite);
   }
 
   private applyDeckStyleAssociationHighlighting(): void {

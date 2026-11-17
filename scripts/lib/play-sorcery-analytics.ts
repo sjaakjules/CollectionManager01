@@ -1,4 +1,4 @@
-/** Offline aggregate statistics. Never contains authentication or card metadata. */
+/** Maintenance-only parser. Never imported by the website; no transport or credentials. */
 export const PLAY_SORCERY_CARDS_URL = 'https://playsorceryonline.com/api/game-analytics/cards?format=constructed';
 export const ANALYTICS_MAX_BYTES = 10 * 1024 * 1024;
 export const ANALYTICS_METRICS = ['inDeck', 'played', 'openingHand', 'inHand', 'notInHand', 'inDeckUnplayed'] as const;

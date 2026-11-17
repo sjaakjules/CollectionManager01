@@ -27,7 +27,7 @@
     "sorcery:search-decks": "node scripts/search-sorcery-decks.mjs",
     "sorcery:competitive-decks": "node scripts/search-sorcery-decks.mjs --preset competitive-2026 --output offlineData/deckArchive.json",
     "deck-styles:build": "node scripts/build-deck-style-associations.mjs",
-    "analytics:import": "node scripts/import-play-sorcery-analytics.mjs",
+    "analytics:build": "node scripts/build-card-statistics.mjs",
     "sorcery:seed-decks": "node scripts/build-guest-seed-decks.mjs"
   },
   "dependencies": {

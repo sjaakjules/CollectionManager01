@@ -10,6 +10,7 @@ A visual deck-building tool for the Sorcery TCG. Built with React and PixiJS for
 - **Multiple Boards**: Main (Spellbook and Atlas), Collection, Maybe, and avatar support
 - **Local-first**: Works fully offline with optional cloud sync
 - **SorceryTCG deck imports**: Load SorceryTCG deck links; import/export standard deck text
+- **Card statistics**: Hover details, optional card overlays and threshold highlights from an [offline-built analytics asset](docs/play-sorcery-analytics.md)
 
 ## Quick Start
 

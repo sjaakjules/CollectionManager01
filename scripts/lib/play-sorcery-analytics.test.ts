@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { analyticsResponseFixture } from './__fixtures__/playSorceryAnalytics';
-import { drawnDifference, matchAnalyticsCards, parseAnalyticsSnapshot, parseAnalyticsText } from './playSorceryAnalytics';
+import { analyticsResponseFixture } from './play-sorcery-analytics.fixture';
+import { drawnDifference, matchAnalyticsCards, parseAnalyticsSnapshot, parseAnalyticsText } from './play-sorcery-analytics';
 
 function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Error('Missing test fixture entry');
