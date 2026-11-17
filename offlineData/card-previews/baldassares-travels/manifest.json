@@ -92,7 +92,25 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/imaginary_friend.webp",
-      "notes": []
+      "notes": [],
+      "alignmentCorners": [
+        [
+          -2.766,
+          0.505
+        ],
+        [
+          743.213,
+          -0.5
+        ],
+        [
+          742.784,
+          1046.091
+        ],
+        [
+          2.72,
+          1029.942
+        ]
+      ]
     },
     {
       "name": "A Very Little House",
@@ -131,7 +149,25 @@
       "landscape": true,
       "partial": false,
       "output": "public/assets/Cards/a_very_little_house.webp",
-      "notes": []
+      "notes": [],
+      "alignmentCorners": [
+        [
+          0.0,
+          4.156
+        ],
+        [
+          1038.0,
+          -4.148
+        ],
+        [
+          1038.0,
+          738.852
+        ],
+        [
+          0.0,
+          747.156
+        ]
+      ]
     },
     {
       "name": "Boundless Thought",
@@ -170,7 +206,25 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/boundless_thought.webp",
-      "notes": []
+      "notes": [],
+      "alignmentCorners": [
+        [
+          -7.686,
+          -0.642
+        ],
+        [
+          740.227,
+          0.622
+        ],
+        [
+          745.734,
+          1031.052
+        ],
+        [
+          7.762,
+          1044.771
+        ]
+      ]
     },
     {
       "name": "Walk the Plank",
@@ -248,8 +302,33 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/spectral_sailors.webp",
-      "notes": [],
-      "frameIndex": 570
+      "notes": [
+        "Aligned several compatible trailer frames to clarify the printed details."
+      ],
+      "frameIndex": 570,
+      "restoredSource": {
+        "path": "restorations/spectral_sailors.png",
+        "sha256": "81c20d3586328cc1fb9705f415e3b34e7b17d25454d438148c397e73c80cf743",
+        "review": "geometry-restoration.json"
+      },
+      "alignmentCorners": [
+        [
+          11.127,
+          -8.02
+        ],
+        [
+          753.179,
+          8.472
+        ],
+        [
+          732.395,
+          1051.906
+        ],
+        [
+          -10.625,
+          1023.236
+        ]
+      ]
     },
     {
       "name": "King Croc",
@@ -288,7 +367,32 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/king_croc.webp",
-      "notes": []
+      "notes": [
+        "Aligned several compatible trailer frames to clarify the printed details."
+      ],
+      "restoredSource": {
+        "path": "restorations/king_croc.png",
+        "sha256": "620f2fda6053eb88eb184261ee979db48fdfb7e1ee526db70f5514f121c606f0",
+        "review": "geometry-restoration.json"
+      },
+      "alignmentCorners": [
+        [
+          9.198,
+          18.857
+        ],
+        [
+          738.647,
+          8.964
+        ],
+        [
+          731.88,
+          1007.408
+        ],
+        [
+          -1.222,
+          1041.079
+        ]
+      ]
     },
     {
       "name": "Tandoraz",
@@ -376,7 +480,25 @@
         "path": "restorations/orohi_sloth.png",
         "sha256": "89ddcc921a57d965b7047ccfde278861c060e23f0e60f3b81bda68ce10d4357b",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -4.387,
+          14.737
+        ],
+        [
+          735.921,
+          -14.249
+        ],
+        [
+          749.513,
+          1010.604
+        ],
+        [
+          4.738,
+          1064.652
+        ]
+      ]
     },
     {
       "name": "Powder Keg",
@@ -425,7 +547,25 @@
         "path": "restorations/powder_keg.png",
         "sha256": "73346b0aeb1fe0b8d775fa926f5971182ea29510a3555bffa0c2a57619dbb061",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -10.307,
+          0.889
+        ],
+        [
+          737.139,
+          -0.849
+        ],
+        [
+          748.592,
+          1015.938
+        ],
+        [
+          10.725,
+          1059.165
+        ]
+      ]
     },
     {
       "name": "Spawn of Zahhak",
@@ -473,7 +613,25 @@
         "path": "restorations/spawn_of_zahhak.png",
         "sha256": "529a84057db32dd4b827df3ea98cbe2f16d3e555c9be3b673b862867247bc4c8",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -33.259,
+          20.547
+        ],
+        [
+          720.126,
+          -13.716
+        ],
+        [
+          758.455,
+          1012.607
+        ],
+        [
+          48.361,
+          1055.799
+        ]
+      ]
     },
     {
       "name": "Captain's Macaw",
@@ -553,6 +711,24 @@
       "output": "public/assets/Cards/undari_guide.webp",
       "notes": [
         "The title appears to read Undari Guide; confirm spelling when official metadata arrives."
+      ],
+      "alignmentCorners": [
+        [
+          0.0,
+          0.502
+        ],
+        [
+          743.0,
+          -0.501
+        ],
+        [
+          743.0,
+          1032.161
+        ],
+        [
+          0.0,
+          1043.855
+        ]
       ]
     },
     {
@@ -592,7 +768,25 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/face_belly_blemmyes.webp",
-      "notes": []
+      "notes": [],
+      "alignmentCorners": [
+        [
+          -10.895,
+          4.72
+        ],
+        [
+          740.57,
+          -4.544
+        ],
+        [
+          745.366,
+          1029.693
+        ],
+        [
+          11.143,
+          1046.029
+        ]
+      ]
     },
     {
       "name": "Gashadokuro",
@@ -670,7 +864,32 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/poison_dart_frogs.webp",
-      "notes": []
+      "notes": [
+        "Aligned several compatible trailer frames to clarify the printed details."
+      ],
+      "restoredSource": {
+        "path": "restorations/poison_dart_frogs.png",
+        "sha256": "c5d853966179556f2d32d10ef4a1a52a6d185b833a7d65df50e97126542e72e0",
+        "review": "geometry-restoration.json"
+      },
+      "alignmentCorners": [
+        [
+          -5.509,
+          1.458
+        ],
+        [
+          723.621,
+          -1.358
+        ],
+        [
+          761.686,
+          1021.731
+        ],
+        [
+          5.676,
+          1053.293
+        ]
+      ]
     },
     {
       "name": "Last Bastion of Albespine",
@@ -718,7 +937,25 @@
         "path": "restorations/last_bastion_of_albespine.png",
         "sha256": "07b253471948a126abec9e15f14d567d43415d582fd308b8e533b7e288b43e0a",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -13.647,
+          11.729
+        ],
+        [
+          1030.785,
+          -11.248
+        ],
+        [
+          1044.767,
+          731.444
+        ],
+        [
+          14.474,
+          754.111
+        ]
+      ]
     },
     {
       "name": "Flying Machine",
@@ -768,7 +1005,25 @@
         "path": "restorations/flying_machine.png",
         "sha256": "5ff2cb42aedd7746502af2ab176d92190338d0fec0071782abf87d48a5e8483f",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -8.333,
+          1.725
+        ],
+        [
+          739.817,
+          -1.669
+        ],
+        [
+          746.125,
+          1031.239
+        ],
+        [
+          8.45,
+          1044.57
+        ]
+      ]
     },
     {
       "name": "Sindbad",
@@ -929,7 +1184,25 @@
       "notes": [
         "The sharper frame confirms the name Grand Heist, replacing the earlier transcription Guard Post."
       ],
-      "frameIndex": 1877
+      "frameIndex": 1877,
+      "alignmentCorners": [
+        [
+          -1.049,
+          0.929
+        ],
+        [
+          735.117,
+          -0.905
+        ],
+        [
+          750.757,
+          1031.618
+        ],
+        [
+          1.062,
+          1044.25
+        ]
+      ]
     },
     {
       "name": "Baldassare's Armada",
@@ -1095,6 +1368,24 @@
       "output": "public/assets/Cards/enbiggen.webp",
       "notes": [
         "The title appears to read Enbiggen; spelling needs official confirmation."
+      ],
+      "alignmentCorners": [
+        [
+          -7.729,
+          0.361
+        ],
+        [
+          749.769,
+          -0.359
+        ],
+        [
+          736.358,
+          1029.576
+        ],
+        [
+          7.845,
+          1046.419
+        ]
       ]
     },
     {
@@ -1173,8 +1464,33 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/krampus_crew.webp",
-      "notes": [],
-      "frameIndex": 1195
+      "notes": [
+        "Aligned several compatible trailer frames to clarify the printed details."
+      ],
+      "frameIndex": 1195,
+      "restoredSource": {
+        "path": "restorations/krampus_crew.png",
+        "sha256": "abd959c273c679bccb845d55a250b2db7d61898781a3b3dd46ff8ee8504509f4",
+        "review": "geometry-restoration.json"
+      },
+      "alignmentCorners": [
+        [
+          -6.668,
+          4.826
+        ],
+        [
+          723.375,
+          -4.478
+        ],
+        [
+          762.167,
+          1031.233
+        ],
+        [
+          6.799,
+          1044.334
+        ]
+      ]
     },
     {
       "name": "Whisperwhomp",
@@ -1213,7 +1529,32 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/whisperwhomp.webp",
-      "notes": []
+      "notes": [
+        "Aligned several compatible trailer frames to clarify the printed details."
+      ],
+      "restoredSource": {
+        "path": "restorations/whisperwhomp.png",
+        "sha256": "feadb7e28bbd3c9cec3dd0bed383f812f2b2171b91c54baa9b6b6e3ec486b10b",
+        "review": "geometry-restoration.json"
+      },
+      "alignmentCorners": [
+        [
+          5.531,
+          -9.488
+        ],
+        [
+          745.207,
+          9.663
+        ],
+        [
+          740.74,
+          1041.639
+        ],
+        [
+          -5.382,
+          1034.276
+        ]
+      ]
     },
     {
       "name": "The Jade Monkey",
@@ -1393,7 +1734,25 @@
         "path": "restorations/unidentified_site_bt_trailer.png",
         "sha256": "789b0afcc474a0b857b32a5e4185a228d2be5bb70a2fada55fee019051506e4f",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          0.09,
+          -5.243
+        ],
+        [
+          1032.093,
+          5.174
+        ],
+        [
+          1043.821,
+          733.424
+        ],
+        [
+          -0.09,
+          752.49
+        ]
+      ]
     },
     {
       "name": "Zig-Zag Dragonfly",
@@ -1443,7 +1802,25 @@
         "path": "restorations/zig_zag_dragonfly.png",
         "sha256": "5bf168822747848b65795efd0c01ca866d29fc746ed4bdb84eb6abc1046d53da",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -16.877,
+          3.4
+        ],
+        [
+          736.43,
+          -3.186
+        ],
+        [
+          749.327,
+          1022.852
+        ],
+        [
+          17.421,
+          1052.234
+        ]
+      ]
     },
     {
       "name": "Unidentified Avatar (BT trailer)",
@@ -1492,7 +1869,25 @@
         "path": "restorations/unidentified_avatar_bt_trailer.png",
         "sha256": "939548de4db07d70a78f6cca8d082640173f1cc2c07156de2aca2e47e96d90a1",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          9.436,
+          19.222
+        ],
+        [
+          686.985,
+          -9.639
+        ],
+        [
+          730.739,
+          1006.436
+        ],
+        [
+          15.377,
+          1063.054
+        ]
+      ]
     },
     {
       "name": "Set Sail",
@@ -1541,7 +1936,25 @@
         "path": "restorations/set_sail.png",
         "sha256": "ef74d05ff91df3dd7e64ea9d9cae5e87d85a86f2e21ad5a084c9636fe7312611",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -6.938,
+          5.584
+        ],
+        [
+          735.914,
+          -5.363
+        ],
+        [
+          749.732,
+          1018.151
+        ],
+        [
+          7.258,
+          1057.166
+        ]
+      ]
     },
     {
       "name": "Blunderbuss Buffoons",
@@ -1655,7 +2068,25 @@
         "path": "restorations/blunderbuss_buffoons.png",
         "sha256": "0b324cb35e9984b5414adabd1ae223e3f83c402c80a48823d9c74479d196fab0",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -12.275,
+          8.026
+        ],
+        [
+          730.352,
+          -7.484
+        ],
+        [
+          755.059,
+          1021.947
+        ],
+        [
+          12.805,
+          1053.053
+        ]
+      ]
     },
     {
       "name": "Broadside",
@@ -1703,7 +2134,25 @@
         "path": "restorations/broadside.png",
         "sha256": "a4694b200da0ddf00faa05e1cc2f5cc9733e8b7efed57528ab701953cb78d93a",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          0.0,
+          18.972
+        ],
+        [
+          743.0,
+          -18.921
+        ],
+        [
+          743.0,
+          1019.079
+        ],
+        [
+          0.0,
+          1056.972
+        ]
+      ]
     },
     {
       "name": "Sing-song Siren",
@@ -1751,7 +2200,25 @@
         "path": "restorations/sing_song_siren.png",
         "sha256": "f7e391b2e7ef0d026d7264246633beee0458b4813b15616d07d431225c340665",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          30.082,
+          -4.0
+        ],
+        [
+          743.819,
+          4.35
+        ],
+        [
+          742.197,
+          1024.356
+        ],
+        [
+          -30.648,
+          1052.84
+        ]
+      ]
     },
     {
       "name": "Realm in a Bottle",
@@ -1799,7 +2266,25 @@
         "path": "restorations/realm_in_a_bottle.png",
         "sha256": "c6894f3a94d3c131fe06180cd5163fd22aaa649559973498c16d87f160bd9f6f",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -9.071,
+          -1.804
+        ],
+        [
+          738.281,
+          1.734
+        ],
+        [
+          747.451,
+          1007.792
+        ],
+        [
+          89.483,
+          1060.731
+        ]
+      ]
     },
     {
       "name": "Man Mountain Mattis",
@@ -1839,7 +2324,31 @@
       "partial": false,
       "output": "public/assets/Cards/man_mountain_mattis.webp",
       "notes": [
-        "A small part of the right edge is covered by The White Death."
+        "A small part of the right edge is covered by The White Death.",
+        "Aligned several compatible trailer frames to clarify the printed details."
+      ],
+      "restoredSource": {
+        "path": "restorations/man_mountain_mattis.png",
+        "sha256": "54ee546a43fc8edbf8b459889ba8c5385ae1b553a888448df8bd25b3fa734472",
+        "review": "geometry-restoration.json"
+      },
+      "alignmentCorners": [
+        [
+          -7.769,
+          9.867
+        ],
+        [
+          741.173,
+          -9.592
+        ],
+        [
+          744.709,
+          1014.562
+        ],
+        [
+          8.253,
+          1060.875
+        ]
       ]
     },
     {
@@ -1888,7 +2397,25 @@
         "path": "restorations/nellie_bly.png",
         "sha256": "c5cfef6314c0324753f12a71be2b492132471d5f514076e6a34e2e92d2790df3",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -4.093,
+          7.898
+        ],
+        [
+          738.782,
+          -7.702
+        ],
+        [
+          747.085,
+          1030.123
+        ],
+        [
+          4.21,
+          1045.724
+        ]
+      ]
     },
     {
       "name": "Baron of Felbog",
@@ -2237,6 +2764,24 @@
             11.0
           ]
         }
+      ],
+      "alignmentCorners": [
+        [
+          3.386,
+          -6.02
+        ],
+        [
+          750.549,
+          6.183
+        ],
+        [
+          735.318,
+          1041.874
+        ],
+        [
+          -3.315,
+          1033.998
+        ]
       ]
     },
     {
@@ -2677,7 +3222,25 @@
         "path": "restorations/unidentified_fae_bt_trailer.png",
         "sha256": "b1e93e1e6ea356006a7d887c200dd2936d0cc3974e47929a81a9fa1a9c80a5b9",
         "review": "restoration-review.json"
-      }
+      },
+      "alignmentCorners": [
+        [
+          -30.569,
+          -14.754
+        ],
+        [
+          674.711,
+          14.526
+        ],
+        [
+          744.259,
+          998.247
+        ],
+        [
+          26.377,
+          980.493
+        ]
+      ]
     },
     {
       "name": "Giant Pelican",

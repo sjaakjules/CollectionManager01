@@ -56,6 +56,12 @@ Seventeen finished crops were replaced after visual comparison. The Jade Monkey 
 
 The [sequence manifest](../offlineData/card-previews/baldassares-travels/sequence-manifest.json) records every frame index, timestamp and perspective transform's corner coordinates, plus the local video's checksum. [Restoration review](../offlineData/card-previews/baldassares-travels/restoration-review.json) records the selected observations and registration for each region, settings and decisions. Reviewed PNG results in `restorations/` have checksums in the extraction manifest, allowing exact final WebP regeneration. `comparison-sequences.json` supplies the versioned gallery URLs.
 
+### Printed border alignment
+
+The follow-up checked all 54 finished crops at their standard dimensions and updated 37. Straight edges of the original title and rules panels supplied the horizontal and vertical guides. `alignmentCorners` in the extraction manifest records the additional perspective correction in pixels of the original rectified crop. The exporter composes it with the source transform for single-frame artwork. For restored images and layer blends, it uses the archived video patch at the boundary where the corrected crop extends past the composite. The previously exported sequences remain available for comparison.
+
+All eight Treasure illustrations use correspondences between their shared printed title and rules panels. Each illustration is sampled from its own frame. The cross uses a larger copy at 01:06.1. Six more cards have clearer print from registered and deblurred frames: Spectral Sailors, King Croc, Poison Dart Frogs, Krampus Crew, Whisperwhomp and Man Mountain Mattis. Their frame ranges and contributing frame numbers are recorded in [the restoration notes](../offlineData/card-previews/baldassares-travels/geometry-restoration.json). The trials did not resolve the soft left side of Baron of Felbog's rules.
+
 Around 01:25–01:26, the side of the box shows **Giant Pelican**, **Treasure Map** and a third card that reads **Zarith** tentatively. The three crops are straightened and their shadows lifted. Their card text remains provisional where the packaging print is soft or covered.
 
 The clearer footage confirms **Grand Heist** (previously transcribed as Guard Post) and **Flying Machine** (previously Flying Machines). Saved decks, collections, canvas cards and imports resolve the old spellings to the corrected names. The closer views also confirm the Sloth's two Earth symbols and 5 power and identify Spawn of Zahhak's subtype as Monster.

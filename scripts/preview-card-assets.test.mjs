@@ -10,11 +10,11 @@ const slug = name => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLow
 
 it('keeps trailer captures traceable and supplies preview cards at every image tier', async () => {
   const directory = 'offlineData/card-previews/baldassares-travels';
-  const [manifest, previews, thumb, medium, versions, comparison] = await Promise.all([
+  const [manifest, previews, thumb, medium, versions, comparison, galleryVersions] = await Promise.all([
     json(`${directory}/manifest.json`), json('src/data/provisionalCards.json'),
     json('public/assets/CardsThumbAtlas/manifest.json'),
     json('public/assets/CardsMediumAtlas/manifest.json'), json('src/data/cardImageVersions.json'),
-    json(`${directory}/comparison-frames.json`),
+    json(`${directory}/comparison-frames.json`), json(`${directory}/gallery-image-versions.json`),
   ]);
   expect(manifest.images).toHaveLength(54);
   expect(new Set(manifest.images.map(entry => entry.cardName)).size).toBe(47);
@@ -47,7 +47,12 @@ it('keeps trailer captures traceable and supplies preview cards at every image t
       expect(createHash('sha256').update(restored).digest('hex')).toBe(capture.restoredSource.sha256);
       expect(await sharp(restored).metadata()).toMatchObject({ width, height });
     }
-    expect(await sharp(capture.output).metadata()).toMatchObject({ format: 'webp', hasAlpha: true, width, height });
+    const finished = await readFile(capture.output);
+    expect(await sharp(finished).metadata()).toMatchObject({ format: 'webp', hasAlpha: true, width, height });
+    if (capture.output.startsWith('public/assets/CardPreviews/')) {
+      expect(galleryVersions[capture.output.slice('public'.length)])
+        .toBe(createHash('sha256').update(finished).digest('hex').slice(0, 16));
+    }
   }
   for (const { card } of previews.cards) {
     const name = slug(card.name);

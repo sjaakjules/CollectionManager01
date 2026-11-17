@@ -16,7 +16,23 @@ import cv2
 import numpy as np
 
 
-def rectify(source_root, capture, name, width, height):
+def card_rectangle(width, height):
+    return np.float32([[0, 0], [width-1, 0], [width-1, height-1], [0, height-1]])
+
+
+def perspective_transform(corners, width, height, name):
+    corners = np.asarray(corners, dtype=np.float32)
+    if corners.shape != (4, 2) or not np.isfinite(corners).all() or not cv2.isContourConvex(corners):
+        raise ValueError(f"Invalid quadrilateral: {name}")
+    return cv2.getPerspectiveTransform(corners, card_rectangle(width, height))
+
+
+def warp_card(image, transform, width, height):
+    return cv2.warpPerspective(image, transform, (width, height),
+                               flags=cv2.INTER_CUBIC, borderValue=(30, 30, 30))
+
+
+def rectify(source_root, capture, name, width, height, alignment=None):
     source_path = source_root / capture['source']
     if hashlib.sha256(source_path.read_bytes()).hexdigest() != capture['sourceSha256']:
         raise ValueError(f"Source checksum changed: {source_path}")
@@ -24,21 +40,30 @@ def rectify(source_root, capture, name, width, height):
     if source is None or list(source.shape[1::-1]) != capture['sourceSize']:
         raise ValueError(f"Missing or changed frame patch: {source_path}")
     corners = np.asarray(capture['corners'], dtype=np.float32)
-    if corners.shape != (4, 2) or not cv2.isContourConvex(corners):
-        raise ValueError(f"Invalid quadrilateral: {name}")
+    transform = perspective_transform(corners, width, height, name)
     outside = (np.any(corners < 0) or np.any(corners[:, 0] >= source.shape[1])
                or np.any(corners[:, 1] >= source.shape[0]))
     if outside and not capture['partial']:
         raise ValueError(f"Unacknowledged missing pixels: {name}")
-    target = np.float32([[0, 0], [width-1, 0], [width-1, height-1], [0, height-1]])
-    transform = cv2.getPerspectiveTransform(corners, target)
-    pixels = cv2.warpPerspective(source, transform, (width, height),
-                                 flags=cv2.INTER_CUBIC, borderValue=(30, 30, 30))
+    if alignment is not None:
+        transform = alignment @ transform
+    pixels = warp_card(source, transform, width, height)
     # Leave a two-pixel source margin for the cubic interpolation footprint.
     available = np.zeros(source.shape[:2], dtype=np.uint8)
     available[2:-2, 2:-2] = 255
     available = cv2.warpPerspective(available, transform, (width, height), flags=cv2.INTER_NEAREST)
     return pixels, available
+
+
+def align_composite(source_root, card, image, alignment, width, height):
+    """Use the archived video patch for pixels beyond the restored crop."""
+    result = warp_card(image, alignment, width, height)
+    source_mask = np.zeros((height, width), dtype=np.float32)
+    source_mask[9:-9, 9:-9] = 1
+    soft_edge = cv2.GaussianBlur(source_mask, (0, 0), 3)
+    alpha = cv2.warpPerspective(soft_edge, alignment, (width, height))[:, :, None]
+    edge, _ = rectify(source_root, card, card['name'], width, height, alignment)
+    return (result * alpha + edge * (1-alpha)).round().astype(np.uint8)
 
 
 def blend_layer(base, detail, available, layer):
@@ -109,37 +134,54 @@ def export_source_frames(manifest_path, output_root, cards):
     print(f'Exported {len(urls)} unsharpened source frames for the gallery.')
 
 
+def render_final(source_root, card):
+    width, height = (1039, 744) if card['landscape'] else (744, 1039)
+    name = card['name']
+    corners = card.get('alignmentCorners')
+    alignment = perspective_transform(corners, width, height, name) if corners is not None else None
+    if 'restoredSource' in card:
+        restored = card['restoredSource']
+        path = source_root / restored['path']
+        if hashlib.sha256(path.read_bytes()).hexdigest() != restored['sha256']:
+            raise ValueError(f'Restored image checksum changed: {path}')
+        pixels = cv2.imread(str(path))
+        if pixels is None or pixels.shape[:2] != (height, width):
+            raise ValueError(f'Invalid restored image: {path}')
+        if alignment is not None:
+            pixels = align_composite(source_root, card, pixels, alignment, width, height)
+        return pixels
+
+    layers = card.get('layers', [])
+    pixels, _ = rectify(source_root, card, name, width, height, alignment if not layers else None)
+    for layer in layers:
+        detail, available = rectify(source_root, layer, name, width, height)
+        pixels = blend_layer(pixels, detail, available, layer)
+    if layers and alignment is not None:
+        pixels = align_composite(source_root, card, pixels, alignment, width, height)
+    if 'luminanceGamma' in card:
+        pixels = adjust_luminance(pixels, card['luminanceGamma'])
+    if 'luminanceSharpen' in card:
+        return sharpen_luminance(pixels, card['luminanceSharpen'])
+    blurred = cv2.GaussianBlur(pixels, (0, 0), 0.7)
+    return cv2.addWeighted(pixels, 1.18, blurred, -0.18, 0)
+
+
 def extract(manifest_path, output_root, source_frames_only=False):
     manifest = json.loads(manifest_path.read_text())
     output_root = output_root.resolve()
     if source_frames_only:
         export_source_frames(manifest_path, output_root, manifest['images'])
         return
+    versions = {}
     for card in manifest['images']:
-        width, height = (1039, 744) if card['landscape'] else (744, 1039)
-        if 'restoredSource' in card:
-            restored = card['restoredSource']
-            path = manifest_path.parent / restored['path']
-            if hashlib.sha256(path.read_bytes()).hexdigest() != restored['sha256']:
-                raise ValueError(f'Restored image checksum changed: {path}')
-            pixels = cv2.imread(str(path))
-            if pixels is None or pixels.shape[:2] != (height, width):
-                raise ValueError(f'Invalid restored image: {path}')
-            write_webp(output_root, card['output'], pixels, 96)
-            continue
-        rectified, _ = rectify(manifest_path.parent, card, card['name'], width, height)
-        for layer in card.get('layers', []):
-            detail, available = rectify(manifest_path.parent, layer, card['name'], width, height)
-            rectified = blend_layer(rectified, detail, available, layer)
-        # Conventional local contrast only. No synthesis, inpainting or OCR redraw.
-        if 'luminanceGamma' in card:
-            rectified = adjust_luminance(rectified, card['luminanceGamma'])
-        if 'luminanceSharpen' in card:
-            rectified = sharpen_luminance(rectified, card['luminanceSharpen'])
-        else:
-            blurred = cv2.GaussianBlur(rectified, (0, 0), 0.7)
-            rectified = cv2.addWeighted(rectified, 1.18, blurred, -0.18, 0)
-        write_webp(output_root, card['output'], rectified, 96)
+        pixels = render_final(manifest_path.parent, card)
+        path = write_webp(output_root, card['output'], pixels, 96)
+        if card['output'].startswith('public/assets/CardPreviews/'):
+            url = '/' + card['output'].removeprefix('public/')
+            versions[url] = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+    index = output_root / 'offlineData/card-previews' / manifest_path.parent.name / 'gallery-image-versions.json'
+    index.parent.mkdir(parents=True, exist_ok=True)
+    index.write_text(json.dumps(versions, indent=2, sort_keys=True) + '\n')
     print(f"Rectified {len(manifest['images'])} trailer images; missing detail was not invented.")
 
 
