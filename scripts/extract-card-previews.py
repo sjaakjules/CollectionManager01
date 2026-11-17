@@ -117,6 +117,16 @@ def extract(manifest_path, output_root, source_frames_only=False):
         return
     for card in manifest['images']:
         width, height = (1039, 744) if card['landscape'] else (744, 1039)
+        if 'restoredSource' in card:
+            restored = card['restoredSource']
+            path = manifest_path.parent / restored['path']
+            if hashlib.sha256(path.read_bytes()).hexdigest() != restored['sha256']:
+                raise ValueError(f'Restored image checksum changed: {path}')
+            pixels = cv2.imread(str(path))
+            if pixels is None or pixels.shape[:2] != (height, width):
+                raise ValueError(f'Invalid restored image: {path}')
+            write_webp(output_root, card['output'], pixels, 96)
+            continue
         rectified, _ = rectify(manifest_path.parent, card, card['name'], width, height)
         for layer in card.get('layers', []):
             detail, available = rectify(manifest_path.parent, layer, card['name'], width, height)

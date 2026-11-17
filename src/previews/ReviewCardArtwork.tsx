@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { reviewImageUrl, reviewSourceFrames, type GalleryFrame, type PreviewCapture } from './previewReviewData';
 import { fittedImageRectangle, hoveredFrameIndex } from './reviewImageGeometry';
 
@@ -19,15 +19,24 @@ export function ReviewCardArtwork({ capture, title, illustration, onZoom }: Revi
   const [index, setIndex] = useState<number | null>(null);
   const [ready, setReady] = useState<ReadonlySet<string>>(() => new Set());
   const [keyboardFrame, setKeyboardFrame] = useState('');
+  const [previousFrame, setPreviousFrame] = useState<GalleryFrame>();
   const frames = useMemo(() => reviewSourceFrames(capture), [capture]);
   const quality = reviewImageUrl(capture);
   const width = capture.landscape ? 1039 : 744;
   const height = capture.landscape ? 744 : 1039;
   const alt = illustration ? `${title} · ${illustration}` : title;
   const selected = index === null ? undefined : frames[index];
-  const shown = selected && ready.has(selected.url) ? selected : undefined;
-  const labelFor = (frame: number) => `Frame ${frame + 1} of ${frames.length} · ${frames[frame]?.timestampSeconds}s`;
-  const frameLabel = selected && index !== null ? labelFor(index) : undefined;
+  const loaded = selected && ready.has(selected.url) ? selected : undefined;
+  const shown = index === null ? undefined : loaded ?? previousFrame;
+  const labelFor = (frame: number) => `Frame ${frame + 1} of ${frames.length} · ${frames[frame]?.timestampSeconds.toFixed(3)}s`;
+  const frameLabel = selected && index !== null
+    ? `${labelFor(index)}${loaded ? '' : ' · Loading…'}` : undefined;
+  const nearby = index === null ? [] : frames.slice(Math.max(0, index - 1), index + 2);
+  const visibleFrames = new Map([...nearby, ...(shown ? [shown] : [])].map((frame) => [frame.url, frame]));
+
+  useEffect(() => {
+    if (loaded) setPreviousFrame(loaded);
+  }, [loaded]);
 
   const reset = () => {
     setIndex(null);
@@ -83,7 +92,7 @@ export function ReviewCardArtwork({ capture, title, illustration, onZoom }: Revi
           width={width}
           height={height}
         />
-        {index !== null && frames.map(({ url }, frameIndex) => Math.abs(frameIndex - index) <= 1 && (
+        {[...visibleFrames.values()].map(({ url }) => (
           <img
             key={url}
             className={shown?.url === url ? 'review-art-source is-shown' : 'review-art-source'}

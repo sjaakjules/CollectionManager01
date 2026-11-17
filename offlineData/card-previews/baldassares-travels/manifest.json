@@ -367,9 +367,16 @@
       "partial": false,
       "output": "public/assets/Cards/orohi_sloth.webp",
       "notes": [
-        "A sharper frame confirms two Earth threshold symbols and 5 power. Confirm the title spelling on release."
+        "The image confirms two Earth threshold symbols and 5 power. The restored title appears to read Oroki Sloth; review before migrating the catalogue name.",
+        "Reviewed 119 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
       ],
-      "frameIndex": 1095
+      "frameIndex": 1095,
+      "restoredSource": {
+        "path": "restorations/orohi_sloth.png",
+        "sha256": "89ddcc921a57d965b7047ccfde278861c060e23f0e60f3b81bda68ce10d4357b",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Powder Keg",
@@ -409,9 +416,16 @@
       "partial": false,
       "output": "public/assets/Cards/powder_keg.webp",
       "notes": [
-        "The printed 3×3 damage grid is transcribed as three text rows."
+        "The printed 3×3 damage grid is transcribed as three text rows.",
+        "Reviewed 157 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
       ],
-      "frameIndex": 1138
+      "frameIndex": 1138,
+      "restoredSource": {
+        "path": "restorations/powder_keg.png",
+        "sha256": "73346b0aeb1fe0b8d775fa926f5971182ea29510a3555bffa0c2a57619dbb061",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Spawn of Zahhak",
@@ -450,8 +464,16 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/spawn_of_zahhak.webp",
-      "notes": [],
-      "frameIndex": 1157
+      "notes": [
+        "Reviewed 190 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
+      ],
+      "frameIndex": 1157,
+      "restoredSource": {
+        "path": "restorations/spawn_of_zahhak.png",
+        "sha256": "529a84057db32dd4b827df3ea98cbe2f16d3e555c9be3b673b862867247bc4c8",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Captain's Macaw",
@@ -688,8 +710,15 @@
       "partial": false,
       "output": "public/assets/Cards/last_bastion_of_albespine.webp",
       "notes": [
-        "(E)(E)(E) represents the three printed Earth symbols in the ability."
-      ]
+        "(E)(E)(E) represents the three printed Earth symbols in the ability.",
+        "Reviewed 95 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
+      ],
+      "restoredSource": {
+        "path": "restorations/last_bastion_of_albespine.png",
+        "sha256": "07b253471948a126abec9e15f14d567d43415d582fd308b8e533b7e288b43e0a",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Flying Machine",
@@ -729,10 +758,17 @@
       "partial": false,
       "output": "public/assets/Cards/flying_machine.webp",
       "notes": [
-        "The sharper frame confirms the singular title Flying Machine."
+        "The sharper frame confirms the singular title Flying Machine.",
+        "Reviewed 107 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
       ],
       "frameIndex": 1578,
-      "luminanceSharpen": 0.75
+      "luminanceSharpen": 0.75,
+      "restoredSource": {
+        "path": "restorations/flying_machine.png",
+        "sha256": "5ff2cb42aedd7746502af2ab176d92190338d0fec0071782abf87d48a5e8483f",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Sindbad",
@@ -971,7 +1007,15 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/ogre_chef.webp",
-      "notes": []
+      "notes": [
+        "Reviewed 30 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
+      ],
+      "restoredSource": {
+        "path": "restorations/ogre_chef.png",
+        "sha256": "3e191ad33d3c9c4fb23846e58c64e2bea6c8042227704c5a1e8c43eac32ca994",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Don Quixote",
@@ -1209,7 +1253,9 @@
       "partial": false,
       "output": "public/assets/Cards/the_jade_monkey.webp",
       "notes": [
-        "Uses two aligned frames to recover the clear artwork and most of the text. The right end of the rules line is still blurred."
+        "Two aligned frames supply the clear artwork and most of the text. The latest restoration improves the blurred right end of the rules line.",
+        "Reviewed 232 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "The blurred end of the type and ability text is restored separately. Confirm the lettering against the original frames."
       ],
       "frameIndex": 930,
       "layers": [
@@ -1292,7 +1338,12 @@
             25
           ]
         }
-      ]
+      ],
+      "restoredSource": {
+        "path": "restorations/the_jade_monkey.png",
+        "sha256": "fdecd07fb1863e9c9e2f20eceede622b3a92037614321245cc42efd27a29204f",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Unidentified Site (BT trailer)",
@@ -1332,10 +1383,17 @@
       "partial": false,
       "output": "public/assets/Cards/unidentified_site_bt_trailer.webp",
       "notes": [
-        "The new frame improves the stonework, but the title and rules remain unreadable. This is the dark site with a red doorway at 00:29.9."
+        "Dark site with a red doorway at 00:29.9. The restored Ward ability is clearer, while the title still needs confirmation.",
+        "Reviewed 39 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Motion deconvolution makes the Ward ability substantially clearer. The title still needs confirmation."
       ],
       "frameIndex": 895,
-      "luminanceSharpen": 0.55
+      "luminanceSharpen": 0.55,
+      "restoredSource": {
+        "path": "restorations/unidentified_site_bt_trailer.png",
+        "sha256": "789b0afcc474a0b857b32a5e4185a228d2be5bb70a2fada55fee019051506e4f",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Zig-Zag Dragonfly",
@@ -1375,10 +1433,17 @@
       "partial": false,
       "output": "public/assets/Cards/zig_zag_dragonfly.webp",
       "notes": [
-        "A sharper frame improves the lettering and artwork. The title and power remain tentative because of motion blur."
+        "A sharper frame improves the lettering and artwork. The title and power remain tentative because of motion blur.",
+        "Reviewed 96 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
       ],
       "frameIndex": 926,
-      "luminanceSharpen": 0.6
+      "luminanceSharpen": 0.6,
+      "restoredSource": {
+        "path": "restorations/zig_zag_dragonfly.png",
+        "sha256": "5bf168822747848b65795efd0c01ca866d29fc746ed4bdb84eb6abc1046d53da",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Unidentified Avatar (BT trailer)",
@@ -1418,9 +1483,16 @@
       "partial": false,
       "output": "public/assets/Cards/unidentified_avatar_bt_trailer.webp",
       "notes": [
-        "Placeholder title: the robed avatar with sun, moon and planets at 00:30. The name, power and abilities are unreadable. Manual identification will be needed.",
-        "Matching 4K VP9 and AV1 encodes show the same directional blur. Using the tracked movement and accumulating 41 aligned title crops or eight rules crops did not recover readable text."
-      ]
+        "Placeholder title for the robed avatar with sun, moon and planets at 00:30. The restored name and power appear to read Seeker and 1; review before updating the catalogue identity.",
+        "Matching 4K VP9 and AV1 encodes show the same directional blur. Earlier averaging trials did not recover the text; the latest region-specific motion inverse reveals much of it.",
+        "Reviewed 60 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "The restored title appears to read Seeker. Portions of its Treasure Map ability are readable. Residual duplicate edges need careful review against the source frames."
+      ],
+      "restoredSource": {
+        "path": "restorations/unidentified_avatar_bt_trailer.png",
+        "sha256": "939548de4db07d70a78f6cca8d082640173f1cc2c07156de2aca2e47e96d90a1",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Set Sail",
@@ -1459,9 +1531,17 @@
       "landscape": false,
       "partial": false,
       "output": "public/assets/Cards/set_sail.webp",
-      "notes": [],
+      "notes": [
+        "Reviewed 220 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
+      ],
       "frameIndex": 975,
-      "luminanceSharpen": 0.6
+      "luminanceSharpen": 0.6,
+      "restoredSource": {
+        "path": "restorations/set_sail.png",
+        "sha256": "ef74d05ff91df3dd7e64ea9d9cae5e87d85a86f2e21ad5a084c9636fe7312611",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Blunderbuss Buffoons",
@@ -1501,7 +1581,9 @@
       "partial": true,
       "output": "public/assets/Cards/blunderbuss_buffoons.webp",
       "notes": [
-        "The title and art use a sharper frame; the earlier view supplies more of the lower edge. A small corner stays outside the shot."
+        "The title and art use a sharper frame; the earlier view supplies more of the lower edge. A small corner stays outside the shot.",
+        "Reviewed 152 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Restoration uses only measured video pixels and motion. Mild ringing can remain around high-contrast edges."
       ],
       "frameIndex": 492,
       "layers": [
@@ -1568,7 +1650,12 @@
             -3.5
           ]
         }
-      ]
+      ],
+      "restoredSource": {
+        "path": "restorations/blunderbuss_buffoons.png",
+        "sha256": "0b324cb35e9984b5414adabd1ae223e3f83c402c80a48823d9c74479d196fab0",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Broadside",
@@ -1608,8 +1695,15 @@
       "partial": true,
       "output": "public/assets/Cards/broadside.webp",
       "notes": [
-        "Only the upper part of the card is shown. Missing pixels remain blank; no rules were invented."
-      ]
+        "Only the upper part of the card is shown. Missing pixels remain blank; no rules were invented.",
+        "Reviewed 90 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Visible details are refined. Parts covered by other cards or outside the video frame are still unavailable."
+      ],
+      "restoredSource": {
+        "path": "restorations/broadside.png",
+        "sha256": "a4694b200da0ddf00faa05e1cc2f5cc9733e8b7efed57528ab701953cb78d93a",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Sing-song Siren",
@@ -1649,8 +1743,15 @@
       "partial": true,
       "output": "public/assets/Cards/sing_song_siren.webp",
       "notes": [
-        "Submerge is readable; the remaining ability and bottom edge are cut off."
-      ]
+        "Submerge is readable; the remaining ability and bottom edge are cut off.",
+        "Reviewed 91 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Visible details are refined. Parts covered by other cards or outside the video frame are still unavailable."
+      ],
+      "restoredSource": {
+        "path": "restorations/sing_song_siren.png",
+        "sha256": "f7e391b2e7ef0d026d7264246633beee0458b4813b15616d07d431225c340665",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Realm in a Bottle",
@@ -1690,8 +1791,15 @@
       "partial": true,
       "output": "public/assets/Cards/realm_in_a_bottle.webp",
       "notes": [
-        "The ability is cut off and partly covered by cloud; no complete transcription is possible."
-      ]
+        "The ability is cut off and partly covered by cloud; no complete transcription is possible.",
+        "Reviewed 76 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Visible details are refined. Parts covered by other cards or outside the video frame are still unavailable."
+      ],
+      "restoredSource": {
+        "path": "restorations/realm_in_a_bottle.png",
+        "sha256": "c6894f3a94d3c131fe06180cd5163fd22aaa649559973498c16d87f160bd9f6f",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Man Mountain Mattis",
@@ -1772,8 +1880,15 @@
       "partial": false,
       "output": "public/assets/Cards/nellie_bly.webp",
       "notes": [
-        "Title and power are visible. The rest is mostly covered by Man Mountain Mattis and The White Death throughout the trailer."
-      ]
+        "Title and power are visible. The rest is mostly covered by Man Mountain Mattis and The White Death throughout the trailer.",
+        "Reviewed 91 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Visible details are refined. Parts covered by other cards or outside the video frame are still unavailable."
+      ],
+      "restoredSource": {
+        "path": "restorations/nellie_bly.png",
+        "sha256": "c5cfef6314c0324753f12a71be2b492132471d5f514076e6a34e2e92d2790df3",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Baron of Felbog",
@@ -2490,7 +2605,9 @@
       "partial": true,
       "output": "public/assets/Cards/unidentified_fae_bt_trailer.webp",
       "notes": [
-        "The rules and artist are clearer in a second frame. Treasure overlaps the title and power in the useful frames."
+        "The rules and artist are clearer in a second frame. Treasure overlaps the title and power in the useful frames.",
+        "Reviewed 105 consecutive 4K frames. Local reconstruction combines up to 20 compatible frames per region.",
+        "Visible details are refined. Parts covered by other cards or outside the video frame are still unavailable."
       ],
       "frameIndex": 1945,
       "layers": [
@@ -2553,7 +2670,12 @@
             0.5
           ]
         }
-      ]
+      ],
+      "restoredSource": {
+        "path": "restorations/unidentified_fae_bt_trailer.png",
+        "sha256": "b1e93e1e6ea356006a7d887c200dd2936d0cc3974e47929a81a9fa1a9c80a5b9",
+        "review": "restoration-review.json"
+      }
     },
     {
       "name": "Giant Pelican",
@@ -2687,7 +2809,9 @@
       "luminanceSharpen": 0.95,
       "notes": [
         "Printed on the side of the booster box near the end of the trailer. Perspective and shadow were corrected.",
-        "Zarith is a tentative reading of the printed title. The cost and first rules line are legible. The smaller text underneath and the remaining print details need a clearer source."
+        "Zarith is a tentative reading of the printed title. The cost and first rules line are legible. The smaller text underneath and the remaining print details need a clearer source.",
+        "Reviewed 195 consecutive 4K frames and trialled reconstruction using up to 20 compatible frames per region. The original finished crop remains the clearest.",
+        "The small packaging print limits recovery. The aligned and deblurred trials did not improve on the existing finished crop."
       ]
     }
   ]

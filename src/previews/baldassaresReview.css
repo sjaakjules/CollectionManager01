@@ -254,7 +254,7 @@ html:has(.review-dialog[open]) { overflow: hidden; }
 
 .review-dialog-art {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   gap: 10px;
   min-height: 0;
   padding: 14px;
@@ -285,6 +285,32 @@ html:has(.review-dialog[open]) { overflow: hidden; }
   color: inherit;
   font: inherit;
 }
+
+.review-frame-timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-frame-timeline input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--review-accent);
+}
+
+.review-frame-timeline button {
+  width: 36px;
+  height: 32px;
+  border: 1px solid var(--review-border);
+  border-radius: 5px;
+  background: var(--review-tile);
+  color: var(--review-accent);
+  font: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.review-frame-timeline button:disabled { opacity: 0.4; cursor: default; }
 
 .review-title {
   margin: 8px 0 4px;

@@ -42,6 +42,11 @@ it('keeps trailer captures traceable and supplies preview cards at every image t
       expect(layer.region.length).toBeGreaterThanOrEqual(3);
       expect(layer.region.every(([x, y]) => x >= 0 && x < width && y >= 0 && y < height)).toBe(true);
     }
+    if (capture.restoredSource) {
+      const restored = await readFile(`${directory}/${capture.restoredSource.path}`);
+      expect(createHash('sha256').update(restored).digest('hex')).toBe(capture.restoredSource.sha256);
+      expect(await sharp(restored).metadata()).toMatchObject({ width, height });
+    }
     expect(await sharp(capture.output).metadata()).toMatchObject({ format: 'webp', hasAlpha: true, width, height });
   }
   for (const { card } of previews.cards) {
@@ -55,6 +60,33 @@ it('keeps trailer captures traceable and supplies preview cards at every image t
   // The old official artwork must not be replaced by the trailer's smaller crop.
   expect(manifest.images.find(entry => entry.cardName === 'The White Death').output)
     .toBe('public/assets/CardPreviews/baldassares_travels/the_white_death.webp');
+});
+
+it('exports consecutive 4K source frames for all eighteen requested cards', async () => {
+  const directory = 'offlineData/card-previews/baldassares-travels';
+  const [archive, gallery] = await Promise.all([
+    json(`${directory}/sequence-manifest.json`), json(`${directory}/comparison-sequences.json`),
+  ]);
+  expect(archive.video).toMatchObject({ width: 3840, height: 2160 });
+  expect(archive.cards).toHaveLength(18);
+  for (const card of archive.cards) {
+    const exported = gallery[card.name];
+    expect(exported.length).toBe(card.frames.length);
+    expect(exported.length).toBeGreaterThanOrEqual(20);
+    for (const [index, frame] of card.frames.entries()) {
+      if (index > 0) expect(frame.frameIndex).toBe(card.frames[index - 1].frameIndex + 1);
+      expect(frame.timestampSeconds).toBeCloseTo(frame.frameIndex / archive.video.framesPerSecond, 5);
+      expect(exported[index].timestampSeconds).toBe(frame.timestampSeconds);
+      const url = new URL(exported[index].url, 'https://example.test');
+      expect(url.pathname).toBe(`/assets/CardPreviewFrames/baldassares-travels/${card.slug}/${frame.frameIndex}.webp`);
+      const bytes = await readFile(`public${url.pathname}`);
+      expect(url.searchParams.get('v')).toBe(createHash('sha256').update(bytes).digest('hex').slice(0, 16));
+      expect(await sharp(bytes).metadata()).toMatchObject({
+        format: 'webp', hasAlpha: true,
+        width: card.landscape ? 1039 : 744, height: card.landscape ? 744 : 1039,
+      });
+    }
+  }
 });
 
 it('uses the same supplement for atlas ordering as the running app, while snapshots stay official-only', async () => {

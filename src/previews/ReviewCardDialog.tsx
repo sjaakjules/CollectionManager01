@@ -72,6 +72,8 @@ export function ReviewCardDialog({
   const illustration = illustrationFor(capture);
   const image = reviewImageUrl(capture);
   const frames = reviewSourceFrames(capture);
+  const framePosition = frames.findIndex((frame) => frame.url === frameUrl) + 1;
+  const selectPosition = (position: number) => setFrameUrl(frames[position - 1]?.url ?? '');
   const uncertainty = card?.provisional?.uncertainFields.map((field) => uncertaintyLabels[field] ?? field) ?? [];
 
   useLayoutEffect(() => {
@@ -131,6 +133,17 @@ export function ReviewCardDialog({
                 ))}
               </select>
             </label>
+            {frames.length > 1 && (
+              <div className="review-frame-timeline">
+                <button type="button" aria-label="Previous frame" disabled={framePosition === 0}
+                  onClick={() => selectPosition(framePosition - 1)}>‹</button>
+                <input type="range" aria-label="Source frame" min={0} max={frames.length} step={1}
+                  value={framePosition} aria-valuetext={framePosition === 0 ? 'Finished image' : `Frame ${framePosition} of ${frames.length}`}
+                  onChange={(event) => selectPosition(Number(event.currentTarget.value))} />
+                <button type="button" aria-label="Next frame" disabled={framePosition === frames.length}
+                  onClick={() => selectPosition(framePosition + 1)}>›</button>
+              </div>
+            )}
           </div>
           <div className="review-fields" onBlur={onFlush}>
             {field('name', 'Name')}

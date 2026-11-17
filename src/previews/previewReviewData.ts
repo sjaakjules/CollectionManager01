@@ -3,6 +3,7 @@ import imageVersions from '@/data/cardImageVersions.json';
 import type { Card } from '@/data/dataModels';
 import { provisionalCards } from '@/data/provisionalCards';
 import comparisonFrames from '../../offlineData/card-previews/baldassares-travels/comparison-frames.json';
+import comparisonSequences from '../../offlineData/card-previews/baldassares-travels/comparison-sequences.json';
 import manifest from '../../offlineData/card-previews/baldassares-travels/manifest.json';
 
 interface Frame {
@@ -85,12 +86,17 @@ export function reviewImageUrl(capture: PreviewCapture): string {
 
 export function reviewSourceFrames(capture: PreviewCapture): GalleryFrame[] {
   const urls: Readonly<Record<string, string>> = comparisonFrames;
-  return [capture, ...(capture.layers ?? [])]
-    .sort((first, second) => first.timestampSeconds - second.timestampSeconds)
+  const sequences: Readonly<Record<string, GalleryFrame[]>> = comparisonSequences;
+  const originals = [capture, ...(capture.layers ?? [])]
     .flatMap(({ source, timestampSeconds }) => {
       const url = urls[source];
       return url ? [{ url, timestampSeconds }] : [];
     });
+  const frames = new Map(
+    [...originals, ...(sequences[capture.cardName] ?? [])].map((frame) =>
+      [Math.round(frame.timestampSeconds * manifest.video.framesPerSecond), frame]),
+  );
+  return [...frames.values()].sort((first, second) => first.timestampSeconds - second.timestampSeconds);
 }
 
 /** Fill existing-card appearances from the bundled snapshot, without an upstream request. */

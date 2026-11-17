@@ -57,6 +57,25 @@ afterEach(async () => {
 });
 
 describe('preview gallery review', () => {
+  it('steps through consecutive source frames in the enlarged editor', async () => {
+    await act(async () => root.render(<PreviewReview editable />));
+    await open('Unidentified Avatar (BT trailer)');
+    const slider = element.querySelector<HTMLInputElement>('dialog input[type="range"]');
+    expect(Number(slider?.max)).toBeGreaterThanOrEqual(60);
+    expect(element.querySelector<HTMLImageElement>('dialog img')?.src).toContain('/Cards/unidentified_avatar_bt_trailer.webp');
+    await click('dialog [aria-label="Next frame"]');
+    expect(slider?.value).toBe('1');
+    expect(element.querySelector<HTMLImageElement>('dialog img')?.src).toContain('/unidentified_avatar_bt_trailer/891.webp');
+    await click('dialog [aria-label="Next frame"]');
+    expect(slider?.value).toBe('2');
+    expect(element.querySelector<HTMLImageElement>('dialog img')?.src).toContain('/unidentified_avatar_bt_trailer/892.webp');
+    await click('dialog [aria-label="Previous frame"]');
+    await click('dialog [aria-label="Previous frame"]');
+    expect(slider?.value).toBe('0');
+    expect(element.querySelector<HTMLImageElement>('dialog img')?.src).toContain('/Cards/unidentified_avatar_bt_trailer.webp');
+    expect(getInput('name').value).toBe('Unidentified Avatar (BT trailer)');
+  });
+
   it('groups the read-only gallery and opens the full printed details', async () => {
     await act(async () => root.render(<PreviewReview editable />));
     expect(element.querySelectorAll('figure')).toHaveLength(54);
