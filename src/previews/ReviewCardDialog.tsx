@@ -1,5 +1,6 @@
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Card } from '@/data/dataModels';
+import { hasPreviewArtwork } from '@/data/previewArtwork';
 import type { ZoomImage } from './ReviewCardArtwork';
 import {
   fieldsForCard, illustrationFor, reviewImageUrl, reviewSourceFrames, thresholdFields, trailerUrl,
@@ -29,26 +30,30 @@ interface ReviewFieldProps {
 }
 
 function ReviewField({ field, label, value, update, numeric, rows, hint }: ReviewFieldProps) {
+  if (!update) return (
+    <div className="review-field">
+      <span>{label}</span>
+      <span className={field === 'rulesText' ? 'review-value review-readable-rules' : 'review-value'}>{value || '—'}</span>
+    </div>
+  );
   return (
     <label className="review-field">
       <span>{label}</span>
-      {update ? (
-        rows ? (
-          <textarea name={field} rows={rows} value={value} placeholder="—"
-            onChange={(event) => update(field, event.currentTarget.value)} />
-        ) : (
-          <input name={field} value={value} inputMode={numeric ? 'numeric' : undefined}
-            autoComplete="off" placeholder="—" title={hint}
-            onChange={(event) => update(field, event.currentTarget.value)} />
-        )
-      ) : <span className="review-value">{value || '—'}</span>}
+      {rows ? (
+        <textarea name={field} rows={rows} value={value} placeholder="—"
+          onChange={(event) => update(field, event.currentTarget.value)} />
+      ) : (
+        <input name={field} value={value} inputMode={numeric ? 'numeric' : undefined}
+          autoComplete="off" placeholder="—" title={hint}
+          onChange={(event) => update(field, event.currentTarget.value)} />
+      )}
     </label>
   );
 }
 
 const uncertaintyLabels: Readonly<Record<string, string>> = {
   name: 'title', rulesText: 'ability text', attack: 'power', typeText: 'printed type line',
-  subTypes: 'subtypes', image: 'image', set: 'set appearance',
+  subTypes: 'subtypes', flavorText: 'flavour', image: 'image', set: 'set appearance',
 };
 const elementLabels = { air: 'Air', earth: 'Earth', fire: 'Fire', water: 'Water' };
 
@@ -66,15 +71,20 @@ export function ReviewCardDialog({
   const closeButton = useRef<HTMLButtonElement>(null);
   const headingId = useId();
   const [frameUrl, setFrameUrl] = useState(initialFrameUrl ?? '');
+  const [showText, setShowText] = useState(false);
   const original = fieldsForCard(capture.cardName, card);
   const fields = { ...original, ...changes };
   const title = fields.name.trim() || original.name;
   const illustration = illustrationFor(capture);
   const image = reviewImageUrl(capture);
-  const frames = reviewSourceFrames(capture);
+  const frames = useMemo(() => reviewSourceFrames(capture), [capture]);
   const framePosition = frames.findIndex((frame) => frame.url === frameUrl) + 1;
   const selectPosition = (position: number) => setFrameUrl(frames[position - 1]?.url ?? '');
   const uncertainty = card?.provisional?.uncertainFields.map((field) => uncertaintyLabels[field] ?? field) ?? [];
+  const reading = showText || !editable;
+  const isPreview = hasPreviewArtwork(card);
+  const transcription = changes ? 'Draft transcription'
+    : isPreview ? 'Trailer transcription' : 'Official catalogue text';
 
   useLayoutEffect(() => {
     const modal = dialog.current;
@@ -91,11 +101,13 @@ export function ReviewCardDialog({
     onFlush();
     onDismiss();
   };
-  const update = editable && card
+  const update = !reading && card
     ? (field: FieldKey, value: string) => onEdit(capture.cardName, field, value, original[field])
     : undefined;
   const field = (key: FieldKey, label: string, options?: Pick<ReviewFieldProps, 'numeric' | 'rows' | 'hint'>) =>
-    <ReviewField key={key} field={key} label={label} value={fields[key]} update={update} {...options} />;
+    <ReviewField key={key} field={key} label={label}
+      value={reading && key === 'rulesText' && !fields.rulesText.trim() && card
+        ? 'Ability text is unavailable.' : fields[key]} update={update} {...options} />;
 
   return (
     <dialog
@@ -122,8 +134,11 @@ export function ReviewCardDialog({
         </header>
         <div className="review-dialog-body">
           <div className="review-dialog-art">
-            <img src={frameUrl || image} alt={illustration ? `${title} · ${illustration}` : title}
-              width={capture.landscape ? 1039 : 744} height={capture.landscape ? 744 : 1039} />
+            <div className="review-dialog-image">
+              <img src={frameUrl || image} alt={illustration ? `${title} · ${illustration}` : title}
+                width={capture.landscape ? 1039 : 744} height={capture.landscape ? 744 : 1039} />
+              {isPreview && <span className="review-preview-watermark">Preview</span>}
+            </div>
             <label className="review-frame-choice">
               <span>Image</span>
               <select value={frameUrl} onChange={(event) => setFrameUrl(event.currentTarget.value)}>
@@ -146,6 +161,18 @@ export function ReviewCardDialog({
             )}
           </div>
           <div className="review-fields" onBlur={onFlush}>
+            {editable && (
+              <div className="review-text-mode" role="group" aria-label="Card details view">
+                <button type="button" aria-pressed={reading} onClick={() => setShowText(true)}>Read text</button>
+                <button type="button" aria-pressed={!reading} onClick={() => setShowText(false)}>Edit details</button>
+              </div>
+            )}
+            {reading && card && (
+              <div className="review-text-source">
+                <strong>{transcription}</strong>
+                {uncertainty.length > 0 && <span>Needs confirmation · {uncertainty.join(', ')}</span>}
+              </div>
+            )}
             {field('name', 'Name')}
             {field('rulesText', 'Ability text', { rows: 4 })}
             <div className="review-stats">

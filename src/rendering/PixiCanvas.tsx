@@ -46,6 +46,8 @@ import type { CanvasArea } from "@/canvas/canvasAreas";
 import { buildQuickTransferDeckTargets } from "@/ui/deckTransferTargets";
 import { CardQuickAddControls, type CardQuickAddControlsHandle } from '@/ui/CardQuickAddControls';
 import type { CardQuickAddDeck } from './cardQuickAdd';
+import { hasPreviewArtwork } from '@/data/previewArtwork';
+import { PreviewCardText } from '@/ui/PreviewCardText';
 
 interface PixiCanvasProps {
   splashDone: boolean;
@@ -482,8 +484,10 @@ export function PixiCanvas({
       {hoveredCardPreviewSrc && !isPointerOverOverlayUi && (
         <div
           className={`card-hover-preview ${hoveredCardIsLandscape ? "landscape" : ""}`}
-          aria-hidden="true"
         >
+          <div className="card-hover-details">
+            <PreviewCardText card={hoveredCard} />
+          </div>
           {hoveredCard?.provisional && (
             <div className="card-preview-notice">
               {hoveredCard.provisional.uncertainFields.includes('set')
@@ -509,6 +513,7 @@ export function PixiCanvas({
               ));
             }}
           />
+          {hasPreviewArtwork(hoveredCard) && <span className="card-preview-watermark">Preview</span>}
         </div>
       )}
     </div>

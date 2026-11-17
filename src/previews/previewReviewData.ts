@@ -1,9 +1,10 @@
 import { normalizeCardCatalog } from '@/data/cardCatalog';
 import imageVersions from '@/data/cardImageVersions.json';
 import type { Card } from '@/data/dataModels';
-import { provisionalCards } from '@/data/provisionalCards';
+import { provisionalCards, withProvisionalCards } from '@/data/provisionalCards';
 import comparisonFrames from '../../offlineData/card-previews/baldassares-travels/comparison-frames.json';
 import comparisonSequences from '../../offlineData/card-previews/baldassares-travels/comparison-sequences.json';
+import galleryImageVersions from '../../offlineData/card-previews/baldassares-travels/gallery-image-versions.json';
 import manifest from '../../offlineData/card-previews/baldassares-travels/manifest.json';
 
 interface Frame {
@@ -81,7 +82,9 @@ export function reviewImageUrl(capture: PreviewCapture): string {
   const url = capture.output.replace(/^public\//u, '/');
   const slug = url.split('/').at(-1)?.replace(/\.webp$/u, '') ?? '';
   const versions: Readonly<Record<string, string>> = imageVersions;
-  return url.startsWith('/assets/Cards/') && versions[slug] ? `${url}?v=${versions[slug]}` : url;
+  const galleryVersions: Readonly<Record<string, string>> = galleryImageVersions;
+  const version = url.startsWith('/assets/Cards/') ? versions[slug] : galleryVersions[url];
+  return version ? `${url}?v=${version}` : url;
 }
 
 export function reviewSourceFrames(capture: PreviewCapture): GalleryFrame[] {
@@ -99,18 +102,22 @@ export function reviewSourceFrames(capture: PreviewCapture): GalleryFrame[] {
   return [...frames.values()].sort((first, second) => first.timestampSeconds - second.timestampSeconds);
 }
 
-/** Fill existing-card appearances from the bundled snapshot, without an upstream request. */
-export async function loadAppearanceCards(): Promise<Map<string, Card>> {
-  const missing = new Set(captureNames.filter((name) => !previewCards.has(name)));
-  if (missing.size === 0) return previewCards;
+/** Resolve official cards and previews using the same precedence as the catalogue. */
+export async function loadReviewCards(): Promise<Map<string, Card>> {
+  const nameKey = (name: string) => name.trim().normalize('NFC').toLowerCase();
+  const names = new Set(captureNames.map(nameKey));
   const response = await fetch('/assets/sorcery_cards.json');
   if (!response.ok) throw new Error('Could not load the bundled card catalogue');
   const payload: unknown = await response.json();
   if (!Array.isArray(payload)) throw new Error('The bundled card catalogue is not an array');
   const selected = payload.filter((entry: unknown) => {
     if (!entry || typeof entry !== 'object' || !('name' in entry)) return false;
-    return typeof entry.name === 'string' && missing.has(entry.name);
+    return typeof entry.name === 'string' && names.has(nameKey(entry.name));
   });
   const { cards } = normalizeCardCatalog(selected);
-  return new Map([...previewCards, ...cards.map((card): [string, Card] => [card.name, card])]);
+  const catalogue = new Map(withProvisionalCards(cards).map((card) => [nameKey(card.name), card]));
+  return new Map(captureNames.flatMap((name): [string, Card][] => {
+    const card = catalogue.get(nameKey(name));
+    return card ? [[name, card]] : [];
+  }));
 }

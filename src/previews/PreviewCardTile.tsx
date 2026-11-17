@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import type { Card } from '@/data/dataModels';
+import { hasPreviewArtwork } from '@/data/previewArtwork';
 import { ReviewCardArtwork, type ZoomImage } from './ReviewCardArtwork';
 import { illustrationFor, type PreviewCapture, type ReviewFields } from './previewReviewData';
 
@@ -17,7 +18,8 @@ export const PreviewCardTile = memo(function PreviewCardTile({ capture, card, ch
 
   return (
     <figure className="review-tile" data-card={capture.cardName}>
-      <ReviewCardArtwork capture={capture} title={title} illustration={illustration} onZoom={onZoom} />
+      <ReviewCardArtwork capture={capture} title={title} illustration={illustration}
+        isPreview={hasPreviewArtwork(card)} onZoom={onZoom} />
       <figcaption>
         <h3 className="review-title">
           <button

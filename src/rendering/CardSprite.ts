@@ -28,6 +28,7 @@ import {
 } from "./LODManager";
 import { shouldRotateCardImage } from "./cardOrientation";
 import { drawMangaOutline, MANGA_PALETTE, type EffectBounds } from './mangaStyle';
+import { createPreviewWatermark } from './PreviewWatermark';
 
 // ============================================================================
 // Types
@@ -39,6 +40,7 @@ export interface CardSpriteConfig {
   x: number;
   y: number;
   displaySize?: { width: number; height: number };
+  isPreview?: boolean;
 }
 
 export interface CardSpriteState {
@@ -77,6 +79,7 @@ export class CardSprite extends Container {
   private scoreText: Text;
   private missingArtworkLabel: Text | null = null;
   private arrivalVisual: Container | null = null;
+  private readonly isPreview: boolean;
   private displayWidth: number;
   private displayHeight: number;
   private currentLOD: LODLevel = lodManager.getStartupLOD();
@@ -94,6 +97,7 @@ export class CardSprite extends Container {
     this.cardName = config.name;
     this.imageSlug = cardNameToSlug(config.name);
     this.isLandscape = config.isLandscape;
+    this.isPreview = config.isPreview === true;
 
     // Create promise for texture loading
     this.textureReady = new Promise((resolve) => {
@@ -129,6 +133,7 @@ export class CardSprite extends Container {
     }
 
     this.addChild(this.sprite);
+    if (this.isPreview) this.addChild(createPreviewWatermark(width, height));
 
     // Metric score outline (drawn beneath selection border)
     this.metricOutline = new Graphics();
@@ -390,6 +395,32 @@ export class CardSprite extends Container {
       x: this.x + this.displayWidth / 2,
       y: this.y + this.displayHeight / 2,
     };
+  }
+
+  /** Share the displayed texture and provenance for a drag ghost; no image requests. */
+  createDragPreview(): Container {
+    const preview = new Container();
+    preview.eventMode = 'none';
+    const image = new Sprite(this.sprite.texture);
+    image.position.copyFrom(this.sprite.position);
+    image.scale.copyFrom(this.sprite.scale);
+    image.rotation = this.sprite.rotation;
+    image.tint = this.sprite.tint;
+    image.visible = true;
+    if (!this.sprite.visible) {
+      // A cold/offscreen card still needs a visible destination, without starting a download.
+      image.rotation = 0;
+      image.position.set(0, 0);
+      image.texture = Texture.WHITE;
+      image.width = this.displayWidth;
+      image.height = this.displayHeight;
+      image.tint = MANGA_PALETTE.raised;
+    }
+    preview.addChild(image);
+    if (this.isPreview) preview.addChild(createPreviewWatermark(this.displayWidth, this.displayHeight));
+    preview.position.set(this.x, this.y);
+    preview.alpha = 0.6;
+    return preview;
   }
 
   /**

@@ -41,7 +41,8 @@ beforeEach(() => {
   vi.useFakeTimers();
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([
-    { name: 'The White Death', guardian: { type: 'Minion', cost: 2, attack: 2, rulesText: 'Ranged 3, Stealth' }, sets: [] },
+    { name: 'The White Death', guardian: { type: 'Minion', cost: 2, attack: 2, rulesText: 'Ranged 3, Stealth' },
+      sets: [{ name: 'Frost Mage Vs. Lavamancer', variants: [] }] },
   ]))));
   localStorage.clear();
   element = document.createElement('div');
@@ -57,6 +58,30 @@ afterEach(async () => {
 });
 
 describe('preview gallery review', () => {
+  it('offers selectable transcriptions beside the footage and exempts official duel deck artwork', async () => {
+    await act(async () => root.render(<PreviewReview editable />));
+    expect(element.querySelector('[data-card="The White Death"] .review-preview-watermark')).toBeNull();
+    expect(element.querySelector('[data-card="Sing-song Siren"] .review-preview-watermark')?.textContent).toBe('Preview');
+
+    await open('Sing-song Siren');
+    await click('dialog [aria-label="Next frame"]');
+    const frame = element.querySelector<HTMLImageElement>('dialog img')?.src;
+    await click('dialog button[aria-pressed="false"]');
+    expect(element.querySelector('dialog .review-text-source')?.textContent).toMatch(/Trailer transcription.*Needs confirmation.*ability text/u);
+    expect(element.querySelector('dialog .review-readable-rules')?.textContent).toBe('Submerge');
+    expect(element.querySelector('dialog textarea')).toBeNull();
+    expect(element.querySelector<HTMLImageElement>('dialog img')?.src).toBe(frame);
+    await click('dialog button[aria-pressed="false"]');
+    expect(getInput('rulesText').value).toBe('Submerge');
+
+    await close();
+    await open('The White Death');
+    await click('dialog button[aria-pressed="false"]');
+    expect(element.querySelector('dialog .review-preview-watermark')).toBeNull();
+    expect(element.querySelector('dialog .review-text-source')?.textContent).toContain('Official catalogue text');
+    expect(element.querySelector('dialog .review-readable-rules')?.textContent).toBe('Ranged 3, Stealth');
+  });
+
   it('steps through consecutive source frames in the enlarged editor', async () => {
     await act(async () => root.render(<PreviewReview editable />));
     await open('Unidentified Avatar (BT trailer)');

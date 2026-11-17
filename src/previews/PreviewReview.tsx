@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isAvatarType, isSiteType } from '@/data/dataModels';
 import { PreviewCardTile } from './PreviewCardTile';
 import {
-  announcedRelease, captureNames, captures, loadAppearanceCards, previewCards, reviewSet, trailerUrl,
+  announcedRelease, captureNames, captures, loadReviewCards, previewCards, reviewSet, trailerUrl,
   type PreviewCapture,
 } from './previewReviewData';
 import type { ZoomImage } from './ReviewCardArtwork';
@@ -40,7 +40,7 @@ export function PreviewReview({ editable }: { editable: boolean }) {
 
   useEffect(() => {
     let active = true;
-    void loadAppearanceCards()
+    void loadReviewCards()
       .then((catalogue) => { if (active) setCards(catalogue); })
       .catch((error: unknown) => { if (active) console.warn('Preview card details unavailable', error); })
       .finally(() => { if (active) setLoading(false); });

@@ -117,6 +117,47 @@ body {
   aspect-ratio: 559 / 400;
 }
 
+.card-preview-watermark {
+  position: absolute;
+  z-index: 1;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.08em 0.65em;
+  border-radius: 4px;
+  background: rgba(20, 26, 34, 0.64);
+  color: #fff5dc;
+  font-family: Arial, sans-serif;
+  font-size: clamp(22px, 3.9vw, 52px);
+  font-weight: bold;
+  line-height: 1.3;
+  pointer-events: none;
+  user-select: none;
+}
+
+.card-hover-details {
+  position: absolute;
+  right: calc(100% + 8px);
+  bottom: 0;
+  display: grid;
+  gap: 8px;
+  width: 260px;
+}
+.card-hover-transcription {
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid #7b7054;
+  border-radius: 8px;
+  background: rgba(24, 26, 31, .97);
+  color: #fff5dc;
+  text-align: left;
+  box-shadow: 0 4px 20px #0008;
+}
+.card-transcription-heading { color: #d4bf86; font-size: 11px; }
+.card-hover-transcription h3 { font-size: 16px; margin: 6px 0 10px; }
+.card-transcription-rules { font-size: 14px; line-height: 1.5; white-space: pre-line; margin: 0; }
+.card-transcription-note { color: #c2bcaa; font-size: 11px; line-height: 1.4; margin: 10px 0 0; }
+
 .touch-action-sheet {
   position: fixed;
   z-index: 10002;

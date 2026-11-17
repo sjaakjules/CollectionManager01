@@ -68,6 +68,51 @@ function delayedCardTextures() {
 }
 
 describe("CardSprite LOD display", () => {
+  it.each([false, true])('keeps the Preview watermark inside card bounds through detail changes and dragging (landscape: %s)', isLandscape => {
+    stubLODManager();
+    const card = new CardSprite({ name: 'Video card', isLandscape, isPreview: true, x: 200, y: 300 });
+    const bounds = card.getWorldBounds();
+    const watermark = card.children.find(child => child.label === 'preview-watermark');
+    expect(watermark?.eventMode).toBe('none');
+    expect(watermark?.interactiveChildren).toBe(false);
+    expect(watermark?.children.find(child => child instanceof Text)?.text).toBe('Preview');
+    card.loadInitialTexture(); card.updateLOD(2); card.setSelected(true);
+    expect(card.children.filter(child => child.label === 'preview-watermark')).toHaveLength(1);
+    expect(card.getWorldBounds()).toEqual(bounds);
+    const ghost = card.createDragPreview();
+    expect(ghost.children.filter(child => child.label === 'preview-watermark')).toHaveLength(1);
+    expect(lodManager.getTexture).not.toHaveBeenCalled();
+    ghost.destroy({ children: true }); card.destroy({ children: true });
+  });
+  it.each([false, true])('shows a correctly oriented drag destination before artwork loads (landscape %s)', (isLandscape) => {
+    stubLODManager();
+    const card = new CardSprite({ name: 'Cold card', isLandscape, x: 200, y: 200 });
+    const ghost = card.createDragPreview();
+    const image = ghost.children[0] as Sprite;
+    expect(image.visible).toBe(true);
+    expect(ghost.width).toBe(isLandscape ? 140 : 100);
+    expect(ghost.height).toBe(isLandscape ? 100 : 140);
+    expect(lodManager.getTexture).not.toHaveBeenCalled();
+    ghost.destroy({ children: true });
+    expect(Texture.WHITE.destroyed).toBe(false);
+    card.destroy();
+  });
+
+  it('shares the visible artwork in a ghost without loading or destroying its texture', () => {
+    stubLODManager();
+    const card = new CardSprite({ name: 'Ready card', isLandscape: true, x: 200, y: 200 });
+    const original = card.children[0] as Sprite;
+    original.visible = true;
+    const ghost = card.createDragPreview();
+    const image = ghost.children[0] as Sprite;
+    expect(image.texture).toBe(original.texture);
+    expect(image.rotation).toBe(original.rotation);
+    expect(image.scale.x).toBe(original.scale.x);
+    expect(lodManager.getTexture).not.toHaveBeenCalled();
+    ghost.destroy({ children: true });
+    expect(original.texture.destroyed).toBe(false);
+    card.destroy();
+  });
   it('keeps full detail when earlier medium and thumbnail downloads finish later', async () => {
     const { sprite, pending } = delayedCardTextures();
     sprite.updateLOD(1);

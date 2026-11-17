@@ -12,10 +12,11 @@ interface ReviewCardArtworkProps {
   capture: PreviewCapture;
   title: string;
   illustration: string;
+  isPreview: boolean;
   onZoom: (image: ZoomImage) => void;
 }
 
-export function ReviewCardArtwork({ capture, title, illustration, onZoom }: ReviewCardArtworkProps) {
+export function ReviewCardArtwork({ capture, title, illustration, isPreview, onZoom }: ReviewCardArtworkProps) {
   const [index, setIndex] = useState<number | null>(null);
   const [ready, setReady] = useState<ReadonlySet<string>>(() => new Set());
   const [keyboardFrame, setKeyboardFrame] = useState('');
@@ -105,6 +106,7 @@ export function ReviewCardArtwork({ capture, title, illustration, onZoom }: Revi
             onLoad={() => setReady((previous) => previous.has(url) ? previous : new Set(previous).add(url))}
           />
         ))}
+        {isPreview && <span className="review-preview-watermark">Preview</span>}
         {frameLabel && <span className="review-frame-badge" aria-hidden="true">{frameLabel}</span>}
         <span className="review-visually-hidden" aria-live="polite">{keyboardFrame}</span>
       </button>

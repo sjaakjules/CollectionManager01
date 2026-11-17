@@ -43,7 +43,8 @@ import { createDefaultCatalogueLayout, type CatalogueLayoutConfig } from "@/data
 import { getLabelFamily, getLabelCards, getLabelRegionBounds, placeCardsBelowLabel, repositionLabelsAfterCardLayout, ShakeDetector } from "@/canvas/labelRegions";
 import { getCardClickSelection } from "./cardSelection";
 import type { CardQuickAddDeck, CardQuickAddTarget, QuickAddBoard, QuickAddScope } from './cardQuickAdd';
-import { CardSprite, type CardSpriteState } from "./CardSprite";
+import { CardSprite, type CardSpriteConfig, type CardSpriteState } from "./CardSprite";
+import { hasPreviewArtwork } from '@/data/previewArtwork';
 import {
   calculateCardLayout,
   calculateDeckLayout,
@@ -3082,6 +3083,12 @@ export class PixiStage {
   private getCardType(cardName: string): CardType | null {
     const card = this.cards.find((entry) => entry.name === cardName);
     return card?.guardian.type ?? null;
+  }
+
+  /** All card surfaces share the same provenance rule, including drag/peek views. */
+  private createCardSprite(config: CardSpriteConfig): CardSprite {
+    const card = this.cards?.find(entry => entry.name === config.name);
+    return new CardSprite({ ...config, isPreview: hasPreviewArtwork(card) });
   }
 
   private getCardCost(cardName: string): number {
@@ -7439,7 +7446,7 @@ export class PixiStage {
     additions.forEach((addition, index) => {
       const isLandscape = this.isLandscapeCard(addition.cardName);
       const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-      const sprite = new CardSprite({
+      const sprite = this.createCardSprite({
         name: addition.cardName,
         isLandscape,
         x: addition.x + size.width / 2,
@@ -8043,7 +8050,7 @@ export class PixiStage {
       const cardHeight = cardWidth / ratio;
       const x = width / 2 - shown.length * cellWidth / 2 + index * cellWidth + (cellWidth - cardWidth) / 2;
       const y = Math.max(130, (height - cardHeight) / 2);
-      const sprite = new CardSprite({ name, isLandscape: landscape, x: x + cardWidth / 2, y: y + cardHeight / 2, displaySize: { width: cardWidth, height: cardHeight } });
+      const sprite = this.createCardSprite({ name, isLandscape: landscape, x: x + cardWidth / 2, y: y + cardHeight / 2, displaySize: { width: cardWidth, height: cardHeight } });
       sprite.eventMode = 'none'; sprite.loadInitialTexture(); sprite.updateLOD(compare ? 4 : 0.8);
       root.addChild(sprite);
       const caption = new Text({ text: name, style: { fontFamily: 'Arial', fontSize: 13, fill: 0xc7cede, wordWrap: true, wordWrapWidth: cellWidth - 18 } });
@@ -8544,7 +8551,7 @@ export class PixiStage {
       const gridPos = pixelsToSnapGrid(centerX, centerY, shiftedLayout.isLandscape);
       const key = this.getAssociationShelfSpriteKey(entry.key);
 
-      const sprite = new CardSprite({
+      const sprite = this.createCardSprite({
         name: shiftedLayout.name,
         isLandscape: shiftedLayout.isLandscape,
         x: centerX,
@@ -9135,7 +9142,7 @@ export class PixiStage {
         zone.bounds.y + ZONE_DECK_AVATAR_CENTER_GRID_Y * DRAWN_GRID.height;
       const avatarLeft = avatarCenterX - avatarWidth / 2;
       const avatarTop = avatarCenterY - avatarHeight / 2;
-      avatarSprite = new CardSprite({
+      avatarSprite = this.createCardSprite({
         name: zone.avatarCardName,
         isLandscape: false,
         x: avatarCenterX,
@@ -9447,7 +9454,7 @@ export class PixiStage {
           const drawY = instance.y + yOffset;
           const centerX = drawX + cardSize.width / 2;
           const centerY = drawY + cardSize.height / 2;
-          const sprite = new CardSprite({
+          const sprite = this.createCardSprite({
             name: instance.cardName,
             isLandscape,
             x: centerX,
@@ -9639,7 +9646,7 @@ export class PixiStage {
       const centerX = cardLayout.position.x;
       const centerY = cardLayout.position.y;
 
-      const sprite = new CardSprite({
+      const sprite = this.createCardSprite({
         name: cardLayout.name,
         isLandscape: cardLayout.isLandscape,
         x: centerX,
@@ -9775,7 +9782,7 @@ export class PixiStage {
       const gridKey = `deck:${cardLayout.board}:${gridPos.x},${gridPos.y}`;
 
       for (let copy = 0; copy < cardLayout.quantity; copy++) {
-        const sprite = new CardSprite({
+        const sprite = this.createCardSprite({
           name: cardLayout.name,
           isLandscape: cardLayout.isLandscape,
           x: centerX,
