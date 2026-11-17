@@ -12,6 +12,7 @@ BUILD_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || printf 'unknown')"
 
 cd "$ROOT_DIR"
 
+node "$SCRIPT_DIR/lib/staging-source.mjs" check "$ROOT_DIR"
 pnpm build
 
 rm -rf "$DEPLOY_ROOT"
@@ -59,6 +60,7 @@ EOF
 
 copy_release "$STAGING_DIR" "$ROOT_DIR/hosting/sorcerystacks.staging.htaccess" "staging"
 copy_release "$PRODUCTION_DIR" "$ROOT_DIR/hosting/sorcerystacks.production.htaccess" "production"
+node "$SCRIPT_DIR/lib/staging-source.mjs" stamp "$ROOT_DIR" "$STAGING_DIR"
 
 find "$DEPLOY_ROOT" \( \
   -name '.DS_Store' -o \

@@ -589,6 +589,13 @@ pnpm deploy:staging
 Important: `deploy:staging` does not rebuild. It deploys the current
 `.deploy/sorcerystacks/staging` artifact.
 
+Staging uses the combined shared checkout, including uncommitted features.
+`scripts/lib/staging-source.mjs` fingerprints the release inputs at build time
+and checks them again before upload. It refuses stale artifacts and isolated
+worktrees that differ from the primary checkout. Do not bypass this check or
+deploy a committed-only copy that drops work already on staging. Changes to
+card images and the preview gallery must remain included in canvas releases.
+
 ### `pnpm promote:production`
 
 Uploads the existing production artifact to production.

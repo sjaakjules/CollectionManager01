@@ -192,6 +192,14 @@ future artwork downloads, including direct SorceryTCG links.
 - pnpm lint – Run linter
 - pnpm test – Run tests (if present)
 
+Verify site changes locally, then build and deploy the verified release to
+`https://staging.sorcerystacks.com` for the user's validation. Use the staging
+deployment commands documented in [the script guide](docs/scripts.md).
+Staging is a combined release of this shared checkout, including its uncommitted
+features. Never deploy an isolated committed worktree over it while omitting
+shared changes. The build/deploy source guard must pass; do not bypass it.
+Preserve newer card images and preview-gallery changes alongside canvas changes.
+
 ---
 
 ## Don’ts

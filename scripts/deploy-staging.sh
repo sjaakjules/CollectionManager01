@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/ventra-ftps.sh"
 
 artifact_dir="$(ventra_require_artifact staging)"
+node "$SCRIPT_DIR/lib/staging-source.mjs" verify "$VENTRA_ROOT_DIR" "$artifact_dir"
 domain="$(ventra_config_value staging domain)"
 
 printf 'Deploying staging artifact to %s\n' "$domain"
