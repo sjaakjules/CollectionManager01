@@ -77,14 +77,15 @@ export async function loginApi(
  */
 export async function signupApi(
   username: string,
-  password: string
+  password: string,
+  userData?: UserData,
 ): Promise<LoginResponse> {
   const response = await fetch(`${API_BASE_URL}/signup`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, userData }),
   });
 
   if (!response.ok) {

@@ -171,13 +171,14 @@ export function mergeUserData(local: UserData, server: UserData, metadata: reado
     }
   }
 
-  // Merge collections - sum quantities for same cards
+  // These are snapshots of the same collection, not new acquisitions. Merging
+  // after signup, on reload, or on repeated login must not multiply card counts.
   const collectionMap = new Map<string, number>();
   for (const item of server.collection) {
     collectionMap.set(item.name, item.quantity);
   }
   for (const item of local.collection) {
-    collectionMap.set(item.name, (collectionMap.get(item.name) ?? 0) + item.quantity);
+    collectionMap.set(item.name, Math.max(collectionMap.get(item.name) ?? 0, item.quantity));
   }
 
   const labelsById = new Map<string, CanvasLabel>();

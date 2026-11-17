@@ -49,7 +49,14 @@ function sorcery_save_user_data(PDO $pdo, string $userId, array $data): void
 function sorcery_handle_signup(PDO $pdo): void
 {
     sorcery_require_method(['POST']);
-    [$username, $normalized, $password] = sorcery_validate_credentials(sorcery_read_json_object());
+    $payload = sorcery_read_json_object();
+    [$username, $normalized, $password] = sorcery_validate_credentials($payload);
+    if (array_key_exists('userData', $payload) &&
+        (!is_array($payload['userData']) ||
+         !is_array($payload['userData']['decks'] ?? null) ||
+         !is_array($payload['userData']['collection'] ?? null))) {
+        sorcery_error('Guest workspace could not be read. Your guest data has not been changed.', 400);
+    }
 
     $existing = $pdo->prepare('SELECT id FROM users WHERE username_norm = ? LIMIT 1');
     $existing->execute([$normalized]);
@@ -66,7 +73,12 @@ function sorcery_handle_signup(PDO $pdo): void
             'INSERT INTO users (id, username, username_norm, password_hash) VALUES (?, ?, ?, ?)'
         );
         $stmt->execute([$userId, $username, $normalized, $passwordHash]);
-        sorcery_save_user_data($pdo, $userId, sorcery_empty_user_data($userId, $username));
+        // Keep signup and the guest transfer atomic: never return a session for
+        // an empty account if saving the workspace failed. Identity is server-owned.
+        $data = isset($payload['userData'])
+            ? sorcery_sanitize_user_data($payload['userData'], $userId, $username)
+            : sorcery_empty_user_data($userId, $username);
+        sorcery_save_user_data($pdo, $userId, $data);
         $token = sorcery_create_session($pdo, $userId, $username);
         $pdo->commit();
     } catch (Throwable $error) {
@@ -131,8 +143,10 @@ function sorcery_handle_user(PDO $pdo): void
         if (!$row) {
             sorcery_error('User data not found', 404);
         }
-        $decoded = json_decode((string)$row['data_json'], true);
-        sorcery_json(is_array($decoded) ? $decoded : sorcery_empty_user_data($userId, $session['username']));
+        // Keep JSON objects as objects: decoding into PHP arrays here would turn
+        // empty position/label maps back into [] on every account download.
+        $decoded = json_decode((string)$row['data_json']);
+        sorcery_json(is_object($decoded) ? $decoded : sorcery_empty_user_data($userId, $session['username']));
     }
 
     $payload = sorcery_read_json_object();

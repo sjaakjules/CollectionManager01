@@ -225,6 +225,13 @@ other device type creates its own layout. Saved layouts contain positions only;
 card contents, board membership and variants remain shared. Both layouts use the
 same guest/account JSON contract.
 
+Creating an account sends the complete guest workspace with signup. The server
+saves the account and its workspace in one transaction, including saved layout
+tabs, phone/desktop positions, variants, labels, collection, favourites and
+catalogue settings. The original guest copy stays in the browser. Signup errors
+leave it untouched; a successful signup can load the workspace immediately on
+another browser. Repeated account merges do not add collection quantities again.
+
 Catalogue double-click opens a destination menu. Stack lists all saved stacks,
 including hidden ones; + names a new stack inline. Deck offers Main, Collection,
 and Maybe for the active deck. Added deck cards glow until moved or acknowledged.

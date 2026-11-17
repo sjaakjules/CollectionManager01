@@ -2,6 +2,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { sanitizeDevUserData } from './lib/dev-user-data.ts';
+import { CANVAS_GRID_VERSION } from '../src/data/canvasGridVersion.ts';
+import { DRAWN_GRID } from '../src/rendering/Grid.ts';
+import { guestWorkspaceFixture } from '../src/data/__fixtures__/guestWorkspace.ts';
 
 const phpAvailable = spawnSync('php', ['--version']).status === 0;
 const source = fileURLToPath(new URL('../server/php/api/shared/user-data.php', import.meta.url));
@@ -15,6 +18,47 @@ function sanitize(payload) {
 }
 
 describe.skipIf(!phpAvailable)('account JSON contract', () => {
+  it('transfers a complete guest workspace through the same PHP and development account schema', () => {
+    const guest = guestWorkspaceFixture();
+    const expected = { ...guest, id: 'account-id', name: 'Account' };
+    expect(sanitize(guest)).toEqual(expected);
+    expect(sanitizeDevUserData(guest, 'account-id', 'Account')).toEqual(expected);
+    expect(sanitize(sanitize(guest))).toEqual(expected);
+    expect(guest.name).toBe('Guest');
+  });
+  const savedGrids = [[2, 75], [3, 65], [CANVAS_GRID_VERSION, DRAWN_GRID.width]];
+  it.each(savedGrids)('round-trips grid version %s and coordinates through both account stores', (gridVersion, cell) => {
+    const payload = { gridVersion,
+      canvasAreas: [{ id: 'deck', name: 'Deck', type: 'deck', bounds: { x: -2 * cell, y: 0, width: 10 * cell, height: 12 * cell },
+        cards: [{ id: 'site', cardName: 'Site', x: 3.5 * cell - 70, y: 3 * cell - 50, board: 'mainboard' }],
+      }],
+      canvasLabels: [{ id: 'label', text: 'Atlas', x: -cell, y: 2 * cell, areaId: 'deck', board: 'mainboard' }],
+    };
+    const php = sanitize(payload);
+    expect(php).toMatchObject(payload);
+    expect(sanitize(php)).toEqual(php);
+    expect(JSON.parse(JSON.stringify(sanitizeDevUserData(payload, 'account-id', 'Account')))).toEqual(php);
+  });
+  it.each([undefined, null, '2', 0, -2, 2.5])('leaves invalid or legacy grid markers absent (%s)', gridVersion => {
+    const payload = { gridVersion };
+    expect(sanitize(payload)).not.toHaveProperty('gridVersion');
+    expect(sanitizeDevUserData(payload, 'account-id', 'Account')).not.toHaveProperty('gridVersion');
+  });
+
+  it('preserves named section tabs and label ownership in both account stores', () => {
+    const site = { id: 'site', cardName: 'Site', x: 12.5, y: 220, board: 'mainboard', labelId: 'l' };
+    const layout = { id: 'openers', name: 'Openers', cardLabels: { site: 'l' },
+      positions: { source: 'desktop', desktop: { cards: { site: { x: 12.5, y: 220 } }, labels: { l: { x: 15, y: 180 } } } } };
+    const payload = {
+      canvasAreas: [{ id: 'd', name: 'Deck', type: 'deck', cards: [site],
+        sectionLayouts: { atlas: { activeId: 'openers', tabs: [layout] } } }],
+      canvasLabels: [{ id: 'l', text: 'Opening sites', x: 15, y: 180, areaId: 'd', board: 'mainboard',
+        deckSectionLayout: { section: 'atlas', id: 'openers' } }],
+    };
+    const php = sanitize(payload);
+    expect(php).toMatchObject(payload);
+    expect(JSON.parse(JSON.stringify(sanitizeDevUserData(payload, 'account-id', 'Account')))).toEqual(php);
+  });
   it('keeps shared and separate phone/desktop position layouts in the same PHP and dev contract', () => {
     const frame = {x: -400, y: -600, width: 800, height: 900};
     const layout = {bounds: frame, regions: {collection: frame}, cards: {a: {x: 10, y: 20}}, labels: {l: {x: 5, y: 6}}};

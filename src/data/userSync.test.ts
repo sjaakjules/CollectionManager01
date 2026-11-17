@@ -111,7 +111,7 @@ describe('mergeUserData', () => {
     expect(merged.decks.some((deck) => deck.id === 'deck-local')).toBe(true);
     expect(merged.collection).toEqual(
       expect.arrayContaining([
-        { name: 'Fireball', quantity: 5 },
+        { name: 'Fireball', quantity: 3 },
         { name: 'Local Only Card', quantity: 1 },
         { name: 'Server Only Card', quantity: 4 },
       ]),
@@ -131,5 +131,7 @@ describe('mergeUserData', () => {
     ]);
     expect(merged.selectedCardCategory).toBe('swarm-bodies');
     expect(merged.cardCategories?.scores.Fireball?.['swarm-bodies']).toBe(0.5);
+    expect(mergeUserData(local, merged)).toEqual(merged);
+    expect(mergeUserData(merged, merged)).toEqual(merged);
   });
 });

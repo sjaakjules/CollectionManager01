@@ -34,12 +34,13 @@ export function LoginModal() {
   const [loading, setLoading] = useState(false);
 
   const handleClose = useCallback(() => {
+    if (loading) return;
     dispatch({ type: 'TOGGLE_LOGIN_MODAL' });
     setUsername('');
     setPassword('');
     setMode('login');
     setError(null);
-  }, [dispatch]);
+  }, [dispatch, loading]);
 
   const validateForm = useCallback((): string | null => {
     if (!username.trim() || !password) {
@@ -60,7 +61,7 @@ export function LoginModal() {
   const buildAccountUserData = useCallback(
     (session: AuthSession, guestData: UserData | null, serverData: UserData | null) => {
       if (guestData && serverData) {
-        return mergeUserData(guestData, serverData);
+        return mergeUserData(guestData, serverData, state.cards);
       }
 
       if (serverData) {
@@ -86,10 +87,15 @@ export function LoginModal() {
         canvasAreas: [],
       };
     },
-    []
+    [state.cards]
   );
 
   const handleAuthenticate = useCallback(async () => {
+    if (loading) return;
+    if (mode === 'signup' && !state.userData) {
+      setError('Your guest workspace is still loading. Please try again once it is ready.');
+      return;
+    }
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
@@ -99,11 +105,16 @@ export function LoginModal() {
     setLoading(true);
     setError(null);
 
-    const authFn = mode === 'signup' ? signup : login;
+    const guestData = state.userData;
     let session: AuthSession;
 
     try {
-      session = await authFn(username.trim(), password);
+      // Retain a separate guest backup before changing identity. Signup sends the
+      // complete shared JSON schema; the server saves it with the new account.
+      if (mode === 'signup' && guestData) await saveUserData(guestData);
+      session = mode === 'signup'
+        ? await signup(username.trim(), password, guestData ?? undefined)
+        : await login(username.trim(), password);
     } catch (err) {
       const fallback = mode === 'signup' ? 'Sign up failed' : 'Login failed';
       setError(err instanceof Error ? err.message : fallback);
@@ -111,12 +122,15 @@ export function LoginModal() {
       return;
     }
 
-    const guestData = state.userData;
     let mergedUserData = buildAccountUserData(session, guestData, null);
 
     try {
-      const serverData = await pullUserData(session.userId, session.token);
-      mergedUserData = buildAccountUserData(session, guestData, serverData);
+      // A new account already contains this exact workspace. Do not merge its
+      // copy back into the guest snapshot (which used to double collection counts).
+      if (mode === 'login') {
+        const serverData = await pullUserData(session.userId, session.token);
+        mergedUserData = buildAccountUserData(session, guestData, serverData);
+      }
       await saveUserData(mergedUserData);
     } catch (error) {
       console.warn('Failed to merge account data during login:', error);
@@ -137,17 +151,23 @@ export function LoginModal() {
         token: session.token,
       },
     });
-    handleClose();
+    if (mode === 'signup') dispatch({ type: 'ADD_NOTIFICATION', notification: {
+      type: 'info', message: 'Account created. Your guest decks, layouts, labels, and collection are saved in your account.',
+    } });
+    dispatch({ type: 'TOGGLE_LOGIN_MODAL' });
+    setUsername('');
+    setPassword('');
     setLoading(false);
+    setMode('login');
   }, [
     mode,
+    loading,
     username,
     password,
     state.userData,
     dispatch,
     validateForm,
     buildAccountUserData,
-    handleClose,
   ]);
 
   const handleLogout = useCallback(() => {
@@ -211,7 +231,7 @@ export function LoginModal() {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Account</h2>
-          <button className="modal-close" onClick={handleClose}>
+          <button className="modal-close" onClick={handleClose} disabled={loading}>
             ×
           </button>
         </div>
@@ -220,7 +240,8 @@ export function LoginModal() {
           {state.session.isGuest ? (
             <>
               <p className="modal-info">
-                Create an account or log in to sync your decks, stacks, card categories, and canvas labels.
+                Creating an account transfers your guest decks, saved layouts, stacks, labels,
+                collection, and settings automatically. A guest copy stays in this browser.
               </p>
 
               <div className="auth-mode-row">

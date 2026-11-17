@@ -107,11 +107,12 @@ function authUserDevApi(): Plugin {
           return;
         }
 
-        let payload: { username?: string; password?: string };
+        let payload: { username?: string; password?: string; userData?: Record<string, unknown> };
         try {
           payload = JSON.parse(await readBody(req)) as {
             username?: string;
             password?: string;
+            userData?: Record<string, unknown>;
           };
         } catch {
           jsonResponse(res, 400, { message: 'Invalid request body' });
@@ -121,6 +122,12 @@ function authUserDevApi(): Plugin {
         const username = payload.username?.trim() ?? '';
         const password = payload.password ?? '';
         const normalized = normalizeUsername(username);
+
+        if ('userData' in payload && (!payload.userData || Array.isArray(payload.userData)
+          || !Array.isArray(payload.userData.decks) || !Array.isArray(payload.userData.collection))) {
+          jsonResponse(res, 400, { message: 'Guest workspace could not be read. Your guest data has not been changed.' });
+          return;
+        }
 
         if (!USERNAME_RE.test(username) || password.length < 6 || normalized === 'guest') {
           jsonResponse(res, 400, {
@@ -149,16 +156,7 @@ function authUserDevApi(): Plugin {
         };
 
         db.accounts[normalized] = account;
-        db.userData[userId] = {
-          name: username,
-          id: userId,
-          decks: [],
-          collection: [],
-          selectedCardCategory: null,
-          favouriteDeckIds: [],
-          canvasLabels: [],
-          canvasAreas: [],
-        };
+        db.userData[userId] = sanitizeDevUserData(payload.userData ?? {}, userId, username);
 
         const token = randomBytes(32).toString('base64url');
         db.sessions[token] = {

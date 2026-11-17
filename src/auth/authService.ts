@@ -13,6 +13,7 @@
 import { storeSession, clearSession, type StoredSession } from './session';
 import { getStoredSession } from './session';
 import { loginApi, signupApi, type LoginResponse } from './api';
+import type { UserData } from '@/data/dataModels';
 
 export interface LoginResult {
   userId: string;
@@ -49,7 +50,8 @@ export async function login(username: string, password: string): Promise<LoginRe
 }
 
 /**
- * Create a new account and immediately persist session data.
+ * Create an account with the guest workspace in the same server transaction.
+ * Persist the session only after both have been saved successfully.
  *
  * Inputs:
  * - `username`: Requested username.
@@ -60,9 +62,10 @@ export async function login(username: string, password: string): Promise<LoginRe
  */
 export async function signup(
   username: string,
-  password: string
+  password: string,
+  userData?: UserData,
 ): Promise<LoginResult> {
-  const response: LoginResponse = await signupApi(username, password);
+  const response: LoginResponse = await signupApi(username, password, userData);
 
   const session: StoredSession = {
     userId: response.userId,
