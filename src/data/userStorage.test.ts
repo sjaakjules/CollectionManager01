@@ -2,6 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGuestUserData, type UserData } from '@/data/dataModels';
+import { CANVAS_GRID_VERSION } from '@/data/canvasGridVersion';
 import {
   loadUserData,
   loadUserDataResult,
@@ -26,6 +27,7 @@ describe('userStorage', () => {
     const guest = createGuestUserData('guest-1');
 
     expect(guest.name).toBe('Guest');
+    expect(guest.gridVersion).toBe(CANVAS_GRID_VERSION);
     expect(guest.canvasAreas).toEqual([]);
     expect(Object.keys(guest).sort()).toEqual([
       'canvasAreas',
@@ -33,6 +35,7 @@ describe('userStorage', () => {
       'collection',
       'decks',
       'favouriteDeckIds',
+      'gridVersion',
       'id',
       'name',
       'selectedCardCategory',
@@ -74,10 +77,12 @@ describe('userStorage', () => {
 
     await expect(loadUserData(null)).resolves.toMatchObject({
       id: 'guest-1',
+      gridVersion: CANVAS_GRID_VERSION,
       canvasAreas: [{ id: 'stack-1' }],
     });
     await expect(loadUserData('user-1')).resolves.toMatchObject({
       id: 'user-1',
+      gridVersion: CANVAS_GRID_VERSION,
       canvasAreas: [{ id: 'deck-1' }],
     });
     expect(localStorage.getItem('sorcery_guest_data')).toContain('stack-1');
@@ -101,10 +106,12 @@ describe('userStorage', () => {
   });
 
   it('still loads legacy localStorage data without an envelope', async () => {
-    const legacy = createGuestUserData('guest-legacy');
+    const legacy = { ...createGuestUserData('guest-legacy'), gridVersion: undefined };
     localStorage.setItem('sorcery_guest_data', JSON.stringify(legacy));
 
-    await expect(loadUserData(null)).resolves.toMatchObject({ id: 'guest-legacy' });
+    const loaded = await loadUserData(null);
+    expect(loaded).toMatchObject({ id: 'guest-legacy' });
+    expect(loaded).not.toHaveProperty('gridVersion');
   });
 
   it('mirrors a snapshot synchronously so the last edit survives unload', async () => {

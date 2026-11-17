@@ -9,6 +9,7 @@ export function detachLabelsFromAreas(labels: CanvasLabel[], removedAreaIds: Set
     delete detached.areaId;
     delete detached.board;
     delete detached.parentLabelId;
+    delete detached.deckSectionLayout;
     return detached;
   });
 }

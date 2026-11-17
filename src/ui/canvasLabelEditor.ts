@@ -8,6 +8,8 @@ export interface CanvasLabelEditorOptions {
   title: string;
   position: CanvasLabelEditorPosition;
   initialText?: string;
+  placeholder?: string;
+  maxLength?: number;
   onSave: (text: string) => void;
   onClose?: () => void;
 }
@@ -29,7 +31,8 @@ export function openCanvasLabelEditor(options: CanvasLabelEditorOptions): Canvas
   input.autocomplete = 'off';
   input.setAttribute('aria-label', options.title);
   input.value = options.initialText ?? '';
-  input.placeholder = 'Label name';
+  input.placeholder = options.placeholder ?? 'Label name';
+  if (options.maxLength) input.maxLength = options.maxLength;
   let closed = false;
   let fontSize = options.position.fontSize;
   const resize = () => {

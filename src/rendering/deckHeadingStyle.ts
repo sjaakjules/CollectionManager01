@@ -3,6 +3,8 @@ import type { CanvasLabel } from '@/data/dataModels';
 import type { DeckRegionId } from '@/canvas/canvasAreas';
 import { MANGA_PALETTE } from './mangaStyle';
 
+export const CANVAS_LABEL_FONT_SIZE = 14;
+
 /** The same hierarchy is used by resting titles and region drag previews. */
 export function getDeckHeadingStyle(region: DeckRegionId): TextStyleOptions {
   const section = region === 'spellbook' || region === 'atlas';
@@ -24,7 +26,7 @@ export function getLabelHeadingStyle(label: CanvasLabel, labels: CanvasLabel[]):
     current = parent;
   }
   return {
-    fontFamily: 'Arial', fontSize: Math.max(10, 14 - depth * 2), fontWeight: '400',
+    fontFamily: 'Arial', fontSize: Math.max(10, CANVAS_LABEL_FONT_SIZE - depth * 2), fontWeight: '400',
     fill: depth ? MANGA_PALETTE.muted : MANGA_PALETTE.paper,
     stroke: { color: MANGA_PALETTE.ink, width: 2 },
   };

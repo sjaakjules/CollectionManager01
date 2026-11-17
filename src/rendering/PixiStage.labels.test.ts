@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PixiStage } from './PixiStage';
 import type { CanvasLabel } from '@/data/dataModels';
 import type { CanvasArea, CanvasCardInstance } from '@/canvas/canvasAreas';
+import { getLabelHeadingBounds, LABEL_CARD_GAP } from '@/canvas/labelRegions';
 
 function required<T>(value: T | undefined | null): T { if (value == null) throw new Error('Missing fixture'); return value; }
 
@@ -42,10 +43,10 @@ beforeEach(() => {
 });
 
 describe('deck label interactions', () => {
-  it('moves only member cards with the label and cancels without persisting', () => {
+  it('previews member cards without changing saved positions and cancels without persisting', () => {
     stage.startLabelDrag('label', { x: 480, y: 550 });
     stage.updateLabelDrag({ x: 680, y: 650 });
-    expect(area.cards[0]).toMatchObject({ x: 700, y: 700 });
+    expect(area.cards[0]).toMatchObject({ x: 500, y: 600 });
     expect(area.cards[1]).toMatchObject({ x: 800, y: 600 });
     stage.endLabelDrag(true);
     expect(area.cards[0]).toMatchObject({ x: 500, y: 600 });
@@ -69,7 +70,9 @@ describe('deck label interactions', () => {
     stage.getLabelTarget.mockReturnValue(stage.canvasLabels[0]);
     stage.applyLabelDrop([required(area.cards[1])], area, area, { x: 480, y: 550 }, false);
     expect(required(area.cards[1]).labelId).toBe('label');
-    expect(required(area.cards[1]).y).toBeGreaterThan(580);
+    const heading = required(getLabelHeadingBounds(stage.canvasLabels, [area], () => false,
+      () => ({ width: 80, height: 20 })).get('label'));
+    expect(required(area.cards[1]).y).toBeGreaterThanOrEqual(heading.y + heading.height + LABEL_CARD_GAP);
     expect(required(area.cards[0])).toMatchObject({ x: 500, y: 600 });
   });
   it('deleting a label keeps cards and releases direct members', () => {

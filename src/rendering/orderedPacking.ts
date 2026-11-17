@@ -10,13 +10,15 @@ export function packOrderedGroups(
   sizes: ReadonlyArray<{ width: number; height: number }>,
   aspect: number,
   gap: number,
+  minColumns = 1,
 ): PackedBox[] {
   const target = Number.isFinite(aspect) && aspect > 0 ? aspect : 16 / 9;
   let best: PackedBox[] = [];
   let bestScore = Infinity;
   // Bounded even for a catalogue grouped by individual card names. Each pass
   // is linear; this runs on layout changes, never on an animation frame.
-  for (let columns = 1; columns <= Math.min(sizes.length, 32); columns++) {
+  const maxColumns = Math.min(sizes.length, 32);
+  for (let columns = Math.min(minColumns, maxColumns); columns > 0 && columns <= maxColumns; columns++) {
     let x = 0, y = 0, rowHeight = 0, width = 0;
     const boxes = sizes.map((size, index) => {
       if (index > 0 && index % columns === 0) {

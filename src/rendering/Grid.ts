@@ -1,30 +1,45 @@
-import { required } from '@/utils/required';
 /**
  * Grid system for card layout and snapping
  *
  * Three overlapping grids:
- * 1. DRAWN GRID: 55×55px - visual grid lines (can be changed independently)
+ * 1. DRAWN GRID: visual grid lines sized to a four-spell stack
  * 2. PORTRAIT SNAP GRID: Same spacing, offset so portrait cards sit centered
- *    inside a 2×3 block of drawn grid cells
+ *    inside a portrait card's footprint
  * 3. LANDSCAPE SNAP GRID: Same spacing, offset so site cards sit centered
- *    inside a 3×2 block of drawn grid cells
+ *    inside a landscape card's footprint
  *
- * Cards are always drawn from their CENTER point at grid intersections.
- * This allows the drawn grid to be changed (even non-square) without affecting snapping.
+ * Card positions are their centers on the corresponding snap lattice.
  */
 
-import type { CardType, ThresholdGroup, CardRarity } from "@/data/dataModels";
-import { buildCatalogueGroups, type CatalogueGroup, type CatalogueLayoutConfig } from '@/data/catalogueLayout';
+import type { CardType, ThresholdGroup, Thresholds, CardRarity } from "@/data/dataModels";
+import { buildCatalogueGroups, getCatalogueSetRank, getLayoutCell, getLayoutLeafAxis, getLayoutStepAxis, LAYOUT_COLUMNS_MAX, type CatalogueGroup, type CatalogueLayoutConfig } from '@/data/catalogueLayout';
 import { packOrderedGroups } from './orderedPacking';
 
 // ============================================================================
 // Grid Constants
 // ============================================================================
 
-/** Drawn grid dimensions (visual only - can be changed to non-square) */
+/** Card drawn dimensions in pixels (100×140 maintains TCG aspect ratio) */
+export const CARD_SIZE = {
+  PORTRAIT: { width: 100, height: 140 },
+  LANDSCAPE: { width: 140, height: 100 },
+} as const;
+
+/** Card footprints in snap grid cells, including the stack fan. */
+export const CARD_CELL_SPACING = {
+  PORTRAIT: { x: 2, y: 3 },
+  LANDSCAPE: { x: 3, y: 2 },
+} as const;
+
+// A standard spell's lower nameplate border sits about 13⅓ units from its top.
+const SPELL_NAMEPLATE_SPACING = 40 / 3;
+const SITE_NAMEPLATE_SPACING = 18;
+// Four spells expose three nameplates and set the height of three grid rows.
+const GRID_CELL_SIZE = (CARD_SIZE.PORTRAIT.height + 3 * SPELL_NAMEPLATE_SPACING) / CARD_CELL_SPACING.PORTRAIT.y;
+
 export const DRAWN_GRID = {
-  width: 55,
-  height: 55,
+  width: GRID_CELL_SIZE,
+  height: GRID_CELL_SIZE,
 } as const;
 
 /** Snap grid spacing (matches drawn grid but could differ) */
@@ -41,52 +56,26 @@ export const SNAP_GRID = {
 export const SNAP_GRID_OFFSET = {
   PORTRAIT: {
     x: 0,
-    y: SNAP_GRID.height / 2, // 27.5px down
+    y: SNAP_GRID.height / 2,
   },
   LANDSCAPE: {
-    x: SNAP_GRID.width / 2, // 27.5px right
+    x: SNAP_GRID.width / 2,
     y: 0,
   },
 } as const;
 
-// ============================================================================
-// Card Constants
-// ============================================================================
-
-/** Card drawn dimensions in pixels (100×140 maintains TCG aspect ratio) */
-export const CARD_SIZE = {
-  PORTRAIT: { width: 100, height: 140 },
-  LANDSCAPE: { width: 140, height: 100 },
-} as const;
-
-/**
- * Deck avatar display size (larger than standard portrait cards).
- * Height is fixed to 4 snap-grid units.
- */
+/** Deck avatar display size stays fixed independently of the snap grid. */
+const DECK_AVATAR_HEIGHT = 220;
 export const DECK_AVATAR_SIZE = {
-  height: SNAP_GRID.height * 4,
-  width: Math.round(
-    (CARD_SIZE.PORTRAIT.width / CARD_SIZE.PORTRAIT.height) *
-      SNAP_GRID.height *
-      4,
-  ),
+  height: DECK_AVATAR_HEIGHT,
+  width: Math.round((CARD_SIZE.PORTRAIT.width / CARD_SIZE.PORTRAIT.height) * DECK_AVATAR_HEIGHT),
 } as const;
 
-/** Card spacing in snap grid cells (how many cells between card centers) */
-export const CARD_CELL_SPACING = {
-  PORTRAIT: { x: 2, y: 3 }, // Centers are 2 cells apart horizontally, 3 vertically
-  LANDSCAPE: { x: 3, y: 2 }, // Centers are 3 cells apart horizontally, 2 vertically
-} as const;
+const AVATAR_ROW_SPACING = Math.ceil(CARD_SIZE.PORTRAIT.height / SNAP_GRID.height);
 
 // ============================================================================
 // Layout Constants
 // ============================================================================
-
-/**
- * Stack offset in pixels - when multiple cards are at the same position,
- * each subsequent card is offset by this amount to show a peek of cards underneath
- */
-export const STACK_OFFSET = 15; // Small offset to show cards are stacked
 
 /** Grid line appearance */
 export const GRID_LINE = {
@@ -105,16 +94,6 @@ export const CARDS_PER_ROW = {
   SITE: 8,
   AVATAR: 12,
 } as const;
-
-/** Avatar set order (for sorting) */
-export const AVATAR_SET_ORDER = [
-  "Alpha",
-  "Beta",
-  "Arthurian Legends",
-  "Dragonlord",
-  "Gothic",
-  "Promotional",
-] as const;
 
 /** Rarity order for sorting (None/precon first, then by rarity) */
 export const RARITY_ORDER: Record<string, number> = {
@@ -264,6 +243,16 @@ export function getCardPixelSize(isLandscape: boolean): {
   return isLandscape ? { ...CARD_SIZE.LANDSCAPE } : { ...CARD_SIZE.PORTRAIT };
 }
 
+/** Show as much of each card name as the stack's grid footprint allows. */
+export function getStackFan(count: number, landscape: boolean): { spacing: number; overhang: number } {
+  if (count < 2) return { spacing: 0, overhang: 0 };
+  const orientation = landscape ? 'LANDSCAPE' : 'PORTRAIT';
+  const nameplateSpacing = landscape ? SITE_NAMEPLATE_SPACING : SPELL_NAMEPLATE_SPACING;
+  const availableHeight = CARD_CELL_SPACING[orientation].y * SNAP_GRID.height - CARD_SIZE[orientation].height;
+  const fanHeight = Math.min((count - 1) * nameplateSpacing, availableHeight);
+  return { spacing: fanHeight / (count - 1), overhang: fanHeight / 2 };
+}
+
 /** Get card cell spacing based on orientation */
 export function getCardCellSpacing(isLandscape: boolean): {
   x: number;
@@ -377,8 +366,11 @@ export interface LayoutCardInput {
   type: CardType;
   thresholdGroup: ThresholdGroup;
   cost: number | null;
+  power?: number | null;
   isLandscape: boolean;
+  thresholds?: Thresholds;
   primarySet?: string;
+  earliestSetReleasedAt?: string;
   rarity?: CardRarity | null;
 }
 
@@ -535,7 +527,7 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   const avatars = config.cards.filter((c) => c.type === "Avatar");
   const nonAvatars = config.cards.filter((c) => c.type !== "Avatar");
 
-  // Layout avatars as a single row above all other cards
+  // Place avatars in a leading section above all other cards.
   let nonAvatarStartGridY = 0;
   let avatarGridWidthUnits = 0;
 
@@ -555,27 +547,15 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
       kind: "collection",
     });
 
-    const sortedAvatars = [...avatars].sort((a, b) => {
-      const aSetIndex = getAvatarSetIndex(a.primarySet);
-      const bSetIndex = getAvatarSetIndex(b.primarySet);
-
-      if (aSetIndex !== bSetIndex) {
-        return aSetIndex - bSetIndex;
-      }
-
-      const aRarityIndex = RARITY_ORDER[a.rarity ?? "None"] ?? 0;
-      const bRarityIndex = RARITY_ORDER[b.rarity ?? "None"] ?? 0;
-
-      return aRarityIndex - bRarityIndex;
-    });
+    const sortedAvatars = avatars.sort(compareAvatars);
 
     const spacing = getCardCellSpacing(false); // Avatars are portrait
-    avatarGridWidthUnits =
-      (sortedAvatars.length - 1) * spacing.x + spacing.x;
+    const columns = getAvatarColumns(sortedAvatars.length, config.layoutVariant, CARDS_PER_ROW.AVATAR);
+    avatarGridWidthUnits = columns * spacing.x;
 
     for (const [i, avatar] of sortedAvatars.entries()) {
-      const gridX = i * spacing.x;
-      const gridY = 0;
+      const gridX = (i % columns) * spacing.x;
+      const gridY = Math.floor(i / columns) * AVATAR_ROW_SPACING;
 
       const position = snapGridToPixels(gridX, gridY, false);
 
@@ -591,8 +571,8 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
       updateBounds(position.x, position.y, false);
     }
 
-    // Non-avatar cards start below the avatar row (extra gap for threshold heading)
-    nonAvatarStartGridY = spacing.y + GROUP_GAP_UNITS + 4;
+    // Leave room for the next section's threshold heading.
+    nonAvatarStartGridY = Math.ceil(sortedAvatars.length / columns) * AVATAR_ROW_SPACING + GROUP_GAP_UNITS + 4;
   }
 
   // Layout non-avatar cards below avatars
@@ -631,110 +611,164 @@ export function calculateCardLayout(config: LayoutConfig): LayoutResult {
   return { cards, headers, bounds };
 }
 
+function getAvatarColumns(count: number, variant: CollectionLayoutVariant | undefined, portraitWidth: number): number {
+  return variant === 'portrait' && count > portraitWidth ? Math.ceil(count / 2) : count;
+}
+
+interface CatalogueSection {
+  width: number;
+  height: number;
+  cards: CardLayoutInfo[];
+  headers: GroupHeader[];
+}
+
 /** Catalogue-only layout: filtered subsets keep their full grouping hierarchy. */
 function layoutCatalogueHierarchy(config: LayoutConfig, preferences: CatalogueLayoutConfig): LayoutResult {
-  // Keep avatars discoverable above the element/type hierarchy, as in the
-  // original catalogue. They have no casting threshold or cost to group by.
-  const avatars = config.cards.filter(card => card.type === 'Avatar');
-  if (avatars.length) {
-    const rest = layoutCatalogueHierarchy({ ...config, cards: config.cards.filter(card => card.type !== 'Avatar') }, preferences);
-    const sorted = buildCatalogueGroups(avatars, {
-      ...preferences, steps: preferences.steps.filter(step => step.mode === 'sort'),
-    }).cards;
-    const spacing = CARD_CELL_SPACING.PORTRAIT;
-    const avatarCards = sorted.map((card, index): CardLayoutInfo => ({
-      ...card,
-      position: snapGridToPixels(1 + (index % preferences.columns) * spacing.x,
-        5 + Math.floor(index / preferences.columns) * spacing.y, false),
-    }));
-    const offsetY = (5 + Math.ceil(avatars.length / preferences.columns) * spacing.y + GROUP_GAP_UNITS) * SNAP_GRID.height;
-    for (const card of rest.cards) card.position.y += offsetY;
-    for (const header of rest.headers) header.position.y += offsetY;
-    const avatarRight = Math.max(...avatarCards.map(card => card.position.x + CARD_SIZE.PORTRAIT.width / 2));
-    const avatarBottom = Math.max(...avatarCards.map(card => card.position.y + CARD_SIZE.PORTRAIT.height / 2));
-    const columnWidth = preferences.columns * spacing.x * SNAP_GRID.width;
-    return {
-      cards: [...avatarCards, ...rest.cards],
-      headers: [{ label: 'Avatars', kind: 'collection', fontSize: Math.min(HEADER_HEIGHT, columnWidth / (7 * 0.7)), position: { x: 0, y: 0 } }, ...rest.headers],
-      bounds: {
-        left: Math.min(0, rest.bounds.left), top: 0,
-        right: Math.max(avatarRight, columnWidth, rest.bounds.right),
-        bottom: rest.cards.length ? Math.max(avatarBottom, rest.bounds.bottom + offsetY) : avatarBottom,
-      },
-    };
-  }
-  const root = buildCatalogueGroups(config.cards, preferences);
-  const groups = root.children.length ? root.children : [root];
-  const cards: CardLayoutInfo[] = [];
-  const headers: GroupHeader[] = [];
-  const columnWidth = preferences.columns * CARD_CELL_SPACING.PORTRAIT.x;
-  const bounds: ContentBounds = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
+  const viewportAspect = config.viewportAspect ?? 0;
+  const aspect = Number.isFinite(viewportAspect) && viewportAspect > 0
+    ? viewportAspect : config.layoutVariant === 'portrait' ? 9 / 19.5 : 16 / 9;
+  const avatars = config.cards.filter(card => card.type === 'Avatar').sort(compareAvatars);
+  const entries = config.cards.filter(card => card.type !== 'Avatar');
+  const root = buildCatalogueGroups(entries, preferences);
+  const leafAxis = getLayoutLeafAxis(preferences);
 
-  function leaves(group: CatalogueGroup<LayoutCardInput>, path: string[] = []): { label: string; cards: LayoutCardInput[] }[] {
-    if (!group.children.length) return [{ label: path.join(' › '), cards: group.cards }];
-    return group.children.flatMap((child) => leaves(child, [...path, child.label]));
-  }
+  // The avatar shelf is ordered by first printing and independent of the
+  // width search for the spell and site groups below it.
+  const { x: spellPitch } = CARD_CELL_SPACING.PORTRAIT;
+  const avatarColumns = avatars.length ? getAvatarColumns(avatars.length, config.layoutVariant, preferences.columns) : 1;
+  const avatarRows = Math.ceil(avatars.length / avatarColumns);
+  const avatarWidth = avatars.length ? avatarColumns * spellPitch * SNAP_GRID.width : 0;
+  const avatarOffsetY = avatars.length ? (5 + avatarRows * AVATAR_ROW_SPACING + GROUP_GAP_UNITS) * SNAP_GRID.height : 0;
+  const avatarCards = avatars.map((card, index): CardLayoutInfo => ({
+    name: card.name,
+    position: snapGridToPixels(1 + (index % avatarColumns) * spellPitch,
+      5 + Math.floor(index / avatarColumns) * AVATAR_ROW_SPACING, false),
+    isLandscape: false,
+    thresholdGroup: card.thresholdGroup,
+    type: card.type,
+    cost: card.cost,
+  }));
+  const avatarHeaders: GroupHeader[] = avatars.length ? [{ label: 'Avatars', kind: 'collection',
+    fontSize: Math.min(HEADER_HEIGHT, avatarWidth / (7 * 0.7)), position: { x: 0, y: 0 } }] : [];
 
-  const measured = groups.map((group) => {
-    const cardStart = cards.length;
-    const headerStart = headers.length;
-    const startX = 0;
-    let cursorY = 0;
-    if (root.children.length) {
-      headers.push({ label: group.label, kind: 'collection', fontSize: Math.min(HEADER_HEIGHT, columnWidth * SNAP_GRID.width / Math.max(1, group.label.length * 0.7)), position: { x: startX * SNAP_GRID.width, y: cursorY * SNAP_GRID.height } });
-      cursorY += 4;
-    }
-    for (const leaf of leaves(group)) {
-      if (leaf.label) {
-        headers.push({ label: leaf.label, kind: 'type-subgroup', fontSize: Math.min(HEADER_HEIGHT * 0.3, columnWidth * SNAP_GRID.width / Math.max(1, leaf.label.length * 0.7)), position: { x: startX * SNAP_GRID.width, y: cursorY * SNAP_GRID.height } });
-        cursorY += 2;
-      }
+  function arrange(group: CatalogueGroup<LayoutCardInput>, depth: number, groupWidth: number): CatalogueSection {
+    const titleRows = depth === 0 ? 0 : depth === 1 ? 4 : 2;
+    const section: CatalogueSection = { cards: [], headers: [], width: 1, height: titleRows };
+    if (group.children.length) {
+      const children = group.children.map(child => arrange(child, depth + 1, groupWidth));
+      const horizontal = group.step && getLayoutStepAxis(group.step) === 'horizontal';
+      const packed = horizontal ? packOrderedGroups(children, aspect, GROUP_GAP_UNITS, 2) : undefined;
+      let nextY = titleRows;
+      children.forEach((child, index) => {
+        const box = packed?.[index];
+        const x = box?.x ?? 0;
+        const y = box ? titleRows + box.y : nextY;
+        const dx = x * SNAP_GRID.width;
+        const dy = y * SNAP_GRID.height;
+        for (const card of child.cards) {
+          card.position.x += dx;
+          card.position.y += dy;
+          section.cards.push(card);
+        }
+        for (const header of child.headers) {
+          header.position.x += dx;
+          header.position.y += dy;
+          section.headers.push(header);
+        }
+        section.width = Math.max(section.width, x + child.width);
+        section.height = Math.max(section.height, y + child.height);
+        nextY = y + child.height + (depth === 0 ? GROUP_GAP_UNITS : 1);
+      });
+    } else {
       // A mixed group still has separate portrait/landscape lanes. Sorting can
       // never rotate sites or give landscape cards portrait spacing.
       for (const landscape of [false, true]) {
-        const entries = leaf.cards.filter((card) => card.isLandscape === landscape);
+        const entries = group.cards.filter(card => card.isLandscape === landscape);
         if (!entries.length) continue;
         const spacing = getCardCellSpacing(landscape);
-        const perRow = Math.max(1, Math.floor(columnWidth / spacing.x));
+        const perRow = Math.max(1, Math.floor(groupWidth / spacing.x));
+        let rows = 0;
+        section.width = Math.max(section.width, spacing.x);
         entries.forEach((card, cardIndex) => {
+          const { column, row } = getLayoutCell(cardIndex, entries.length, perRow, leafAxis);
+          rows = Math.max(rows, row + 1);
+          section.width = Math.max(section.width, (column + 1) * spacing.x);
           const position = snapGridToPixels(
-            startX + 1 + (cardIndex % perRow) * spacing.x,
-            cursorY + 1 + Math.floor(cardIndex / perRow) * spacing.y,
+            1 + column * spacing.x,
+            section.height + 1 + row * spacing.y,
             landscape,
           );
-          cards.push({ name: card.name, position, isLandscape: landscape, type: card.type, thresholdGroup: card.thresholdGroup, cost: card.cost });
+          section.cards.push({ name: card.name, position, isLandscape: landscape, type: card.type, thresholdGroup: card.thresholdGroup, cost: card.cost });
         });
-        cursorY += Math.ceil(entries.length / perRow) * spacing.y + 1;
+        section.height += rows * spacing.y + 1;
       }
-      cursorY += 1;
     }
-    return { width: columnWidth, height: cursorY, cardStart, cardEnd: cards.length, headerStart, headerEnd: headers.length };
-  });
-  const packed = packOrderedGroups(measured, config.viewportAspect ?? (config.layoutVariant === 'portrait' ? 9 / 19.5 : 16 / 9), GROUP_GAP_UNITS);
-  measured.forEach((group, index) => {
-    const box = required(packed[index]);
-    const dx = box.x * SNAP_GRID.width, dy = box.y * SNAP_GRID.height;
-    for (let i = group.cardStart; i < group.cardEnd; i++) {
-      const card = required(cards[i]);
-      card.position.x += dx;
-      card.position.y += dy;
+    if (depth > 0) {
+      section.headers.unshift({
+        label: group.label,
+        kind: depth === 1 ? 'collection' : 'type-subgroup',
+        fontSize: Math.min(
+          HEADER_HEIGHT * (depth === 1 ? 1 : 0.3),
+          section.width * SNAP_GRID.width / Math.max(1, group.label.length * 0.7),
+        ),
+        position: { x: 0, y: 0 },
+      });
+    }
+    return section;
+  }
+
+  function measure(groupWidth: number): LayoutResult {
+    const { cards: rest, headers: restHeaders, width } = arrange(root, 0, groupWidth);
+    for (const card of rest) card.position.y += avatarOffsetY;
+    for (const header of restHeaders) header.position.y += avatarOffsetY;
+    const cards = [...avatarCards, ...rest];
+    const headers = [...avatarHeaders, ...restHeaders];
+    const bounds: ContentBounds = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
+    for (const card of cards) {
       const size = getCardPixelSize(card.isLandscape);
       bounds.left = Math.min(bounds.left, card.position.x - size.width / 2);
       bounds.top = Math.min(bounds.top, card.position.y - size.height / 2);
       bounds.right = Math.max(bounds.right, card.position.x + size.width / 2);
       bounds.bottom = Math.max(bounds.bottom, card.position.y + size.height / 2);
     }
-    for (let i = group.headerStart; i < group.headerEnd; i++) {
-      const header = required(headers[i]);
-      header.position.x += dx;
-      header.position.y += dy;
-      // Include titles when centering the complete catalogue.
-      bounds.left = Math.min(bounds.left, header.position.x);
-      bounds.top = Math.min(bounds.top, header.position.y);
-      bounds.right = Math.max(bounds.right, header.position.x + columnWidth * SNAP_GRID.width);
+    if (headers.length) {
+      bounds.left = Math.min(bounds.left, 0);
+      bounds.top = Math.min(bounds.top, 0);
+      bounds.right = Math.max(bounds.right, avatarWidth, restHeaders.length ? width * SNAP_GRID.width : 0);
     }
-  });
-  return { cards, headers, bounds: cards.length ? bounds : { left: 0, top: 0, right: 0, bottom: 0 } };
+    return { cards, headers, bounds: cards.length ? bounds : { left: 0, top: 0, right: 0, bottom: 0 } };
+  }
+
+  // Use a shared physical width for both orientations. The column ceiling
+  // is applied to the narrower pitch present, so no lane exceeds it and a
+  // catalogue filtered to sites still has its full column allowance.
+  const pitches = [...new Set(entries.map(card => getCardCellSpacing(card.isLandscape).x))];
+  const minPitch = pitches.length ? Math.min(...pitches) : spellPitch;
+  const columnLimit = preferences.columnMode === 'auto' ? LAYOUT_COLUMNS_MAX
+    : Math.max(1, Math.min(LAYOUT_COLUMNS_MAX, Math.floor(preferences.columns)));
+  const maxWidth = minPitch * columnLimit;
+  // Three spells occupy the same six grid cells as two sites. Align both
+  // lanes whenever the column ceiling leaves room for that full interval.
+  const sharedPitch = pitches.length > 1 ? spellPitch * CARD_CELL_SPACING.LANDSCAPE.x : minPitch;
+  const widthStep = maxWidth >= sharedPitch ? sharedPitch : minPitch;
+  const widestGroup = Math.floor(maxWidth / widthStep) * widthStep;
+  if (!preferences.columnMode || !entries.length) return measure(widestGroup);
+
+  const cardArea = config.cards.reduce((sum, card) => {
+    const size = getCardPixelSize(card.isLandscape);
+    return sum + size.width * size.height;
+  }, 0);
+  let best: LayoutResult | undefined;
+  let bestScore = Infinity;
+  // Score the entire catalogue against the viewport, including the fixed avatar shelf.
+  for (let groupWidth = widthStep; groupWidth <= widestGroup; groupWidth += widthStep) {
+    const candidate = measure(groupWidth);
+    const width = Math.max(1, candidate.bounds.right - candidate.bounds.left);
+    const height = Math.max(1, candidate.bounds.bottom - candidate.bounds.top);
+    const score = Math.abs(Math.log(width / height / aspect)) + Math.log(Math.max(1, width * height / cardArea)) * 0.12;
+    if (score < bestScore) { bestScore = score; best = candidate; }
+  }
+  return best ?? measure(widestGroup);
 }
 
 function layoutWideGroupedCards({
@@ -1325,12 +1359,14 @@ function getCostSortValue(cost: number | null): number {
   return typeof cost === "number" && Number.isFinite(cost) ? cost : 0;
 }
 
-function getAvatarSetIndex(setName?: string): number {
-  if (!setName) return AVATAR_SET_ORDER.length;
-  const index = AVATAR_SET_ORDER.indexOf(
-    setName as (typeof AVATAR_SET_ORDER)[number],
-  );
-  return index >= 0 ? index : AVATAR_SET_ORDER.length;
+function compareAvatars(a: LayoutCardInput, b: LayoutCardInput): number {
+  const setOrder = (a.primarySet ? getCatalogueSetRank(a.primarySet) : Infinity)
+    - (b.primarySet ? getCatalogueSetRank(b.primarySet) : Infinity);
+  const aDate = Date.parse(a.earliestSetReleasedAt ?? '');
+  const bDate = Date.parse(b.earliestSetReleasedAt ?? '');
+  const dateOrder = (Number.isFinite(aDate) ? aDate : Infinity) - (Number.isFinite(bDate) ? bDate : Infinity);
+  const rarityOrder = (RARITY_ORDER[a.rarity ?? 'None'] ?? 0) - (RARITY_ORDER[b.rarity ?? 'None'] ?? 0);
+  return setOrder || dateOrder || rarityOrder || a.name.localeCompare(b.name);
 }
 
 function groupCards(
@@ -1527,7 +1563,7 @@ export function calculateDeckLayout(
     CARD_CELL_SPACING.PORTRAIT.x,
     Math.ceil(DECK_AVATAR_SIZE.width / SNAP_GRID.width),
   );
-  const avatarRowHeightUnits = hasDeckAvatar ? 4 : CARD_CELL_SPACING.PORTRAIT.y;
+  const avatarRowHeightUnits = Math.ceil(deckTitleCardSize.height / SNAP_GRID.height);
   const avatarPos = snapGridToPixels(0, startGridY, false);
   const avatarTopY = avatarPos.y - deckTitleCardSize.height / 2;
 

@@ -35,6 +35,24 @@ afterEach(() => {
 });
 
 describe("TouchGestureTracker", () => {
+  it('keeps canvas control holds available for taps, pan and pinch without card actions', () => {
+    vi.useFakeTimers();
+    const tracker = new TouchGestureTracker<TestTarget>();
+    const control = { key: 'stats:next', label: 'Next page', allowLongPress: false };
+    const hold = vi.fn();
+    tracker.start(point(), control, hold);
+    vi.advanceTimersByTime(TOUCH_LONG_PRESS_MS * 2);
+    expect(hold).not.toHaveBeenCalled();
+    expect(tracker.release(point({ timeMs: 1000 })).type).toBe('tap');
+    tracker.start(point(), control, hold);
+    vi.advanceTimersByTime(TOUCH_LONG_PRESS_MS * 2);
+    expect(tracker.move(point({ x: 140 })).type).toBe('pan-start');
+    tracker.release(point());
+    tracker.start(point(), control, hold);
+    tracker.start(point({ pointerId: 2 }), control, hold);
+    expect(tracker.release(point()).type).toBe('none');
+    expect(hold).not.toHaveBeenCalled();
+  });
   it('drags a centre grab immediately after slop, keeping taps and pinch cancellation intact', () => {
     const tracker = new TouchGestureTracker<TestTarget>();
     const centre = { ...cardTarget, dragOnMove: true };

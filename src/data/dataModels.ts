@@ -12,6 +12,8 @@
  * - `src/rules/deckRules.ts` (deck validation logic)
  */
 
+import { CANVAS_GRID_VERSION } from './canvasGridVersion';
+
 // ============================================================================
 // Normalized Card Data Types (see cardCatalog.ts for upstream API formats)
 // ============================================================================
@@ -140,6 +142,8 @@ export interface CanvasLabel {
   board?: ActiveBoard;
   /** Optional containing label; cards refer to their immediate label. */
   parentLabelId?: string;
+  /** Named layouts own their labels. Main labels spanning both sections stay shared. */
+  deckSectionLayout?: import('@/canvas/deckSectionLayouts').DeckSectionLayoutRef;
 }
 
 export type { CardCategoryData } from '@/data/cardCategories';
@@ -151,6 +155,8 @@ export type { CardCategoryData } from '@/data/cardCategories';
 export interface UserData {
   name: string;
   id: string;
+  /** Position format shared by guest and account canvas snapshots. */
+  gridVersion?: number;
   decks: Deck[];
   /** ISO deletion times; shared by guest/account saves to prevent resurrection. */
   removedDecks?: Record<string, string>;
@@ -235,6 +241,7 @@ export function createGuestUserData(id: string): UserData {
   return {
     name: 'Guest',
     id,
+    gridVersion: CANVAS_GRID_VERSION,
     decks: [],
     collection: [],
     selectedCardCategory: null,

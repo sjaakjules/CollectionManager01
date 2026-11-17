@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { CardType, ThresholdGroup } from "@/data/dataModels";
+import type { CatalogueLayoutConfig } from '@/data/catalogueLayout';
+import { required } from '@/utils/required';
 import {
   calculateCardLayout,
   calculateDeckLayout,
+  CARD_CELL_SPACING,
+  DECK_AVATAR_SIZE,
+  DRAWN_GRID,
+  getCardCenterPosition,
+  getCardPixelSize,
+  getStackFan,
+  GROUP_GAP_UNITS,
   pixelsToSnapGrid,
+  SNAP_GRID,
   snapCardCenter,
   snapToDrawnGrid,
   type GroupHeader,
@@ -44,6 +54,33 @@ function collectionHeader(
     (header) => header.kind === "collection" && header.label === label,
   );
 }
+
+describe('stack fans', () => {
+  it.each([false, true])('fit inside their grid slot regardless of stack size (landscape=%s)', landscape => {
+    const spacing = landscape ? CARD_CELL_SPACING.LANDSCAPE : CARD_CELL_SPACING.PORTRAIT;
+    const first = getCardCenterPosition(0, 0, landscape);
+    const next = getCardCenterPosition(0, 1, landscape);
+    const rowTop = first.y - spacing.y * DRAWN_GRID.height / 2;
+    expect(DRAWN_GRID).toEqual({ width: 60, height: 60 });
+    expect(spacing).toEqual(landscape ? { x: 3, y: 2 } : { x: 2, y: 3 });
+    expect(snapToDrawnGrid(0, rowTop).y).toBe(rowTop);
+    for (const count of [0, 1, 2, 3, 4, 5, 6, 20, 100]) {
+      const fan = getStackFan(count, landscape);
+      const fannedHeight = getCardPixelSize(landscape).height + 2 * fan.overhang;
+      expect(fannedHeight).toBeLessThanOrEqual(next.y - first.y);
+      expect(fan.spacing * Math.max(0, count - 1)).toBeCloseTo(2 * fan.overhang);
+    }
+    expect(snapCardCenter(next.x, next.y, landscape)).toEqual(next);
+    expect(DECK_AVATAR_SIZE).toEqual({ width: 157, height: 220 });
+  });
+
+  it('fits four spells at their nameplate spacing and limits wider site fans', () => {
+    const counts = [1, 2, 3, 4, 5];
+    expect(counts.map(count => getStackFan(count, false).spacing)).toEqual([0, 40 / 3, 40 / 3, 40 / 3, 10]);
+    expect(counts.map(count => getStackFan(count, true).spacing)).toEqual([0, 18, 10, 20 / 3, 5]);
+    expect(getCardPixelSize(false).height + getStackFan(4, false).overhang * 2).toBe(DRAWN_GRID.height * 3);
+  });
+});
 
 describe("calculateCardLayout", () => {
   it.each([
@@ -292,11 +329,107 @@ describe("calculateCardLayout", () => {
 });
 
 describe('catalogue hierarchy geometry', () => {
+  it('keeps the full configured column allowance for a site-only filter', () => {
+    const result = calculateCardLayout({
+      cards: Array.from({ length: 8 }, (_, index) => card(`Site ${index}`, 'Site', 'water', null)),
+      viewportAspect: 4,
+      catalogueLayout: { columns: 4, columnMode: 'limit', steps: [
+        { field: 'name', mode: 'sort', direction: 'asc', axis: 'horizontal' },
+      ] },
+    });
+    expect(new Set(result.cards.map(card => card.position.x)).size).toBe(4);
+    expect(new Set(result.cards.map(card => card.position.y)).size).toBe(2);
+    expect(result.cards.every(card => card.isLandscape)).toBe(true);
+  });
+
+  it.each([
+    { limit: 2, spellColumns: 2, siteColumns: 1 },
+    { limit: 5, spellColumns: 3, siteColumns: 2 },
+    { limit: 6, spellColumns: 6, siteColumns: 4 },
+  ])('packs adjacent element groups within a $limit-column ceiling', ({ limit, spellColumns, siteColumns }) => {
+    const cards = (['air', 'earth'] as const).flatMap(element => [
+      ...Array.from({ length: 12 }, (_, index) => card(`${element} Spell ${index}`, 'Minion', element)),
+      ...Array.from({ length: 12 }, (_, index) => card(`${element} Site ${index}`, 'Site', element, null)),
+    ]);
+    const result = calculateCardLayout({ cards, viewportAspect: 4, catalogueLayout: { columns: limit, columnMode: 'limit', steps: [
+      { field: 'element', mode: 'group', direction: 'asc', axis: 'horizontal' },
+      { field: 'family', mode: 'group', direction: 'asc', axis: 'vertical' },
+    ] } });
+    const columns = (isLandscape: boolean) => new Set(result.cards.filter(card =>
+      card.thresholdGroup === 'air' && card.isLandscape === isLandscape).map(card => card.position.x)).size;
+    expect(columns(false)).toBe(spellColumns);
+    expect(columns(true)).toBe(siteColumns);
+    const air = required(collectionHeader(result, 'Air'));
+    const earth = required(collectionHeader(result, 'Earth'));
+    expect(earth.position.y).toBe(air.position.y);
+    expect(earth.position.x - air.position.x).toBe((spellColumns * CARD_CELL_SPACING.PORTRAIT.x + GROUP_GAP_UNITS) * SNAP_GRID.width);
+  });
+
+  it.each([{ layoutVariant: 'wide', viewportAspect: 2 }, { layoutVariant: 'portrait', viewportAspect: 0.5 }] as const)(
+    'fits mixed catalogue groups to a $layoutVariant viewport while aligning their widths', ({ layoutVariant, viewportAspect }) => {
+      const cards = (['air', 'earth', 'fire', 'water'] as const).flatMap(element => [
+        ...Array.from({ length: 48 }, (_, index) => card(`${element} Spell ${index}`, 'Minion', element)),
+        ...Array.from({ length: 32 }, (_, index) => card(`${element} Site ${index}`, 'Site', element, null)),
+      ]);
+      const result = calculateCardLayout({ cards, layoutVariant, viewportAspect, catalogueLayout: {
+        columns: 16, columnMode: 'auto', steps: [
+          { field: 'element', mode: 'group', direction: 'asc', axis: 'horizontal' },
+          { field: 'family', mode: 'group', direction: 'asc', axis: 'vertical' },
+          { field: 'name', mode: 'sort', direction: 'asc', axis: 'horizontal' },
+        ],
+      } });
+      const columns = (isLandscape: boolean) => new Set(result.cards.filter(card =>
+        card.thresholdGroup === 'air' && card.isLandscape === isLandscape).map(card => card.position.x)).size;
+      expect(columns(false) * CARD_CELL_SPACING.PORTRAIT.x).toBe(columns(true) * CARD_CELL_SPACING.LANDSCAPE.x);
+      const ratio = (result.bounds.right - result.bounds.left) / (result.bounds.bottom - result.bounds.top);
+      expect(Math.abs(Math.log(ratio / viewportAspect))).toBeLessThan(0.25);
+      expect(result.cards).toHaveLength(cards.length);
+    },
+  );
+
+  it('chooses catalogue dimensions for the window and respects a per-group column cap', () => {
+    const inputs = Array.from({ length: 48 }, (_, i) => card(`Spell ${i}`, 'Magic', 'air', i % 3));
+    const preference: CatalogueLayoutConfig = { columns: 16, columnMode: 'auto', steps: [
+      { field: 'cost', mode: 'sort', direction: 'asc', axis: 'vertical' },
+    ] };
+    const wide = calculateCardLayout({ cards: inputs, catalogueLayout: preference, viewportAspect: 2 });
+    const tall = calculateCardLayout({ cards: inputs, catalogueLayout: preference, viewportAspect: 0.5 });
+    const aspect = (result: LayoutResult) => (result.bounds.right - result.bounds.left) / (result.bounds.bottom - result.bounds.top);
+    expect(Math.abs(Math.log(aspect(wide) / 2))).toBeLessThan(0.25);
+    expect(Math.abs(Math.log(aspect(tall) / 0.5))).toBeLessThan(0.25);
+    expect(new Set(wide.cards.map(card => card.position.x)).size).toBeGreaterThan(new Set(tall.cards.map(card => card.position.x)).size);
+    const capped = calculateCardLayout({ cards: inputs, viewportAspect: 2, catalogueLayout: {
+      columns: 2, columnMode: 'limit', steps: [
+        { field: 'cost', mode: 'group', direction: 'asc', axis: 'horizontal' },
+        { field: 'name', mode: 'sort', direction: 'asc', axis: 'vertical' },
+      ],
+    } });
+    for (const cost of [0, 1, 2]) {
+      expect(new Set(capped.cards.filter(card => card.cost === cost).map(card => card.position.x)).size).toBeLessThanOrEqual(2);
+    }
+    expect(capped.cards).toHaveLength(inputs.length);
+  });
+
   const catalogueLayout = { columns: 6, steps: [
     { field: 'element', mode: 'group', direction: 'asc' },
     { field: 'family', mode: 'group', direction: 'asc' },
     { field: 'cost', mode: 'sort', direction: 'asc' },
   ] } as const;
+  it.each([false, true])('always leads with the earliest avatar sets (configured=%s)', configured => {
+    const inputs = [
+      { ...card('Z gothic', 'Avatar', 'none'), primarySet: 'Gothic' },
+      { ...card('B newer set', 'Avatar', 'none'), primarySet: 'Future B', earliestSetReleasedAt: '2032-01-01' },
+      { ...card('Z newer set', 'Avatar', 'none'), primarySet: 'Future A', earliestSetReleasedAt: '2031-01-01' },
+      { ...card('A alpha', 'Avatar', 'none'), primarySet: 'Alpha' },
+      { ...card('Z promo', 'Avatar', 'none'), primarySet: 'Promotional' },
+      { ...card('B beta', 'Avatar', 'none'), primarySet: 'Beta' },
+    ];
+    const result = calculateCardLayout({ cards: inputs,
+      catalogueLayout: configured ? { columns: 4, steps: [{ field: 'name', mode: 'sort', direction: 'desc' }] } : undefined,
+    });
+    expect(result.cards.map(card => card.name)).toEqual(['A alpha', 'B beta', 'Z gothic', 'Z newer set', 'B newer set', 'Z promo']);
+    expect(result.cards.map(card => card.position.x)).toEqual([...result.cards.map(card => card.position.x)].sort((a, b) => a - b));
+  });
   it.each(['wide', 'portrait'] as const)('puts all avatars in a visible leading section in %s layout', layoutVariant => {
     const avatars = [
       card('Frost Mage', 'Avatar', 'none', null),
@@ -307,18 +440,49 @@ describe('catalogue hierarchy geometry', () => {
     const result = calculateCardLayout({ cards: inputs, layoutVariant, catalogueLayout: { ...catalogueLayout, steps: [...catalogueLayout.steps] } });
     expect(result.headers[0]?.label).toBe('Avatars');
     expect(result.cards.map(entry => entry.name).sort()).toEqual(inputs.map(entry => entry.name).sort());
-    const lastAvatarEdge = Math.max(...result.cards.filter(entry => entry.type === 'Avatar').map(entry => entry.position.y + 70));
+    const avatarPositions = result.cards.filter(entry => entry.type === 'Avatar').map(entry => entry.position);
+    expect(new Set(avatarPositions.map(position => position.y)).size).toBe(layoutVariant === 'portrait' ? 2 : 1);
+    const lastAvatarEdge = Math.max(...avatarPositions.map(position => position.y + 70));
     expect(result.cards.filter(entry => entry.type !== 'Avatar').every(entry => entry.position.y - 70 > lastAvatarEdge)).toBe(true);
     for (const entry of result.cards) expect(snapCardCenter(entry.position.x, entry.position.y, entry.isLandscape)).toEqual(entry.position);
-    const onlyAvatars = calculateCardLayout({ cards: avatars, catalogueLayout: { columns: 6, steps: [] } });
+    const onlyAvatars = calculateCardLayout({ cards: avatars, layoutVariant, catalogueLayout: { columns: 6, steps: [] } });
     expect(onlyAvatars.cards).toHaveLength(avatars.length);
     expect(onlyAvatars.bounds.bottom).toBe(lastAvatarEdge);
     const onlySpells = calculateCardLayout({ cards: inputs.filter(entry => entry.type !== 'Avatar'), catalogueLayout: { columns: 6, steps: [] } });
     expect(onlySpells.headers.some(header => header.label === 'Avatars')).toBe(false);
-    const singleAvatar = calculateCardLayout({ cards: [card('Frost Mage', 'Avatar', 'none', null)], catalogueLayout: { columns: 1, steps: [] } });
+    const singleAvatar = calculateCardLayout({ cards: [card('Frost Mage', 'Avatar', 'none', null)], layoutVariant, catalogueLayout: { columns: 1, steps: [] } });
     const title = singleAvatar.headers[0];
     expect(title).toBeDefined();
-    expect((title?.fontSize ?? 0) * 'Avatars'.length * 0.7).toBeLessThanOrEqual(singleAvatar.bounds.right);
+    expect((title?.fontSize ?? 0) * ('Avatars'.length * 0.7)).toBeLessThanOrEqual(singleAvatar.bounds.right);
+  });
+  it('uses each grouping and sort axis to place its siblings and cards', () => {
+    const inputs = [
+      card('First air spell', 'Magic', 'air', 1),
+      card('Second air spell', 'Magic', 'air', 2),
+      card('Air site', 'Site', 'air', null),
+      card('Earth spell', 'Magic', 'earth', 1),
+    ];
+    const result = calculateCardLayout({
+      cards: inputs,
+      layoutVariant: 'portrait',
+      catalogueLayout: { columns: 1, steps: [
+        {field: 'element', mode: 'group', direction: 'asc', axis: 'vertical'},
+        {field: 'family', mode: 'group', direction: 'asc', axis: 'horizontal'},
+        {field: 'cost', mode: 'sort', direction: 'desc', axis: 'vertical'},
+      ] },
+    });
+    const air = collectionHeader(result, 'Air');
+    const earth = collectionHeader(result, 'Earth');
+    expect(air?.position.x).toBe(earth?.position.x);
+    expect(earth?.position.y).toBeGreaterThan(air?.position.y ?? Infinity);
+    const spellbook = result.headers.find(header => header.label === 'Spellbook');
+    const atlas = result.headers.find(header => header.label === 'Atlas');
+    expect(spellbook?.position.y).toBe(atlas?.position.y);
+    expect(atlas?.position.x).toBeGreaterThan(spellbook?.position.x ?? Infinity);
+    const first = cardByName(result, 'First air spell');
+    const second = cardByName(result, 'Second air spell');
+    expect(first.position.x).toBe(second.position.x);
+    expect(first.position.y).toBeGreaterThan(second.position.y);
   });
   it.each(['wide', 'portrait'] as const)('keeps every card in non-overlapping snapped cells in %s layout', (layoutVariant) => {
     const inputs = (['air', 'earth', 'fire', 'water', 'multiple', 'none'] as const).flatMap((element) =>

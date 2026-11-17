@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PixiStage } from './PixiStage';
-import { CARD_SIZE, snapCardCenter } from './Grid';
+import { CARD_SIZE, SNAP_GRID, snapCardCenter, snapGridToPixels } from './Grid';
 import type { CanvasLabel } from '@/data/dataModels';
 import type { CanvasArea, CanvasCardInstance } from '@/canvas/canvasAreas';
 import { openCanvasLabelEditor } from '@/ui/canvasLabelEditor';
+import { required } from '@/utils/required';
 
 vi.mock('@/ui/canvasLabelEditor', () => ({ openCanvasLabelEditor: vi.fn() }));
 
@@ -30,14 +31,24 @@ interface Harness {
 
 let stage: Harness;
 let area: CanvasArea;
+
+function cardAtGrid(column: number, row: number, landscape = false) {
+  const center = snapGridToPixels(column, row, landscape);
+  const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+  return { x: center.x - size.width / 2, y: center.y - size.height / 2 };
+}
+
+const snappedMove = { x: 2 * SNAP_GRID.width, y: 2 * SNAP_GRID.height };
+const rawMove = { x: snappedMove.x + SNAP_GRID.width / 8, y: snappedMove.y - SNAP_GRID.height / 4 };
+
 beforeEach(() => {
   vi.mocked(openCanvasLabelEditor).mockReset();
   area = {
     id: 'deck', type: 'deck', name: 'Deck', pinned: true,
     bounds: { x: 0, y: 0, width: 1800, height: 1400 },
     cards: [
-      { id: 'a', cardName: 'Spell A', x: 5, y: 12.5, board: 'mainboard', labelId: 'child' },
-      { id: 'b', cardName: 'Spell B', x: 115, y: 12.5, board: 'mainboard', labelId: 'child' },
+      { id: 'a', cardName: 'Spell A', ...cardAtGrid(1, 1), board: 'mainboard', labelId: 'child' },
+      { id: 'b', cardName: 'Spell B', ...cardAtGrid(3, 1), board: 'mainboard', labelId: 'child' },
     ],
   };
   stage = Object.assign(Object.create(PixiStage.prototype) as Harness, {
@@ -112,33 +123,30 @@ describe('label interaction review regressions', () => {
     stage.resetZoneCardDrag();
     const label = stage.canvasLabels.find((entry) => entry.id === 'child');
     stage.getLabelTarget.mockReturnValue(label);
-    const next: CanvasCardInstance = { id: 'new', cardName: 'New card', x: 5, y: 12.5, board: 'mainboard' };
+    const next: CanvasCardInstance = { id: 'new', cardName: 'New card', ...cardAtGrid(1, 1), board: 'mainboard' };
     stage.applyLabelDrop([next], area, area, { x: 0, y: 0 }, false);
     expect(next.labelId).toBe('child');
   });
 
   it('snaps a populated label by one card anchor while retaining all offsets', () => {
+    const before = structuredClone(area.cards);
     stage.startLabelDrag('child', { x: 0, y: 0 });
-    stage.updateLabelDrag({ x: 113, y: 97 });
+    stage.updateLabelDrag(rawMove);
     stage.endLabelDrag();
-    const [first, second] = area.cards;
-    if (!first || !second) throw new Error('Missing card fixture');
-    expect(first.x).toBe(115);
-    expect(first.y).toBe(122.5);
-    expect(second.x - first.x).toBe(110);
-    expect(second.y - first.y).toBe(0);
-    const label = stage.canvasLabels.find((entry) => entry.id === 'child');
-    expect(first.x - (label?.x ?? 0)).toBe(5);
-    expect(first.y - (label?.y ?? 0)).toBe(12.5);
+    expect(area.cards.map(({ x, y }) => ({ x, y }))).toEqual(before.map(card => ({
+      x: card.x + snappedMove.x, y: card.y + snappedMove.y,
+    })));
+    expect(stage.canvasLabels.find(label => label.id === 'child')).toMatchObject(snappedMove);
   });
 
   it('keeps mixed orientations, stacks and nested headings on the same grid translation', () => {
-    area.cards.unshift({ id: 'site', cardName: 'Site', x: 12.5, y: 5, board: 'mainboard', labelId: 'parent' });
-    area.cards.push({ id: 'copy', cardName: 'Spell A', x: 5, y: 12.5, board: 'mainboard', labelId: 'child' });
+    area.cards.push({ ...required(area.cards[0]), id: 'copy' });
+    area.cards.unshift({ id: 'site', cardName: 'Site', ...cardAtGrid(1, 1, true), board: 'mainboard', labelId: 'parent' });
     Object.assign(stage, { isLandscapeCard: (name: string) => name === 'Site' });
     const before = structuredClone(area.cards);
-    stage.startLabelDrag('parent', { x: -40, y: -50 });
-    stage.updateLabelDrag({ x: 73, y: 47 });
+    const labelStart = { ...required(stage.canvasLabels.find(label => label.id === 'parent')) };
+    stage.startLabelDrag('parent', { x: labelStart.x, y: labelStart.y });
+    stage.updateLabelDrag({ x: labelStart.x + rawMove.x, y: labelStart.y + rawMove.y });
     stage.endLabelDrag();
     for (const [index, card] of area.cards.entries()) {
       const original = before[index];
@@ -146,11 +154,13 @@ describe('label interaction review regressions', () => {
       const size = card.cardName === 'Site' ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
       const center = { x: card.x + size.width / 2, y: card.y + size.height / 2 };
       expect(snapCardCenter(center.x, center.y, card.cardName === 'Site')).toEqual(center);
-      expect(card.x - original.x).toBe(110);
-      expect(card.y - original.y).toBe(110);
+      expect(card.x - original.x).toBe(snappedMove.x);
+      expect(card.y - original.y).toBe(snappedMove.y);
     }
-    expect(stage.canvasLabels.find(label => label.id === 'parent')).toMatchObject({ x: 70, y: 60 });
-    expect(stage.canvasLabels.find(label => label.id === 'child')).toMatchObject({ x: 110, y: 110 });
+    expect(stage.canvasLabels.find(label => label.id === 'parent')).toMatchObject({
+      x: labelStart.x + snappedMove.x, y: labelStart.y + snappedMove.y,
+    });
+    expect(stage.canvasLabels.find(label => label.id === 'child')).toMatchObject({ ...snappedMove, parentLabelId: labelStart.id });
   });
 
   it('leaves an empty label free and treats pointer jitter as a click', () => {
@@ -192,15 +202,18 @@ describe('label interaction review regressions', () => {
     for (const label of stage.canvasLabels) { label.x += 4000; label.y += 3000; }
     stage.canvasLabels.push({ id: 'empty', text: 'Loose', x: -8000, y: -8000, areaId: 'deck', board: 'mainboard' });
     const beforeCards = structuredClone(area.cards);
+    const beforeLabels = structuredClone(stage.canvasLabels);
     stage.sortZoneCards(area.id);
     const child = stage.canvasLabels.find(label => label.id === 'child');
     const parent = stage.canvasLabels.find(label => label.id === 'parent');
     const left = Math.min(...area.cards.map(card => card.x));
     const top = Math.min(...area.cards.map(card => card.y));
-    expect(child?.x).toBe(left - 5);
-    expect(child?.y).toBe(top - 12.5);
-    expect(parent?.x).toBe(left - 45);
-    expect(parent?.y).toBe(top - 62.5);
+    const dx = left - Math.min(...beforeCards.map(card => card.x));
+    const dy = top - Math.min(...beforeCards.map(card => card.y));
+    const previousChild = required(beforeLabels.find(label => label.id === 'child'));
+    const previousParent = required(beforeLabels.find(label => label.id === 'parent'));
+    expect(child).toMatchObject({ x: previousChild.x + dx, y: previousChild.y + dy });
+    expect(parent).toMatchObject({ x: previousParent.x + dx, y: previousParent.y + dy });
     expect(child?.parentLabelId).toBe('parent');
     expect(stage.canvasLabels.find(label => label.id === 'empty')?.x).toBe(-8000);
     expect(area.cards.map(({ id, board, labelId }) => ({ id, board, labelId })))

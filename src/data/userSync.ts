@@ -10,12 +10,13 @@
  * - `src/data/userStorage.ts` (local persistence fallback)
  */
 
-import type { UserData, CanvasLabel } from './dataModels';
+import type { UserData, CanvasLabel, Card } from './dataModels';
 import { fetchUserData, updateUserData } from '@/auth/api';
 import { saveUserData } from './userStorage';
 import { debounce } from '@/utils/debounce';
 import { detachLabelsFromAreas, mergeDeckRemovals } from './deckRemovals';
 import { normalizeUserDataBoards } from './boardMigration';
+import { migrateCanvasGrid } from '@/canvas/canvasGridMigration';
 
 // Debounce delay for auto-save (ms)
 const SYNC_DEBOUNCE_MS = 2000;
@@ -134,9 +135,10 @@ async function performSync(userData: UserData, token: string): Promise<void> {
  * Outputs:
  * - Returns merged `UserData` preserving server precedence where conflicts exist.
  */
-export function mergeUserData(local: UserData, server: UserData): UserData {
-  local = normalizeUserDataBoards(local);
-  server = normalizeUserDataBoards(server);
+export function mergeUserData(local: UserData, server: UserData, metadata: readonly Card[] = []): UserData {
+  // Each save may use a different coordinate format. Upgrade before combining them.
+  local = migrateCanvasGrid(normalizeUserDataBoards(local), metadata);
+  server = migrateCanvasGrid(normalizeUserDataBoards(server), metadata);
   // Simple merge strategy: keep all decks, dedupe by ID
   const deckMap = new Map<string, UserData['decks'][0]>();
 
@@ -208,6 +210,7 @@ export function mergeUserData(local: UserData, server: UserData): UserData {
   return {
     name: server.name,
     id: server.id,
+    gridVersion: server.gridVersion,
     decks: Array.from(deckMap.values()),
     removedDecks,
     collection: Array.from(collectionMap.entries()).map(([name, quantity]) => ({

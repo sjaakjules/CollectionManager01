@@ -50,12 +50,17 @@ describe('selected card quick add', () => {
     const update = stage as unknown as { updateCardQuickAddTargets(): void };
     update.updateCardQuickAddTargets();
     expect(onCardQuickAddTargetsChange).toHaveBeenLastCalledWith(expect.arrayContaining([
-      { key: 'Frost Mage', cardName: 'Frost Mage', clientX: 402, clientY: 328, visible: true },
+      { key: 'Frost Mage', cardName: 'Frost Mage', clientX: 402, clientY: 328, visible: true,
+        bounds: { left: 210, top: 320, right: 410, bottom: 600 }, canLayout: false, canQuickSort: false, canCleanUp: false },
     ]));
     sprite.x = 1000;
     update.updateCardQuickAddTargets();
     const targets = onCardQuickAddTargetsChange.mock.calls.at(-1)?.[0];
     expect(targets).toHaveLength(3);
     expect(targets?.every(target => !target.visible)).toBe(true);
+    sprite.x = 100;
+    Object.assign(stage, { dragState: { isDragging: true } });
+    update.updateCardQuickAddTargets();
+    expect(onCardQuickAddTargetsChange.mock.calls.at(-1)?.[0]?.every(target => !target.visible && !target.bounds)).toBe(true);
   });
 });

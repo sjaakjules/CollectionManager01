@@ -1,5 +1,6 @@
 import { required } from '@/utils/required';
 import { describe, expect, it } from 'vitest';
+import { DRAWN_GRID } from '@/rendering/Grid';
 import type { DeckRegionBounds } from './canvasAreas';
 import { hitDeckRegion, planDeckRegionMove, resizeDeckRegion, type RegionEdge } from './deckRegionInteraction';
 
@@ -18,7 +19,7 @@ describe('deck region proposals', () => {
     expect(plan.hint).toBe('Atlas before Spellbook');
     expect(required(plan.rects.atlas).y + required(plan.rects.atlas).height + 22).toBeLessThanOrEqual(required(plan.rects.spellbook).y);
     expect(required(plan.rects.mainboard).y).toBeLessThan(required(plan.rects.atlas).y - 32);
-    expect(Object.values(plan.deltas).every(move => move.x % 55 === 0 && move.y % 55 === 0)).toBe(true);
+    expect(Object.values(plan.deltas).every(move => move.x % DRAWN_GRID.width === 0 && move.y % DRAWN_GRID.height === 0)).toBe(true);
     expect(regions).toEqual(before);
   });
 

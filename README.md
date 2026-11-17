@@ -5,7 +5,7 @@ A visual deck-building tool for the Sorcery TCG. Built with React and PixiJS for
 ## Features
 
 - **Visual Deck Building**: Pan and zoom through your entire card collection on an interactive grid
-- **Direct Card Manipulation**: Double-click to add/remove cards from your deck
+- **Direct Card Manipulation**: Double-click catalogue cards to choose a stack or deck board
 - **Real-time Validation**: Deck rules enforced with clear visual feedback
 - **Multiple Boards**: Main (Spellbook and Atlas), Collection, Maybe, and avatar support
 - **Local-first**: Works fully offline with optional cloud sync
@@ -174,7 +174,8 @@ All of the modules above include top-of-file headers and exported function docs 
 | Touch a card/stack centre and drag | Move it immediately once zoomed to a readable size |
 | Touch card edges or empty canvas / pinch | Pan / zoom; overview thumbnails also pan |
 | Hold a card | Show touch actions |
-| Double left/right-click in the catalogue | Add to Main / remove from the active deck |
+| Double-click in the catalogue | Open Stack / Deck destinations; hover or click to choose a saved stack or Main / Collection / Maybe |
+| Double right-click in the catalogue | Remove from the active deck |
 | Alt + double-click in a deck | Toggle inclusion in the current variant |
 | Click a card's X | Remove that card immediately; Cmd/Ctrl+Z restores it |
 | Drop a card on a label name | Join that label's group |
@@ -224,7 +225,9 @@ other device type creates its own layout. Saved layouts contain positions only;
 card contents, board membership and variants remain shared. Both layouts use the
 same guest/account JSON contract.
 
-Catalogue double-click additions always go to Main and glow until moved.
+Catalogue double-click opens a destination menu. Stack lists all saved stacks,
+including hidden ones; + names a new stack inline. Deck offers Main, Collection,
+and Maybe for the active deck. Added deck cards glow until moved or acknowledged.
 The **Layout** panel defines the catalogue's grouping and sorting hierarchy:
 drag steps between arrows, double-click a step to switch Group/Sort, or use its
 buttons. Element, Spellbook/Atlas and card-type groups remain after filtering.

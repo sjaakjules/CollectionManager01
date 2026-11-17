@@ -24,6 +24,7 @@ import { getStoredSession, type StoredSession } from '@/auth/session';
 import { generateUUID } from '@/utils/uuid';
 import { fetchUserData } from '@/auth/api';
 import { mergeUserData } from '@/data/userSync';
+import { migrateCanvasGrid } from '@/canvas/canvasGridMigration';
 
 export interface StartupResult {
   success: boolean;
@@ -62,7 +63,7 @@ export async function initializeApp(
     const cardsPromise = loadCards(dispatch);
 
     // Step 3: Load or create user data
-    const userDataPromise = loadOrCreateUserData(dispatch, session ?? null);
+    const userDataPromise = loadOrCreateUserData(dispatch, session ?? null, cardsPromise.then(result => result.cards ?? []));
 
     // Wait for both to complete
     const [cardsResult, userDataResult] = await Promise.all([
@@ -88,7 +89,7 @@ export async function initializeApp(
 
 async function loadCards(
   dispatch: React.Dispatch<AppAction>
-): Promise<StartupResult> {
+): Promise<StartupResult & { cards?: Card[] }> {
   try {
     const cards: Card[] = await fetchCards((message) => {
       dispatch({
@@ -97,7 +98,7 @@ async function loadCards(
       });
     });
     dispatch({ type: 'SET_CARDS', cards });
-    return { success: true };
+    return { success: true, cards };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load cards';
     console.error('Failed to load cards:', error);
@@ -107,7 +108,8 @@ async function loadCards(
 
 async function loadOrCreateUserData(
   dispatch: React.Dispatch<AppAction>,
-  session: StoredSession | null
+  session: StoredSession | null,
+  metadata: Promise<Card[]>,
 ): Promise<StartupResult> {
   try {
     let userData: UserData | null = null;
@@ -126,7 +128,7 @@ async function loadOrCreateUserData(
       }
 
       if (localData && serverData) {
-        userData = mergeUserData(localData, serverData);
+        userData = mergeUserData(localData, serverData, await metadata);
       } else if (serverData) {
         userData = serverData;
       } else if (localData) {
@@ -152,7 +154,8 @@ async function loadOrCreateUserData(
         userData = createGuestUserData(guestId);
       }
 
-      userData = await applyGuestSeedDecks(dispatch, userData);
+      // Upgrade existing coordinates before seeding areas on the current grid.
+      userData = await applyGuestSeedDecks(dispatch, migrateCanvasGrid(userData, await metadata));
 
       dispatch({
         type: 'SET_SESSION',
@@ -165,6 +168,7 @@ async function loadOrCreateUserData(
       });
     }
 
+    userData = migrateCanvasGrid(userData, await metadata);
     if (readFailed) {
       // A storage read threw, so existing data may be present but unreadable.
       // Persisting now could overwrite it with fresh defaults — stay in

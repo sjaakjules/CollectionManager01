@@ -3,7 +3,7 @@ import { PixiStage } from './PixiStage';
 import { createDeckZone, cardNameToOrientationMap, type CanvasArea, type CanvasCardInstance } from '@/canvas/canvasAreas';
 import { DECK_COLLECTION_WIDTH, type DeckZoneBoard } from '@/canvas/deckBoardLayout';
 import type { Card, Deck, CanvasLabel } from '@/data/dataModels';
-import { CARD_SIZE } from './Grid';
+import { CARD_SIZE, SNAP_GRID } from './Grid';
 
 interface BoardStage {
   canvasAreas: CanvasArea[];
@@ -89,7 +89,7 @@ describe('deck Collection and Maybe sections', () => {
   it('fits moved boards without wrapping cards or changing their saved positions', () => {
     first('maybeboard').y = first('mainboard').y;
     zone.cards.filter((entry) => entry.board === 'collection').forEach((card, index) => {
-      card.x += index * 110;
+      card.x += index * 2 * SNAP_GRID.width;
     });
     const savedCards = structuredClone(zone.cards);
     stage.fitDeckSections(zone);
@@ -221,21 +221,23 @@ describe('free deck arrangements', () => {
 
   it('preserves source areas when moving a selection from multiple areas on empty canvas', () => {
     const second:CanvasArea = {...structuredClone(zone),id:'second'};
-    second.cards = second.cards.map((card) => ({...card,id:`second-${card.id}`,x:card.x+2000}));
+    second.cards = second.cards.map((card) => ({ ...card, id: `second-${card.id}`, x: card.x + 36 * SNAP_GRID.width }));
     stage.canvasAreas.push(second);
     Object.assign(stage,{getZoneAtPosition:vi.fn(() => null)});
     const firstCard=first('mainboard');
     const secondCard=required(second.cards[0]);
     const before={first:firstCard.x,second:secondCard.x};
     const point=armDrag([firstCard,secondCard]);
-    stage.endZoneCardDrag({x:point.x+550,y:point.y});
-    expect(zone.cards.find((card) => card.id===firstCard.id)?.x).toBe(before.first+550);
-    expect(second.cards.find((card) => card.id===secondCard.id)?.x).toBe(before.second+550);
+    const dx = 10 * SNAP_GRID.width;
+    stage.endZoneCardDrag({ x: point.x + dx + SNAP_GRID.width / 5, y: point.y });
+    expect(zone.cards.find((card) => card.id === firstCard.id)?.x).toBe(before.first + dx);
+    expect(second.cards.find((card) => card.id === secondCard.id)?.x).toBe(before.second + dx);
   });
 
   it('keeps offsets across source areas when their cards join one label heading', () => {
     const firstCard = first('mainboard');
-    const secondCard = { ...firstCard, id: 'second-card', x: firstCard.x + 330, y: firstCard.y + 55 };
+    const offset = { x: 6 * SNAP_GRID.width, y: SNAP_GRID.height };
+    const secondCard = { ...firstCard, id: 'second-card', x: firstCard.x + offset.x, y: firstCard.y + offset.y };
     const second: CanvasArea = { ...structuredClone(zone), id: 'second', cards: [secondCard] };
     const target: CanvasArea = { ...structuredClone(zone), id: 'target', cards: [] };
     const label: CanvasLabel = { id: 'target-label', areaId: 'target', board: 'mainboard', text: 'Together', x: 1500, y: 1500 };
@@ -252,8 +254,8 @@ describe('free deck arrangements', () => {
     const b = required(target.cards.find(card => card.id === secondCard.id));
     expect(a.labelId).toBe(label.id);
     expect(b.labelId).toBe(label.id);
-    expect(b.x - a.x).toBe(330);
-    expect(b.y - a.y).toBe(55);
+    expect(b.x - a.x).toBe(offset.x);
+    expect(b.y - a.y).toBe(offset.y);
     expect(a.y).toBeGreaterThan(label.y + 30);
   });
 

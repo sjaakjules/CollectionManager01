@@ -1,0 +1,112 @@
+.catalogue-card-menu {
+  position: fixed;
+  z-index: 180;
+  width: var(--catalogue-menu-width, 112px);
+  pointer-events: none;
+  color: var(--manga-paper, #fff3d6);
+  font: 600 13px/1.2 Arial, sans-serif;
+}
+
+.catalogue-card-menu-main,
+.catalogue-card-menu-submenu {
+  box-sizing: border-box;
+  display: grid;
+  gap: 2px;
+  max-height: var(--catalogue-menu-height, calc(100dvh - 16px));
+  padding: 3px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--manga-line, #817969);
+  border-radius: 5px;
+  background: var(--manga-ink, #161620);
+  box-shadow: 2px 3px 8px #0009;
+  pointer-events: auto;
+}
+
+.catalogue-card-menu-submenu {
+  position: absolute;
+  left: 100%;
+  width: var(--catalogue-submenu-width, 184px);
+}
+
+.catalogue-card-menu[data-submenu-side="left"] .catalogue-card-menu-submenu {
+  right: 100%;
+  left: auto;
+}
+
+.catalogue-card-menu[data-submenu-side="left"] .catalogue-card-menu-caret {
+  transform: rotate(180deg);
+}
+
+.catalogue-card-menu button {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 32px;
+  overflow: hidden;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.catalogue-card-menu button[data-destination] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.catalogue-card-menu button:not(:disabled):is(:hover, :focus-visible, [aria-expanded="true"]) {
+  border-color: var(--manga-gold, #f2c572);
+  background: var(--manga-active, #484336);
+}
+
+.catalogue-card-menu button:disabled {
+  color: var(--manga-muted, #b6af9f);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.catalogue-card-menu :is(button, input, [role="menu"]):focus-visible {
+  outline: 1px solid var(--manga-gold, #f2c572);
+  outline-offset: -2px;
+}
+
+.catalogue-card-menu p {
+  margin: 0;
+  padding: 4px 8px;
+  color: var(--manga-muted, #b6af9f);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.catalogue-card-menu form {
+  display: grid;
+  gap: 4px;
+  padding: 3px;
+}
+
+.catalogue-card-menu input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 6px;
+  border: 1px solid var(--manga-line, #817969);
+  border-radius: 3px;
+  color: inherit;
+  background: var(--manga-raised, #293046);
+  font: inherit;
+}
+
+.catalogue-card-menu form button {
+  justify-self: end;
+  border-color: var(--manga-line, #817969);
+}

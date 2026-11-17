@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Container, Graphics, Text } from 'pixi.js';
 import { PixiStage } from './PixiStage';
 import { CardSprite } from './CardSprite';
-import { CARD_SIZE, STACK_OFFSET } from './Grid';
+import { CARD_SIZE, DRAWN_GRID, getStackFan, snapCardToGrid } from './Grid';
+import { cardBounds } from '@/canvas/labelRegions';
 import type { CanvasArea, CanvasCardInstance } from '@/canvas/canvasAreas';
 import type { DeckZoneBoard } from '@/canvas/deckBoardLayout';
 import type { InteractionEffectsSettings } from '@/data/interactionEffects';
@@ -33,8 +34,10 @@ interface ZoneCard {
 }
 interface Harness {
   initialize(host: HTMLElement): Promise<void>;
+  camera: { getVisibleBounds(): EffectBounds };
   canvasAreas: CanvasArea[];
   zoneCardSprites: Map<string, ZoneCard>;
+  selectedZoneCardKeys: Set<string>;
   arrivalPops: ArrivalEntry[];
   arrivalStackHistory: Array<{ members: Set<string> }>;
   isInitialized: boolean;
@@ -46,6 +49,8 @@ interface Harness {
   playArrivalPop(zone: string, id: string): void;
   getZoneStackEffectKeys(zone: string, id: string): string[];
   startZoneCardDrag(card: ZoneCard, point: { x: number; y: number }): void;
+  emitSelectionChange(): void;
+  emitCanvasAreasChange: ReturnType<typeof vi.fn>;
   update(): void;
 }
 let stage: PixiStage;
@@ -105,6 +110,31 @@ afterEach(() => {
 });
 
 describe('card arrival stack integration', () => {
+  it.each([
+    { name: 'Site', count: 2, height: 118, rows: 2 },
+    { name: 'Site', count: 3, height: 120, rows: 2 },
+    { name: 'Site', count: 4, height: 120, rows: 2 },
+    { name: 'Spell', count: 4, height: 180, rows: 3 },
+  ])('fits $count copies of a $name within $rows snapped rows', ({ name, count, height, rows }) => {
+    const landscape = name === 'Site';
+    const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const area = makeArea(name, count);
+    const position = snapCardToGrid(500, 600, landscape);
+    for (const card of area.cards) Object.assign(card, position);
+    h.canvasAreas = [area];
+    h.rebuildZoneVisuals();
+
+    const rendered = [...h.zoneCardSprites.values()].map(card => card.bounds);
+    const middle = position.y + size.height / 2;
+    const top = Math.min(...rendered.map(bounds => bounds.top));
+    const bottom = Math.max(...rendered.map(bounds => bounds.bottom));
+    expect(rendered).toHaveLength(count);
+    expect(top).toBeGreaterThanOrEqual(middle - rows * DRAWN_GRID.height / 2);
+    expect(bottom).toBeLessThanOrEqual(middle + rows * DRAWN_GRID.height / 2);
+    expect(bottom - top).toBe(height);
+    expect(required(cardBounds(area.cards, () => landscape).get('card-0'))).toMatchObject({ y: top, height });
+  });
+
   it.each(['Spell', 'Site'])('animates the first %s added from the catalogue after hydration', name => {
     stage.setCanvasAreas([makeArea(name, 0)]);
     expect(created).not.toHaveBeenCalled();
@@ -126,10 +156,12 @@ describe('card arrival stack integration', () => {
     const area = arrange(name, count, board);
     const original = area.cards.map(card => ({ ...card }));
     h.duplicateCanvasCardInstance('deck', 'card-0');
-    const size = name === 'Site' ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const landscape = name === 'Site';
+    const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const { overhang } = getStackFan(count + 1, landscape);
     expect(created).toHaveBeenCalledExactlyOnceWith({
-      left: 500, top: 600 - count * STACK_OFFSET / 2,
-      right: 500 + size.width, bottom: 600 + size.height + count * STACK_OFFSET / 2,
+      left: 500, top: 600 - overhang,
+      right: 500 + size.width, bottom: 600 + size.height + overhang,
     }, 0.5, { intensity: 'expressive', lettering: 'both' }, true);
     expect(area.cards.slice(0, count)).toEqual(original);
     expect(area.cards).toHaveLength(count + 1);
@@ -153,8 +185,9 @@ describe('card arrival stack integration', () => {
     expect(entry.effect.refreshWords).toHaveBeenCalledExactlyOnceWith(150);
     expect(entry.start).toBe(1000);
     expect(entry.follow).toHaveLength(3);
+    const { overhang } = getStackFan(3, false);
     expect(entry.effect.update).toHaveBeenLastCalledWith(150, 0.5, {
-      left: 500, top: 600 - STACK_OFFSET, right: 500 + CARD_SIZE.PORTRAIT.width, bottom: 600 + CARD_SIZE.PORTRAIT.height + STACK_OFFSET,
+      left: 500, top: 600 - overhang, right: 500 + CARD_SIZE.PORTRAIT.width, bottom: 600 + CARD_SIZE.PORTRAIT.height + overhang,
     });
     expect(getArtwork(entry.cardKey ?? '')?.rotation).not.toBe(0);
     expect(getArtwork(`deck:${required(area.cards.at(-1)).id}`)).toBeUndefined();
@@ -193,7 +226,42 @@ describe('card arrival stack integration', () => {
     h.rebuildZoneVisuals();
     h.duplicateCanvasCardInstance('deck', survivor);
     expect(created.mock.calls.map(call => call[3])).toEqual([true, false]);
-    expect(created.mock.lastCall?.[0]).toMatchObject({ left: 1700, top: 1000 - STACK_OFFSET / 2 });
+    expect(created.mock.lastCall?.[0]).toMatchObject({ left: 1700, top: 1000 - getStackFan(2, true).overhang });
+  });
+
+  it('clears a duplicate’s new outline when another member of its pile is selected', () => {
+    const area = arrange();
+    h.duplicateCanvasCardInstance('deck', 'card-0');
+    const copy = required(area.cards[1]);
+    expect(copy.isNew).toBe(true);
+    const sprite = required(h.zoneCardSprites.get(`deck:${copy.id}`)).sprite;
+    const outline = vi.spyOn(sprite, 'setNewlyAdded');
+    // The stack path is independent of the viewport test.
+    h.camera.getVisibleBounds = () => ({ left: 0, top: 0, right: 300, bottom: 300 });
+    h.selectedZoneCardKeys.add('deck:card-0');
+    h.emitSelectionChange();
+    expect(copy.isNew).toBe(false);
+    expect(outline).toHaveBeenCalledExactlyOnceWith(false);
+    expect(h.emitCanvasAreasChange).toHaveBeenCalledOnce();
+  });
+
+  it('acknowledges on-screen additions when selecting another pile and keeps offscreen ones new', () => {
+    const area = makeArea();
+    area.cards.push(
+      { id: 'visible', cardName: 'Spell', x: 750, y: 600, board: 'mainboard', isNew: true },
+      { id: 'offscreen', cardName: 'Spell', x: 1600, y: 600, board: 'mainboard', isNew: true },
+    );
+    h.camera.getVisibleBounds = () => ({ left: 0, top: 0, right: 1200, bottom: 900 });
+    h.canvasAreas = [area];
+    h.rebuildZoneVisuals();
+
+    h.emitSelectionChange();
+    expect(area.cards.slice(1).map(card => card.isNew)).toEqual([true, true]);
+    h.selectedZoneCardKeys.add('deck:card-0');
+    h.emitSelectionChange();
+    expect(area.cards.slice(1).map(card => card.isNew)).toEqual([false, true]);
+    h.emitSelectionChange();
+    expect(h.emitCanvasAreasChange).toHaveBeenCalledOnce();
   });
 
   it('does not allocate empty repeated effects when lettering is disabled', () => {

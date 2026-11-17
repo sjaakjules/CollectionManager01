@@ -5,7 +5,12 @@
   z-index: 100;
 }
 
+/* Open menus must remain usable above the side drawers on narrow screens. */
+.card-quick-add-controls[data-menu-open] { z-index: 160; }
+
 .card-quick-add-plus,
+.card-selection-actions button,
+.card-selection-sort-menu button,
 .card-quick-add-row button {
   pointer-events: auto;
   touch-action: manipulation;
@@ -29,10 +34,69 @@
   line-height: 28px;
 }
 
-.card-quick-add-plus[hidden] { display: none; }
+.card-selection-actions,
+.card-selection-sort-menu {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #817969;
+  border-radius: 7px;
+  background: #161620ed;
+  box-shadow: 0 2px 8px #0009;
+  pointer-events: auto;
+}
+
+.card-selection-actions {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: var(--selection-actions-opacity, 0.18);
+  transition: opacity 120ms ease-out;
+}
+
+.card-selection-actions:is(:hover, :focus-within) { opacity: 1; }
+
+@media (hover: none) {
+  .card-selection-actions { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-selection-actions { transition: none; }
+}
+
+.card-selection-sort-menu {
+  position: fixed;
+  left: 0;
+  top: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(184px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  background: var(--manga-ink, #161620);
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.card-selection-actions button,
+.card-selection-sort-menu button {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.card-selection-actions button { min-width: 90px; }
+.card-quick-add-plus[hidden],
+.card-selection-actions[hidden],
+.card-selection-sort-menu[hidden] { display: none; }
 .card-quick-add-plus[aria-expanded="true"] { z-index: 2; }
 .card-quick-add-plus:hover,
 .card-quick-add-plus[aria-expanded="true"],
+.card-selection-actions button:hover,
+.card-selection-actions button[aria-expanded="true"],
+.card-selection-sort-menu button:hover,
 .card-quick-add-row button:hover {
   background: #484336;
   border-color: #f2c572;
@@ -100,3 +164,8 @@
   padding-top: 7px;
 }
 .card-quick-add-caption span { color: #b6af9f; }
+
+/* Show a held menu while leaving the in-progress gesture on the canvas. */
+.card-quick-add-controls[data-canvas-pointer-down] :is(button, .card-quick-add-selection, .card-selection-actions, .card-selection-sort-menu) {
+  pointer-events: none;
+}

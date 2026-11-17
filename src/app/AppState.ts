@@ -25,6 +25,8 @@ import type {
 import type { CanvasDeckVariant, CanvasArea, CanvasAreaKind } from '@/canvas/canvasAreas';
 import { normalizeDeckRegionBounds } from '@/canvas/deckBoardLayout';
 import { normalizeDeckLayoutProfiles } from '@/canvas/deckLayoutProfiles';
+import { normalizeDeckSectionLayouts } from '@/canvas/deckSectionLayouts';
+import { migrateCanvasGrid } from '@/canvas/canvasGridMigration';
 import {
   createDefaultCardFilters,
   ensureCardFilterState,
@@ -195,7 +197,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_USER_DATA':
       {
-        const normalized = normalizeUserData(action.userData);
+        const normalized = normalizeUserData(action.userData, state.cards);
         return {
           ...state,
           userData: normalized,
@@ -699,17 +701,19 @@ function normalizeCanvasAreas(value: unknown): CanvasArea[] {
       cardFilters,
       deckRegionBounds: type === 'deck' ? normalizeDeckRegionBounds(areaRecord.deckRegionBounds) : undefined,
       layoutProfiles: type === 'deck' ? normalizeDeckLayoutProfiles(areaRecord.layoutProfiles) : undefined,
+      sectionLayouts: type === 'deck' ? normalizeDeckSectionLayouts(areaRecord.sectionLayouts) : undefined,
     });
   }
 
   return canvasAreas;
 }
 
-function normalizeUserData(raw: UserData): UserData {
+function normalizeUserData(raw: UserData, metadata: readonly Card[]): UserData {
   const userData = normalizeUserDataBoards(raw);
-  return {
+  return migrateCanvasGrid({
     name: userData.name,
     id: userData.id,
+    gridVersion: userData.gridVersion,
     decks: userData.decks,
     removedDecks: normalizeDeckRemovals(userData.removedDecks),
     collection: userData.collection,
@@ -720,7 +724,7 @@ function normalizeUserData(raw: UserData): UserData {
     canvasAreas: normalizeCanvasAreas(userData.canvasAreas),
     catalogueLayout: ensureCatalogueLayout(userData.catalogueLayout),
     interactionEffects: ensureInteractionEffects(userData.interactionEffects),
-  };
+  }, metadata);
 }
 
 // ============================================================================

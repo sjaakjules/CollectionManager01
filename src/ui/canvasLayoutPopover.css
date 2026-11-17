@@ -1,0 +1,21 @@
+.canvas-layout-popover {
+  position: fixed;
+  z-index: 10100;
+  width: min(680px, calc(100vw - 16px));
+  max-height: min(65vh, 420px);
+  overflow: auto;
+  color: var(--manga-paper, #ece4d4);
+  background: var(--panel-bg, #171820);
+  border: 1px solid var(--manga-line, #7c796d);
+  border-radius: 9px;
+  box-shadow: 3px 5px 0 #09090cb3;
+  padding: 9px;
+  animation: layout-controls-open 140ms steps(4, end);
+}
+.canvas-layout-popover[hidden] { display: none; }
+.canvas-layout-popover-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 7px; font-size: 12px; }
+.canvas-layout-popover-header button { border: 0; border-radius: 4px; color: inherit; background: #ffffff0d; width: 28px; height: 26px; cursor: pointer; }
+.canvas-layout-apply { display: block; margin: 8px 0 0 auto; padding: 7px 22px; color: #171820; background: var(--manga-gold, #ddc48b); border: 1px solid #eee4ca; border-radius: 5px; cursor: pointer; font-weight: 700; }
+.canvas-layout-apply:disabled { opacity: .48; cursor: default; }
+@keyframes layout-controls-open { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .canvas-layout-popover { animation: none; } }

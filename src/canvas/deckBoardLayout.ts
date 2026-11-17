@@ -1,7 +1,7 @@
 import { required } from '@/utils/required';
 import type { ActiveBoard } from '@/data/dataModels';
 import type { CanvasArea, CanvasAreaBounds, CanvasCardInstance, DeckRegionBounds } from './canvasAreas';
-import { CARD_CELL_SPACING, CARD_SIZE, DRAWN_GRID, STACK_OFFSET, pixelsToSnapGrid, snapCardCenter } from '@/rendering/Grid';
+import { CARD_CELL_SPACING, CARD_SIZE, DRAWN_GRID, getStackFan, pixelsToSnapGrid, snapCardCenter } from '@/rendering/Grid';
 
 export const DECK_BOARD_ORDER = ['mainboard', 'collection', 'maybeboard'] as const;
 export type DeckZoneBoard = typeof DECK_BOARD_ORDER[number];
@@ -11,7 +11,17 @@ export const DECK_BOARD_TOP_GAP = DRAWN_GRID.height;
 export const DECK_BOARD_GAP = 22;
 export const DECK_BOARD_BOTTOM_PADDING = 18;
 export const DECK_REGION_TITLE_HEIGHT = 32;
-export type MainDeckLabelBounds = Partial<Record<'spellbook' | 'atlas', CanvasAreaBounds[]>>;
+// Title and four-line statistic columns share one row; tabs sit above its edge.
+export const DECK_SECTION_HEADER_HEIGHT = DRAWN_GRID.height;
+export const DECK_SECTION_MIN_WIDTH = 360;
+const DECK_SECTION_COMPACT_WIDTH = 210;
+const EMPTY_SECTION_HEIGHT = 76;
+const LEGACY_EMPTY_SECTION_HEIGHT = 52;
+const MAIN_DECK_SECTIONS = ['spellbook', 'atlas'] as const;
+const MAIN_DECK_SECTION_PAIRS = [['spellbook', 'atlas'], ['atlas', 'spellbook']] as const;
+type MainDeckSection = typeof MAIN_DECK_SECTIONS[number];
+type MainDeckSectionBounds = Partial<Record<MainDeckSection, CanvasAreaBounds>>;
+export type MainDeckLabelBounds = Partial<Record<MainDeckSection | 'shared', CanvasAreaBounds[]>>;
 
 export function normalizeDeckRegionBounds(value: unknown): DeckRegionBounds | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -45,8 +55,10 @@ export const DECK_MIN_WIDTH = DECK_COLLECTION_WIDTH + DECK_BOARD_PADDING * 2;
 // their leftmost card. The ten-column rule belongs to import/reset placement.
 export const DECK_COMPACT_BOARD_WIDTH = CARD_SIZE.PORTRAIT.width +
   CARD_CELL_SPACING.PORTRAIT.x * DRAWN_GRID.width + DECK_BOARD_INNER_PADDING * 2;
+const LEGACY_MAIN_BOARD_MIN_HEIGHT = CARD_SIZE.PORTRAIT.height + DECK_BOARD_TOP_GAP + 6;
 export const DECK_BOARD_MIN_HEIGHT: Record<DeckZoneBoard, number> = {
-  mainboard: CARD_SIZE.PORTRAIT.height + DECK_BOARD_TOP_GAP + 6,
+  mainboard: Math.max(LEGACY_MAIN_BOARD_MIN_HEIGHT,
+    EMPTY_SECTION_HEIGHT * 2 + 8 + DECK_BOARD_TOP_GAP + DECK_BOARD_BOTTOM_PADDING),
   collection: CARD_SIZE.PORTRAIT.height + DECK_BOARD_TOP_GAP - 6,
   maybeboard: CARD_SIZE.PORTRAIT.height + DECK_BOARD_TOP_GAP - 6,
 };
@@ -61,28 +73,37 @@ export function getDeckBoardWidth(board: DeckZoneBoard, zoneWidth: number): numb
   return board === 'collection' ? DECK_COLLECTION_WIDTH : zoneWidth - DECK_BOARD_PADDING * 2;
 }
 
-function cardExtents(cards: CanvasCardInstance[], isLandscape: (name: string) => boolean) {
-  const extents = new Map<DeckZoneBoard, { left: number; top: number; right: number; bottom: number }>();
-  const stacks = new Map<string, CanvasCardInstance[]>();
+function deckCardStackBounds(cards: CanvasCardInstance[], isLandscape: (name: string) => boolean) {
+  const stacks = new Map<string, { board: DeckZoneBoard; landscape: boolean; cards: CanvasCardInstance[] }>();
   for (const card of cards) {
+    const board = normalizeDeckBoard(card.board);
     const landscape = isLandscape(card.cardName);
     const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
     const grid = pixelsToSnapGrid(card.x + size.width / 2, card.y + size.height / 2, landscape);
-    const key = `${normalizeDeckBoard(card.board)}:${landscape}:${grid.x},${grid.y}`;
-    const stack = stacks.get(key) ?? [];
-    stack.push(card);
+    const key = `${board}:${landscape}:${grid.x},${grid.y}`;
+    const stack = stacks.get(key) ?? { board, landscape, cards: [] };
+    stack.cards.push(card);
     stacks.set(key, stack);
   }
-  for (const stack of stacks.values()) for (const card of stack) {
-    const board = normalizeDeckBoard(card.board);
-    const size = isLandscape(card.cardName) ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-    const overhang = (stack.length - 1) * STACK_OFFSET / 2;
-    const bounds = extents.get(board) ?? { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
-    bounds.left = Math.min(bounds.left, card.x);
-    bounds.top = Math.min(bounds.top, card.y - overhang);
-    bounds.right = Math.max(bounds.right, card.x + size.width);
-    bounds.bottom = Math.max(bounds.bottom, card.y + size.height + overhang);
-    extents.set(board, bounds);
+  return [...stacks.values()].map(({ board, landscape, cards: stack }) => {
+    const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+    const { overhang } = getStackFan(stack.length, landscape);
+    const bounds = stack.map((card): CanvasAreaBounds => ({ x: card.x, y: card.y - overhang, width: size.width, height: size.height + 2 * overhang }))
+      .reduce(unionRegionBounds);
+    return { board, landscape, bounds };
+  });
+}
+
+function cardExtents(cards: CanvasCardInstance[], isLandscape: (name: string) => boolean) {
+  const extents = new Map<DeckZoneBoard, { left: number; top: number; right: number; bottom: number }>();
+  for (const { board, bounds } of deckCardStackBounds(cards, isLandscape)) {
+    const previous = extents.get(board);
+    extents.set(board, {
+      left: Math.min(previous?.left ?? Infinity, bounds.x),
+      top: Math.min(previous?.top ?? Infinity, bounds.y),
+      right: Math.max(previous?.right ?? -Infinity, bounds.x + bounds.width),
+      bottom: Math.max(previous?.bottom ?? -Infinity, bounds.y + bounds.height),
+    });
   }
   return extents;
 }
@@ -96,9 +117,22 @@ export function getDeckBoardRects(
   saved: DeckRegionBounds = {},
   labels: MainDeckLabelBounds = {},
 ): Record<DeckZoneBoard, CanvasAreaBounds> {
+  return layoutDeckBoards(bounds, cards, headerHeight, isLandscape, saved, labels);
+}
+
+function layoutDeckBoards(
+  bounds: CanvasAreaBounds,
+  cards: CanvasCardInstance[],
+  headerHeight: number,
+  isLandscape: (name: string) => boolean,
+  saved: DeckRegionBounds = {},
+  labels: MainDeckLabelBounds = {},
+  legacySectionHeaders = false,
+): Record<DeckZoneBoard, CanvasAreaBounds> {
   const extents = cardExtents(cards, isLandscape);
   // Main encloses its physical children, including their own title bands.
-  const children = Object.values(getMainDeckSectionRects(cards, isLandscape, saved, labels));
+  const mainOrigin = saved.mainboard ?? { x: bounds.x + DECK_BOARD_PADDING, y: bounds.y + headerHeight + DECK_BOARD_PADDING };
+  const children = Object.values(layoutMainDeckSections(cards, isLandscape, saved, labels, mainOrigin, legacySectionHeaders).rects);
   if (children.length) extents.set('mainboard', {
     left: Math.min(...children.map(rect => rect.x)),
     top: Math.min(...children.map(rect => rect.y)),
@@ -114,12 +148,13 @@ export function getDeckBoardRects(
       ? DECK_COLLECTION_WIDTH : DECK_COMPACT_BOARD_WIDTH;
     const width = Math.max(minWidth,
       content ? content.right + DECK_BOARD_INNER_PADDING - x : 0);
-    const height = Math.max(DECK_BOARD_MIN_HEIGHT[board],
+    const minHeight = legacySectionHeaders && board === 'mainboard' ? LEGACY_MAIN_BOARD_MIN_HEIGHT : DECK_BOARD_MIN_HEIGHT[board];
+    const height = Math.max(minHeight,
       content ? content.bottom + DECK_BOARD_BOTTOM_PADDING - y : 0);
     const requested = saved[board];
     const result = requested
       ? content ? unionRegionBounds({x, y, width, height}, requested)
-        : {...requested, width: Math.max(DECK_COMPACT_BOARD_WIDTH, requested.width), height: Math.max(DECK_BOARD_MIN_HEIGHT[board], requested.height)}
+        : {...requested, width: Math.max(DECK_COMPACT_BOARD_WIDTH, requested.width), height: Math.max(minHeight, requested.height)}
       : { x, y, width, height };
     top = Math.max(top, result.y + result.height) + DECK_BOARD_GAP;
     return result;
@@ -190,9 +225,11 @@ function separateDeckRegions(zone: CanvasArea, headerHeight: number, isLandscape
       }
     });
   };
-  const children = getMainDeckSectionRects(zone.cards, isLandscape);
+  // The extra room for statistics is optional in an existing arrangement. A
+  // legacy save without rectangles still gets only its original title gaps.
+  const children = layoutMainDeckSections(zone.cards, isLandscape, {}, {}, undefined, true).rects;
   separate((['spellbook', 'atlas'] as const).flatMap(key => children[key] ? [{rect: required(children[key]), members: zone.cards.filter(card => normalizeDeckBoard(card.board) === 'mainboard' && isLandscape(card.cardName) === (key === 'atlas'))}] : []));
-  const rects = getDeckBoardRects(zone.bounds, zone.cards, headerHeight, isLandscape, zone.deckRegionBounds);
+  const rects = layoutDeckBoards(zone.bounds, zone.cards, headerHeight, isLandscape, zone.deckRegionBounds, {}, true);
   separate(DECK_BOARD_ORDER.filter(board => zone.cards.some(card => normalizeDeckBoard(card.board) === board))
     .map(board => ({rect: rects[board], members: zone.cards.filter(card => normalizeDeckBoard(card.board) === board)})));
   return changed;
@@ -232,12 +269,11 @@ export function placeNewDeckCards(
         lastRowY = Math.max(...sameType.map((card) => card.y));
       } else {
         const opposite = occupied.filter((card) => normalizeDeckBoard(card.board) === board);
-        if (opposite.length) {
+        const oppositeBounds = cardExtents(opposite, isLandscape).get(board);
+        if (oppositeBounds) {
           // Retain a full title gap even if snapping moves the new row inward.
           const sectionGap = DECK_BOARD_TOP_GAP + DECK_BOARD_BOTTOM_PADDING + DECK_BOARD_GAP + DRAWN_GRID.height;
-          startY = landscape
-            ? Math.max(...opposite.map((card) => card.y + CARD_SIZE.PORTRAIT.height)) + sectionGap
-            : Math.min(...opposite.map((card) => card.y)) - size.height - sectionGap;
+          startY = landscape ? oppositeBounds.bottom + sectionGap : oppositeBounds.top - size.height - sectionGap;
         }
         lastRowY = startY;
       }
@@ -267,31 +303,175 @@ export function placeNewDeckCards(
   }
 }
 
+function overlapsHorizontally(a: CanvasAreaBounds, b: CanvasAreaBounds): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x;
+}
+
+function overlapsRegion(a: CanvasAreaBounds, b: CanvasAreaBounds): boolean {
+  return a.y < b.y + b.height && a.y + a.height > b.y && overlapsHorizontally(a, b);
+}
+
+function sectionHeaderTop(frame: CanvasAreaBounds, contentTop: number, obstacles: CanvasAreaBounds[]): number {
+  const desired = contentTop - DECK_SECTION_HEADER_HEIGHT;
+  const nearest = Math.max(-Infinity, ...obstacles.filter(bounds => overlapsHorizontally(frame, bounds) && bounds.y < contentTop)
+    .map(bounds => bounds.y + bounds.height));
+  // Prefer the normal frame gap, but use part of it for the title when the
+  // gap is cramped. An existing overlap can leave no strip at all.
+  const padded = Math.min(nearest + DECK_BOARD_BOTTOM_PADDING + DECK_BOARD_GAP, contentTop - DECK_REGION_TITLE_HEIGHT);
+  return Math.min(contentTop, Math.max(desired, nearest, padded));
+}
+
+function getSectionHeaderBounds(frame: CanvasAreaBounds, contentTop: number, bandTop: number,
+  obstacles: CanvasAreaBounds[]): CanvasAreaBounds {
+  const y = frame.y;
+  let bottom = Math.min(contentTop, y + DECK_SECTION_HEADER_HEIGHT);
+  for (const obstacle of obstacles) {
+    if (obstacle.y < bottom && obstacle.y + obstacle.height > y && overlapsHorizontally(frame, obstacle)) {
+      bottom = Math.max(y, obstacle.y);
+    }
+  }
+  if (bottom - y < DECK_REGION_TITLE_HEIGHT && bandTop > y && contentTop - bandTop >= DECK_REGION_TITLE_HEIGHT) {
+    const available = getSectionHeaderBounds({ ...frame, y: bandTop }, contentTop, bandTop, obstacles);
+    if (available.height > bottom - y) return available;
+  }
+  return { x: frame.x, y, width: frame.width, height: Math.max(0, bottom - y) };
+}
+
+function getHeaderAboveSharedLabels(
+  header: CanvasAreaBounds, shared: CanvasAreaBounds[], obstacles: CanvasAreaBounds[],
+): CanvasAreaBounds | undefined {
+  const labels = shared.filter(label => overlapsHorizontally(header, label));
+  const occupiedBottom = Math.max(-Infinity, ...obstacles.filter(rect =>
+    rect.y < header.y + header.height && overlapsHorizontally(header, rect))
+    .map(rect => rect.y + rect.height));
+
+  let candidate = header;
+  while (candidate.height >= DECK_REGION_TITLE_HEIGHT) {
+    const bottom = Math.min(Infinity, ...labels.filter(label =>
+      label.y < candidate.y + candidate.height && label.y + label.height > candidate.y).map(label => label.y));
+    if (bottom === Infinity) return candidate;
+    const y = Math.min(bottom, Math.max(bottom - DECK_SECTION_HEADER_HEIGHT, occupiedBottom));
+    candidate = { ...header, y, height: bottom - y };
+  }
+  return undefined;
+}
+
+function layoutMainDeckSections(
+  cards: CanvasCardInstance[],
+  isLandscape: (name: string) => boolean,
+  saved: DeckRegionBounds,
+  labels: MainDeckLabelBounds,
+  mainOrigin: { x: number; y: number } | undefined,
+  legacySectionHeaders: boolean,
+): { rects: MainDeckSectionBounds; headers: MainDeckSectionBounds } {
+  const rects: MainDeckSectionBounds = {};
+  const headers: MainDeckSectionBounds = {};
+  const preferredHeaders: MainDeckSectionBounds = {};
+  const stacks = deckCardStackBounds(cards, isLandscape);
+  const shared = labels.shared ?? [];
+  const obstacles: Record<MainDeckSection, CanvasAreaBounds[]> = { spellbook: [], atlas: [] };
+  for (const [key, sibling] of MAIN_DECK_SECTION_PAIRS) {
+    const belongs = (stack: typeof stacks[number]) => stack.board === 'mainboard' && stack.landscape === (key === 'atlas');
+    const members = [...(labels[key] ?? []), ...stacks.filter(belongs).map(stack => stack.bounds)];
+    obstacles[key] = [...(labels[sibling] ?? []), ...stacks.filter(stack => !belongs(stack)).map(stack => stack.bounds)];
+    const manual = saved[key];
+    if (!members.length) {
+      if (manual) rects[key] = { ...manual, width: mainOrigin ? Math.max(manual.width, DECK_SECTION_COMPACT_WIDTH) : manual.width };
+      continue;
+    }
+    const content = members.reduce(unionRegionBounds);
+    const padded = { x: content.x - DECK_BOARD_INNER_PADDING, y: content.y,
+      width: content.width + DECK_BOARD_INNER_PADDING * 2, height: content.height + DECK_BOARD_BOTTOM_PADDING };
+    const frame = manual ? unionRegionBounds(padded, manual) : padded;
+    if (mainOrigin) frame.width = Math.max(frame.width, DECK_SECTION_COMPACT_WIDTH);
+    const bandTop = legacySectionHeaders ? content.y - DECK_BOARD_TOP_GAP : sectionHeaderTop(frame, content.y, obstacles[key]);
+    const top = Math.min(frame.y, bandTop);
+    const rect = { ...frame, y: top, height: frame.y + frame.height - top };
+    rects[key] = rect;
+    const header = getSectionHeaderBounds(rect, content.y, bandTop, [...obstacles[key], ...shared]);
+    headers[key] = header;
+    if (shared.length && header.height < DECK_SECTION_HEADER_HEIGHT) {
+      preferredHeaders[key] = getSectionHeaderBounds({ ...rect, y: bandTop }, content.y, bandTop, obstacles[key]);
+    }
+  }
+  // Restore space lost to a shared label when there is room immediately
+  // above it. A different card section still limits how far we can move.
+  for (const [key, sibling] of MAIN_DECK_SECTION_PAIRS) {
+    const preferred = preferredHeaders[key];
+    const header = headers[key];
+    const rect = rects[key];
+    if (!preferred || !header || !rect || preferred.height <= header.height) continue;
+    const siblingFrame = rects[sibling];
+    const candidate = getHeaderAboveSharedLabels(preferred, shared, siblingFrame
+      ? [...obstacles[key], siblingFrame] : obstacles[key]);
+    if (!candidate || candidate.height <= header.height) continue;
+    headers[key] = candidate;
+    rects[key] = unionRegionBounds(rect, candidate);
+  }
+  // Empty sections have room for their title and tabs, within Main's compact width.
+  if (mainOrigin) {
+    for (const [key, sibling] of MAIN_DECK_SECTION_PAIRS) {
+      if (rects[key]) continue;
+      const neighbour = rects[sibling];
+      let y = neighbour ? neighbour.y + neighbour.height + 8 : mainOrigin.y + DECK_BOARD_TOP_GAP;
+      const x = neighbour?.x ?? mainOrigin.x + DECK_BOARD_INNER_PADDING;
+      const height = legacySectionHeaders ? LEGACY_EMPTY_SECTION_HEIGHT : EMPTY_SECTION_HEIGHT;
+      if (neighbour && (key === 'spellbook' || stacks.some(stack => {
+        if (stack.board === 'mainboard') return false;
+        const bounds = stack.bounds;
+        return overlapsHorizontally({ x, y, width: DECK_SECTION_COMPACT_WIDTH, height }, bounds) &&
+          y < bounds.y + bounds.height && y + height + DECK_BOARD_TOP_GAP > bounds.y;
+      }))) y = neighbour.y - height - 8;
+      rects[key] = { x, y, width: DECK_SECTION_COMPACT_WIDTH, height };
+    }
+  }
+  for (const key of MAIN_DECK_SECTIONS) {
+    const rect = rects[key];
+    if (!rect || headers[key]) continue;
+    const bottom = rect.y + rect.height;
+    headers[key] = getSectionHeaderBounds(rect, bottom, sectionHeaderTop(rect, bottom, obstacles[key]),
+      [...obstacles[key], ...shared]);
+  }
+  // Widen compact headings after both sections have claimed their space.
+  if (mainOrigin && !legacySectionHeaders) {
+    for (const [key, sibling] of MAIN_DECK_SECTION_PAIRS) {
+      const rect = rects[key], header = headers[key], siblingFrame = rects[sibling];
+      if (!rect || !header?.height || rect.width >= DECK_SECTION_MIN_WIDTH) continue;
+      const extraWidth = DECK_SECTION_MIN_WIDTH - rect.width;
+      const blockers = siblingFrame ? [...obstacles[key], siblingFrame] : obstacles[key];
+      const freeEdge = [rect.x + rect.width, rect.x - extraWidth].find(x => {
+        const edge = { ...rect, x, width: extraWidth };
+        const headingEdge = { ...header, x, width: extraWidth };
+        return !blockers.some(blocker => overlapsRegion(edge, blocker)) &&
+          !shared.some(label => overlapsRegion(headingEdge, label));
+      });
+      if (freeEdge === undefined) continue;
+      const x = Math.min(freeEdge, rect.x);
+      rects[key] = { ...rect, x, width: DECK_SECTION_MIN_WIDTH };
+      headers[key] = { ...header, x, width: DECK_SECTION_MIN_WIDTH };
+    }
+  }
+  return { rects, headers };
+}
+
+/** The available header strip accounts for the neighbouring stacks and label rows. */
+export function getMainDeckSectionLayout(
+  cards: CanvasCardInstance[],
+  isLandscape: (name: string) => boolean,
+  saved: DeckRegionBounds = {},
+  labels: MainDeckLabelBounds = {},
+  mainOrigin?: { x: number; y: number },
+): { rects: MainDeckSectionBounds; headers: MainDeckSectionBounds } {
+  return layoutMainDeckSections(cards, isLandscape, saved, labels, mainOrigin, false);
+}
+
 /** Main's physical orientation regions follow its cards without changing membership. */
 export function getMainDeckSectionRects(
   cards: CanvasCardInstance[],
   isLandscape: (name: string) => boolean,
   saved: DeckRegionBounds = {},
   labels: MainDeckLabelBounds = {},
-): { spellbook?: CanvasAreaBounds; atlas?: CanvasAreaBounds } {
-  const result: { spellbook?: CanvasAreaBounds; atlas?: CanvasAreaBounds } = {};
-  for (const [key, landscape] of [['spellbook', false], ['atlas', true]] as const) {
-    const members = cards.filter((card) => normalizeDeckBoard(card.board) === 'mainboard' && isLandscape(card.cardName) === landscape);
-    if (!members.length) {
-      if (saved[key]) result[key] = {...saved[key]};
-      continue;
-    }
-    const {left, top, right, bottom} = required(cardExtents(members, isLandscape).get('mainboard'));
-    result[key] = { x:left-DECK_BOARD_INNER_PADDING, y:top-DECK_BOARD_TOP_GAP,
-      width:right-left+DECK_BOARD_INNER_PADDING*2, height:bottom-top+DECK_BOARD_TOP_GAP+DECK_BOARD_BOTTOM_PADDING };
-    if (saved[key]) result[key] = unionRegionBounds(required(result[key]), required(saved[key]));
-    for (const label of labels[key] ?? []) {
-      result[key] = unionRegionBounds(required(result[key]), {
-        x: label.x - DECK_BOARD_INNER_PADDING, y: label.y - DECK_BOARD_TOP_GAP,
-        width: label.width + DECK_BOARD_INNER_PADDING * 2,
-        height: label.height + DECK_BOARD_TOP_GAP + DECK_BOARD_BOTTOM_PADDING,
-      });
-    }
-  }
-  return result;
+  mainOrigin?: { x: number; y: number },
+): MainDeckSectionBounds {
+  return getMainDeckSectionLayout(cards, isLandscape, saved, labels, mainOrigin).rects;
 }

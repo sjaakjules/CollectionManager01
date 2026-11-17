@@ -350,6 +350,7 @@ export class CardSprite extends Container {
   }
 
   updateLOD(zoom: number): void {
+    this.statisticsOverlay?.updateZoom(zoom);
     if (this.outlineZoom !== zoom) {
       this.outlineZoom = Math.max(0.01, zoom);
       if (this._isSelected || this.isNewlyAdded) this.redrawOutlines();

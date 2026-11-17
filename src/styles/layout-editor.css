@@ -1,0 +1,213 @@
+.catalogue-layout-heading {
+  margin-bottom: 10px;
+}
+
+.layout-editor {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.layout-editor-palette,
+.layout-editor-flow,
+.layout-editor-footer,
+.layout-editor-width-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.layout-editor-palette,
+.layout-editor-footer,
+.layout-editor-width-controls {
+  gap: 6px;
+}
+
+.layout-editor-palette:empty {
+  display: none;
+}
+
+.layout-editor-flow {
+  row-gap: 5px;
+  align-items: stretch;
+}
+
+.layout-editor-flow-item {
+  display: flex;
+  align-items: stretch;
+  max-width: 100%;
+}
+
+.layout-editor-connector {
+  display: grid;
+  flex: 0 0 22px;
+  min-height: 36px;
+  place-items: center;
+  color: var(--manga-muted);
+  border-radius: 4px;
+  user-select: none;
+}
+
+.layout-editor-connector.drop-active {
+  background: var(--manga-active);
+  color: var(--manga-gold);
+  outline: 1px dashed var(--manga-gold);
+  outline-offset: -2px;
+}
+
+.layout-editor-node {
+  position: relative;
+  min-width: 105px;
+  max-width: 100%;
+  padding: 4px 5px 5px;
+  color: var(--manga-paper);
+  background: var(--manga-raised);
+  border: 1px solid var(--manga-line);
+  border-radius: 7px;
+}
+
+.layout-editor-node.group {
+  background: var(--manga-active);
+}
+
+.layout-editor-node.is-dragging {
+  opacity: .65;
+  outline: 1px solid var(--manga-gold);
+}
+
+.layout-editor-node,
+.layout-editor-node-title,
+.layout-editor-palette-step {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.layout-editor-node.clean,
+.layout-editor-node.clean .layout-editor-node-title {
+  cursor: default;
+  touch-action: auto;
+}
+
+.layout-editor-node button {
+  color: inherit;
+  font: inherit;
+}
+
+.layout-editor-node .layout-editor-node-title {
+  display: block;
+  width: 100%;
+  padding: 2px 27px 2px 3px;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.layout-editor-node .layout-editor-remove {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  width: 23px;
+  height: 23px;
+  font-size: 16px;
+  line-height: 1;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.layout-editor-node-options {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.layout-editor-node-options button {
+  min-height: 25px;
+  padding: 1px 6px;
+  border: 1px solid var(--manga-line);
+  border-radius: 4px;
+  background: var(--manga-surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.layout-editor-node-options button:first-child {
+  flex: 1;
+}
+
+.layout-editor-node-options .layout-editor-direction {
+  min-width: 27px;
+  color: var(--manga-gold);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.layout-editor-node button:hover {
+  color: var(--manga-gold);
+}
+
+.layout-editor button:focus-visible,
+.layout-editor input:focus-visible {
+  outline: 2px solid var(--manga-gold);
+  outline-offset: 1px;
+}
+
+.layout-editor-width {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.layout-editor-width input {
+  width: min(110px, 26vw);
+  accent-color: var(--manga-gold);
+}
+
+.layout-editor-width output {
+  min-width: 42px;
+  color: var(--manga-muted);
+}
+
+.layout-editor-footer .layout-editor-auto {
+  min-height: 26px;
+  padding: 2px 7px;
+  font-size: 11px;
+}
+
+.layout-editor-auto:disabled {
+  opacity: .48;
+  cursor: default;
+}
+
+.layout-editor-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .layout-editor-palette button,
+  .layout-editor-node-options button {
+    min-height: 36px;
+  }
+
+  .layout-editor-node .layout-editor-node-title {
+    min-height: 34px;
+    padding-right: 36px;
+  }
+
+  .layout-editor-node .layout-editor-remove,
+  .layout-editor-node-options .layout-editor-direction {
+    min-width: 34px;
+    min-height: 34px;
+  }
+}

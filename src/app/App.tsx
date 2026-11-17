@@ -42,6 +42,7 @@ import { queueSync, flushSync } from '@/data/userSync';
 import type { Deck } from '@/data/dataModels';
 import type { ActiveBoard } from '@/data/dataModels';
 import type { DeckAddPlacement, DeckAddRequestPayload } from '@/rendering/PixiStage';
+import type { CatalogueStackDestination } from '@/rendering/cardQuickAdd';
 import type { CardFilterState } from '@/data/cardFilters';
 import {
   createDeckZone,
@@ -418,6 +419,27 @@ export function App() {
     [cardOrientationMap],
   );
 
+  const handleCatalogueStackAdd = useCallback((cardName: string, destination: CatalogueStackDestination) => {
+    if (isBlockedTokenCardName(cardName)) return;
+    const name = 'name' in destination ? destination.name.trim() : null;
+    if (name === '') return;
+    const area = 'stackId' in destination
+      ? canvasAreas.find(entry => entry.id === destination.stackId && entry.type === 'stack')
+      : createEmptyZone('stack', name ?? '', canvasAreas.filter(entry => entry.type === 'stack').length, canvasAreas);
+    if (!area) return;
+    const updated = addCardsToCanvasAreaModel(area, [cardName]);
+    if (updated === area) {
+      dispatch({ type: 'ADD_NOTIFICATION', notification: { type: 'info', message: `${cardName} is already in ${area.name}.` } });
+      return;
+    }
+    const existing = 'stackId' in destination;
+    dispatch({ type: 'SET_CANVAS_AREAS', canvasAreas: existing
+      ? canvasAreas.map(entry => entry.id === area.id ? updated : entry)
+      : [...canvasAreas, updated] });
+    if (!existing) setFocusCanvasAreaRequest({ canvasAreaId: area.id, nonce: Date.now() });
+    dispatch({ type: 'ADD_NOTIFICATION', notification: { type: 'info', message: `Added ${cardName} to ${area.name}.` } });
+  }, [addCardsToCanvasAreaModel, canvasAreas, dispatch]);
+
   const commitDeckAddRequest = useCallback(
     (request: Omit<PendingDeckAddRequest, 'id'>, board: ActiveBoard) => {
 
@@ -488,7 +510,7 @@ export function App() {
   );
 
   const handleAddToActiveDeckRequest = useCallback(
-    (cardName: string) => {
+    (cardName: string, board: DeckAddBoard = 'mainboard') => {
       const deckId = state.editor.activeDeckId;
       if (!deckId) return;
       if (isBlockedTokenCardName(cardName)) return;
@@ -499,7 +521,7 @@ export function App() {
         deckId,
         canvasAreaId,
         cardNames: [cardName],
-        board: 'mainboard',
+        board,
       });
     },
     [canvasAreas, queueDeckAddRequest, state.editor.activeDeckId],
@@ -726,7 +748,7 @@ export function App() {
     const blocksPhoneSwipe = (target: EventTarget | null) =>
       target instanceof HTMLElement &&
       !!target.closest(
-        'input, textarea, select, .modal, .bottom-folder-shell, .deck-filter-popover, .touch-action-sheet',
+        'input, textarea, select, .modal, .bottom-folder-shell, .deck-filter-popover, .touch-action-sheet, .catalogue-card-menu',
       );
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -877,6 +899,7 @@ export function App() {
           canvasAreas={visibleCanvasAreas}
           onCanvasAreasChange={handleCanvasAreasChange}
           onAddToDeckRequest={handleAddToActiveDeckRequest}
+          onCatalogueStackAdd={handleCatalogueStackAdd}
           onDeckAddRequest={handleDeckAddRequest}
           onCardsAddedToCanvasArea={handleCardsAddedToCanvasArea}
           onDeckLayoutResetRequest={requestDeckLayoutReset}

@@ -2,7 +2,7 @@ import type { CanvasLabel } from '@/data/dataModels';
 import type { CanvasArea, DeckLayoutProfile, DeckLayoutProfiles, DeckLayoutSnapshot } from './canvasAreas';
 import { normalizeDeckRegionBounds } from './deckBoardLayout';
 
-function readPositions(value: unknown): Record<string, {x: number; y: number}> {
+export function readCanvasPositions(value: unknown): Record<string, {x: number; y: number}> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return Object.fromEntries(Object.entries(value).flatMap(([id, point]) => {
     if (!point || typeof point !== 'object') return [];
@@ -23,7 +23,7 @@ export function normalizeDeckLayoutProfiles(value: unknown): DeckLayoutProfiles 
     const record = raw as Record<string, unknown>;
     const bounds = normalizeDeckRegionBounds({mainboard: record.bounds})?.mainboard;
     if (!bounds) continue;
-    result[profile] = {bounds, regions: normalizeDeckRegionBounds(record.regions) ?? {}, cards: readPositions(record.cards), labels: readPositions(record.labels)};
+    result[profile] = {bounds, regions: normalizeDeckRegionBounds(record.regions) ?? {}, cards: readCanvasPositions(record.cards), labels: readCanvasPositions(record.labels)};
   }
   return result[result.source] ? result : undefined;
 }

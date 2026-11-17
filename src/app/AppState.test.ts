@@ -1,8 +1,10 @@
 import { required } from '@/utils/required';
 import { describe, expect, it } from 'vitest';
 import { appReducer, initialAppState } from '@/app/AppState';
+import { CANVAS_GRID_VERSION } from '@/data/canvasGridVersion';
 import { createEmptyDeck, createGuestUserData, type UserData } from '@/data/dataModels';
 import type { CanvasArea } from '@/canvas/canvasAreas';
+import { DRAWN_GRID } from '@/rendering/Grid';
 
 function stackArea(overrides: Partial<CanvasArea> = {}): CanvasArea {
   return {
@@ -17,6 +19,30 @@ function stackArea(overrides: Partial<CanvasArea> = {}): CanvasArea {
 }
 
 describe('appReducer canvas areas', () => {
+  it.each(['Guest', 'Alice'])('upgrades legacy %s geometry only once across saves and reloads', name => {
+    const legacy: UserData = { id: name.toLowerCase(), name, decks: [], collection: [],
+      canvasAreas: [stackArea({ type: 'deck', bounds: { x: -110, y: -220, width: 550, height: 660 },
+        deckRegionBounds: { collection: { x: 0, y: 55, width: 440, height: 330 } },
+        cards: [{ id: 'spell', cardName: 'Spell', x: 60, y: 67.5, board: 'collection', labelId: 'label' }],
+      })],
+      canvasLabels: [{ id: 'label', text: 'Collection cards', x: 55, y: 0, areaId: 'stack-1', board: 'collection' }],
+    };
+    const loaded = appReducer(initialAppState, { type: 'SET_USER_DATA', userData: legacy });
+    const saved = required(loaded.userData);
+    const cell = DRAWN_GRID.width;
+    expect(saved.gridVersion).toBe(CANVAS_GRID_VERSION);
+    expect(saved.canvasAreas?.[0]).toMatchObject({
+      bounds: { x: -2 * cell, y: -4 * cell, width: 10 * cell, height: 12 * cell },
+      deckRegionBounds: { collection: { x: 0, y: cell, width: 8 * cell, height: 6 * cell } },
+      cards: [{ id: 'spell', cardName: 'Spell', x: 2 * cell - 50, y: 2.5 * cell - 70, board: 'collection', labelId: 'label' }],
+    });
+    expect(saved.canvasLabels?.[0]).toMatchObject({ id: 'label', x: cell, y: 0, areaId: 'stack-1' });
+    const reloaded = appReducer(initialAppState, { type: 'SET_USER_DATA', userData: JSON.parse(JSON.stringify(saved)) as UserData });
+    expect(reloaded.userData).toEqual(saved);
+    expect(legacy.canvasAreas?.[0]?.cards[0]).toMatchObject({ x: 60, y: 67.5 });
+    expect(legacy).not.toHaveProperty('gridVersion');
+  });
+
   it('normalizes user data to supported canvas area types', () => {
     const userData = {
       ...createGuestUserData('guest-1'),

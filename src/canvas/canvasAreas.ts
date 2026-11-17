@@ -14,6 +14,7 @@
  */
 
 import type { Card, Deck, DeckCard, ActiveBoard, CardType } from "@/data/dataModels";
+import type { DeckSectionLayouts } from './deckSectionLayouts';
 import {
   DECK_BOARD_ORDER, DECK_BOARD_MIN_HEIGHT, DECK_MIN_WIDTH,
   DECK_BOARD_GAP, DECK_BOARD_PADDING, DECK_BOARD_INNER_PADDING, DECK_BOARD_TOP_GAP, DECK_BOARD_BOTTOM_PADDING,
@@ -66,7 +67,7 @@ export interface CanvasCardInstance {
   board?: ActiveBoard | null;
   /** Optional named subregion. Membership is explicit, never inferred from overlap. */
   labelId?: string;
-  /** Added cards remain highlighted until the user moves them. */
+  /** Added cards stay highlighted until the user moves or acknowledges them. */
   isNew?: boolean;
 }
 
@@ -93,6 +94,7 @@ export interface CanvasArea {
   /** An empty map records that legacy title/stack spacing has been upgraded. */
   deckRegionBounds?: DeckRegionBounds;
   layoutProfiles?: DeckLayoutProfiles;
+  sectionLayouts?: DeckSectionLayouts;
 }
 
 const QUADRANT_SIZE = 12000;

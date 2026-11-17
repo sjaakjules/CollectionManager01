@@ -43,20 +43,25 @@ import {
   type DeckStyleAssociationData,
 } from "@/data/deckStyleAssociations";
 import type { CanvasArea } from "@/canvas/canvasAreas";
+import type { CanvasLabel } from '@/data/dataModels';
 import { buildQuickTransferDeckTargets } from "@/ui/deckTransferTargets";
 import { CardQuickAddControls, type CardQuickAddControlsHandle } from '@/ui/CardQuickAddControls';
-import type { CardQuickAddDeck } from './cardQuickAdd';
+import type { CardQuickAddDeck, CatalogueStackDestination, QuickAddBoard } from './cardQuickAdd';
+import { CatalogueCardMenu, type CatalogueCardMenuRequest } from '@/ui/CatalogueCardMenu';
 import { createCardStatisticsPresentations } from '@/data/cardStatisticHighlights';
 import { useCardStatistics } from '@/ui/useCardStatistics';
 import { CardStatisticsHover } from '@/ui/CardStatisticsHover';
 import { hasPreviewArtwork } from '@/data/previewArtwork';
 import { PreviewCardText } from '@/ui/PreviewCardText';
 
+const EMPTY_CANVAS_LABELS: CanvasLabel[] = [];
+
 interface PixiCanvasProps {
   splashDone: boolean;
   canvasAreas: CanvasArea[];
   onCardDragDrop?: (payload: CardDragDropPayload) => void;
-  onAddToDeckRequest?: (cardName: string) => void;
+  onAddToDeckRequest?: (cardName: string, board?: QuickAddBoard) => void;
+  onCatalogueStackAdd?: (cardName: string, destination: CatalogueStackDestination) => void;
   onDeckAddRequest?: (payload: DeckAddRequestPayload) => void;
   onCardsAddedToCanvasArea?: (canvasAreaId: string, cardNames: string[]) => void;
   onDeckLayoutResetRequest?: (canvasAreaId: string) => void;
@@ -92,6 +97,7 @@ export function PixiCanvas({
   canvasAreas,
   onCardDragDrop,
   onAddToDeckRequest,
+  onCatalogueStackAdd,
   onDeckAddRequest,
   onCardsAddedToCanvasArea,
   onDeckLayoutResetRequest,
@@ -109,6 +115,10 @@ export function PixiCanvas({
   const { state, dispatch } = useAppState();
   const { asset: cardStatistics } = useCardStatistics();
   const cardStatisticsPresentations = useMemo(() => createCardStatisticsPresentations(cardStatistics, state.ui.cardStatistics), [cardStatistics, state.ui.cardStatistics]);
+  const [catalogueMenu, setCatalogueMenu] = useState<(CatalogueCardMenuRequest & { id: number }) | null>(null);
+  const catalogueMenuNonce = useRef(0);
+  const closeCatalogueMenu = useCallback(() => setCatalogueMenu(null), []);
+  const canvasLabels = state.userData?.canvasLabels ?? EMPTY_CANVAS_LABELS;
   const userCategoryData = state.userData?.cardCategories ?? null;
   const cardFilters = useMemo(
     () => ensureCardFilterState(state.ui.cardFilters),
@@ -146,6 +156,11 @@ export function PixiCanvas({
     const area = deck && canvasAreas.find(entry => entry.type === 'deck' && entry.deckId === deck.id && entry.pinned);
     return deck && area ? { deckId: deck.id, canvasAreaId: area.id, name: deck.name } : null;
   }, [canvasAreas, state.editor.activeDeckId, state.userData?.decks]);
+  const catalogueDeck = state.userData?.decks.find(deck => deck.id === state.editor.activeDeckId) ?? null;
+  const catalogueStacks = useMemo(() => canvasAreas.filter(area => area.type === 'stack'), [canvasAreas]);
+
+  useEffect(closeCatalogueMenu, [closeCatalogueMenu, state.userData?.id, state.ui.cardFilters, state.ui.catalogueLayout,
+    state.ui.selectedCardCategory, focusCanvasAreaRequest]);
 
   // Load card categories from userData (when present) or static seed fallback.
   useEffect(() => {
@@ -222,6 +237,7 @@ export function PixiCanvas({
       onAddToDeck: (cardName) => {
         addToDeckRequestRef.current?.(cardName);
       },
+      onCatalogueCardMenuRequest: request => setCatalogueMenu({ ...request, id: ++catalogueMenuNonce.current }),
       onRemoveFromDeck: (cardName) => {
         dispatch({ type: "REMOVE_CARD_FROM_DECK", cardName });
       },
@@ -252,7 +268,9 @@ export function PixiCanvas({
       onSelectionChange: (selectedCardNames) => {
         dispatch({ type: "SET_SELECTED_CARD_NAMES", names: selectedCardNames });
       },
-      onCardQuickAddTargetsChange: targets => quickAddRef.current?.updateTargets(targets),
+      onCardQuickAddTargetsChange: (targets, label) => quickAddRef.current?.updateTargets(targets, label),
+      onCardQuickAddHoldOpen: cardKey => quickAddRef.current?.openForHold(cardKey) ?? false,
+      onCardQuickAddHoldCancel: () => quickAddRef.current?.cancelHoldMenu(),
       onCanvasLabelsChange: (labels) => {
         dispatch({ type: "SET_CANVAS_LABELS", labels });
       },
@@ -335,13 +353,17 @@ export function PixiCanvas({
 
   useEffect(() => {
     if (!stageRef.current) return;
-    stageRef.current.setCanvasAreas(canvasAreas);
-  }, [canvasAreas]);
+    stageRef.current.setCanvasAreas(canvasAreas, canvasLabels);
+  }, [canvasAreas, canvasLabels]);
 
   useEffect(() => {
     if (!stageRef.current) return;
     stageRef.current.setDeckTransferTargets(deckTransferTargets);
   }, [deckTransferTargets]);
+
+  useEffect(() => {
+    stageRef.current?.setCardQuickAddDeck(quickAddDeck);
+  }, [quickAddDeck]);
 
   // Replay reveal/progress only when the source card dataset changes.
   useEffect(() => {
@@ -415,7 +437,7 @@ export function PixiCanvas({
       const overOverlayUi =
         event.target instanceof Element &&
         !!event.target.closest(
-          ".stacks-panel, .stacks-tabs, .bottom-folder-shell, .bottom-folder-tabs, .top-login-button, .card-quick-add-controls",
+          ".stacks-panel, .stacks-tabs, .bottom-folder-shell, .bottom-folder-tabs, .top-login-button, .card-quick-add-controls, .catalogue-card-menu",
         );
 
       setIsPointerOverOverlayUi((prev) =>
@@ -475,10 +497,21 @@ export function PixiCanvas({
       className="pixi-canvas-container"
       onContextMenu={handleContextMenu}
     >
-      <CardQuickAddControls ref={quickAddRef} deck={quickAddDeck}
+      <div hidden={catalogueMenu !== null}>
+        <CardQuickAddControls ref={quickAddRef} deck={quickAddDeck}
+        onLayout={key => stageRef.current?.openSelectionLayout(key)}
+        onQuickSort={field => stageRef.current?.quickSortSelection(field)}
+        onCleanUp={() => stageRef.current?.cleanUpSelection()}
+        onCleanUpLabel={id => stageRef.current?.cleanUpLabel(id)}
         onAdd={(key, scope, board) => {
           if (quickAddDeck) stageRef.current?.quickAddToDeck(quickAddDeck, key, scope, board);
         }} />
+      </div>
+      {catalogueMenu && <CatalogueCardMenu key={catalogueMenu.id} request={catalogueMenu}
+        deck={catalogueDeck} stacks={catalogueStacks} onClose={closeCatalogueMenu}
+        onDeck={board => onAddToDeckRequest?.(catalogueMenu.cardName, board)}
+        onStack={stackId => onCatalogueStackAdd?.(catalogueMenu.cardName, { stackId })}
+        onCreateStack={name => onCatalogueStackAdd?.(catalogueMenu.cardName, { name })} />}
       {showLoadingBar && (
         <TextureLoadingBar
           loaded={loadProgress.loaded}
@@ -491,7 +524,7 @@ export function PixiCanvas({
           total={backgroundLoadProgress.total}
         />
       )}
-      {hoveredCardPreviewSrc && !isPointerOverOverlayUi && (
+      {hoveredCardPreviewSrc && !isPointerOverOverlayUi && !catalogueMenu && (
         <div
           className={`card-hover-preview ${hoveredCardIsLandscape ? "landscape" : ""}`}
         >

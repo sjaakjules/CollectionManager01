@@ -63,6 +63,8 @@ export function sanitizeDevUserData(
   return {
     name: username,
     id: userId,
+    ...(Number.isInteger(payload.gridVersion) && Number(payload.gridVersion) > 0
+      ? { gridVersion: payload.gridVersion } : {}),
     decks,
     collection,
     selectedCardCategory,

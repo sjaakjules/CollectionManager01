@@ -72,6 +72,12 @@ function sorcery_sanitize_canvas_labels($value): array
             if ($board !== null) {
                 $saved['board'] = $board;
             }
+            $layout = $label['deckSectionLayout'] ?? null;
+            if (is_array($layout) && isset($saved['areaId']) &&
+                in_array($layout['section'] ?? null, ['spellbook', 'atlas'], true) &&
+                is_string($layout['id'] ?? null) && trim($layout['id']) !== '') {
+                $saved['deckSectionLayout'] = ['section' => $layout['section'], 'id' => $layout['id']];
+            }
             $labels[] = $saved;
         }
     }
@@ -133,11 +139,43 @@ function sorcery_sanitize_canvas_areas($value): array
                     return $card;
                 }, $area['cards']);
             }
-            $areas[] = $area;
+            $areas[] = sorcery_preserve_layout_maps($area);
         }
     }
 
     return $areas;
+}
+
+/** PHP associative decoding turns {} (and numeric-key dictionaries) into arrays.
+ * Preserve the shared JSON contract when saving layout snapshots. */
+function sorcery_preserve_layout_maps(array $area): array
+{
+    if (isset($area['deckRegionBounds'])) {
+        $area['deckRegionBounds'] = (object)$area['deckRegionBounds'];
+    }
+    foreach (['desktop', 'phone'] as $device) {
+        foreach (['regions', 'cards', 'labels'] as $key) {
+            if (isset($area['layoutProfiles'][$device][$key])) {
+                $area['layoutProfiles'][$device][$key] = (object)$area['layoutProfiles'][$device][$key];
+            }
+        }
+    }
+    foreach (['spellbook', 'atlas'] as $section) {
+        if (!is_array($area['sectionLayouts'][$section]['tabs'] ?? null)) continue;
+        foreach ($area['sectionLayouts'][$section]['tabs'] as &$tab) {
+            if (!is_array($tab)) continue;
+            if (isset($tab['cardLabels'])) $tab['cardLabels'] = (object)$tab['cardLabels'];
+            foreach (['desktop', 'phone'] as $device) {
+                foreach (['cards', 'labels'] as $key) {
+                    if (isset($tab['positions'][$device][$key])) {
+                        $tab['positions'][$device][$key] = (object)$tab['positions'][$device][$key];
+                    }
+                }
+            }
+        }
+        unset($tab);
+    }
+    return $area;
 }
 
 function sorcery_sanitize_deck_removals($value): object
@@ -175,8 +213,16 @@ function sorcery_sanitize_user_data(array $payload, string $userId, string $user
         'canvasAreas' => sorcery_sanitize_canvas_areas($payload['canvasAreas'] ?? null),
     ];
 
+    if (isset($payload['gridVersion']) && is_int($payload['gridVersion']) && $payload['gridVersion'] > 0) {
+        $result['gridVersion'] = $payload['gridVersion'];
+    }
     if (isset($payload['cardCategories']) && is_array($payload['cardCategories'])) {
         $result['cardCategories'] = $payload['cardCategories'];
+        if (is_array($result['cardCategories']['scores'] ?? null)) {
+            $result['cardCategories']['scores'] = (object)array_map(function ($scores) {
+                return (object)$scores;
+            }, $result['cardCategories']['scores']);
+        }
     }
     if (isset($payload['catalogueLayout']) && is_array($payload['catalogueLayout'])) {
         $result['catalogueLayout'] = $payload['catalogueLayout'];

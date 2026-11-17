@@ -14,6 +14,8 @@ export interface TouchGesturePoint {
 
 export interface TouchGestureTarget {
   key: string;
+  /** Native-like canvas controls allow pan/pinch without a card action hold. */
+  allowLongPress?: boolean;
   /** A deliberate centre/title grab; edge swipes keep their pan behavior. */
   dragOnMove?: boolean;
 }
@@ -176,7 +178,9 @@ export class TouchGestureTracker<TTarget extends TouchGestureTarget> {
     this.startPoint = { ...point };
     this.currentPoint = { ...point };
     this.onLongPressStart = onLongPressStart ?? null;
-    this.longPressTimer = setTimeout(() => this.fireLongPress(), this.options.longPressMs);
+    if (target.allowLongPress !== false) {
+      this.longPressTimer = setTimeout(() => this.fireLongPress(), this.options.longPressMs);
+    }
   }
 
   move(point: TouchGesturePoint): TouchGestureMove<TTarget> {

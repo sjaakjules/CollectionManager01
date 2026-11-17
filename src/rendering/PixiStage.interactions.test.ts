@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FederatedPointerEvent } from 'pixi.js';
 import { PixiStage } from './PixiStage';
-import { CARD_SIZE, snapCardCenter } from './Grid';
+import { CARD_SIZE, SNAP_GRID, snapCardCenter } from './Grid';
+import { TOUCH_LONG_PRESS_MS, TouchGestureTracker } from './touchGestures';
 import type { CanvasArea, CanvasCardInstance } from '@/canvas/canvasAreas';
 
 type Point = { x: number; y: number };
@@ -37,9 +38,9 @@ function required<T>(value: T | null | undefined): T {
 let stage: StageHarness;
 let anchor: SpriteData;
 let base: Point;
-function event(x: number, y: number, button = 0): FederatedPointerEvent {
+function event(x: number, y: number, button = 0, pointerType = 'mouse'): FederatedPointerEvent {
   const pointer: Partial<FederatedPointerEvent> = {
-    preventDefault: vi.fn(), globalX: x, globalY: y, button, pointerType: 'mouse', shiftKey: false, altKey: false,
+    preventDefault: vi.fn(), globalX: x, globalY: y, button, pointerType, pointerId: 1, shiftKey: false, altKey: false,
   };
   return pointer as FederatedPointerEvent;
 }
@@ -76,13 +77,80 @@ beforeEach(() => {
     selectionBox: { isActive: false, startWorldPos: null, graphics: null }, quickTransferState: { active: false },
     camera: { screenToWorld: (x: number, y: number) => ({ x, y }), pauseDrag: vi.fn(), resumeDrag: vi.fn() },
     isTouchPointer: vi.fn(() => false), shouldIgnorePostTouchMouseEvent: vi.fn(() => false),
-    clearQuickTransferHold: vi.fn(), clearZoneDropPreview: vi.fn(), updateHoveredFromWorldPos: vi.fn(),
+    clearZoneDropPreview: vi.fn(), updateHoveredFromWorldPos: vi.fn(),
     getZoneVariantTabTargetAtPosition: vi.fn(() => null), getZoneSortTargetAtPosition: vi.fn(() => null),
     getDeckFilterChipTargetAtPosition: vi.fn(() => null), getZoneFilterTargetAtPosition: vi.fn(() => null),
     getZoneCloseTargetAtPosition: vi.fn(() => null), getZoneHeaderAtPosition: vi.fn(() => null),
     getZoneCardAtPosition: vi.fn(() => anchor), getLabelAtPosition: vi.fn(() => null),
     getCardAtPosition: vi.fn(() => null), getZoneAtPosition: vi.fn(() => null),
     lastClickTime: 0, lastZoneCardClickTime: 0,
+  });
+});
+
+describe('board menu when holding a card', () => {
+  const openMenu = vi.fn(() => true);
+  const dismissMenu = vi.fn();
+  const showTouchActionSheet = vi.fn();
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    openMenu.mockClear();
+    dismissMenu.mockClear();
+    showTouchActionSheet.mockClear();
+    required(stage.canvasAreas[0]).deckId = 'deck';
+    const touchTarget = { kind: 'zone-card', key: 'zone-card:zone:b', zoneCardKey: 'zone:b', zoneId: 'zone',
+      instanceId: 'b', cardName: 'Spell', cardType: 'Minion', dragOnMove: true };
+    Object.assign(stage, {
+      cardQuickAddDeck: { deckId: 'deck', canvasAreaId: 'zone', name: 'Deck' },
+      onCardQuickAddHoldOpen: openMenu, onCardQuickAddHoldCancel: dismissMenu,
+      touchGestures: new TouchGestureTracker(), getTouchTarget: () => touchTarget,
+      isTouchPointer: (pointer: FederatedPointerEvent) => pointer.pointerType === 'touch',
+      getClientPosition: (pointer: FederatedPointerEvent) => ({ x: pointer.globalX, y: pointer.globalY }),
+      captureTouchPointer: vi.fn(), releaseTouchPointer: vi.fn(), closeTouchActionSheet: vi.fn(), showTouchActionSheet,
+      setStacksDropVisual: vi.fn(),
+    });
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it.each(['mouse', 'touch'])('opens on a steady %s press and leaves the menu and group intact on release', pointerType => {
+    const press = event(500, 500, 0, pointerType);
+    stage.onPointerDown(press);
+    stage.onPointerMove(event(502, 501, 0, pointerType));
+    vi.advanceTimersByTime(TOUCH_LONG_PRESS_MS - 1);
+    expect(openMenu).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(openMenu).toHaveBeenCalledExactlyOnceWith('zone:b');
+    expect(stage.zoneCardDragState.isDragging).toBe(false);
+    stage.onPointerUp(press);
+    expect([...stage.selectedZoneCardKeys]).toEqual(['zone:a', 'zone:b']);
+    expect(dismissMenu).not.toHaveBeenCalled();
+    expect(showTouchActionSheet).not.toHaveBeenCalled();
+    expect(stage.camera.resumeDrag).toHaveBeenCalled();
+  });
+
+  it.each(['mouse', 'touch'])('does not open the menu after a %s drag begins', pointerType => {
+    stage.onPointerDown(event(500, 500, 0, pointerType));
+    stage.onPointerMove(event(600, 600, 0, pointerType));
+    vi.advanceTimersByTime(TOUCH_LONG_PRESS_MS);
+    expect(stage.zoneCardDragState.isDragging).toBe(true);
+    expect(openMenu).not.toHaveBeenCalled();
+  });
+
+  it.each(['mouse', 'touch'])('closes an already open menu when the %s drag begins', pointerType => {
+    stage.onPointerDown(event(500, 500, 0, pointerType));
+    vi.advanceTimersByTime(TOUCH_LONG_PRESS_MS);
+    stage.onPointerMove(event(600, 600, 0, pointerType));
+    expect(openMenu).toHaveBeenCalledExactlyOnceWith('zone:b');
+    expect(dismissMenu).toHaveBeenCalledOnce();
+    expect(stage.zoneCardDragState.isDragging).toBe(true);
+  });
+
+  it('does not open a held menu after the active deck leaves the canvas', () => {
+    stage.onPointerDown(event(500, 500));
+    required(stage.canvasAreas[0]).pinned = false;
+    vi.advanceTimersByTime(TOUCH_LONG_PRESS_MS);
+    expect(openMenu).not.toHaveBeenCalled();
   });
 });
 
@@ -138,7 +206,7 @@ describe('deck canvas mouse interactions', () => {
     expect(stage.emitCanvasAreasChange).not.toHaveBeenCalled();
   });
 
-  it('does not delete from an invisible touch control and makes the visible plus respond once', () => {
+  it('does not delete from an invisible touch control and makes the visible duplicate control respond once', () => {
     const duplicate = vi.fn(), remove = vi.fn();
     Object.assign(stage, {hoveredZoneCardKey: null, canDuplicateZoneCard: () => true,
       getDuplicateButtonBounds: () => ({left: 90, top: 0, right: 100, bottom: 10}),
@@ -285,10 +353,13 @@ describe('selection spanning deck areas', () => {
     expect([...stage.selectedZoneCardKeys]).toEqual(['zone:a','zone:b','other:second']);
     stage.selectZoneCardForPointer(anchor.key,false,false,true);
     expect([...stage.selectedZoneCardKeys]).toEqual(['zone:a','zone:b','other:second']);
+    const dx = SNAP_GRID.width * 2;
+    const end = { x: 500 + dx, y: 500 };
+    const expected = second.sprite.x + dx;
     stage.startZoneCardDrag(anchor,{x:500,y:500});
-    stage.updateZoneCardDrag({x:610,y:500});
-    expect(second.sprite.x).toBe(base.x+2310);
-    stage.endZoneCardDrag({x:610,y:500});
-    expect(stage.canvasAreas[1]?.cards[0]?.x).toBe(base.x+2310);
+    stage.updateZoneCardDrag(end);
+    expect(second.sprite.x).toBe(expected);
+    stage.endZoneCardDrag(end);
+    expect(stage.canvasAreas[1]?.cards[0]?.x).toBe(expected);
   });
 });

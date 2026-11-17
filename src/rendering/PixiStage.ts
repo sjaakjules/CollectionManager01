@@ -1,11 +1,28 @@
 import { required } from '@/utils/required';
 import { detectResponsiveUiMode } from '@/utils/responsiveMode';
 import { applyDeckLayoutProfile, applyDeckLabelProfile, inheritDeckLayoutPosition, normalizeDeckLayoutProfiles, saveDeckLayoutProfile } from '@/canvas/deckLayoutProfiles';
+import {
+  applyDeckSectionTab, DECK_LAYOUT_SECTIONS, ensureDeckSectionTabs, getDeckCardSection, getDeckSectionTabs,
+  getDeckSectionTabLayout, getDeckSectionTabMode, inheritDeckSectionTabPosition, normalizeDeckSectionLayouts, normalizeSectionLayoutName,
+  restoreDeckSectionPositions, saveDeckSectionLayouts, scopeDeckLayoutLabels, SECTION_LAYOUT_NAME_LIMIT,
+  seedDefaultSectionPositions, translateDeckSectionTabs, visibleDeckLayoutLabels,
+  type CanvasPoint, type DeckLayoutSection, type DeckSectionLayoutTab,
+} from '@/canvas/deckSectionLayouts';
+import { arrangeCardsByLayout } from '@/canvas/cardLayoutPipeline';
+import { arrangeDeckSelection } from '@/canvas/selectionLayout';
+import { cleanUpDeckSelection, getDeckSelectionActions, quickSortDeckSelection, type DeckQuickSortField } from '@/canvas/selectionActions';
+import { DeckSectionTabs } from '@/ui/deckSectionTabs';
+import { CanvasLayoutPopover } from '@/ui/canvasLayoutPopover';
+import { CanvasStatisticTooltip } from '@/ui/canvasStatisticTooltip';
+import { DeckSectionStatisticsCache, type DeckSectionSummary } from '@/canvas/deckSectionStatistics';
+import { isBlockedTokenCardName } from '@/data/tokenCards';
+import { DeckStatisticStrip } from './DeckStatisticStrip';
+import { drawDeckGrid } from './deckGrid';
 /**
  * PixiJS application setup and card scene management
  *
  * Features:
- * - Faint background grid (55×55 pixel cells)
+ * - Faint background grid aligned with card snapping
  * - Viewport culling: Only visible cards are rendered
  * - Card stacking: Multiple cards at same position offset to show names
  *   - Spells: offset downward (names on top)
@@ -17,7 +34,7 @@ import { applyDeckLayoutProfile, applyDeckLabelProfile, inheritDeckLayoutPositio
  * - Left-drag on a card: Move the selected card, stack or group
  * - Left-drag on empty space (or Ctrl+drag): Selection box; Shift extends
  * - Double-click in a deck/stack area: Select the stack
- * - Double-click in the catalogue: Add to active deck (right-click removes)
+ * - Double-click in the catalogue: Choose a Stack or Deck destination
  * - Touch: Tap, hold-to-drag, one-finger pan and pinch remain separate
  */
 
@@ -27,6 +44,7 @@ import {
   Graphics,
   Text,
   FederatedPointerEvent,
+  CanvasTextMetrics,
 } from "pixi.js";
 import { Camera, type CameraBounds } from "./Camera";
 import { DeletionPoof } from "./DeletionPoof";
@@ -34,15 +52,15 @@ import { ArrivalPop } from './ArrivalPop';
 import { getArrivalCardPose } from './arrivalPopTimeline';
 import { MangaEffect, type EffectBounds } from './MangaEffect';
 import { drawMangaOutline, MANGA_PALETTE, unionEffectBounds } from './mangaStyle';
-import { getDeckHeadingStyle, getLabelHeadingStyle } from './deckHeadingStyle';
+import { CANVAS_LABEL_FONT_SIZE, getDeckHeadingStyle, getLabelHeadingStyle } from './deckHeadingStyle';
 import { DEFAULT_INTERACTION_EFFECTS, ensureInteractionEffects, MangaEffectGate, MAX_MANGA_EFFECTS, type InteractionEffectsSettings, type MangaEffectKind, type CanvasGestureCommand } from '@/data/interactionEffects';
 import { outlineSelectedStack } from './stackSelectionOutline';
 import { openCanvasLabelEditor, type CanvasLabelEditor } from "@/ui/canvasLabelEditor";
-import { LabelStatisticsCache } from '@/canvas/labelStatistics';
-import { createDefaultCatalogueLayout, type CatalogueLayoutConfig } from "@/data/catalogueLayout";
-import { getLabelFamily, getLabelCards, getLabelRegionBounds, placeCardsBelowLabel, repositionLabelsAfterCardLayout, ShakeDetector } from "@/canvas/labelRegions";
+import { LabelStatisticsCache, formatLabelStatistics } from '@/canvas/labelStatistics';
+import { createDefaultCatalogueLayout, createSelectionLayout, ensureCatalogueLayout, getEarliestCardSet, type CatalogueLayoutConfig } from "@/data/catalogueLayout";
+import { cardBounds, getLabelFamily, getLabelCards, getLabelHeadingBounds, getLabelHeadingBands, getLabelHeadingLayout, getLabelRegionBounds, placeCardsBelowLabel, repositionLabelsAfterCardLayout, ShakeDetector, LABEL_HEADING_INSET_X } from "@/canvas/labelRegions";
 import { getCardClickSelection } from "./cardSelection";
-import type { CardQuickAddDeck, CardQuickAddTarget, QuickAddBoard, QuickAddScope } from './cardQuickAdd';
+import type { CardQuickAddDeck, CardQuickAddTarget, LabelCleanUpTarget, QuickAddBoard, QuickAddScope } from './cardQuickAdd';
 import { CardSprite, type CardSpriteConfig, type CardSpriteState } from "./CardSprite";
 import { hasPreviewArtwork } from '@/data/previewArtwork';
 import type { CardStatisticsPresentation } from '@/data/cardStatisticHighlights';
@@ -55,13 +73,14 @@ import {
   DECK_AVATAR_SIZE,
   GRID_LINE,
   HEADER_HEIGHT,
-  STACK_OFFSET,
+  getStackFan,
   snapCardCenter,
   snapToDrawnGrid,
   pixelsToSnapGrid,
   type CardLayoutInfo,
   type CollectionLayoutVariant,
   type ContentBounds,
+  type LayoutCardInput,
 } from "./Grid";
 import {
   lodManager,
@@ -83,6 +102,7 @@ import {
   isTouchLikePointerEvent,
   isTouchDragCentre,
   SYNTHETIC_MOUSE_AFTER_TOUCH_MS,
+  TOUCH_LONG_PRESS_MS,
   TouchGestureTracker,
   type TouchGesturePoint,
   type TouchGestureSnapshot,
@@ -137,9 +157,9 @@ import {
 } from "@/canvas/canvasAreas";
 import {
   DECK_BOARD_ORDER, DECK_BOARD_MIN_HEIGHT, DECK_MIN_WIDTH,
-  DECK_COMPACT_BOARD_WIDTH,
+  DECK_COMPACT_BOARD_WIDTH, DECK_BOARD_PADDING,
   getDeckBoardWidth, getDeckBoardRects as computeDeckBoardRects,
-  fitDeckBoardSections, getDeckAreaBounds, placeNewDeckCards, getMainDeckSectionRects, normalizeDeckBoard, type DeckZoneBoard,
+  fitDeckBoardSections, getDeckAreaBounds, placeNewDeckCards, getMainDeckSectionLayout, normalizeDeckBoard, type DeckZoneBoard, type MainDeckLabelBounds,
 } from '@/canvas/deckBoardLayout';
 import { DECK_REGION_NAMES, hitDeckRegion, planDeckRegionMove, resizeDeckRegion,
   type DeckRegionHit, type DeckRegionPlan } from '@/canvas/deckRegionInteraction';
@@ -151,11 +171,14 @@ import { DECK_REGION_NAMES, hitDeckRegion, planDeckRegionMove, resizeDeckRegion,
 export interface PixiStageConfig {
   container: HTMLElement;
   onAddToDeck: (cardName: string) => void;
+  onCatalogueCardMenuRequest?: (request: { cardName: string; clientX: number; clientY: number }) => void;
   onRemoveFromDeck: (cardName: string) => void;
   onTextureProgress?: (loaded: number, total: number) => void;
   onBackgroundTextureProgress?: (loaded: number, total: number) => void;
   onSelectionChange?: (selectedCardNames: string[]) => void;
-  onCardQuickAddTargetsChange?: (targets: CardQuickAddTarget[]) => void;
+  onCardQuickAddTargetsChange?: (targets: CardQuickAddTarget[], label?: LabelCleanUpTarget | null) => void;
+  onCardQuickAddHoldOpen?: (cardKey: string) => boolean;
+  onCardQuickAddHoldCancel?: () => void;
   onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   onLabelPlacementConsumed?: () => void;
   onHoveredCardChange?: (cardName: string | null) => void;
@@ -273,6 +296,7 @@ interface LabelSpriteData {
   label: CanvasLabel;
   text: Text;
   statistics?: Text;
+  band?: CanvasArea['bounds'];
   bounds: { left: number; top: number; right: number; bottom: number };
 }
 
@@ -281,6 +305,16 @@ interface LabelDragState {
   labelId: string | null;
   startWorldPos: { x: number; y: number };
   labelStartPos: { x: number; y: number };
+}
+
+interface LabelDragPreview {
+  group: boolean;
+  delta: CanvasPoint;
+  name: CanvasPoint;
+  band?: CanvasArea['bounds'];
+  anchor?: { x: number; y: number; landscape: boolean };
+  cards: Map<string, { x: number; y: number; alpha: number; ghost?: Container }>;
+  frames: Map<string, { x: number; y: number }>;
 }
 
 interface ZoneCardSpriteData {
@@ -343,6 +377,7 @@ interface ZoneDragState {
 }
 
 type TouchCanvasTarget =
+  | ({ kind: 'statistic-control' } & TouchGestureTarget)
   | ({ kind: 'deck-region'; zoneId: string; hit: DeckRegionHit } & TouchGestureTarget)
   | ({ kind: "empty" } & TouchGestureTarget)
   | ({
@@ -544,10 +579,11 @@ const ZONE_DECK_AVATAR_CENTER_GRID_Y = 2;
 const ZONE_DECK_AVATAR_TITLE_GAP = 20;
 const ZONE_DECK_HEADER_X_OFFSET = DRAWN_GRID.width * 0.5;
 const ZONE_DECK_MIN_BOARD_HEIGHT = DECK_BOARD_MIN_HEIGHT;
-const ZONE_DECK_STATS_COL_GAP = 10;
-const ZONE_DECK_STATS_TITLE_SIZE = 11;
+const ZONE_DECK_GRAPH_GAP = 10;
+const ZONE_DECK_GRAPH_IDENTITY_GAP = 12;
+const ZONE_DECK_GRAPH_MIN_WIDTH = 120;
+const ZONE_DECK_GRAPH_MIN_HEIGHT = 64;
 const ZONE_DECK_STATS_LINE_SIZE = 10;
-const ZONE_DECK_STATS_LINE_GAP = 2;
 const ZONE_DECK_STATS_TEXT_FILLS = {
   title: 0xdbe4ff,
   line: 0xbdd0ff,
@@ -706,9 +742,10 @@ export class PixiStage {
   private dragDetached = false;
   private dragDetachedAt = 0;
   private labelDragCardStarts = new Map<string, { x: number; y: number }>();
-  private labelDragLabelStarts = new Map<string, { x: number; y: number }>();
+  private labelDragLabelStarts = new Map<string, { x: number; y: number; heading: CanvasPoint }>();
   private labelDragBoardTargets: Array<{ areaId: string; board: DeckZoneBoard; rect: CanvasArea["bounds"] }> = [];
   private labelDragLastPos: { x: number; y: number } | null = null;
+  private labelDragPreview: LabelDragPreview | null = null;
   private deletionPuffs: Array<{ effect: DeletionPoof; start: number }> = [];
   private mangaEffects: Array<{ effect: MangaEffect; start: number; follow?: string[] }> = [];
   private arrivalPops: Array<{ effect: ArrivalPop; start: number; zoneId: string; follow: string[]; cardKey?: string }> = [];
@@ -752,12 +789,24 @@ export class PixiStage {
   private collectionLayoutAspect = 0;
   private deckLayoutProfile = detectResponsiveUiMode();
   private deckRegionHitRects = new Map<string, DeckRegionBounds>();
+  private deckSectionHeaderRects = new Map<string, Partial<Record<DeckLayoutSection, CanvasArea['bounds']>>>();
+  private deckSectionTabs: DeckSectionTabs | null = null;
+  private sectionNameEditor: CanvasLabelEditor | null = null;
+  private sectionEditorButton: HTMLButtonElement | null = null;
+  private sectionLayoutMotion: { start: number; from: Map<string, CanvasPoint>; to: Map<string, CanvasPoint> } | null = null;
+  private layoutPopover: CanvasLayoutPopover | null = null;
+  private automaticLayoutEditor: { areaId: string; section: DeckLayoutSection; tabId: string } | null = null;
+  private automaticLayoutSignatures = new Map<string, string>();
+  private selectionLayoutPreview: { areas: CanvasArea[]; labels: CanvasLabel[]; keys: Set<string>; layout: CatalogueLayoutConfig; rendered: boolean } | null = null;
+  private selectionActionsCache?: { areas: CanvasArea[]; cards: Card[]; signature: string; actions: ReturnType<typeof getDeckSelectionActions> };
+  private labelCleanUpCache?: { id: string; areas: CanvasArea[]; labels: CanvasLabel[]; cards: Card[]; keys: ReadonlySet<string> | null };
   private regionDrag: {
     zoneId: string; hit: DeckRegionHit; start: {x: number; y: number};
     original: CanvasArea; rects: DeckRegionBounds; labels: CanvasLabel[];
     plan: DeckRegionPlan | null; preview: CanvasArea | null;
     graphic: Graphics; titles: Map<DeckRegionId, Text>;
     sprites: Map<string, {x: number; y: number; alpha: number}>;
+    labelPositions: Map<string, CanvasPoint>;
   } | null = null;
 
   // Culling state
@@ -813,6 +862,8 @@ export class PixiStage {
   };
   private readonly handleCanvasBlur = (): void => {
     this.spacePanHeld = false;
+    this.touchGestures.cancel();
+    this.activeTouchDragTarget = null;
     this.cancelDesktopInteraction();
   };
   private stacksDropVisualActive = false;
@@ -866,6 +917,11 @@ export class PixiStage {
   private selectedLabelId: string | null = null;
   private labelDeleteGraphic: Graphics | null = null;
   private labelStatistics = new LabelStatisticsCache();
+  private deckSectionStatistics = new DeckSectionStatisticsCache();
+  private statisticTooltip: CanvasStatisticTooltip | null = null;
+  private statisticPages = new Map<string, number>();
+  private statisticStrips = new Map<string, { strip: DeckStatisticStrip; bounds: CanvasArea['bounds'] }>();
+  private statisticGestureVersion = 0;
   private lastEmptyCanvasClick: { x: number; y: number; time: number } | null = null;
   private pendingEmptyCanvasClick: { x: number; y: number } | null = null;
   private labelDragState: LabelDragState = {
@@ -925,11 +981,14 @@ export class PixiStage {
 
   // Callbacks
   private onAddToDeck: (cardName: string) => void;
+  private onCatalogueCardMenuRequest?: PixiStageConfig['onCatalogueCardMenuRequest'];
   private onRemoveFromDeck: (cardName: string) => void;
   private onTextureProgress?: (loaded: number, total: number) => void;
   private onBackgroundTextureProgress?: (loaded: number, total: number) => void;
   private onSelectionChange?: (selectedCardNames: string[]) => void;
-  private onCardQuickAddTargetsChange?: (targets: CardQuickAddTarget[]) => void;
+  private onCardQuickAddTargetsChange?: PixiStageConfig['onCardQuickAddTargetsChange'];
+  private onCardQuickAddHoldOpen?: (cardKey: string) => boolean;
+  private onCardQuickAddHoldCancel?: () => void;
   private onCanvasLabelsChange?: (labels: CanvasLabel[]) => void;
   private onLabelPlacementConsumed?: () => void;
   private onHoveredCardChange?: (cardName: string | null) => void;
@@ -955,7 +1014,9 @@ export class PixiStage {
   private hoveredCardName: string | null = null;
   private lastPointerScreenPos: { x: number; y: number } | null = null;
   private quickTransferLastTickMs = 0;
-  private quickTransferHoldTimerId: number | null = null;
+  private cardQuickAddDeck: CardQuickAddDeck | null = null;
+  private cardQuickAddHoldTimer?: ReturnType<typeof setTimeout>;
+  private cardQuickAddHeldPointer: number | null = null;
   private readonly touchGestures = new TouchGestureTracker<TouchCanvasTarget>();
   private activeTouchDragTarget: TouchCanvasTarget | null = null;
   private lastTouchPointerEventMs = 0;
@@ -964,11 +1025,14 @@ export class PixiStage {
 
   constructor(config: PixiStageConfig) {
     this.onAddToDeck = config.onAddToDeck;
+    this.onCatalogueCardMenuRequest = config.onCatalogueCardMenuRequest;
     this.onRemoveFromDeck = config.onRemoveFromDeck;
     this.onTextureProgress = config.onTextureProgress;
     this.onBackgroundTextureProgress = config.onBackgroundTextureProgress;
     this.onSelectionChange = config.onSelectionChange;
     this.onCardQuickAddTargetsChange = config.onCardQuickAddTargetsChange;
+    this.onCardQuickAddHoldOpen = config.onCardQuickAddHoldOpen;
+    this.onCardQuickAddHoldCancel = config.onCardQuickAddHoldCancel;
     this.onCanvasLabelsChange = config.onCanvasLabelsChange;
     this.onLabelPlacementConsumed = config.onLabelPlacementConsumed;
     this.onHoveredCardChange = config.onHoveredCardChange;
@@ -1025,6 +1089,11 @@ export class PixiStage {
     }
 
     container.appendChild(this.app.canvas);
+    this.deckSectionTabs = new DeckSectionTabs(container, {
+      select: (id, section, tabId) => this.activateDeckSectionTab(id, section, tabId),
+      edit: (id, section, tabId, button) => this.editDeckSectionTabName(id, section, tabId, button),
+      toggleMode: (id, section, tabId, button) => this.toggleDeckSectionTabMode(id, section, tabId, button),
+    });
 
     // Register before the camera's horizontal-wheel capture listener so an
     // inspection blocks every gesture before it can move the canvas beneath it.
@@ -1077,6 +1146,7 @@ export class PixiStage {
       this.catalogueCards = this.pendingCardSet.catalogueCards;
       this.catalogueLayout = this.pendingCardSet.catalogueLayout;
       this.pendingCardSet = null;
+      this.applyCanvasLayoutProfile();
       // Reset reveal state left by any earlier empty reveal call so culling
       // inside rebuildCardSprites() doesn't prematurely preload textures.
       this.initialRevealCompleted = false;
@@ -1157,9 +1227,10 @@ export class PixiStage {
     viewport.on("pointerupoutside", this.onPointerUp.bind(this));
     viewport.on("pointercancel", this.onPointerCancel.bind(this));
     viewport.on("pointerleave", () => {
+      this.statisticTooltip?.hide();
       this.pendingCardClick = null;
       this.pendingZoneCardClick = null;
-      this.clearQuickTransferHold();
+      this.clearCardQuickAddHold();
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
       this.clearZoneDropPreview();
@@ -1197,7 +1268,7 @@ export class PixiStage {
     this.app.canvas.addEventListener("pointerleave", () => {
       this.pendingCardClick = null;
       this.pendingZoneCardClick = null;
-      this.clearQuickTransferHold();
+      this.clearCardQuickAddHold();
       this.setHoveredCard(null);
       this.setStacksDropVisual(false);
       this.clearZoneDropPreview();
@@ -1276,12 +1347,21 @@ export class PixiStage {
       if (this.selectedCardCategoryId && this.cardCategoryData) {
         this.handleCardCategoryDoubleClick(cardName, data?.bounds, worldPos);
       } else {
-        this.onAddToDeck(cardName);
+        this.lastClickTime = 0;
+        this.lastClickedCard = null;
+        this.openCatalogueCardMenu(cardName, pending.startScreenPos);
       }
       return;
     }
 
     this.selectMainCardForPointer(pending.cardKey, pending.shiftKey);
+  }
+
+  private openCatalogueCardMenu(cardName: string, screenPos: { x: number; y: number }): void {
+    if (!this.onCatalogueCardMenuRequest || isBlockedTokenCardName(cardName)) return;
+    this.setHoveredCard(null);
+    const rect = this.app.canvas.getBoundingClientRect();
+    this.onCatalogueCardMenuRequest({ cardName, clientX: rect.left + screenPos.x, clientY: rect.top + screenPos.y });
   }
 
   private selectMainCardForPointer(key: string, additive: boolean, dragging = false): void {
@@ -1361,6 +1441,10 @@ export class PixiStage {
   }
 
   private getTouchTarget(worldPos: { x: number; y: number }): TouchCanvasTarget {
+    for (const [key, { strip, bounds }] of this.statisticStrips ?? []) {
+      const control = strip.pageControlAt({ x: worldPos.x - bounds.x, y: worldPos.y - bounds.y });
+      if (control !== null) return { kind: 'statistic-control', key: `${key}:page:${control}`, allowLongPress: false };
+    }
     const labelDelete = this.getLabelDeleteTarget(worldPos);
     if (labelDelete) return { kind: 'label-delete', key: `label-delete:${labelDelete}`, labelId: labelDelete };
     const variantTab = this.getZoneVariantTabTargetAtPosition(worldPos);
@@ -1525,6 +1609,7 @@ export class PixiStage {
     }
 
     if (move.type === "drag-start") {
+      this.clearCardQuickAddHold();
       this.startTouchDrag(move.gesture);
       this.updateActiveTouchDrag(worldPos, { x: event.globalX, y: event.globalY });
       return;
@@ -1552,6 +1637,7 @@ export class PixiStage {
     this.clearZoneDropPreview();
 
     const release = this.touchGestures.release(this.toTouchPoint(event));
+    const openedQuickAdd = this.releaseCardQuickAddHold(event.pointerId);
     this.releaseTouchPointer(event);
 
     if (this.quickTransferState.active) {
@@ -1566,7 +1652,7 @@ export class PixiStage {
 
     if (release.type === "tap") {
       this.handleTouchTap(release.target, worldPos, screenPos, release.isDoubleTap);
-    } else if (release.type === "action") {
+    } else if (release.type === "action" && !openedQuickAdd) {
       this.cancelActiveTouchDrag();
       this.showTouchActionSheet(release.target, clientPos.x, clientPos.y);
     } else if (release.type === "drag-end") {
@@ -1583,7 +1669,7 @@ export class PixiStage {
   private onPointerCancel(event: FederatedPointerEvent): void {
     this.pendingCardClick = null;
     this.pendingZoneCardClick = null;
-    this.clearQuickTransferHold();
+    this.clearCardQuickAddHold();
     if (this.isTouchPointer(event)) {
       this.markTouchPointerEvent();
       this.touchGestures.cancel();
@@ -1609,19 +1695,28 @@ export class PixiStage {
     gesture: TouchGestureSnapshot<TouchCanvasTarget>,
   ): void {
     if (!this.camera) return;
-    if (gesture.target.kind === "empty") return;
-    if (gesture.target.kind === "card") {
+    const { target } = gesture;
+    if (target.kind === "empty") return;
+    if (target.kind === 'card' || target.kind === 'zone-card') {
+      const inZone = target.kind === 'zone-card';
+      const key = inZone ? target.zoneCardKey : target.cardKey;
+      if (this.openCardQuickAddHold(gesture.pointerId, key, inZone, false)) {
+        this.camera.pauseDrag();
+        return;
+      }
+    }
+    if (target.kind === "card") {
       const worldPos = this.camera.screenToWorld(gesture.current.x, gesture.current.y);
-      this.activeTouchDragTarget = gesture.target;
-      this.beginQuickTransferDrag(gesture.target.cardKey, worldPos, {
+      this.activeTouchDragTarget = target;
+      this.beginQuickTransferDrag(target.cardKey, worldPos, {
         x: gesture.current.x,
         y: gesture.current.y,
       });
       return;
     }
     this.camera.pauseDrag();
-    this.activeTouchDragTarget = gesture.target;
-    this.updateTouchSelectionPreview(gesture.target);
+    this.activeTouchDragTarget = target;
+    this.updateTouchSelectionPreview(target);
   }
 
   private handleTouchTap(
@@ -1683,7 +1778,7 @@ export class PixiStage {
           const data = this.getSpriteData(target.cardKey);
           this.handleCardCategoryDoubleClick(target.cardName, data?.bounds, worldPos);
         } else {
-          this.onAddToDeck(target.cardName);
+          this.openCatalogueCardMenu(target.cardName, screenPos);
         }
         this.updateHoveredFromWorldPos(worldPos);
         return;
@@ -1708,6 +1803,9 @@ export class PixiStage {
     target: TouchCanvasTarget,
     worldPos: { x: number; y: number },
   ): boolean {
+    // Pixi's pointertap changes the page after pointerup; do not also select
+    // the region or place a label underneath that same touch.
+    if (target.kind === 'statistic-control') return true;
     if (target.kind === 'label-delete') {
       this.deleteLabel(target.labelId);
       return true;
@@ -2579,12 +2677,6 @@ export class PixiStage {
     return true;
   }
 
-  private clearQuickTransferHold(): void {
-    if (this.quickTransferHoldTimerId === null) return;
-    window.clearTimeout(this.quickTransferHoldTimerId);
-    this.quickTransferHoldTimerId = null;
-  }
-
   private toDeckAddPlacements(placements: DraggedCardPlacement[]): DeckAddPlacement[] {
     return placements.map((placement) => ({
       cardName: placement.cardName,
@@ -2677,6 +2769,7 @@ export class PixiStage {
       bounds: { ...area.bounds },
       deckRegionBounds: area.deckRegionBounds ? Object.fromEntries(Object.entries(area.deckRegionBounds).map(([key, rect]) => [key, { ...rect }])) : undefined,
       layoutProfiles: normalizeDeckLayoutProfiles(area.layoutProfiles),
+      sectionLayouts: normalizeDeckSectionLayouts(area.sectionLayouts),
       cards: area.cards.map((card) => ({ ...card })),
       deckVariants: area.deckVariants?.map((variant) => ({
         ...variant,
@@ -2692,9 +2785,16 @@ export class PixiStage {
   }
 
   private emitCanvasAreasChange(): void {
-    for (const area of this.canvasAreas) if (area.layoutProfiles?.[this.deckLayoutProfile]) {
-      saveDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
+    if (this.selectionLayoutPreview) return;
+    let scopesChanged = false;
+    for (const area of this.canvasAreas) {
+      if (area.sectionLayouts && this.cards?.length) {
+        scopesChanged = scopeDeckLayoutLabels(area, this.canvasLabels, this.getDeckRegionRects(area), name => this.isLandscapeCard(name)) || scopesChanged;
+        saveDeckSectionLayouts(area, this.canvasLabels, this.deckLayoutProfile, name => this.isLandscapeCard(name));
+      }
+      if (area.layoutProfiles?.[this.deckLayoutProfile]) saveDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
     }
+    if (scopesChanged) this.emitCanvasLabelsChange();
     this.onCanvasAreasChange?.(this.cloneCanvasAreas(this.canvasAreas));
   }
 
@@ -2926,6 +3026,14 @@ export class PixiStage {
   }
 
   resetSessionGestures(): void {
+    this.cancelSelectionLayout(false);
+    this.closeLayoutPopover();
+    this.clearCardQuickAddHold();
+    this.touchGestures?.cancel();
+    this.activeTouchDragTarget = null;
+    this.deckSectionTabs?.cancelPending();
+    this.sectionNameEditor?.close();
+    this.sectionLayoutMotion = null;
     this.removedCardHistory = [];
     this.hasReceivedAreas = false;
     this.effectGate = new MangaEffectGate();
@@ -3180,15 +3288,25 @@ export class PixiStage {
     return value.toFixed(2).replace(/\.?0+$/, "");
   }
 
-  private formatDeckStatPercent(value: number, total: number): string {
-    if (total <= 0) return "0%";
-    return `${Math.round((value / total) * 100)}%`;
-  }
-
   private formatDeckAuthorLabel(author: string): string {
     const trimmed = author.trim();
     if (!trimmed) return "";
     return /^by\b/i.test(trimmed) ? trimmed : `by ${trimmed}`;
+  }
+
+  private fitDeckHeaderIdentityText(label: Text, maxWidth: number): void {
+    if (label.width <= maxWidth) return;
+    const characters = Array.from(label.text);
+    let lo = 0;
+    let hi = characters.length - 1;
+    while (lo < hi) {
+      const length = Math.ceil((lo + hi) / 2);
+      label.text = `${characters.slice(0, length).join("").trimEnd()}…`;
+      if (label.width <= maxWidth) lo = length;
+      else hi = length - 1;
+    }
+    label.text = `${characters.slice(0, lo).join("").trimEnd()}…`;
+    if (label.width > maxWidth) label.text = "";
   }
 
   private addDeckHeaderText(
@@ -3248,8 +3366,6 @@ export class PixiStage {
       yFormatter?: (value: number) => string;
     },
   ): DeckGraphHoverRegion | null {
-    if (options.width < 120 || options.height < 64) return null;
-
     const panel = new Graphics();
     panel.zIndex = options.zIndex;
     panel.roundRect(options.x, options.y, options.width, options.height, 8);
@@ -3456,100 +3572,21 @@ export class PixiStage {
     options: {
       left: number;
       top: number;
-      graphTop?: number;
       right: number;
       bottom: number;
       zIndex: number;
     },
   ): DeckGraphHoverRegion[] {
-    const hoverRegions: DeckGraphHoverRegion[] = [];
+    const graphWidth = (options.right - options.left - ZONE_DECK_GRAPH_GAP) / 2;
+    const graphHeight = options.bottom - options.top;
+    if (graphWidth < ZONE_DECK_GRAPH_MIN_WIDTH || graphHeight < ZONE_DECK_GRAPH_MIN_HEIGHT) return [];
     const stats = this.computeDeckHeaderStats(zone);
-    if (!stats) return hoverRegions;
-
-    const width = options.right - options.left;
-    const height = options.bottom - options.top;
-    if (width < 460 || height < 64) return hoverRegions;
-
-    const gaps = ZONE_DECK_STATS_COL_GAP * 4;
-    const usableWidth = width - gaps;
-    if (usableWidth <= 0) return hoverRegions;
-
-    const sectionRatios = [0.11, 0.12, 0.14, 0.315, 0.315] as const;
-    const sectionWidths = sectionRatios.map((ratio) => ratio * usableWidth);
-    const sectionX: number[] = [];
-    let cursorX = options.left;
-    for (let index = 0; index < sectionWidths.length; index++) {
-      sectionX.push(cursorX);
-      const sectionWidth = sectionWidths[index] ?? 0;
-      cursorX += sectionWidth + (index < sectionWidths.length - 1 ? ZONE_DECK_STATS_COL_GAP : 0);
-    }
-
-    const addColumn = (column: number, title: string, lines: string[]): void => {
-      const x = sectionX[column] ?? options.left;
-      const maxWidth = sectionWidths[column] ?? 0;
-      const titleText = this.addDeckHeaderText(elements, {
-        text: title,
-        x,
-        y: options.top,
-        zIndex: options.zIndex,
-        maxWidth,
-        fontSize: ZONE_DECK_STATS_TITLE_SIZE,
-        fill: ZONE_DECK_STATS_TEXT_FILLS.title,
-        bold: true,
-      });
-
-      let y = titleText.y + titleText.height + 2;
-      for (const line of lines) {
-        const row = this.addDeckHeaderText(elements, {
-          text: line,
-          x,
-          y,
-          zIndex: options.zIndex,
-          maxWidth,
-          fontSize: ZONE_DECK_STATS_LINE_SIZE,
-          fill: ZONE_DECK_STATS_TEXT_FILLS.line,
-        });
-        y = row.y + row.height + ZONE_DECK_STATS_LINE_GAP;
-        if (y > options.bottom - 12) {
-          break;
-        }
-      }
-    };
-
-    addColumn(0, "Decks", [
-      `Spellbook: ${stats.spellsTotal}`,
-      `Sites: ${stats.sitesTotal}`,
-      `Collection: ${stats.collectionTotal}`,
-    ]);
-
-    addColumn(1, "Spell Types", [
-      `Minions: ${stats.spellTypeCounts.Minion}`,
-      `Magic: ${stats.spellTypeCounts.Magic}`,
-      `Auras: ${stats.spellTypeCounts.Aura}`,
-      `Artifacts: ${stats.spellTypeCounts.Artifact}`,
-      ...Object.entries(stats.spellTypeCounts)
-        .filter(([type]) => !["Minion", "Magic", "Aura", "Artifact"].includes(type))
-        .map(([type, count]) => `${type}: ${count}`),
-    ]);
-
-    const minionTotal = stats.minionInfo.total;
-    const minionRatioText = (value: number): string =>
-      `${value}/${minionTotal} (${this.formatDeckStatPercent(value, minionTotal)})`;
-    const minionInfoLines =
-      stats.minionInfo.topKeywords.length > 0
-        ? stats.minionInfo.topKeywords
-            .slice(0, 4)
-            .map((entry) => `${entry.label}: ${minionRatioText(entry.count)}`)
-        : ["No keyword concentration"];
-    addColumn(2, "Minion Info", minionInfoLines);
-
-    const graphTop = Math.min(options.top, options.graphTop ?? options.top);
-    const graphHeight = Math.max(64, options.bottom - graphTop);
+    if (!stats) return [];
 
     const manaCurveRegion = this.drawDeckHeaderLineGraph(elements, {
-      x: sectionX[3] ?? options.left,
-      y: graphTop,
-      width: sectionWidths[3] ?? 0,
+      x: options.left,
+      y: options.top,
+      width: graphWidth,
       height: graphHeight,
       zIndex: options.zIndex,
       manaCosts: stats.manaCosts,
@@ -3587,12 +3624,10 @@ export class PixiStage {
       ],
       yFormatter: (value) => `${Math.round(value)}`,
     });
-    if (manaCurveRegion) hoverRegions.push(manaCurveRegion);
-
     const thresholdRegion = this.drawDeckHeaderLineGraph(elements, {
-      x: sectionX[4] ?? options.left,
-      y: graphTop,
-      width: sectionWidths[4] ?? 0,
+      x: options.left + graphWidth + ZONE_DECK_GRAPH_GAP,
+      y: options.top,
+      width: graphWidth,
       height: graphHeight,
       zIndex: options.zIndex,
       manaCosts: stats.manaCosts,
@@ -3624,9 +3659,7 @@ export class PixiStage {
       ],
       yFormatter: (value) => this.formatDeckStatNumber(value),
     });
-    if (thresholdRegion) hoverRegions.push(thresholdRegion);
-
-    return hoverRegions;
+    return [manaCurveRegion, thresholdRegion].filter(region => region !== null);
   }
 
   private computeDeckHeaderStats(zone: CanvasArea): DeckHeaderStats | null {
@@ -4571,6 +4604,502 @@ export class PixiStage {
     return null;
   }
 
+  private syncDeckSectionTabs(): void {
+    if (!this.deckSectionTabs) return;
+    const editor = this.automaticLayoutEditor;
+    if (editor && !this.canvasAreas.some(area => area.id === editor.areaId && area.pinned &&
+      getDeckSectionTabs(area, editor.section).activeId === editor.tabId)) this.closeLayoutPopover();
+    const sections = this.canvasAreas.flatMap(area => {
+      const rects = this.deckRegionHitRects.get(area.id);
+      if (!area.pinned || area.type !== 'deck' || !rects) return [];
+      return DECK_LAYOUT_SECTIONS.flatMap(section => {
+        // Tabs follow the section's actual corner, independently of any header
+        // band moved to clear a label or neighbouring cards.
+        const bounds = rects[section];
+        const stats = this.statisticStrips?.get(`${area.id}:${section}`);
+        return bounds ? [{ areaId: area.id, section, bounds,
+          minX: stats ? stats.bounds.x + 180 : bounds.x + 120,
+          ...getDeckSectionTabs(area, section) }] : [];
+      });
+    });
+    this.deckSectionTabs.sync(sections);
+    this.positionDeckSectionTabs();
+  }
+
+  private bindStatisticTooltip(text: Container, description: string): void {
+    if (!description) return;
+    text.eventMode = 'static';
+    text.cursor = 'help';
+    const show = (event: FederatedPointerEvent) => {
+      if (event.buttons || event.pointerType === 'touch' || this.labelDragState.isDragging || this.regionDrag || this.zoneDragState.isDragging || this.spacePanHeld) return;
+      this.statisticTooltip ??= new CanvasStatisticTooltip();
+      this.statisticTooltip.show(description, { x: event.clientX, y: event.clientY });
+    };
+    text.on('pointerover', show);
+    text.on('pointermove', show);
+    text.on('pointerout', () => this.statisticTooltip?.hide());
+  }
+
+  /** Rendering stays separate from cached deck analysis and native layout controls. */
+  private addDeckStatisticColumns(key: string, summary: DeckSectionSummary, bounds: CanvasArea['bounds'],
+    zIndex: number, labels: Container[]): void {
+    if (!summary.columns.length || bounds.width < 42 || bounds.height < 24) return;
+    this.statisticPages ??= new Map();
+    this.statisticStrips ??= new Map();
+    const strip = new DeckStatisticStrip({
+      summary, height: bounds.height, page: this.statisticPages.get(key) ?? 0,
+      configureText: text => this.configureTextQuality(text),
+      tooltip: (target, description) => this.bindStatisticTooltip(target, description),
+      hideTooltip: () => this.statisticTooltip?.hide(),
+      pageChanged: page => this.statisticPages.set(key, page),
+      gestureVersion: () => this.statisticGestureVersion,
+      canPress: event => event.button === 0 && !this.spacePanHeld,
+    });
+    strip.position.set(bounds.x, bounds.y);
+    strip.zIndex = zIndex;
+    strip.layout(bounds.width);
+    this.statisticStrips.set(key, { strip, bounds });
+    this.zoneContainer.addChild(strip);
+    labels.push(strip);
+  }
+
+  private positionDeckSectionTabs(): void {
+    if (!this.deckSectionTabs || !this.camera) return;
+    const viewport = this.camera.container;
+    this.deckSectionTabs.position(point => viewport.toGlobal(point), this.app.screen, viewport.scale.x,
+      !!this.regionDrag || !!this.inspection || this.zoneDragState.isDragging);
+    for (const area of this.canvasAreas) for (const section of DECK_LAYOUT_SECTIONS) {
+      const view = this.statisticStrips?.get(`${area.id}:${section}`);
+      if (!view) continue;
+      const reserved = this.deckSectionTabs.getReservedWidth(area.id, section);
+      view.strip.layout(Math.max(0, view.bounds.width - reserved - (reserved ? 8 : 0)));
+    }
+    if (this.sectionEditorButton && this.sectionNameEditor) {
+      if (this.sectionEditorButton.isConnected) {
+        this.sectionNameEditor.reposition(this.getSectionNameEditorPosition(this.sectionEditorButton));
+      } else {
+        this.sectionNameEditor.close();
+      }
+    }
+    this.layoutPopover?.reposition();
+  }
+
+  private getSectionNameEditorPosition(button: HTMLButtonElement) {
+    const rect = button.getBoundingClientRect();
+    const zoom = this.camera?.container.scale.x ?? 1;
+    return { x: Math.max(8, Math.min(rect.left, window.innerWidth - 174)), y: rect.top + 2 * zoom,
+      fontSize: CANVAS_LABEL_FONT_SIZE * zoom };
+  }
+
+  private editDeckSectionTabName(areaId: string, section: DeckLayoutSection, tabId: string | null, button: HTMLButtonElement): void {
+    const area = this.canvasAreas.find(zone => zone.id === areaId && zone.type === 'deck' && zone.pinned);
+    if (!area || !this.cards.length) return;
+    const tab = getDeckSectionTabs(area, section).tabs.find(entry => entry.id === tabId);
+    if (tabId !== null && !tab) return;
+    if (tab && getDeckSectionTabMode(tab) === 'automatic') {
+      this.activateDeckSectionTab(areaId, section, tab.id);
+      button = this.deckSectionTabs?.getButton(areaId, section, tab.id) ?? button;
+      this.openAutomaticLayoutEditor(areaId, section, tab.id);
+    } else {
+      this.closeLayoutPopover();
+    }
+    this.labelEditor?.commit();
+    this.sectionNameEditor?.commit();
+    this.sectionEditorButton = button;
+    this.sectionNameEditor = openCanvasLabelEditor({
+      title: `${tabId ? 'Rename' : 'Name'} ${DECK_REGION_NAMES[section]} layout`,
+      initialText: tab?.name,
+      placeholder: 'Layout name',
+      maxLength: SECTION_LAYOUT_NAME_LIMIT,
+      position: this.getSectionNameEditorPosition(button),
+      onClose: () => {
+        this.sectionNameEditor = null;
+        this.sectionEditorButton = null;
+      },
+      onSave: value => {
+        const zone = this.canvasAreas.find(entry => entry.id === areaId && entry.type === 'deck' && entry.pinned);
+        const name = normalizeSectionLayoutName(value);
+        if (!zone || !name) return;
+        const set = this.prepareDeckSectionTabs(zone, section);
+        if (tabId === null) {
+          const id = createCanvasDeckVariantId();
+          set.tabs.push({ id, name, mode: 'custom' });
+          this.activateDeckSectionTab(areaId, section, id);
+        } else {
+          const entry = set.tabs.find(entry => entry.id === tabId);
+          if (!entry) return;
+          entry.name = name;
+          this.syncDeckSectionTabs();
+          this.emitCanvasAreasChange();
+          this.emitCanvasLabelsChange();
+        }
+      },
+    });
+  }
+
+  private prepareDeckSectionTabs(area: CanvasArea, section: DeckLayoutSection) {
+    const set = ensureDeckSectionTabs(area, section);
+    const isLandscape = (name: string) => this.isLandscapeCard(name);
+    scopeDeckLayoutLabels(area, this.canvasLabels, this.getDeckRegionRects(area), isLandscape);
+    seedDefaultSectionPositions(area, section, this.canvasLabels, this.deckLayoutProfile, isLandscape);
+    saveDeckSectionLayouts(area, this.canvasLabels, this.deckLayoutProfile, isLandscape);
+    return set;
+  }
+
+  private closeLayoutPopover(): void {
+    this.layoutPopover?.destroy();
+    this.layoutPopover = null;
+    this.automaticLayoutEditor = null;
+  }
+
+  private toggleDeckSectionTabMode(areaId: string, section: DeckLayoutSection, tabId: string, button: HTMLButtonElement): void {
+    this.cancelSelectionLayout();
+    this.sectionNameEditor?.commit();
+    this.activateDeckSectionTab(areaId, section, tabId);
+    const area = this.canvasAreas.find(area => area.id === areaId && area.type === 'deck' && area.pinned);
+    if (!area) return;
+    const tab = this.prepareDeckSectionTabs(area, section).tabs.find(tab => tab.id === tabId);
+    if (!tab) return;
+    const automatic = getDeckSectionTabMode(tab) !== 'automatic';
+    tab.layout = ensureCatalogueLayout(tab.layout ?? (tab.id === 'cost' || tab.id === 'threshold'
+      ? getDeckSectionTabLayout(tab) : this.catalogueLayout));
+    tab.mode = automatic ? 'automatic' : 'custom';
+    if (automatic) {
+      this.automaticLayoutSignatures?.delete(`${areaId}:${section}`);
+      this.captureLayoutMotion();
+      this.rebuildZoneVisuals(false);
+      this.openAutomaticLayoutEditor(areaId, section, tabId);
+    } else {
+      this.closeLayoutPopover();
+      this.syncDeckSectionTabs();
+    }
+    this.emitCanvasAreasChange();
+    this.emitCanvasLabelsChange();
+    (this.deckSectionTabs?.getButton(areaId, section, tabId) ?? button).focus({ preventScroll: true });
+  }
+
+  private openAutomaticLayoutEditor(areaId: string, section: DeckLayoutSection, tabId: string): void {
+    this.cancelSelectionLayout();
+    this.closeLayoutPopover();
+    const area = this.canvasAreas.find(area => area.id === areaId && area.pinned);
+    const tab = area && getDeckSectionTabs(area, section).tabs.find(tab => tab.id === tabId);
+    if (!tab || getDeckSectionTabMode(tab) !== 'automatic') return;
+    this.automaticLayoutEditor = { areaId, section, tabId };
+    this.layoutPopover = new CanvasLayoutPopover({
+      label: 'Automatic layout', layout: getDeckSectionTabLayout(tab),
+      anchor: () => {
+        const button = this.deckSectionTabs?.getButton(areaId, section, tabId);
+        return button?.isConnected && !button.closest('[hidden]') ? button.getBoundingClientRect() : null;
+      },
+      onChange: layout => {
+        const zone = this.canvasAreas.find(area => area.id === areaId && area.pinned);
+        const current = zone && ensureDeckSectionTabs(zone, section).tabs.find(tab => tab.id === tabId);
+        if (!zone || !current || getDeckSectionTabMode(current) !== 'automatic') return;
+        current.layout = ensureCatalogueLayout(layout);
+        this.captureLayoutMotion();
+        this.rebuildZoneVisuals(false);
+        this.emitCanvasAreasChange();
+        this.emitCanvasLabelsChange();
+      },
+      onClose: () => this.closeLayoutPopover(),
+    });
+  }
+
+  private captureLayoutMotion(): void {
+    this.updateDeckSectionMotion(performance.now(), true);
+    const from = new Map<string, CanvasPoint>();
+    if (this.motionEnabled()) for (const [key, data] of this.zoneCardSprites) {
+      if (data.sprite.visible) from.set(key, { x: data.sprite.x, y: data.sprite.y });
+    }
+    this.sectionLayoutMotion = from.size ? { start: performance.now(), from, to: new Map() } : null;
+  }
+
+  private automaticSectionSignature(zone: CanvasArea, section: DeckLayoutSection, tab: DeckSectionLayoutTab): string {
+    return JSON.stringify([tab.id, this.deckLayoutProfile, getDeckSectionTabLayout(tab), zone.cards
+      .filter(card => getDeckCardSection(card, name => this.isLandscapeCard(name)) === section)
+      .map(card => [card.id, card.cardName, card.labelId])]);
+  }
+
+  private arrangeAutomaticSection(zone: CanvasArea, section: DeckLayoutSection, tab: DeckSectionLayoutTab,
+    region: CanvasArea['bounds']): void {
+    const before = zone.cards.map(card => ({ ...card }));
+    const byName = new Map(this.cards.map(card => [card.name, card]));
+    const cards = zone.cards.filter(card => getDeckCardSection(card, name => this.isLandscapeCard(name)) === section);
+    const positions = arrangeCardsByLayout(cards, name => byName.get(name), getDeckSectionTabLayout(tab), {
+      region, preserveTopRow: true, aspectRatio: this.getCollectionLayoutAspect(),
+    });
+    for (const card of cards) Object.assign(card, positions.get(card.id));
+    this.canvasLabels = repositionLabelsAfterCardLayout(this.canvasLabels, zone.id, before, zone.cards);
+    this.automaticLayoutSignatures ??= new Map();
+    this.automaticLayoutSignatures.set(`${zone.id}:${section}`, this.automaticSectionSignature(zone, section, tab));
+  }
+
+  private refreshAutomaticSectionLayouts(): boolean {
+    if (this.selectionLayoutPreview || !this.cards?.length) return false;
+    this.automaticLayoutSignatures ??= new Map();
+    const surviving = new Set<string>();
+    let changed = false;
+    for (const area of this.canvasAreas) {
+      if (area.type !== 'deck' || !area.pinned || !area.sectionLayouts) continue;
+      for (const section of DECK_LAYOUT_SECTIONS) {
+        const set = area.sectionLayouts[section];
+        const tab = set?.tabs.find(tab => tab.id === set.activeId);
+        if (!tab || getDeckSectionTabMode(tab) !== 'automatic') continue;
+        const key = `${area.id}:${section}`;
+        surviving.add(key);
+        const signature = this.automaticSectionSignature(area, section, tab);
+        if (signature === this.automaticLayoutSignatures.get(key)) continue;
+        const rects = this.getDeckRegionRects(area);
+        const region = rects[section];
+        if (!region) continue;
+        this.arrangeAutomaticSection(area, section, tab, region);
+        if (this.reflowAfterDeckSectionSwitch(area, section, rects)) saveDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
+        changed = true;
+      }
+    }
+    for (const key of this.automaticLayoutSignatures.keys()) if (!surviving.has(key)) this.automaticLayoutSignatures.delete(key);
+    return changed;
+  }
+
+  /** Preview snapshots never leave the renderer until Apply is pressed. */
+  openSelectionLayout(_cardKey?: string): void {
+    this.cancelSelectionLayout();
+    this.closeLayoutPopover();
+    const keys = new Set(this.selectedZoneCardKeys);
+    if (!this.getSelectionActions().canLayout) return;
+    this.sectionNameEditor?.commit();
+    this.updateDeckSectionMotion(performance.now(), true);
+    const points = this.getQuickAddCards().flatMap(card => this.camera ? [
+      this.camera.viewport.toScreen(card.sprite.x, card.sprite.y),
+      this.camera.viewport.toScreen(card.sprite.x + card.displaySize.width, card.sprite.y + card.displaySize.height),
+    ] : []);
+    const canvas = this.app.canvas.getBoundingClientRect();
+    const centerX = points.length ? (Math.min(...points.map(point => point.x)) + Math.max(...points.map(point => point.x))) / 2 : canvas.width / 2;
+    const centerY = points.length ? (Math.min(...points.map(point => point.y)) + Math.max(...points.map(point => point.y))) / 2 : canvas.height / 2;
+    const anchor = { left: canvas.left + centerX, top: canvas.top + centerY, bottom: canvas.top + centerY + 30 };
+    const layout = createSelectionLayout();
+    this.selectionLayoutPreview = {
+      areas: this.cloneCanvasAreas(this.canvasAreas), labels: this.canvasLabels.map(label => ({ ...label })), keys, layout, rendered: false,
+    };
+    this.layoutPopover = new CanvasLayoutPopover({
+      label: 'Layout selected cards', layout, allowClean: true, anchor: () => anchor,
+      onChange: next => this.previewSelectionLayout(next),
+      onClose: () => this.cancelSelectionLayout(),
+      onApply: () => this.applySelectionLayout(),
+    });
+  }
+
+  private previewSelectionLayout(layout: CatalogueLayoutConfig): void {
+    const preview = this.selectionLayoutPreview;
+    if (!preview) return;
+    preview.layout = ensureCatalogueLayout(layout);
+    if (!preview.rendered && !preview.layout.clean && !preview.layout.steps.length) return;
+    preview.rendered = true;
+    this.captureLayoutMotion();
+    const next = arrangeDeckSelection(this.cloneCanvasAreas(preview.areas), preview.labels.map(label => ({ ...label })),
+      preview.keys, this.cards, preview.layout, this.getCollectionLayoutAspect(), id => this.getLabelTitleSize(id));
+    this.canvasAreas = next.areas;
+    this.canvasLabels = next.labels;
+    this.rebuildZoneVisuals(false);
+  }
+
+  private cancelSelectionLayout(rebuild = true): void {
+    const preview = this.selectionLayoutPreview;
+    if (!preview) return;
+    this.selectionLayoutPreview = null;
+    this.closeLayoutPopover();
+    if (!preview.rendered) return;
+    this.sectionLayoutMotion = null;
+    this.canvasAreas = preview.areas;
+    this.canvasLabels = preview.labels;
+    if (rebuild) this.rebuildZoneVisuals(false);
+  }
+
+  private applySelectionLayout(): void {
+    const preview = this.selectionLayoutPreview;
+    if (!preview) return;
+    this.selectionLayoutPreview = null;
+    this.closeLayoutPopover();
+    if (!preview.rendered) return;
+    const changed = this.getChangedSelectionKeys(preview.areas, this.canvasAreas, preview.keys);
+    if (changed.size) {
+      this.freezeSelectedAutomaticLayouts(changed);
+      this.saveSelectionArrangement(changed);
+    } else {
+      // Returning to an empty sequence also restores the exact saved frames.
+      this.canvasAreas = preview.areas;
+      this.canvasLabels = preview.labels;
+      this.rebuildZoneVisuals(false);
+    }
+  }
+
+  private getChangedSelectionKeys(before: readonly CanvasArea[], after: readonly CanvasArea[], selected: ReadonlySet<string>): Set<string> {
+    const old = new Map<string, CanvasCardInstance>(before.flatMap(area => area.cards.map(card => [`${area.id}:${card.id}`, card] as const)));
+    return new Set(after.flatMap(area => area.cards.flatMap(card => {
+      const key = `${area.id}:${card.id}`;
+      const previous = old.get(key);
+      return selected.has(key) && previous && (previous.x !== card.x || previous.y !== card.y) ? [key] : [];
+    })));
+  }
+
+  private freezeSelectedAutomaticLayouts(keys: ReadonlySet<string>): void {
+    // A deliberate manual arrangement freezes the active automatic view.
+    for (const area of this.canvasAreas) for (const section of DECK_LAYOUT_SECTIONS) {
+      if (!area.cards.some(card => keys.has(`${area.id}:${card.id}`) &&
+        getDeckCardSection(card, name => this.isLandscapeCard(name)) === section)) continue;
+      const set = area.sectionLayouts?.[section];
+      const tab = set?.tabs.find(tab => tab.id === set.activeId);
+      if (tab && getDeckSectionTabMode(tab) === 'automatic') tab.mode = 'custom';
+    }
+  }
+
+  private saveSelectionArrangement(keys: ReadonlySet<string>): void {
+    for (const area of this.canvasAreas) if (area.cards.some(card => keys.has(`${area.id}:${card.id}`))) {
+      saveDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
+    }
+    this.emitCanvasAreasChange();
+    this.emitCanvasLabelsChange();
+    this.syncDeckSectionTabs();
+    this.playCardsEffect('sort', keys);
+  }
+
+  quickSortSelection(field: DeckQuickSortField): void {
+    this.cancelSelectionLayout();
+    if (this.getSelectionActions().canQuickSort) this.arrangeCardsImmediately(new Set(this.selectedZoneCardKeys), field);
+  }
+
+  cleanUpSelection(): void {
+    this.cancelSelectionLayout();
+    if (this.getSelectionActions().canCleanUp) this.arrangeCardsImmediately(new Set(this.selectedZoneCardKeys));
+  }
+
+  cleanUpLabel(id: string): void {
+    this.cancelSelectionLayout();
+    if (this.labelEditorAnchor || this.labelDragState?.isDragging || this.regionDrag) return;
+    const keys = this.getSelectedLabelCleanUpKeys(id);
+    if (keys) this.arrangeCardsImmediately(keys);
+  }
+
+  private arrangeCardsImmediately(keys: ReadonlySet<string>, field?: DeckQuickSortField): void {
+    this.closeLayoutPopover();
+    this.sectionNameEditor?.commit();
+    this.labelEditor?.commit();
+    this.updateDeckSectionMotion(performance.now(), true);
+    const bounds = this.app.canvas.getBoundingClientRect();
+    const next = field
+      ? quickSortDeckSelection(this.cloneCanvasAreas(this.canvasAreas), this.canvasLabels.map(label => ({ ...label })), keys, this.cards, field)
+      : cleanUpDeckSelection(this.cloneCanvasAreas(this.canvasAreas), this.canvasLabels.map(label => ({ ...label })), keys, this.cards,
+        bounds.width / Math.max(1, bounds.height), id => this.getLabelTitleSize(id));
+    const changed = this.getChangedSelectionKeys(this.canvasAreas, next.areas, keys);
+    if (!changed.size) return;
+    this.captureLayoutMotion();
+    this.canvasAreas = next.areas;
+    this.canvasLabels = next.labels;
+    this.freezeSelectedAutomaticLayouts(changed);
+    this.rebuildZoneVisuals(false);
+    this.saveSelectionArrangement(changed);
+  }
+
+  private activateDeckSectionTab(areaId: string, section: DeckLayoutSection, tabId: string): void {
+    this.cancelSelectionLayout();
+    const zone = this.canvasAreas.find(area => area.id === areaId && area.type === 'deck' && area.pinned);
+    if (!zone || !this.cards.length || getDeckSectionTabs(zone, section).activeId === tabId) return;
+    this.closeLayoutPopover();
+    this.sectionNameEditor?.commit();
+    const rects = this.getDeckRegionRects(zone);
+    const original = rects[section];
+    if (!original) return;
+    this.labelEditor?.commit();
+    const set = this.prepareDeckSectionTabs(zone, section);
+    const tab = set.tabs.find(entry => entry.id === tabId);
+    if (!tab) return;
+    const isLandscape = (name: string) => this.isLandscapeCard(name);
+    const from = new Map<string, CanvasPoint>();
+    if (this.motionEnabled()) for (const [key, data] of this.zoneCardSprites) {
+      if (data.zoneId === zone.id && data.sprite.visible) from.set(key, { x: data.sprite.x, y: data.sprite.y });
+    }
+    const generated = this.applySelectedDeckSectionTab(zone, section, tab, original, isLandscape);
+    this.selectLabel(null);
+    this.setHoveredCard(null);
+    if (generated && this.reflowAfterDeckSectionSwitch(zone, section, rects)) {
+      saveDeckLayoutProfile(zone, this.canvasLabels, this.deckLayoutProfile);
+    }
+    this.sectionLayoutMotion = from.size ? { start: performance.now(), from, to: new Map() } : null;
+    this.rebuildZoneVisuals(false);
+    const region = this.deckRegionHitRects.get(areaId)?.[section];
+    if (region) this.playMangaEffect('sort', { left: region.x, top: region.y,
+      right: region.x + Math.min(220, region.width), bottom: region.y + 45 });
+    this.emitCanvasAreasChange();
+    this.emitCanvasLabelsChange();
+  }
+
+  private applySelectedDeckSectionTab(zone: CanvasArea, section: DeckLayoutSection, tab: DeckSectionLayoutTab,
+    original: CanvasArea['bounds'], isLandscape: (name: string) => boolean): boolean {
+    const unplaced = applyDeckSectionTab(zone, this.canvasLabels, section, tab, this.deckLayoutProfile, isLandscape);
+    if (getDeckSectionTabMode(tab) === 'automatic') {
+      this.arrangeAutomaticSection(zone, section, tab, original);
+      return true;
+    } else if (tab.positions && unplaced.length) {
+      const ids = new Set(unplaced.map(card => card.id));
+      placeNewDeckCards({ ...zone, cards: zone.cards.filter(card => !ids.has(card.id)) }, unplaced, isLandscape);
+    }
+    return false;
+  }
+
+  private reflowAfterDeckSectionSwitch(zone: CanvasArea, section: DeckLayoutSection, original: DeckRegionBounds): boolean {
+    const next = this.getDeckRegionRects(zone);
+    const rect = next[section];
+    const before = original[section];
+    if (!rect || !before || (rect.x === before.x && rect.y === before.y && rect.width <= before.width && rect.height <= before.height)) return false;
+    // A taller preset can make room below, but cannot reorder earlier sections.
+    const following: DeckRegionBounds = Object.fromEntries(Object.entries(next).filter(([id]) =>
+      id === section || id === 'mainboard' || (original[id as DeckRegionId]?.y ?? Infinity) >= before.y));
+    const plan = planDeckRegionMove(following, section, { x: 0, y: 0 }, false);
+    const getDelta = (id: DeckRegionId) => plan.deltas[id];
+    const moved = Object.values(plan.deltas).some(delta => delta.x || delta.y);
+    if (!moved) return false;
+    const isLandscape = (name: string) => this.isLandscapeCard(name);
+    for (const card of zone.cards) {
+      const delta = getDelta(getDeckCardSection(card, isLandscape) ?? normalizeDeckBoard(card.board));
+      if (delta) { card.x += delta.x; card.y += delta.y; }
+    }
+    const labels = this.getActiveCanvasLabels();
+    for (const label of labels) {
+      if (label.areaId !== zone.id) continue;
+      const members = getLabelCards(labels, label.id, [zone]);
+      const first = members[0];
+      const ownedSection = label.deckSectionLayout?.section ?? (first && members.every(card =>
+        getDeckCardSection(card, isLandscape) === getDeckCardSection(first, isLandscape)) ? getDeckCardSection(first, isLandscape) : null);
+      const delta = getDelta(ownedSection ?? normalizeDeckBoard(label.board));
+      if (delta) { label.x += delta.x; label.y += delta.y; }
+    }
+    for (const key of DECK_LAYOUT_SECTIONS) {
+      const delta = getDelta(key);
+      if (delta) translateDeckSectionTabs(zone, key, this.deckLayoutProfile, delta);
+    }
+    for (const [key, saved] of Object.entries(zone.deckRegionBounds ?? {})) {
+      const delta = getDelta(key as DeckRegionId);
+      if (delta) { saved.x += delta.x; saved.y += delta.y; }
+    }
+    return true;
+  }
+
+  private updateDeckSectionMotion(now: number, finish = false): void {
+    const motion = this.sectionLayoutMotion;
+    if (!motion) return;
+    const t = finish || !this.motionEnabled() ? 1 : Math.min(1, (now - motion.start) / 290);
+    const ease = 1 - (1 - t) ** 3;
+    for (const [key, end] of motion.to) {
+      const sprite = this.zoneCardSprites.get(key)?.sprite;
+      const start = motion.from.get(key);
+      if (sprite && start) sprite.position.set(start.x + (end.x - start.x) * ease, start.y + (end.y - start.y) * ease);
+    }
+    if (t === 1) {
+      this.sectionLayoutMotion = null;
+      this.scheduleCulling();
+    }
+  }
+
   private layoutZoneBoardCards(
     cards: CanvasCardInstance[],
     options: {
@@ -4837,10 +5366,8 @@ export class PixiStage {
       this.zoneDeleteOverlay.circle(duplicateCenterX, duplicateCenterY, duplicateRadius);
       this.zoneDeleteOverlay.fill({ color: MANGA_PALETTE.raised, alpha: 0.95 });
       this.zoneDeleteOverlay.stroke({ width: 1.5, color: MANGA_PALETTE.gold, alpha: 0.85 });
-      this.zoneDeleteOverlay.moveTo(duplicateBounds.left + 4, duplicateCenterY);
-      this.zoneDeleteOverlay.lineTo(duplicateBounds.right - 4, duplicateCenterY);
-      this.zoneDeleteOverlay.moveTo(duplicateCenterX, duplicateBounds.top + 4);
-      this.zoneDeleteOverlay.lineTo(duplicateCenterX, duplicateBounds.bottom - 4);
+      this.zoneDeleteOverlay.roundRect(duplicateCenterX - 4.5, duplicateCenterY - 5.5, 7, 8, 1);
+      this.zoneDeleteOverlay.roundRect(duplicateCenterX - 1, duplicateCenterY - 2, 7, 8, 1);
       this.zoneDeleteOverlay.stroke({ width: 1.45, color: MANGA_PALETTE.paper, alpha: 0.94 });
     }
 
@@ -5194,7 +5721,10 @@ export class PixiStage {
 
   private onPointerDown(event: FederatedPointerEvent): void {
     if (!this.camera) return;
-    this.clearQuickTransferHold();
+    this.cancelSelectionLayout();
+    this.deckSectionTabs?.cancelPending();
+    this.updateDeckSectionMotion(performance.now(), true);
+    this.clearCardQuickAddHold();
 
     if (this.isTouchPointer(event)) {
       this.onTouchPointerDown(event);
@@ -5393,6 +5923,7 @@ export class PixiStage {
         shiftKey: isShiftHeld,
         altKey: event.altKey,
       };
+      this.scheduleCardQuickAddHold(event.pointerId, clickedZoneCard.key, true, isShiftHeld);
       this.camera.pauseDrag();
       this.updateHoveredFromWorldPos(worldPos);
       return;
@@ -5428,6 +5959,7 @@ export class PixiStage {
         startWorldPos: worldPos,
         shiftKey: isShiftHeld,
       };
+      this.scheduleCardQuickAddHold(event.pointerId, clickedCard, false, isShiftHeld);
       this.camera.pauseDrag();
     } else {
       const screen = this.getPointerScreenPosition(event);
@@ -5475,6 +6007,7 @@ export class PixiStage {
         screenPos,
       )
     ) {
+      this.clearCardQuickAddHold();
       const pending = this.pendingCardClick;
       this.pendingCardClick = null;
       this.selectMainCardForPointer(pending.cardKey, pending.shiftKey, true);
@@ -5489,6 +6022,7 @@ export class PixiStage {
         screenPos,
       )
     ) {
+      this.clearCardQuickAddHold();
       const pending = this.pendingZoneCardClick;
       this.pendingZoneCardClick = null;
       const card = this.zoneCardSprites.get(pending.zoneCardKey);
@@ -5569,12 +6103,12 @@ export class PixiStage {
 
   private onPointerUp(event: FederatedPointerEvent): void {
     if (!this.camera) return;
-    this.clearQuickTransferHold();
 
     if (this.isTouchPointer(event)) {
       this.onTouchPointerUp(event);
       return;
     }
+    const openedQuickAdd = this.releaseCardQuickAddHold(event.pointerId);
     if (this.shouldIgnorePostTouchMouseEvent(event)) {
       this.cancelSelectionBox();
       this.pointerDownOnSelectedCard = false;
@@ -5584,6 +6118,13 @@ export class PixiStage {
     }
 
     this.camera.resumeDrag();
+    if (openedQuickAdd) {
+      this.pendingCardClick = null;
+      this.pendingZoneCardClick = null;
+      this.lastClickedCard = null;
+      this.lastClickedZoneCardKey = null;
+      return;
+    }
     const panStart = this.desktopPanStart;
     this.desktopPanStart = null;
     if (panStart && (event.button !== 2 || this.movedBeyondDesktopClickSlop(panStart, this.getPointerScreenPosition(event)))) {
@@ -5797,6 +6338,10 @@ export class PixiStage {
     return null;
   }
 
+  private getActiveCanvasLabels(): CanvasLabel[] {
+    return visibleDeckLayoutLabels(this.canvasLabels ?? [], this.canvasAreas);
+  }
+
   private getLabelTarget(worldPos: { x: number; y: number }, excluded = new Set<string>()): CanvasLabel | null {
     for (const data of [...(this.labelSprites?.values() ?? [])].reverse()) {
       if (!excluded.has(data.label.id) && this.pointInBounds(worldPos, data.bounds)) {
@@ -5807,44 +6352,75 @@ export class PixiStage {
   }
 
   private getPopulatedLabelBounds(zone: CanvasArea, board?: DeckZoneBoard): CanvasArea["bounds"][] {
-    return (this.canvasLabels ?? []).filter(label => label.areaId === zone.id && (!board || this.normalizeDeckBoard(label.board) === board))
-      .flatMap(label => {
-        const bounds = getLabelRegionBounds(this.canvasLabels, label, [zone],
-          name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
-        if (bounds) return [bounds];
-        const size = this.getLabelTitleSize(label.id);
-        return [{ x: label.x - 14, y: label.y - 14, width: size.width + 28, height: size.height + 28 }];
-      });
+    const labels = this.getActiveCanvasLabels();
+    const members = labels.filter(label => label.areaId === zone.id && (!board || this.normalizeDeckBoard(label.board) === board));
+    if (!members.length) return [];
+    const headings = this.measureLabelHeadings(labels, [zone]);
+    const isLandscape = (name: string) => this.isLandscapeCard(name);
+    const rendered = cardBounds(zone.cards, isLandscape);
+    return members.map(label => {
+      const bounds = getLabelRegionBounds(labels, label, [zone],
+        isLandscape, id => this.getLabelTitleSize(id), headings, rendered);
+      if (bounds) return bounds;
+      const heading = required(headings.get(label.id));
+      return { x: heading.x - 14, y: heading.y - 14, width: heading.width + 28, height: heading.height + 28 };
+    });
+  }
+
+  private measureLabelHeadings(labels: CanvasLabel[], areas = this.canvasAreas) {
+    return getLabelHeadingBounds(labels, areas, name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
   }
 
   private getLabelTitleSize(id: string): { width: number; height: number } {
     const data = this.labelSprites?.get(id);
-    if (data) return { width: data.text.width + (data.statistics ? 12 + data.statistics.width : 0),
-      height: Math.max(data.text.height, data.statistics?.height ?? 0) };
+    if (data) return { width: data.text.width, height: data.text.height };
     const label = this.canvasLabels?.find(entry => entry.id === id);
     const fontSize = label ? Number(getLabelHeadingStyle(label, this.canvasLabels).fontSize) : 14;
     return { width: (label?.text.length ?? 10) * fontSize * 0.65, height: fontSize * 1.3 + 2 };
   }
 
   private getMainDeckLabelBounds(zone: CanvasArea) {
-    const bounds: Partial<Record<'spellbook' | 'atlas', CanvasArea['bounds'][]>> = {};
-    for (const label of this.canvasLabels ?? []) {
-      if (label.areaId !== zone.id || normalizeDeckBoard(label.board) !== 'mainboard') continue;
-      const members = getLabelCards(this.canvasLabels, label.id, [zone]);
-      if (!members.length) continue;
+    const bounds: MainDeckLabelBounds = {};
+    const labels = this.getActiveCanvasLabels();
+    const mainLabels = labels.filter(label => label.areaId === zone.id && normalizeDeckBoard(label.board) === 'mainboard');
+    if (!mainLabels.length) return bounds;
+    const headings = this.measureLabelHeadings(labels, [zone]);
+    const isLandscape = (name: string) => this.isLandscapeCard(name);
+    const bands = getLabelHeadingBands(labels, [zone], isLandscape);
+    const rendered = cardBounds(zone.cards, isLandscape);
+    for (const label of mainLabels) {
+      const members = getLabelCards(labels, label.id, [zone]);
+      if (!members.length) {
+        const section = label.deckSectionLayout?.section;
+        const size = this.getLabelTitleSize(label.id);
+        if (section) (bounds[section] ??= []).push({ x: label.x, y: label.y, ...size });
+        else (bounds.shared ??= []).push({ x: label.x, y: label.y, ...size });
+        continue;
+      }
       const landscape = this.isLandscapeCard(required(members[0]).cardName);
       // A label mixing sites and spells belongs directly to Main.
-      if (!members.every(card => this.isLandscapeCard(card.cardName) === landscape)) continue;
-      const rect = getLabelRegionBounds(this.canvasLabels, label, [zone],
-        name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
+      if (!members.every(card => this.isLandscapeCard(card.cardName) === landscape)) {
+        const band = bands.get(label.id);
+        if (band) (bounds.shared ??= []).push(band);
+        continue;
+      }
+      const rect = getLabelRegionBounds(labels, label, [zone],
+        isLandscape, id => this.getLabelTitleSize(id), headings, rendered);
       if (rect) (bounds[landscape ? 'atlas' : 'spellbook'] ??= []).push(rect);
     }
     return bounds;
   }
 
   private getDeckSectionRects(zone: CanvasArea) {
-    return getMainDeckSectionRects(zone.cards, name => this.isLandscapeCard(name),
-      zone.deckRegionBounds, this.getMainDeckLabelBounds(zone));
+    return this.getDeckSectionLayout(zone).rects;
+  }
+
+  private getDeckSectionLayout(zone: CanvasArea) {
+    return getMainDeckSectionLayout(zone.cards, name => this.isLandscapeCard(name),
+      zone.deckRegionBounds, this.getMainDeckLabelBounds(zone), zone.deckRegionBounds?.mainboard ?? {
+        x: zone.bounds.x + DECK_BOARD_PADDING,
+        y: zone.bounds.y + this.getZoneHeaderHeight(zone) + DECK_BOARD_PADDING,
+      });
   }
 
   private fitLabelRegionBounds(zone: CanvasArea): boolean {
@@ -5860,13 +6436,24 @@ export class PixiStage {
     return left !== before.x || top !== before.y || zone.bounds.width !== before.width || zone.bounds.height !== before.height;
   }
 
-  private rebuildLabelRegions(): void {
+  private rebuildLabelRegions(headings?: ReadonlyMap<string, CanvasArea['bounds']>): void {
     for (const graphic of this.labelRegionGraphics.values()) graphic.destroy();
     this.labelRegionGraphics.clear();
-    for (const label of this.canvasLabels) {
-      if (!label.areaId || !this.canvasAreas.some(area => area.id === label.areaId && area.pinned)) continue;
-      const bounds = getLabelRegionBounds(this.canvasLabels, label, this.canvasAreas,
-        name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
+    const labels = this.getActiveCanvasLabels();
+    headings ??= this.measureLabelHeadings(labels);
+    const areas = new Map(this.canvasAreas.filter(area => area.pinned).map(area => [area.id, area]));
+    const renderedByArea = new Map<string, ReturnType<typeof cardBounds>>();
+    const isLandscape = (name: string) => this.isLandscapeCard(name);
+    for (const label of labels) {
+      const area = label.areaId ? areas.get(label.areaId) : undefined;
+      if (!area) continue;
+      let rendered = renderedByArea.get(area.id);
+      if (!rendered) {
+        rendered = cardBounds(area.cards, isLandscape);
+        renderedByArea.set(area.id, rendered);
+      }
+      const bounds = getLabelRegionBounds(labels, label, [area],
+        isLandscape, id => this.getLabelTitleSize(id), headings, rendered);
       if (!bounds) continue;
       const graphic = new Graphics();
       graphic.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, 12);
@@ -5966,7 +6553,7 @@ export class PixiStage {
         card.board = target.board;
         if (targetZone.type === 'deck' && oldBoard !== this.normalizeDeckBoard(card.board)) this.syncDeckVariantForBoardChange(targetZone, card.id, this.normalizeDeckBoard(card.board));
       }
-      if (positionCards) placeCardsBelowLabel(cards, target, targetZone, this.canvasLabels,
+      if (positionCards) placeCardsBelowLabel(cards, target, targetZone, this.getActiveCanvasLabels(),
         name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
       this.playMangaEffect('attach', this.labelSprites?.get(target.id)?.bounds);
       this.emitCanvasLabelsChange();
@@ -5981,13 +6568,23 @@ export class PixiStage {
   }
 
   private setCanvasLabels(labels: CanvasLabel[]): void {
-    const positioned = labels.map(label => ({...label}));
-    for (const area of this.canvasAreas) applyDeckLabelProfile(area, positioned, this.deckLayoutProfile);
+    if (this.labelDragState?.isDragging && !this.canvasLabelsEqual(this.canvasLabels, labels)) this.endLabelDrag(true);
+    const positioned = this.positionCanvasLabels(labels);
     if (this.canvasLabelsEqual(this.canvasLabels, positioned)) {
       return;
     }
     this.canvasLabels = positioned;
     this.rebuildLabelSprites();
+    this.updateCardQuickAddTargets();
+  }
+
+  private positionCanvasLabels(labels: CanvasLabel[]): CanvasLabel[] {
+    const positioned = labels.map(label => ({ ...label }));
+    for (const area of this.canvasAreas) {
+      applyDeckLabelProfile(area, positioned, this.deckLayoutProfile);
+      restoreDeckSectionPositions(area, positioned, this.deckLayoutProfile);
+    }
+    return positioned;
   }
 
   private canvasLabelsEqual(a: CanvasLabel[], b: CanvasLabel[]): boolean {
@@ -6000,7 +6597,8 @@ export class PixiStage {
         left.id !== right.id ||
         left.text !== right.text ||
         left.x !== right.x ||
-        left.y !== right.y || left.areaId !== right.areaId || left.board !== right.board || left.parentLabelId !== right.parentLabelId
+        left.y !== right.y || left.areaId !== right.areaId || left.board !== right.board || left.parentLabelId !== right.parentLabelId ||
+        left.deckSectionLayout?.id !== right.deckSectionLayout?.id || left.deckSectionLayout?.section !== right.deckSectionLayout?.section
       ) {
         return false;
       }
@@ -6009,6 +6607,8 @@ export class PixiStage {
   }
 
   private rebuildLabelSprites(): void {
+    this.statisticTooltip?.hide();
+    this.labelCleanUpCache = undefined;
     for (const data of this.labelSprites.values()) {
       data.text.destroy();
       data.statistics?.destroy();
@@ -6018,17 +6618,27 @@ export class PixiStage {
     this.labelSprites.clear();
     this.labelContainer.removeChildren();
     this.labelStatistics ??= new LabelStatisticsCache();
-    const statistics = this.labelStatistics.get(this.canvasLabels, this.canvasAreas, this.cards);
+    const labels = this.getActiveCanvasLabels();
+    const statistics = this.labelStatistics.get(labels, this.canvasAreas, this.cards);
+    const bands = getLabelHeadingBands(labels, this.canvasAreas, name => this.isLandscapeCard(name));
 
-    for (const label of this.canvasLabels) {
+    for (const label of labels) {
       if (label.areaId && !this.canvasAreas.some(area => area.id === label.areaId && area.pinned)) continue;
       const text = this.configureTextQuality(new Text({
         text: label.text,
-        style: getLabelHeadingStyle(label, this.canvasLabels),
+        style: getLabelHeadingStyle(label, labels),
       }));
+      const band = bands.get(label.id);
+      if (band) {
+        const maxWidth = Math.max(1, band.width - LABEL_HEADING_INSET_X * 2);
+        // Keep full text in the editor; the heading itself must stay in its grid row.
+        if (text.width > maxWidth) {
+          let clipped = label.text;
+          while (clipped.length > 1 && CanvasTextMetrics.measureText(`${clipped}…`, text.style).width > maxWidth) clipped = clipped.slice(0, -1);
+          text.text = `${clipped}…`;
+        }
+      }
 
-      text.x = label.x;
-      text.y = label.y;
       text.visible = this.labelEditorAnchor?.labelId !== label.id;
       this.labelContainer.addChild(text);
 
@@ -6039,9 +6649,14 @@ export class PixiStage {
         fill: MANGA_PALETTE.muted, stroke: { color: MANGA_PALETTE.ink, width: 1 },
       } })) : undefined;
       if (stats) {
-        stats.position.set(label.x + text.width + 12, label.y);
+        if (band && summary) {
+          const maxWidth = Math.max(1, band.width - LABEL_HEADING_INSET_X * 2);
+          stats.text = formatLabelStatistics(summary, maxWidth, value => CanvasTextMetrics.measureText(value, stats.style).width);
+          if (stats.width > maxWidth) stats.scale.set(Math.min(1, maxWidth / stats.width));
+        }
         stats.alpha = 0.82;
         stats.visible = text.visible;
+        this.bindStatisticTooltip(stats, summary?.tooltip ?? summary?.text ?? '');
         this.labelContainer.addChild(stats);
       }
 
@@ -6049,13 +6664,15 @@ export class PixiStage {
         label: { ...label },
         text,
         statistics: stats,
+        band,
         bounds: { left: 0, top: 0, right: 0, bottom: 0 },
       };
 
-      this.updateLabelBounds(data);
       this.labelSprites.set(label.id, data);
     }
-    this.rebuildLabelRegions();
+    const { headings } = getLabelHeadingLayout(labels, this.canvasAreas, name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id), bands);
+    for (const [id, data] of this.labelSprites) this.positionLabelSprite(data, headings.get(id) ?? data.label);
+    this.rebuildLabelRegions(headings);
     this.drawLabelDeleteButton();
   }
 
@@ -6074,8 +6691,10 @@ export class PixiStage {
   }
 
   private selectLabel(id: string | null): void {
+    if (id === this.selectedLabelId) return;
     this.selectedLabelId = id;
     this.drawLabelDeleteButton();
+    this.updateCardQuickAddTargets();
   }
 
   private drawLabelDeleteButton(): void {
@@ -6098,13 +6717,20 @@ export class PixiStage {
     this.labelDeleteGraphic = graphic;
   }
 
-  private updateLabelBounds(data: LabelSpriteData): void {
+  private positionLabelSprite(data: LabelSpriteData, position: CanvasPoint, band = data.band): void {
+    const { x, y } = position;
+    data.text.position.set(x, y);
+    if (data.statistics) {
+      if (band) data.statistics.position.set(band.x + LABEL_HEADING_INSET_X, band.y + band.height - data.statistics.height - 6);
+      else data.statistics.position.set(x + data.text.width + 12, y);
+    }
     const padding = 8;
+    const size = this.getLabelTitleSize(data.label.id);
     data.bounds = {
-      left: data.text.x - padding,
-      top: data.text.y - padding,
-      right: data.text.x + data.text.width + padding,
-      bottom: data.text.y + data.text.height + padding,
+      left: x - padding,
+      top: y - padding,
+      right: x + size.width + padding,
+      bottom: y + size.height + padding,
     };
   }
 
@@ -6119,69 +6745,132 @@ export class PixiStage {
     });
     this.labelDragCardStarts.clear();
     this.labelDragLabelStarts.clear();
-    const family = getLabelFamily(this.canvasLabels, labelId);
-    for (const member of this.canvasLabels) if (family.has(member.id)) this.labelDragLabelStarts.set(member.id, { x: member.x, y: member.y });
-    for (const card of getLabelCards(this.canvasLabels, labelId, this.canvasAreas)) this.labelDragCardStarts.set(card.id, { x: card.x, y: card.y });
+    const labels = this.getActiveCanvasLabels();
+    const family = getLabelFamily(labels, labelId);
+    const bands = getLabelHeadingBands(labels, this.canvasAreas, name => this.isLandscapeCard(name));
+    const headings = getLabelHeadingLayout(labels, this.canvasAreas, name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id), bands).headings;
+    const heading = this.labelSprites.get(labelId)?.text ?? headings.get(labelId) ?? label;
+    this.labelDragPreview = { group: false, delta: { x: 0, y: 0 }, name: { x: heading.x, y: heading.y },
+      band: bands.get(labelId), cards: new Map(), frames: new Map() };
+    for (const member of labels) {
+      if (!family.has(member.id)) continue;
+      const heading = this.labelSprites.get(member.id)?.text ?? headings.get(member.id) ?? member;
+      this.labelDragLabelStarts.set(member.id, { x: member.x, y: member.y, heading: { x: heading.x, y: heading.y } });
+      const frame = this.labelRegionGraphics?.get(member.id);
+      if (frame) this.labelDragPreview.frames.set(member.id, { x: frame.x, y: frame.y });
+    }
+    for (const card of getLabelCards(labels, labelId, this.canvasAreas)) {
+      this.labelDragCardStarts.set(card.id, { x: card.x, y: card.y });
+      this.labelDragPreview.anchor ??= { x: card.x, y: card.y, landscape: this.isLandscapeCard(card.cardName) };
+      const key = `${label.areaId}:${card.id}`;
+      const sprite = this.zoneCardSprites.get(key)?.sprite;
+      if (sprite) this.labelDragPreview.cards.set(key, { x: sprite.x, y: sprite.y, alpha: sprite.alpha });
+    }
+    this.updateCardQuickAddTargets();
   }
 
   private updateLabelDrag(worldPos: { x: number; y: number }): void {
-    if (!this.labelDragState.isDragging) return;
+    const preview = this.labelDragPreview;
+    const labelId = this.labelDragState.labelId;
+    if (!this.labelDragState.isDragging || !preview || !labelId) return;
     this.labelDragLastPos = { ...worldPos };
-    const dx = worldPos.x - this.labelDragState.startWorldPos.x;
-    const dy = worldPos.y - this.labelDragState.startWorldPos.y;
-    for (const label of this.canvasLabels) {
-      const start = this.labelDragLabelStarts.get(label.id);
-      if (!start) continue;
-      label.x = start.x + dx;
-      label.y = start.y + dy;
-      const data = this.labelSprites.get(label.id);
-      if (data) {
-        data.label = { ...label };
-        data.text.position.set(label.x, label.y);
-        data.statistics?.position.set(label.x + data.text.width + 12, label.y);
-        this.updateLabelBounds(data);
+    let dx = worldPos.x - this.labelDragState.startWorldPos.x;
+    let dy = worldPos.y - this.labelDragState.startWorldPos.y;
+    const start = this.labelDragLabelStarts.get(labelId);
+    if (!start) return;
+    const populated = this.labelDragCardStarts.size > 0;
+    // Populated names stay at the top left. Crossing a grid unit starts a group move.
+    preview.group ||= populated && Math.hypot(dx, dy) > DRAWN_GRID.height;
+    if (populated && !preview.group) {
+      preview.name = { ...start.heading };
+    } else {
+      if (preview.anchor) {
+        const { x, y, landscape } = preview.anchor;
+        const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const snapped = snapCardCenter(x + size.width / 2 + dx, y + size.height / 2 + dy, landscape);
+        dx = snapped.x - size.width / 2 - x;
+        dy = snapped.y - size.height / 2 - y;
       }
-    }
-    for (const area of this.canvasAreas) for (const card of area.cards) {
-      const start = this.labelDragCardStarts.get(card.id);
-      if (!start) continue;
-      const sprite = this.zoneCardSprites.get(`${area.id}:${card.id}`);
-      const moveX = start.x + dx - card.x;
-      const moveY = start.y + dy - card.y;
-      card.x += moveX;
-      card.y += moveY;
-      if (sprite) {
-        sprite.sprite.x += moveX;
-        sprite.sprite.y += moveY;
-        sprite.bounds = { left: sprite.bounds.left + moveX, right: sprite.bounds.right + moveX, top: sprite.bounds.top + moveY, bottom: sprite.bounds.bottom + moveY };
+      preview.delta = { x: dx, y: dy };
+      for (const [id, original] of this.labelDragLabelStarts) {
+        const data = this.labelSprites.get(id);
+        if (data) this.positionLabelSprite(data, { x: original.heading.x + dx, y: original.heading.y + dy },
+          data.band ? { ...data.band, x: data.band.x + dx, y: data.band.y + dy } : undefined);
+        const frame = this.labelRegionGraphics?.get(id);
+        const frameStart = preview.frames.get(id);
+        if (frame && frameStart) frame.position.set(frameStart.x + dx, frameStart.y + dy);
       }
+      for (const [key, original] of preview.cards) {
+        const sprite = this.zoneCardSprites.get(key)?.sprite;
+        if (!sprite) continue;
+        if (!original.ghost && this.zoneDropPreviewContainer) {
+          original.ghost = sprite.createDragPreview();
+          original.ghost.zIndex = sprite.zIndex;
+          this.zoneDropPreviewContainer.addChild(original.ghost);
+        }
+        sprite.alpha = original.alpha * 0.24;
+        original.ghost?.position.set(original.x + dx, original.y + dy);
+      }
+      this.zoneDropPreviewContainer?.sortChildren();
     }
-    this.rebuildLabelRegions();
     this.drawLabelDeleteButton();
+  }
+
+  private clearLabelDragPreview(): void {
+    const preview = this.labelDragPreview;
+    if (!preview) return;
+    for (const [key, original] of preview.cards) {
+      const sprite = this.zoneCardSprites.get(key)?.sprite;
+      if (sprite) sprite.alpha = original.alpha;
+      original.ghost?.destroy({ children: true });
+    }
+    for (const [id, original] of this.labelDragLabelStarts) {
+      const data = this.labelSprites.get(id);
+      if (data) this.positionLabelSprite(data, original.heading);
+      const frame = this.labelRegionGraphics?.get(id);
+      const frameStart = preview.frames.get(id);
+      if (frame && frameStart) frame.position.set(frameStart.x, frameStart.y);
+    }
+    this.labelDragPreview = null;
   }
 
   private endLabelDrag(cancel = false): void {
     const { labelId } = this.labelDragState;
     const label = this.canvasLabels.find(entry => entry.id === labelId);
-    if (!label) return;
+    const preview = this.labelDragPreview;
+    const start = labelId ? this.labelDragLabelStarts.get(labelId) : undefined;
     const last = this.labelDragLastPos ?? this.labelDragState.startWorldPos;
-    const moved = Math.hypot(last.x - this.labelDragState.startWorldPos.x,
+    const headingOnly = this.labelDragCardStarts.size > 0 && !preview?.group;
+    const changed = preview && (headingOnly ? preview.name.x !== start?.heading.x || preview.name.y !== start?.heading.y :
+      preview.delta.x !== 0 || preview.delta.y !== 0);
+    const moved = changed && Math.hypot(last.x - this.labelDragState.startWorldPos.x,
       last.y - this.labelDragState.startWorldPos.y) * (this.camera?.zoom ?? 1) > DESKTOP_CLICK_SLOP_PX;
-    if (cancel || !moved) {
-      this.updateLabelDrag(this.labelDragState.startWorldPos);
+    if (!label || !preview || cancel || !moved) {
+      this.clearLabelDragPreview();
+      this.labelDragState.isDragging = false;
+      this.labelDragState.labelId = null;
+      this.labelDragCardStarts.clear();
+      this.labelDragLabelStarts.clear();
+      this.drawLabelDeleteButton();
+      this.updateCardQuickAddTargets();
+      return;
+    }
+    if (headingOnly) {
+      label.x = preview.name.x;
+      label.y = preview.name.y;
     } else {
       const pos = this.labelDragLastPos ?? { x: label.x, y: label.y };
-      const family = getLabelFamily(this.canvasLabels, label.id);
-      const cards = getLabelCards(this.canvasLabels, label.id, this.canvasAreas);
-      // Snap one card anchor, then translate the whole family by that correction.
-      // Per-card snapping would split mixed spell/site layouts and stacked cards.
-      const anchor = cards[0];
-      if (anchor) {
-        const landscape = this.isLandscapeCard(anchor.cardName);
-        const size = landscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-        const snapped = snapCardCenter(anchor.x + size.width / 2, anchor.y + size.height / 2, landscape);
-        this.updateLabelDrag({ x: pos.x + snapped.x - size.width / 2 - anchor.x,
-          y: pos.y + snapped.y - size.height / 2 - anchor.y });
+      const labels = this.getActiveCanvasLabels();
+      const family = getLabelFamily(labels, label.id);
+      const cards = getLabelCards(labels, label.id, this.canvasAreas);
+      // Commit exactly the snapped ghost positions. No model positions change while dragging.
+      for (const member of labels) {
+        const original = this.labelDragLabelStarts.get(member.id);
+        if (original) { member.x = original.x + preview.delta.x; member.y = original.y + preview.delta.y; }
+      }
+      for (const card of cards) {
+        const original = this.labelDragCardStarts.get(card.id);
+        if (original) { card.x = original.x + preview.delta.x; card.y = original.y + preview.delta.y; }
       }
       const targetLabel = this.getLabelTarget(pos, family);
       const oldArea = this.canvasAreas.find(area => area.id === label.areaId);
@@ -6189,9 +6878,10 @@ export class PixiStage {
       const boardTarget = this.labelDragBoardTargets.find(target => target.areaId === targetArea?.id && this.pointInBounds(pos, { left: target.rect.x, top: target.rect.y, right: target.rect.x + target.rect.width, bottom: target.rect.y + target.rect.height }));
       const board = targetLabel?.board ?? (targetArea ? boardTarget?.board ?? label.board ?? 'mainboard' : undefined);
       label.parentLabelId = targetArea && targetLabel?.areaId === targetArea.id ? targetLabel.id : undefined;
-      for (const member of this.canvasLabels) if (family.has(member.id)) {
+      for (const member of labels) if (family.has(member.id)) {
         member.areaId = targetArea?.id;
         member.board = board;
+        if (!cards.length || oldArea?.id !== targetArea?.id || normalizeDeckBoard(board) !== 'mainboard') delete member.deckSectionLayout;
       }
       if (targetArea && cards.length) {
         for (const area of this.canvasAreas) {
@@ -6210,26 +6900,25 @@ export class PixiStage {
         }
       }
     }
+    this.clearLabelDragPreview();
     this.labelDragState.isDragging = false;
     this.labelDragState.labelId = null;
     this.labelDragCardStarts.clear();
     this.labelDragLabelStarts.clear();
-    for (const area of this.canvasAreas) this.reconcileCanvasAreaBounds(area.id);
-    if (!cancel && moved) {
-      this.lastClickedLabel = null;
-      const owner = this.canvasAreas.find(area => area.id === label.areaId);
-      if (owner) saveDeckLayoutProfile(owner, this.canvasLabels, this.deckLayoutProfile ?? 'desktop');
-    }
-    this.rebuildZoneVisuals();
-    if (!cancel && moved) {
-      this.emitCanvasLabelsChange();
-      this.emitCanvasAreasChange();
-    }
+    if (!headingOnly) for (const area of this.canvasAreas) this.reconcileCanvasAreaBounds(area.id);
+    this.lastClickedLabel = null;
+    const owner = this.canvasAreas.find(area => area.id === label.areaId);
+    if (owner) saveDeckLayoutProfile(owner, this.canvasLabels, this.deckLayoutProfile ?? 'desktop');
+    if (headingOnly) { this.rebuildLabelSprites(); this.updateCardQuickAddTargets(); }
+    else this.rebuildZoneVisuals(true);
+    this.emitCanvasLabelsChange();
+    this.emitCanvasAreasChange();
   }
 
   private getLabelEditorPosition() {
     const anchor = this.labelEditorAnchor ?? { x: 0, y: 0 };
-    const position = this.camera?.container.toGlobal(anchor) ?? anchor;
+    const heading = (anchor.labelId && this.labelSprites.get(anchor.labelId)?.text) || anchor;
+    const position = this.camera?.container.toGlobal({ x: heading.x, y: heading.y }) ?? heading;
     const rect = this.app?.canvas.getBoundingClientRect();
     const label = this.canvasLabels.find(entry => entry.id === anchor.labelId);
     const fontSize = label ? Number(getLabelHeadingStyle(label, this.canvasLabels).fontSize) : 14;
@@ -6246,6 +6935,7 @@ export class PixiStage {
       if (data.statistics) data.statistics.visible = false;
     }
     this.drawLabelDeleteButton();
+    this.updateCardQuickAddTargets();
     this.labelEditor = openCanvasLabelEditor({
       title: current ? 'Edit label' : 'New label',
       position: this.getLabelEditorPosition(),
@@ -6259,6 +6949,7 @@ export class PixiStage {
           if (sprite.statistics) sprite.statistics.visible = true;
         }
         this.drawLabelDeleteButton();
+        this.updateCardQuickAddTargets();
       },
       onSave: (text) => {
         if (this.isDestroyed || !text) return;
@@ -6320,6 +7011,7 @@ export class PixiStage {
   }
 
   private emitCanvasLabelsChange(): void {
+    if (this.selectionLayoutPreview) return;
     this.onCanvasLabelsChange?.(this.canvasLabels.map((label) => ({ ...label })));
   }
 
@@ -6333,6 +7025,7 @@ export class PixiStage {
   // ============================================================================
 
   private clearMainSelection(suppressEmit = false): void {
+    this.cancelSelectionLayout();
     for (const cardName of this.selectedCards) {
       const data = this.getSpriteData(cardName);
       if (data) {
@@ -6366,6 +7059,7 @@ export class PixiStage {
   }
 
   private clearZoneSelection(): void {
+    this.cancelSelectionLayout();
     for (const key of this.selectedZoneCardKeys) {
       const data = this.zoneCardSprites.get(key);
       if (data) {
@@ -6441,8 +7135,13 @@ export class PixiStage {
   }
 
   private emitSelectionChange(): void {
+    this.selectionActionsCache = undefined;
+    const preview = this.selectionLayoutPreview;
+    if (preview && (this.selectedCards.size || this.selectedZoneCardKeys.size !== preview.keys.size ||
+      [...this.selectedZoneCardKeys].some(key => !preview.keys.has(key)))) this.cancelSelectionLayout();
     this.updateZoneSelectionOutlines();
     const keys = [...this.selectedZoneCardKeys, ...this.selectedCards];
+    if (keys.length && !this.selectionLayoutPreview) this.acknowledgeNewCards();
     const signature = keys.join('|');
     if (keys.length > 1 && signature !== this.lastSelectionEffect) {
       this.playCardsEffect('select', keys);
@@ -6452,17 +7151,70 @@ export class PixiStage {
     this.updateCardQuickAddTargets();
   }
 
+  private acknowledgeNewCards(): void {
+    const view = this.camera?.getVisibleBounds?.();
+    let changed = false;
+    for (const area of this.canvasAreas) {
+      if (!area.pinned) continue;
+      const added = area.cards.filter(card => card.isNew);
+      if (!added.length) continue;
+      const selectedStacks = new Set(area.cards
+        .filter(card => this.selectedZoneCardKeys.has(`${area.id}:${card.id}`))
+        .map(card => this.getZoneCardStackKey(area, card)));
+      for (const card of added) {
+        const data = this.zoneCardSprites.get(`${area.id}:${card.id}`);
+        const seen = view && data?.sprite.visible && this.boundsIntersect(data.bounds, view);
+        if (!seen && !selectedStacks.has(this.getZoneCardStackKey(area, card))) continue;
+        card.isNew = false;
+        data?.sprite.setNewlyAdded(false);
+        changed = true;
+      }
+    }
+    if (changed) this.emitCanvasAreasChange();
+  }
+
   private getQuickAddCards() {
     return [
       ...[...this.selectedCards].flatMap(key => {
         const data = this.getSpriteData(key);
-        return data ? [{ key, cardName: data.layout.name, sprite: data.sprite, displaySize: data.displaySize }] : [];
+        return data ? [{ key, cardName: data.layout.name, sprite: data.sprite, displaySize: data.displaySize, zoneId: null }] : [];
       }),
       ...[...this.selectedZoneCardKeys].flatMap(key => {
         const data = this.zoneCardSprites.get(key);
-        return data ? [{ key, cardName: data.cardName, sprite: data.sprite, displaySize: data.displaySize }] : [];
+        return data ? [{ key, cardName: data.cardName, sprite: data.sprite, displaySize: data.displaySize, zoneId: data.zoneId }] : [];
       }),
     ];
+  }
+
+  private getSelectionActions(): ReturnType<typeof getDeckSelectionActions> {
+    const none = { canLayout: false, canQuickSort: false, canCleanUp: false };
+    if (this.selectedCards.size || this.selectedZoneCardKeys.size < 2) return none;
+    const signature = [...this.selectedZoneCardKeys].join('|');
+    const cached = this.selectionActionsCache;
+    if (cached?.areas === this.canvasAreas && cached.cards === this.cards && cached.signature === signature) return cached.actions;
+    const valid = [...this.selectedZoneCardKeys].every(key => {
+      const data = this.zoneCardSprites.get(key);
+      return data && this.canvasAreas.some(area => area.id === data.zoneId && area.pinned && area.type === 'deck');
+    });
+    const actions = valid ? getDeckSelectionActions(this.canvasAreas, this.selectedZoneCardKeys, this.cards) : none;
+    this.selectionActionsCache = { areas: this.canvasAreas, cards: this.cards, signature, actions };
+    return actions;
+  }
+
+  private getSelectedLabelCleanUpKeys(id: string): ReadonlySet<string> | null {
+    if (this.selectedLabelId !== id || !this.cards?.length) return null;
+    const cached = this.labelCleanUpCache;
+    if (cached?.id === id && cached.areas === this.canvasAreas && cached.labels === this.canvasLabels && cached.cards === this.cards) return cached.keys;
+    const labels = this.getActiveCanvasLabels();
+    const label = labels.find(entry => entry.id === id);
+    const area = this.canvasAreas.find(entry => entry.id === label?.areaId && entry.pinned && entry.type === 'deck');
+    let keys: ReadonlySet<string> | null = null;
+    if (area) {
+      const members = new Set(getLabelCards(labels, id, [area]).map(card => `${area.id}:${card.id}`));
+      if (members.size > 1 && getDeckSelectionActions([area], members, this.cards).canCleanUp) keys = members;
+    }
+    this.labelCleanUpCache = { id, areas: this.canvasAreas, labels: this.canvasLabels, cards: this.cards, keys };
+    return keys;
   }
 
   private updateCardQuickAddTargets(): void {
@@ -6470,21 +7222,91 @@ export class PixiStage {
     if (!this.onCardQuickAddTargetsChange || !camera || !this.isInitialized) return;
     const rect = this.app.canvas.getBoundingClientRect();
     const dragging = this.dragState.isDragging || this.zoneCardDragState.isDragging;
-    this.onCardQuickAddTargetsChange(this.getQuickAddCards().map(card => {
+    const cards = this.getQuickAddCards();
+    const actions = this.getSelectionActions();
+    const canInteract = !dragging && !this.inspection && !this.regionDrag && !this.labelDragState?.isDragging;
+    const targets = cards.map(card => {
       const corner = camera.viewport.toScreen(card.sprite.x + card.displaySize.width, card.sprite.y);
+      const topLeft = camera.viewport.toScreen(card.sprite.x, card.sprite.y);
+      const bottomRight = camera.viewport.toScreen(card.sprite.x + card.displaySize.width, card.sprite.y + card.displaySize.height);
       const clientX = rect.left + corner.x - 8;
-      const clientY = rect.top + corner.y + 8;
+      // Deck and stack cards already have their edit controls inside this corner.
+      const clientY = card.zoneId ? Math.max(rect.top + 16, rect.top + corner.y - 17) : rect.top + corner.y + 8;
       return {
         key: card.key, cardName: card.cardName, clientX, clientY,
-        visible: !dragging && card.sprite.visible && clientX >= rect.left + 8 && clientX <= rect.right - 8
+        ...actions,
+        ...(canInteract ? { bounds: { left: rect.left + topLeft.x, top: rect.top + topLeft.y,
+          right: rect.left + bottomRight.x, bottom: rect.top + bottomRight.y } } : {}),
+        visible: canInteract && card.sprite.visible
+          && corner.y >= 0 && clientX >= rect.left + 8 && clientX <= rect.right - 8
           && clientY >= rect.top + 8 && clientY <= rect.bottom - 8,
       };
-    }));
+    });
+    const id = this.selectedLabelId;
+    const label = id ? this.labelSprites?.get(id) : undefined;
+    if (id && label && this.getSelectedLabelCleanUpKeys(id)) {
+      const center = camera.viewport.toScreen((label.bounds.left + label.bounds.right) / 2, label.text.y);
+      const target: LabelCleanUpTarget = {
+        id, clientX: rect.left + center.x, clientY: rect.top + center.y,
+        visible: canInteract && label.text.visible && !this.labelEditorAnchor
+          && center.x >= 0 && center.x <= rect.width && center.y >= 0 && center.y <= rect.height,
+      };
+      this.onCardQuickAddTargetsChange(targets, target);
+    } else {
+      this.onCardQuickAddTargetsChange(targets);
+    }
+  }
+
+  setCardQuickAddDeck(deck: CardQuickAddDeck | null): void {
+    if (this.cardQuickAddDeck?.canvasAreaId !== deck?.canvasAreaId || this.cardQuickAddDeck?.deckId !== deck?.deckId) {
+      this.clearCardQuickAddHold();
+    }
+    this.cardQuickAddDeck = deck;
+  }
+
+  private getPinnedQuickAddZone(deck?: CardQuickAddDeck | null): CanvasArea | undefined {
+    return deck ? this.canvasAreas.find(area => area.id === deck.canvasAreaId && area.deckId === deck.deckId
+      && area.type === 'deck' && area.pinned) : undefined;
+  }
+
+  private scheduleCardQuickAddHold(pointerId: number, cardKey: string, inZone: boolean, additive: boolean): void {
+    if (!this.onCardQuickAddHoldOpen || !this.getPinnedQuickAddZone(this.cardQuickAddDeck)) return;
+    this.cardQuickAddHoldTimer = setTimeout(() => {
+      this.cardQuickAddHoldTimer = undefined;
+      this.openCardQuickAddHold(pointerId, cardKey, inZone, additive);
+    }, TOUCH_LONG_PRESS_MS);
+  }
+
+  private openCardQuickAddHold(pointerId: number, cardKey: string, inZone: boolean, additive: boolean): boolean {
+    if (!this.onCardQuickAddHoldOpen || !this.getPinnedQuickAddZone(this.cardQuickAddDeck)) return false;
+    if (inZone && !this.selectedZoneCardKeys.has(cardKey)) {
+      this.selectZoneCardForPointer(cardKey, additive, false, true);
+    } else if (!inZone && !this.selectedCards.has(cardKey)) {
+      this.selectMainCardForPointer(cardKey, additive, true);
+    }
+    this.updateCardQuickAddTargets();
+    if (!this.onCardQuickAddHoldOpen(cardKey)) return false;
+    this.cardQuickAddHeldPointer = pointerId;
+    return true;
+  }
+
+  private clearCardQuickAddHold(): void {
+    clearTimeout(this.cardQuickAddHoldTimer);
+    this.cardQuickAddHoldTimer = undefined;
+    if (this.cardQuickAddHeldPointer != null) this.onCardQuickAddHoldCancel?.();
+    this.cardQuickAddHeldPointer = null;
+  }
+
+  private releaseCardQuickAddHold(pointerId: number): boolean {
+    const opened = this.cardQuickAddHeldPointer != null && this.cardQuickAddHeldPointer === pointerId;
+    if (opened) this.cardQuickAddHeldPointer = null;
+    this.clearCardQuickAddHold();
+    return opened;
   }
 
   quickAddToDeck(deck: CardQuickAddDeck, cardKey: string, scope: QuickAddScope, board: QuickAddBoard): void {
     if (!this.camera || !this.onDeckAddRequest) return;
-    const zone = this.canvasAreas.find(area => area.id === deck.canvasAreaId && area.deckId === deck.deckId && area.type === 'deck' && area.pinned);
+    const zone = this.getPinnedQuickAddZone(deck);
     const cards = this.getQuickAddCards();
     const anchor = cards.find(card => card.key === cardKey);
     // Revalidate after selection/deck changes; a stale button cannot add cards.
@@ -6873,7 +7695,7 @@ export class PixiStage {
     }
     // One placement for the whole selection, even when its cards came from
     // several areas. Positioning each source separately would lose its offsets.
-    for (const drop of labelDrops.values()) placeCardsBelowLabel(drop.cards, drop.label, drop.zone, this.canvasLabels,
+    for (const drop of labelDrops.values()) placeCardsBelowLabel(drop.cards, drop.label, drop.zone, this.getActiveCanvasLabels(),
       name => this.isLandscapeCard(name), id => this.getLabelTitleSize(id));
     this.selectedZoneCardKeys = selectedKeys;
     for (const zone of changedZones) this.reconcileCanvasAreaBounds(zone.id);
@@ -6893,6 +7715,7 @@ export class PixiStage {
   }
 
   private cancelDesktopInteraction(): void {
+    this.clearCardQuickAddHold();
     this.pendingEmptyCanvasClick = null;
     this.lastEmptyCanvasClick = null;
     if (this.regionDrag) this.endDeckRegionDrag(true);
@@ -6921,7 +7744,15 @@ export class PixiStage {
 
   private getDeckRegionAtPosition(point: {x: number; y: number}, touch = false): {zone: CanvasArea; hit: DeckRegionHit} | null {
     for (const [id, rects] of [...(this.deckRegionHitRects?.entries() ?? [])].reverse()) {
-      const hit = hitDeckRegion(rects, point, this.camera?.zoom ?? 1, touch);
+      let hit = hitDeckRegion(rects, point, this.camera?.zoom ?? 1, touch);
+      const headers = this.deckSectionHeaderRects?.get(id);
+      if (hit && !hit.edge && (hit.id === 'spellbook' || hit.id === 'atlas') &&
+        headers?.[hit.id]?.y !== undefined && headers[hit.id]?.y !== rects[hit.id]?.y) hit = null;
+      for (const section of DECK_LAYOUT_SECTIONS) {
+        const header = headers?.[section];
+        if (header && header.height >= 26 && point.x >= header.x + 4 && point.x <= header.x + Math.min(header.width - 4, 160) &&
+          point.y >= header.y + 6 && point.y <= header.y + 32) hit = { id: section };
+      }
       const zone = hit && this.canvasAreas.find(area => area.id === id && area.pinned);
       if (hit && zone) return {zone, hit};
     }
@@ -6935,14 +7766,22 @@ export class PixiStage {
     graphic.zIndex = 1000000;
     graphic.eventMode = 'none';
     this.zoneContainer.addChild(graphic);
+    const labels = this.getActiveCanvasLabels().map(label => ({ ...label }));
+    const labelPositions = new Map<string, CanvasPoint>();
+    for (const label of labels) {
+      const text = label.areaId === zoneId ? this.labelSprites?.get(label.id)?.text : undefined;
+      if (text) labelPositions.set(label.id, { x: text.x, y: text.y });
+    }
     this.regionDrag = {zoneId, hit, start: {...point}, original: required(this.cloneCanvasAreas([zone])[0]),
-      rects: this.getDeckRegionRects(zone), labels: this.canvasLabels.map(label => ({...label})),
-      plan: null, preview: null, graphic, titles: new Map(),
+      rects: this.getDeckRegionRects(zone), labels,
+      plan: null, preview: null, graphic, titles: new Map(), labelPositions,
       sprites: new Map([...this.zoneCardSprites].filter(([, card]) => card.zoneId === zoneId)
         .map(([key, card]) => [key, {x: card.sprite.x, y: card.sprite.y, alpha: card.sprite.alpha}]))};
     this.hoveredZoneCardKey = null;
     this.drawZoneDeleteOverlay();
     this.app.canvas.style.cursor = hit.edge ? `${hit.edge}-resize` : 'grabbing';
+    this.positionDeckSectionTabs();
+    this.updateCardQuickAddTargets();
   }
 
   private getRegionLabelDelta(label: CanvasLabel, drag: NonNullable<PixiStage['regionDrag']>, plan: DeckRegionPlan): {x: number; y: number} {
@@ -6950,6 +7789,7 @@ export class PixiStage {
     const board = normalizeDeckBoard(label.board);
     if (plan.deltas[board]) return required(plan.deltas[board]);
     if (board === 'mainboard') {
+      if (label.deckSectionLayout) return plan.deltas[label.deckSectionLayout.section] ?? {x: 0, y: 0};
       const members = getLabelCards(drag.labels, label.id, [drag.original]);
       for (const child of ['spellbook', 'atlas'] as const) {
         if (members.length && members.every(card => this.isLandscapeCard(card.cardName) === (child === 'atlas'))) {
@@ -6999,8 +7839,12 @@ export class PixiStage {
       sprite.alpha = dx || dy ? start.alpha * 0.58 : start.alpha;
     }
     for (const label of drag.labels) {
+      const start = drag.labelPositions.get(label.id);
+      const sprite = this.labelSprites.get(label.id);
+      if (!start || !sprite) continue;
       const move = this.getRegionLabelDelta(label, drag, plan);
-      this.labelSprites.get(label.id)?.text.position.set(label.x + move.x, label.y + move.y);
+      this.positionLabelSprite(sprite, { x: start.x + move.x, y: start.y + move.y },
+        sprite.band ? { ...sprite.band, x: sprite.band.x + move.x, y: sprite.band.y + move.y } : undefined);
     }
     if (!drag.hit.edge && drag.plan?.hint !== plan.hint) {
       const moved = preview.cards.filter(card => {
@@ -7048,16 +7892,27 @@ export class PixiStage {
       const sprite = this.zoneCardSprites.get(key)?.sprite;
       if (sprite) { sprite.position.set(start.x, start.y); sprite.alpha = start.alpha; }
     }
-    for (const label of drag.labels) this.labelSprites.get(label.id)?.text.position.set(label.x, label.y);
+    for (const [id, position] of drag.labelPositions) {
+      const sprite = this.labelSprites.get(id);
+      if (sprite) this.positionLabelSprite(sprite, position);
+    }
     const frame = this.zoneFrames.get(drag.zoneId);
     if (frame) { frame.frame.alpha = 1; for (const title of frame.subzoneLabels) title.alpha = 1; }
     this.app.canvas.style.cursor = '';
     this.app.canvas.title = '';
     this.camera?.resumeDrag();
-    if (cancel || !drag.plan || !drag.preview) return;
+    if (cancel || !drag.plan || !drag.preview) {
+      this.positionDeckSectionTabs();
+      this.updateCardQuickAddTargets();
+      return;
+    }
     const zone = this.canvasAreas.find(area => area.id === drag.zoneId);
     if (!zone) return;
     Object.assign(zone, drag.preview);
+    for (const section of DECK_LAYOUT_SECTIONS) {
+      const delta = drag.plan.deltas.mainboard ?? drag.plan.deltas[section];
+      if (delta) translateDeckSectionTabs(zone, section, this.deckLayoutProfile, delta);
+    }
     for (const label of this.canvasLabels) {
       const original = drag.labels.find(entry => entry.id === label.id);
       if (!original) continue;
@@ -7148,6 +8003,9 @@ export class PixiStage {
     const snappedY = startBounds.y + snappedDeltaY;
     const dx = snappedX - zone.bounds.x;
     const dy = snappedY - zone.bounds.y;
+    for (const section of DECK_LAYOUT_SECTIONS) {
+      translateDeckSectionTabs(zone, section, this.deckLayoutProfile, { x: snappedDeltaX, y: snappedDeltaY });
+    }
     zone.bounds.x = snappedX;
     zone.bounds.y = snappedY;
     for (const rect of Object.values(zone.deckRegionBounds ?? {})) { rect.x += dx; rect.y += dy; }
@@ -7214,6 +8072,7 @@ export class PixiStage {
 
     zone.cards = [...zone.cards, duplicate];
     inheritDeckLayoutPosition(zone, source.id, duplicate.id);
+    inheritDeckSectionTabPosition(zone, source.id, duplicate.id);
     if (zone.type === "deck" && sourceBoard) {
       this.syncDeckVariantForBoardChange(zone, duplicate.id, sourceBoard);
     }
@@ -7694,8 +8553,9 @@ export class PixiStage {
       return;
     }
 
-    // Calculate total stack offset for centering
-    const totalOffset = (stackSize - 1) * STACK_OFFSET;
+    const first = cardNames[0];
+    const landscape = first !== undefined && this.getSpriteData(first)?.layout.isLandscape === true;
+    const { spacing, overhang } = getStackFan(stackSize, landscape);
 
     for (const [i, cardName] of cardNames.entries()) {
       const data = this.getSpriteData(cardName);
@@ -7710,7 +8570,7 @@ export class PixiStage {
       const isSite = data.layout.isLandscape;
 
       // Calculate offset from center of stack
-      const indexOffset = i * STACK_OFFSET - totalOffset / 2;
+      const indexOffset = i * spacing - overhang;
 
       // Sites offset upward (negative Y), Spells offset downward (positive Y)
       const yOffset = isSite ? -indexOffset : indexOffset;
@@ -7836,9 +8696,12 @@ export class PixiStage {
     }
 
     const sourceChanged = this.cards !== cards;
+    if (sourceChanged) this.automaticLayoutSignatures?.clear();
+    const initializing = this.cards.length === 0;
     const layoutChanged = JSON.stringify(this.catalogueLayout) !== JSON.stringify(catalogueLayout);
     const restartReveal = this.isRevealInProgress;
     this.cards = cards;
+    if (initializing) this.applyCanvasLayoutProfile();
     this.catalogueCards = catalogueCards;
     this.catalogueLayout = catalogueLayout;
     this.onBackgroundTextureProgress?.(0, 0);
@@ -7858,13 +8721,22 @@ export class PixiStage {
     }
   }
 
-  setCanvasAreas(areas: CanvasArea[]): void {
+  setCanvasAreas(areas: CanvasArea[], labels?: CanvasLabel[]): void {
+    if (this.labelDragState?.isDragging) this.endLabelDrag(true);
+    this.cancelSelectionLayout(false);
     if (this.regionDrag) this.endDeckRegionDrag(true);
     const previous = this.canvasAreas;
     const canAnimate = this.hasReceivedAreas && this.isInitialized && this.initialRevealCompleted;
     this.hasReceivedAreas = true;
     this.canvasAreas = this.cloneCanvasAreas(areas);
-    for (const area of this.canvasAreas) applyDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
+    const retainedAreaIds = new Set(this.canvasAreas.map(area => area.id));
+    this.deckSectionStatistics?.retainAreaIds(retainedAreaIds);
+    for (const key of this.statisticPages?.keys() ?? []) {
+      const areaId = key.slice(0, key.lastIndexOf(':'));
+      if (!retainedAreaIds.has(areaId)) this.statisticPages.delete(key);
+    }
+    if (labels) this.canvasLabels = labels.map(label => ({ ...label }));
+    this.applyCanvasLayoutProfile();
     this.hoveredDeckFilterChip = null;
     for (const zone of this.canvasAreas) {
       if (zone.type === "deck") {
@@ -7887,6 +8759,14 @@ export class PixiStage {
           added.flatMap(card => this.getZoneStackEffectKeys(area.id, card.id)));
       }
       for (const old of previous) if (old.pinned && !this.canvasAreas.some(area => area.id === old.id && area.pinned)) this.playAreaEffect('hide', old);
+    }
+  }
+
+  private applyCanvasLayoutProfile(): void {
+    for (const area of this.canvasAreas) {
+      applyDeckLayoutProfile(area, this.canvasLabels, this.deckLayoutProfile);
+      restoreDeckSectionPositions(area, this.canvasLabels, this.deckLayoutProfile,
+        this.cards?.length ? name => this.isLandscapeCard(name) : undefined);
     }
   }
 
@@ -7921,6 +8801,7 @@ export class PixiStage {
 
   /** Explicit canvas tools: effects describe successful actions, never delay them. */
   runCanvasGesture(command: CanvasGestureCommand, bottomInset = 0): string | null {
+    this.cancelSelectionLayout();
     if (command === 'close-inspection') { this.closeInspection(); return null; }
     if (command === 'undo') {
       const saved = this.removedCardHistory.pop();
@@ -7936,7 +8817,7 @@ export class PixiStage {
         entry.effect.destroy(); return false;
       });
       const card = { ...saved.card };
-      if (!this.canvasLabels.some(label => label.id === card.labelId)) delete card.labelId;
+      if (!this.getActiveCanvasLabels().some(label => label.id === card.labelId)) delete card.labelId;
       area.cards.splice(Math.min(saved.index, area.cards.length), 0, card);
       for (const variant of area.deckVariants ?? []) if (saved.variants.includes(variant.id) && !variant.activeCardIds.includes(card.id)) variant.activeCardIds.push(card.id);
       this.reconcileCanvasAreaBounds(area.id);
@@ -7947,7 +8828,7 @@ export class PixiStage {
     }
     if (command === 'new') {
       const added = this.canvasAreas.filter(area => area.pinned).flatMap(area => area.cards.filter(card => card.isNew).map(card => `${area.id}:${card.id}`));
-      if (!added.length) return 'All added cards have already been picked up.';
+      if (!added.length) return 'There are no new cards to show.';
       this.clearSelection(true);
       for (const key of added) this.selectZoneCard(key);
       this.emitSelectionChange();
@@ -8017,12 +8898,14 @@ export class PixiStage {
   private closeInspection(): void {
     this.inspection?.destroy({ children: true });
     this.inspection = null;
+    this.positionDeckSectionTabs();
   }
 
   private openInspection(names: string[], compare: boolean, page: number): void {
     this.closeInspection();
     const root = new Container();
     this.inspection = root;
+    this.positionDeckSectionTabs();
     root.eventMode = 'static';
     root.on('pointerdown', event => event.stopPropagation());
     root.on('pointerup', event => event.stopPropagation());
@@ -8337,6 +9220,11 @@ export class PixiStage {
   }
 
   destroy(): void {
+    this.statisticTooltip?.destroy();
+    this.statisticTooltip = null;
+    this.clearLabelDragPreview();
+    this.cancelSelectionLayout(false);
+    this.closeLayoutPopover();
     if (this.regionDrag) this.endDeckRegionDrag(true);
     this.clearArrivalPops();
     this.arrivalStackHistory = [];
@@ -8351,6 +9239,8 @@ export class PixiStage {
     window.removeEventListener("keyup", this.handlePanKeyUp);
     window.removeEventListener("blur", this.handleCanvasBlur);
     this.isDestroyed = true;
+    this.clearCardQuickAddHold();
+    this.touchGestures?.cancel();
     this.setHoveredCard(null);
     this.highDetailPreloadQueued = false;
     this.highDetailPreloadRunId++;
@@ -8372,6 +9262,10 @@ export class PixiStage {
     this.removeTextureInvalidationListener = null;
     this.labelEditor?.close();
     this.labelEditor = null;
+    this.sectionNameEditor?.close();
+    this.deckSectionTabs?.destroy();
+    this.deckSectionTabs = null;
+    this.sectionLayoutMotion = null;
     this.closeDeckVariantDialog();
     this.closeTouchActionSheet();
     this.deactivateQuickTransfer();
@@ -8630,22 +9524,18 @@ export class PixiStage {
     return [];
   }
 
-  private getLayoutCardInput(card: Card): {
-    name: string;
-    type: CardType;
-    thresholdGroup: ThresholdGroup;
-    cost: number | null;
-    isLandscape: boolean;
-    primarySet: string | undefined;
-    rarity: Card["guardian"]["rarity"];
-  } {
+  private getLayoutCardInput(card: Card): LayoutCardInput {
+    const earliest = card.guardian.type === 'Avatar' ? getEarliestCardSet(card.sets) : undefined;
     return {
       name: card.name,
       type: card.guardian.type,
       thresholdGroup: getThresholdGroup(card.guardian.thresholds),
+      thresholds: card.guardian.thresholds,
       cost: card.guardian.cost,
+      power: card.guardian.attack,
       isLandscape: card.guardian.type === "Site",
-      primarySet: card.sets[0]?.name,
+      primarySet: earliest?.name ?? card.sets[0]?.name,
+      earliestSetReleasedAt: earliest?.releasedAt,
       rarity: card.guardian.rarity,
     };
   }
@@ -8802,8 +9692,11 @@ export class PixiStage {
   }
 
   private clearZoneVisuals(preserveArrivals = false): void {
+    this.statisticTooltip?.hide();
     if (this.regionDrag) this.endDeckRegionDrag(true);
     this.deckRegionHitRects?.clear();
+    this.deckSectionHeaderRects?.clear();
+    this.statisticStrips?.clear();
     if (!preserveArrivals) this.clearArrivalPops();
     this.clearZoneDropPreview();
     this.destroyDeckGraphHoverTooltip();
@@ -8882,6 +9775,8 @@ export class PixiStage {
     frame.rect(zone.bounds.x, zone.bounds.y, zone.bounds.width, zone.bounds.height);
     frame.fill({ color: MANGA_PALETTE.ink, alpha: 0.88 });
     frame.stroke({ width: 2, color: MANGA_PALETTE.line, alpha: 0.92 });
+    if (zone.type === 'deck') drawDeckGrid(frame, { x: zone.bounds.x, y: headerBottom,
+      width: zone.bounds.width, height: Math.max(0, zone.bounds.height - headerHeight) });
 
     frame.rect(zone.bounds.x, zone.bounds.y, zone.bounds.width, headerHeight);
     frame.fill({ color: MANGA_PALETTE.raised, alpha: 0.96 });
@@ -9100,10 +9995,14 @@ export class PixiStage {
         boardRects.mainboard.height,
       );
       frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.56 });
-      const mainSections = this.getDeckSectionRects(zone);
+      const { rects: mainSections, headers: sectionHeaders } = this.getDeckSectionLayout(zone);
+      this.deckSectionHeaderRects ??= new Map();
+      this.deckSectionHeaderRects.set(zone.id, sectionHeaders);
+      this.deckSectionStatistics ??= new DeckSectionStatisticsCache();
+      const sectionStatistics = this.deckSectionStatistics.get(zone, this.cards);
       this.deckRegionHitRects.set(zone.id, {...boardRects, ...mainSections});
-      const drawRegionHandle = (rect: CanvasArea['bounds']) => {
-        for (const x of [rect.x + 7, rect.x + 11]) for (const y of [rect.y + 11, rect.y + 16, rect.y + 21]) {
+      const drawRegionHandle = (rect: CanvasArea['bounds'], titleY = rect.y) => {
+        for (const x of [rect.x + 7, rect.x + 11]) for (const y of [titleY + 11, titleY + 16, titleY + 21]) {
           frame.circle(x, y, 0.8).fill({color: MANGA_PALETTE.muted, alpha: 0.6});
         }
         const x = rect.x + rect.width, y = rect.y + rect.height;
@@ -9114,15 +10013,22 @@ export class PixiStage {
       for (const [key, name] of [['spellbook', 'Spellbook'], ['atlas', 'Atlas']] as const) {
         const rect = mainSections[key];
         if (!rect) continue;
+        const header = sectionHeaders[key] ?? rect;
         frame.roundRect(rect.x, rect.y, rect.width, rect.height, 8);
         frame.stroke({ width: 1, color: MANGA_PALETTE.line, alpha: 0.4 });
-        drawRegionHandle(rect);
+        if (header.height < 26) continue;
+        drawRegionHandle(rect, header.y);
         const sectionLabel = this.configureTextQuality(new Text({ text: name,
           style: getDeckHeadingStyle(key) }));
-        sectionLabel.position.set(rect.x + 20, rect.y + 8);
+        sectionLabel.position.set(rect.x + 20, header.y + 8);
         sectionLabel.zIndex = frame.zIndex + 2;
         this.zoneContainer.addChild(sectionLabel);
         subzoneLabels.push(sectionLabel);
+        this.addDeckStatisticColumns(`${zone.id}:${key}`, sectionStatistics[key], {
+          x: sectionLabel.x + sectionLabel.width + 18, y: header.y + 6,
+          width: rect.x + rect.width - 12 - (sectionLabel.x + sectionLabel.width + 18),
+          height: Math.min(DRAWN_GRID.height, header.height) - 10,
+        }, frame.zIndex + 2, subzoneLabels);
       }
       for (const [board, label] of [['mainboard', 'Main'], ['collection', 'Collection'], ['maybeboard', 'Maybe']] as const) {
         const rect = boardRects[board];
@@ -9139,6 +10045,11 @@ export class PixiStage {
         boardLabel.zIndex = frame.zIndex + 2;
         this.zoneContainer.addChild(boardLabel);
         subzoneLabels.push(boardLabel);
+        if (board === 'mainboard') this.addDeckStatisticColumns(`${zone.id}:main`, sectionStatistics.main, {
+          x: boardLabel.x + boardLabel.width + 18, y: rect.y + 6,
+          width: rect.x + rect.width - 12 - (boardLabel.x + boardLabel.width + 18),
+          height: DRAWN_GRID.height - 10,
+        }, frame.zIndex + 2, subzoneLabels);
       }
     }
 
@@ -9183,7 +10094,15 @@ export class PixiStage {
       },
     }));
     title.x = titleX;
-    let titleBottomY = title.y + title.height;
+    const maxTabRight = closeBounds.left - buttonMargin;
+    const availableIdentityWidth = maxTabRight - titleX;
+    const identityWidthBesideGraphs = availableIdentityWidth - ZONE_DECK_GRAPH_IDENTITY_GAP -
+      2 * ZONE_DECK_GRAPH_MIN_WIDTH - ZONE_DECK_GRAPH_GAP;
+    const maxIdentityWidth = identityWidthBesideGraphs >= title.style.fontSize
+      ? identityWidthBesideGraphs
+      : Math.max(0, availableIdentityWidth);
+    if (zone.type === "deck") this.fitDeckHeaderIdentityText(title, maxIdentityWidth);
+    let identityRight = titleX + title.width;
     if (zone.type === "deck" && zone.deckAuthor) {
       title.y = deckHeaderTopY ?? zone.bounds.y + 8;
       const author = this.configureTextQuality(new Text({
@@ -9197,17 +10116,15 @@ export class PixiStage {
       }));
       author.x = titleX;
       author.y = title.y + title.height + 2;
+      this.fitDeckHeaderIdentityText(author, maxIdentityWidth);
       author.zIndex = frame.zIndex + 2;
       this.zoneContainer.addChild(author);
       subzoneLabels.push(author);
-      titleBottomY = author.y + author.height;
+      identityRight = Math.max(identityRight, author.x + author.width);
     } else if (zone.type === "deck" && deckHeaderTopY !== null) {
       title.y = deckHeaderTopY;
     } else {
       title.y = zone.bounds.y + Math.max(4, (headerHeight - title.height) / 2);
-    }
-    if (!(zone.type === "deck" && zone.deckAuthor)) {
-      titleBottomY = title.y + title.height;
     }
     title.zIndex = frame.zIndex + 2;
 
@@ -9220,16 +10137,14 @@ export class PixiStage {
         filterChipBounds.at(-1)?.bounds.right ?? 0;
       const tabStartX = Math.max(headerToolRight, filterChipRight);
       let tabCursorX = Math.max(titleX, tabStartX + ZONE_DECK_TAB_GAP);
-      const maxTabRight = closeBounds.left - buttonMargin;
       graphHoverRegions.push(
         ...this.renderDeckHeaderStats(zone, subzoneLabels, {
-        left: Math.max(titleX, headerToolRight + ZONE_DECK_TAB_GAP),
-        top: titleBottomY + 3,
-        graphTop: zone.bounds.y + 8,
-        right: maxTabRight,
-        bottom: tabTop - 2,
-        zIndex: frame.zIndex + 2,
-      }),
+          left: identityRight + ZONE_DECK_GRAPH_IDENTITY_GAP,
+          top: zone.bounds.y + 8,
+          right: maxTabRight,
+          bottom: tabTop - 2,
+          zIndex: frame.zIndex + 2,
+        }),
       );
 
       const fitTabLabel = (text: Text, maxWidth: number): void => {
@@ -9398,11 +10313,13 @@ export class PixiStage {
     return { frame, title, subzoneLabels, avatarSprite };
   }
 
-  private rebuildZoneVisuals(): void {
+  private rebuildZoneVisuals(publishBounds = true): void {
+    this.selectionActionsCache = undefined;
+    const automaticChanged = this.refreshAutomaticSectionLayouts();
     this.clearZoneVisuals(true);
     if (!this.camera) return;
 
-    let layoutChanged = false;
+    let layoutChanged = automaticChanged;
     if (this.cards.length > 0) {
       for (const zone of this.canvasAreas) {
         if (this.fitDeckSections(zone)) layoutChanged = true;
@@ -9428,18 +10345,7 @@ export class PixiStage {
 
       const stacks = new Map<string, CanvasCardInstance[]>();
       for (const instance of visibleZoneCards) {
-        const isLandscape = this.isLandscapeCard(instance.cardName);
-        const size = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-        const centerX = instance.x + size.width / 2;
-        const centerY = instance.y + size.height / 2;
-        const grid = pixelsToSnapGrid(centerX, centerY, isLandscape);
-        const boardKey =
-          zone.type === "deck"
-            ? this.normalizeDeckBoard(instance.board)
-            : instance.board ?? "zone";
-        const stackKey = `${boardKey}:${
-          isLandscape ? "L" : "P"
-        }:${grid.x},${grid.y}`;
+        const stackKey = this.getZoneCardStackKey(zone, instance);
         let stack = stacks.get(stackKey);
         if (!stack) {
           stack = [];
@@ -9459,13 +10365,13 @@ export class PixiStage {
           });
         }
 
-        const stackSize = stack.length;
-        const totalOffset = (stackSize - 1) * STACK_OFFSET;
+        const first = required(stack[0]);
+        const isLandscape = this.isLandscapeCard(first.cardName);
+        const cardSize = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
+        const { spacing, overhang } = getStackFan(stack.length, isLandscape);
         stack.forEach((instance, stackIndex) => {
           const key = `${zone.id}:${instance.id}`;
-          const isLandscape = this.isLandscapeCard(instance.cardName);
-          const cardSize = isLandscape ? CARD_SIZE.LANDSCAPE : CARD_SIZE.PORTRAIT;
-          const indexOffset = stackIndex * STACK_OFFSET - totalOffset / 2;
+          const indexOffset = stackIndex * spacing - overhang;
           const yOffset = isLandscape ? -indexOffset : indexOffset;
           const drawX = instance.x;
           const drawY = instance.y + yOffset;
@@ -9512,6 +10418,17 @@ export class PixiStage {
     ));
     this.queueVisibleHighDetailPreload();
     this.syncZoneSelectionVisuals();
+    const motion = this.sectionLayoutMotion;
+    if (motion) {
+      motion.to.clear();
+      for (const [key, start] of motion.from) {
+        const sprite = this.zoneCardSprites.get(key)?.sprite;
+        if (sprite?.visible && (sprite.x !== start.x || sprite.y !== start.y)) {
+          motion.to.set(key, { x: sprite.x, y: sprite.y });
+        }
+      }
+      this.updateDeckSectionMotion(performance.now());
+    }
     this.applyActiveMetricHighlighting();
     this.drawZoneDeleteOverlay();
     this.updateCardQuickAddTargets();
@@ -9528,7 +10445,9 @@ export class PixiStage {
       entry.follow = area && anchor ? this.getZoneStackEffectKeys(area.id, anchor.id) : [];
     }
     this.updateArrivalPops(performance.now());
-    if (layoutChanged) this.emitCanvasAreasChange();
+    this.syncDeckSectionTabs();
+    if (automaticChanged && publishBounds) this.emitCanvasLabelsChange();
+    if (layoutChanged && publishBounds && !this.zoneDragState.isDragging) this.emitCanvasAreasChange();
   }
 
   private rebuildCardSprites(rebuildDecks = true): void {
@@ -9559,15 +10478,7 @@ export class PixiStage {
       return;
     }
 
-    const layoutCards = this.catalogueCards.map((card) => ({
-      name: card.name,
-      type: card.guardian.type,
-      thresholdGroup: getThresholdGroup(card.guardian.thresholds),
-      cost: card.guardian.cost,
-      isLandscape: card.guardian.type === "Site",
-      primarySet: card.sets[0]?.name,
-      rarity: card.guardian.rarity,
-    }));
+    const layoutCards = this.catalogueCards.map(card => this.getLayoutCardInput(card));
     const layoutVariant = this.getCollectionLayoutVariant();
     this.collectionLayoutVariant = layoutVariant;
     this.collectionLayoutAspect = this.getCollectionLayoutAspect();
@@ -9840,31 +10751,7 @@ export class PixiStage {
       stack.push(key);
     }
 
-    for (const keys of deckStacks.values()) {
-      if (keys.length <= 1) continue;
-      const totalOffset = (keys.length - 1) * STACK_OFFSET;
-
-      for (const [i, key] of keys.entries()) {
-        const data = this.deckSprites.get(key);
-        if (!data) continue;
-
-        const isSite = data.layout.isLandscape;
-        const indexOffset = i * STACK_OFFSET - totalOffset / 2;
-        const yOffset = isSite ? -indexOffset : indexOffset;
-
-        data.sprite.x = data.basePosition.x;
-        data.sprite.y = data.basePosition.y + yOffset;
-        data.sprite.zIndex = i;
-
-        const cardSize = data.displaySize;
-        data.bounds = {
-          left: data.sprite.x,
-          top: data.sprite.y,
-          right: data.sprite.x + cardSize.width,
-          bottom: data.sprite.y + cardSize.height,
-        };
-      }
-    }
+    for (const keys of deckStacks.values()) this.applyStackOffsets(keys);
 
     // Load textures for deck sprites (they don't participate in the reveal animation)
     for (const data of this.deckSprites.values()) {
@@ -9886,15 +10773,21 @@ export class PixiStage {
   }
 
   private handleViewportChange(): void {
+    this.statisticTooltip?.hide();
+    this.statisticGestureVersion = (this.statisticGestureVersion ?? 0) + 1;
     this.updateCardQuickAddTargets();
     this.labelEditor?.reposition(this.getLabelEditorPosition());
     const profile = detectResponsiveUiMode();
     if (this.deckLayoutProfile !== profile) {
+      if (this.labelDragState?.isDragging) this.endLabelDrag(true);
+      this.cancelSelectionLayout(false);
       if (this.regionDrag) this.endDeckRegionDrag(true);
+      this.updateDeckSectionMotion(performance.now(), true);
       this.deckLayoutProfile = profile;
-      for (const area of this.canvasAreas) applyDeckLayoutProfile(area, this.canvasLabels, profile);
+      this.applyCanvasLayoutProfile();
       if (this.isInitialized) this.rebuildZoneVisuals();
     }
+    this.positionDeckSectionTabs();
     this.updateViewportVelocity();
     this.rebuildCollectionForLayoutVariantChange();
     this.scheduleCulling();
@@ -9984,8 +10877,8 @@ export class PixiStage {
 
   private getCollectionLayoutAspect(): number {
     const viewport = globalThis.window?.visualViewport;
-    const width = viewport?.width ?? this.app.screen.width;
-    const height = viewport?.height ?? this.app.screen.height;
+    const width = viewport?.width ?? this.app?.screen?.width ?? globalThis.window?.innerWidth ?? 1600;
+    const height = viewport?.height ?? this.app?.screen?.height ?? globalThis.window?.innerHeight ?? 900;
     return Math.max(0.25, Math.min(4, width / Math.max(1, height - 64)));
   }
 
@@ -10457,6 +11350,7 @@ export class PixiStage {
 
   private update(): void {
     const nowMs = performance.now();
+    this.updateDeckSectionMotion(nowMs);
     if (!this.motionEnabled()) {
       this.clearArrivalPops();
       for (const entry of this.mangaEffects ?? []) entry.effect.destroy();
